@@ -31,6 +31,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# turbo
+.turbo/
+
 # system
 .DS_Store
 Thumbs.db
