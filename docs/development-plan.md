@@ -409,39 +409,6 @@ export interface FxAdapter {
 - `fewer-permission-prompts` —— 减少日后的 permission 弹窗
 
 ---
-- [ ] **应用商店**：
-  - [ ] App Store（中国区 + 海外）：截图、icon、描述、年龄分级
-  - [ ] 国内安卓：华为、小米、OPPO、vivo、应用宝（每家审核策略不同）
-  - [ ] **类目选「效率工具」或「记账」，绝不选「金融」**
-- [ ] **订阅系统**：
-  - [ ] StoreKit / Google Play Billing 集成（首选）
-  - [ ] Free / Pro / Pro+ 三档实现
-  - [ ] 国内：考虑独立支付（支付宝/微信）—— V1.5+
-- [ ] **官网**：
-  - [ ] 一页式 landing（用 Expo Web 复用组件）
-  - [ ] 应用商店徽章 + 隐私政策 + 用户协议链接
-- [ ] **AI 模块**（可选 P1）：
-  - [ ] 接入 Claude API（启用 prompt caching）
-  - [ ] 「分析我的组合风险」单一查询场景上线
-  - [ ] 严格 prompt 控制不出现「建议买入/卖出」字样
-
-**Definition of Done**：
-- ✅ App Store 上架成功
-- ✅ 至少 1 家国内安卓商店上架成功
-- ✅ Pro 订阅完成首单（自己买也算）
-- ✅ 官网可访问，SEO 基础元数据齐
-
-**推荐模型**：
-- **Opus**：合规审查、AI prompt 设计、订阅状态机
-- **Sonnet**：应用商店素材、订阅 UI、官网
-- **Haiku**：备案材料整理、文案润色
-
-**推荐 Skills**：
-- `claude-api` —— 接入 AI 时强制使用，确保 caching 默认开
-- `security-review` —— 上架前必跑
-- `review` —— 任何接入支付/订阅的 PR 必跑
-
----
 
 ### Stage 1：MVP-0 端到端骨架（2-3 周，15-30h）
 
