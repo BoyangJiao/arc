@@ -10,5 +10,37 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install*)",
+      "Bash(pnpm dev*)",
+      "Bash(pnpm build*)",
+      "Bash(pnpm lint*)",
+      "Bash(pnpm typecheck*)",
+      "Bash(pnpm test*)",
+      "Bash(pnpm run *)",
+      "Bash(pnpm exec *)",
+      "Bash(npx expo *)",
+      "Bash(npx turbo *)",
+      "Bash(turbo *)",
+      "Bash(supabase start*)",
+      "Bash(supabase stop*)",
+      "Bash(supabase db *)",
+      "Bash(supabase generate*)",
+      "Bash(supabase migration*)",
+      "Bash(supabase status*)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git branch*)",
+      "Bash(git fetch*)",
+      "Bash(git show*)",
+      "Bash(git stash list*)",
+      "Bash(node *)",
+      "Bash(tsc *)",
+      "Bash(eslint *)",
+      "Bash(prettier *)"
+    ]
   }
 }
