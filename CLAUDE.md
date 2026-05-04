@@ -1,27 +1,193 @@
-# CLAUDE.md - 项目规范与指令
+# CLAUDE.md — Arc 项目规范与指令
 
-## 项目概览
-- **名称**: Arc (暂定)
+> **阅读顺序**：本文件是所有模型切换时的最小必读上下文。完整背景请阅读：
+> - `docs/project-background.md` — 产品定位、市场、风险登记册
+> - `docs/development-plan.md` — 阶段拆解、模型分工、Skill 应用时机
+> - `docs/preflight-checklist.md` — Stage 0 准备清单
+> - `docs/legal-risk-map.md` — 法律风险与文案合规
+> - `docs/adr/` — 关键架构决策记录
+
+---
+
+## 一、项目概览
+
+- **名称**: Arc（中文副标题：循迹）
 - **定位**: 全球资产配置追踪器 & 再平衡助手
-- **目标用户**: 25-40 岁高净值人群 (Gen-Z & Millennials)
-- **风格**: 科技、简约、高端 (借鉴 Delta)
+- **目标用户**: 在 A股 / 港股 / 美股 / 公募基金 / 加密货币 中持有 ≥3 类资产、跨 ≥2 个平台的中国投资者
+- **当前阶段**: Stage 0 → Stage 1（Pre-flight → MVP-0 骨架）
+- **开发节奏**: 兼职，6-12h/周；详细里程碑见 `docs/development-plan.md §七`
 
-## 文案铁律 (必须遵守)
-1. **禁止建议**: 永不出现 "建议买入/卖出"、"你应该..." 等措辞。
-2. **描述性表达**: 使用 "达到目标配置需要的份额变化为 X" 或 "偏离目标配置 Y%"。
-3. **免责标识**: 任何资产现值、净值展示均需配以 "仅供参考，可能延迟" 的标识。
-4. **色彩方案**: 支持红涨绿跌/绿涨红跌切换，代码实现需引用 `tokens` 中的语义色。
+---
 
-## 工程规约
-- **技术栈**: Expo / TypeScript / NativeWind / Supabase / Drizzle / decimal.js.
-- **金额处理**: 严禁使用 `number`！必须使用 `decimal.js` 处理所有财务计算以防火浮点误差。
-- **数据源**: 必须通过 `packages/data-sources/` 的 Adapter 层抽象，不准在业务代码直接调用具体厂商 API。
-- **i18n**: 双语 Day1，所有文案严禁硬编码在组件内。
+## 二、文案铁律（任何 UI 文案必须遵守）
 
-## 开发模式
-- **Monorepo**: 使用 pnpm workspaces + Turborepo.
-- **文档优先**: 关键决策必须记录在 `docs/adr/`.
-- **常用命令**:
-  - 安装依赖: `pnpm install`
-  - 启动开发: `pnpm dev`
-  - 数据库同步: `pnpm db:push`
+### 永不出现的词（立即触发整改）
+- 建议买入 / 建议卖出 / 推荐购买 / 应该买 / 应该卖
+- 将获得 X% 收益 / 预期回报 / 保本
+- 专业建议 / 投资顾问 / 理财规划
+
+### 必须使用的替代表达
+- ✅ 「达到目标配置需要的份额变化为 X」（不是「你应该买 X 股」）
+- ✅ 「偏离目标配置 Y%」（不是「建议调整」）
+- ✅ 「仅供参考，可能延迟」（任何价格/净值旁边必须配此标识）
+- ✅ 「本工具不构成投资建议」（免责声明，全局可见）
+
+---
+
+## 三、工程铁律
+
+### 3.1 金融计算
+- **严禁使用 `number` 处理任何财务数值**（价格、份额、成本、汇率、净值）
+- 必须使用 `decimal.js`（`Decimal` 类型）
+- `0.1 + 0.2 !== 0.3` 是 P0 bug，不是 edge case
+
+### 3.2 数据模型不变性（5 条核心原则）
+1. **资产 ID 不变** — `market:symbol`（如 `CN:600519`）一经写入永不修改；修正走新增「调整交易」
+2. **单一来源真相** — 持仓 = Σ(交易) + Σ(快照修正)；不允许直接编辑持仓数字
+3. **Adapter 层抽象** — 所有外部 API（行情/汇率/基金净值）必须经 `packages/data-sources/` adapter；业务代码看不到任何具体厂商
+4. **币种永不丢失** — 资产录入保留原始币种；显示时按报告货币换算；存储中绝不预先换算
+5. **历史 ≠ 当下** — 历史净值用历史汇率/价格；当前净值用最新价；混用是 P0 bug
+
+### 3.3 i18n
+- **所有 UI 文案严禁硬编码在组件内**
+- 使用 `@arc/i18n` 包，通过 `useTranslation()` hook 获取文案
+- 中英双语 Day 1，新增文案必须同时在 `en.ts` 和 `zh.ts` 添加
+
+### 3.4 数据源
+- 业务代码只能通过 `packages/data-sources/` 的 adapter 接口访问外部 API
+- 不准在 `apps/` 或 `packages/core/` 中直接 `fetch` 厂商 API
+
+---
+
+## 四、技术栈
+
+| 层 | 选型 |
+|:---|:---|
+| 跨端框架 | Expo SDK 54 + Expo Router（file-based） |
+| 语言 | TypeScript strict |
+| 样式 | NativeWind v4 + Tailwind CSS |
+| UI 组件 | HeroUI Pro（待集成）+ 自建 finance/charts |
+| 状态管理 | Zustand + TanStack Query |
+| 表单 | React Hook Form + Zod |
+| 后端 | Supabase（PostgreSQL + Auth + RLS + Storage） |
+| ORM | Drizzle ORM |
+| 图表 | Web: Recharts；RN: Victory Native |
+| i18n | i18next + react-i18next |
+| 日期/时区 | date-fns + date-fns-tz |
+| 金额计算 | **decimal.js（绝不用 number）** |
+| 本地存储 | MMKV (RN) / IndexedDB (Web) |
+| 错误监控 | Sentry |
+| 分析 | PostHog |
+
+---
+
+## 五、Monorepo 结构
+
+```
+arc/
+├── apps/
+│   └── mobile/              ← Expo 应用（含 Web 输出）
+│       ├── app/             ← Expo Router 文件路由（页面）
+│       └── components/      ← 业务组件（页面级，不可复用到其他 app）
+├── packages/
+│   ├── ui/                  ← UI 基建层
+│   │   ├── primitives/      ← re-export HeroUI（薄封装）
+│   │   ├── blocks/          ← HeroUI Pro 源码 blocks
+│   │   ├── finance/         ← 自建领域组件（PriceCell / PnLBadge / AllocationDonut...）
+│   │   ├── charts/          ← 图表（Web/RN 双实现）
+│   │   └── tokens/          ← 颜色/字号/间距/语义色（含红涨绿跌切换）
+│   ├── core/                ← 领域逻辑（无 UI/IO 依赖）
+│   │   ├── domain/          ← 类型定义（Asset / Holding / Transaction / Portfolio）
+│   │   ├── returns/         ← TWR / MWR / 累计收益率
+│   │   ├── rebalance/       ← 再平衡引擎
+│   │   └── fx/              ← 多币种换算
+│   ├── data-sources/        ← 外部 API adapter 层
+│   │   ├── adapters/        ← alphavantage / tushare / coingecko / exchangeratehost
+│   │   ├── interfaces.ts    ← 统一接口（PriceAdapter / FxAdapter / FundNavAdapter）
+│   │   └── cache/           ← 行情缓存策略
+│   ├── db/                  ← Drizzle schema + migrations
+│   └── i18n/                ← 中英文案（en.ts / zh.ts）
+├── docs/
+│   ├── adr/                 ← Architecture Decision Records
+│   └── *.md                 ← 项目文档
+└── tools/                   ← 一次性脚本
+```
+
+**铁律**：业务代码永远 `import { Button } from '@arc/ui'`，绝不直接 `import { Button } from '@heroui/react'`。
+
+---
+
+## 六、色彩方案
+
+支持红涨绿跌 / 绿涨红跌切换，所有涨跌色必须引用 `packages/ui/tokens/semantic.ts` 中的语义色，禁止硬编码颜色值。
+
+```ts
+// 正确示例
+import { semanticTokens } from '@arc/ui/tokens';
+const gainColor = semanticTokens[theme].gain[colorScheme]; // 'red' | 'green'
+
+// 错误示例 ❌
+const gainColor = '#00A86B';
+```
+
+---
+
+## 七、模型分工指南
+
+| 任务类型 | 首选模型 | 备选 |
+|:---|:---:|:---:|
+| 架构决策 / ADR 起草 / 数据模型 | **Opus** | Sonnet |
+| 算法实现（TWR / 再平衡 / FX 链） | **Opus** | Sonnet |
+| React Native 页面 / 表单 / CRUD | **Sonnet** | — |
+| Bug 修复（已诊断） / CSV 解析 | **Sonnet** | Haiku |
+| Bug 诊断（复杂 / edge case） | **Opus** | Sonnet |
+| UI 微调 / 文案 / a11y / typo | **Haiku** | Sonnet |
+| 依赖升级 / lint 修复 | **Haiku** | Sonnet |
+| Prompt engineering（AI 模块） | **Opus** | Sonnet |
+| 安全 review / 合规审查 | **Opus** | Sonnet |
+
+**切换信号**：Sonnet 反复改不对一个 bug → 升 Opus；Opus 在做无脑 CRUD → 降 Sonnet；Sonnet 改 typo/升级版本 → 降 Haiku。
+
+---
+
+## 八、Skill 应用时机
+
+| Skill | 何时用 |
+|:---|:---|
+| `init` | 每次重大架构变更后更新本文件 |
+| `update-config` | 配置 hooks、permission 白名单 |
+| `fewer-permission-prompts` | Stage 1 末跑一次，减少日常弹窗 |
+| `session-start-hook` | 已配置（SessionStart 自动 pnpm install） |
+| `simplify` | 每完成一个大功能模块后清理代码 |
+| `review` | 任何涉及金融计算或支付的 PR |
+| `security-review` | Stage 2 末、Stage 4 上架前 |
+| `claude-api` | 接入 Claude API 时，确保 prompt caching 默认开 |
+
+---
+
+## 九、常用命令
+
+```bash
+pnpm install          # 安装依赖
+pnpm dev              # 启动开发（Turborepo 并行）
+pnpm build            # 构建所有包
+pnpm lint             # ESLint 检查
+pnpm typecheck        # TypeScript 检查
+pnpm format           # Prettier 格式化
+
+# packages/db 就绪后：
+pnpm --filter @arc/db generate   # 生成 Drizzle migration
+pnpm --filter @arc/db push       # 推送 schema 到 Supabase
+```
+
+---
+
+## 十、决策记录规范
+
+关键架构选择存入 `docs/adr/NNN-标题.md`，格式：
+- **状态**：提议 / 已接受 / 已废弃
+- **背景**：为什么要做这个决策
+- **决策**：具体选择了什么
+- **后果**：这个决策带来的利弊
+
+切换模型时必须让新模型阅读最近 3 条 ADR。
