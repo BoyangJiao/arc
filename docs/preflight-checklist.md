@@ -28,7 +28,7 @@
 ### 数据源
 - [ ] **Tushare Pro 账号** —— 注册 + 实名认证 + 选 ≥120 积分档（≈ ¥200/年）
   - 要点：实名认证后才有日级历史数据接口
-- [ ] **Alpha Vantage 免费 key**（美股 25 calls/day）
+- [ ] **Alpha Vantage 免费 key**（美股 25 calls/day,API key: DH31JDSPX2MVJ91I）
 - [ ] **CoinGecko**（不需要 key）
 - [ ] **exchangerate.host**（不需要 key）
 - [ ] 备选：**OpenExchangeRates**（汇率付费，$12/月，仅在免费源不稳定时启用）
