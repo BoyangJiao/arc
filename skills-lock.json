@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "skills": {
+    "drizzle-orm-expert": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/web-development/drizzle-orm-expert/SKILL.md",
+      "computedHash": "f39da7fdfca57ffb67ab1d193254ab8b716d7dd00f031d352dd6ac14b83b5255"
+    },
+    "find-bugs": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/sentry/find-bugs/SKILL.md",
+      "computedHash": "d6c81119a46aca7d0ff9878895fa696709583e2705f515204a218c8b0e54f759"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
+    "i18n-localization": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/development/i18n-localization/SKILL.md",
+      "computedHash": "66da9c3f527c18a87003543882c76ebe5bd179e692fc9bc859752bf6e1a2f1f6"
+    },
+    "security-best-practices": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/security/security-best-practices/SKILL.md",
+      "computedHash": "8dd7ff46906c39dbb3f6077c8a87a73c8ccff3d516e2a7152ad26aa41b4e7ca6"
+    },
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/skill-creator/SKILL.md",
+      "computedHash": "5ea13a6d9f0d4bb694405d79acd00cadec0d21bb138c4dd10fcf3c500cb835c2"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/database/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "c3997d2c905cdd6080d453a9223d9ff981eb52a0781a697da20f8c317a75108d"
+    },
+    "tanstack-query-expert": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/web-development/tanstack-query-expert/SKILL.md",
+      "computedHash": "f7366f83faade8fcd91b1fa7541c66d0e42f92ee90eef4bde642dbafd45db082"
+    },
+    "typescript-pro": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/development/typescript-pro/SKILL.md",
+      "computedHash": "cba26ffa0704266be5ed47da7bc93b6b8cbde60c65851f3e0a001041e4044b99"
+    },
+    "vercel-composition-patterns": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/composition-patterns/SKILL.md",
+      "computedHash": "f98931159fa9c7fed043bcd18a891a46dcf89ababa38df13a4c5b7b30dc0ce07"
+    },
+    "vercel-react-native-skills": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-native-skills/SKILL.md",
+      "computedHash": "2e9088a7333666d8c2833b8ff58bd51b955501c42b4c7244f72b4cbf22dafcc4"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "a6a44d5498f7e8f68289902f3dedfc6f38ae0cee1e96527c80724cf27f727c2a"
+    },
+    "webapp-testing": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/webapp-testing/SKILL.md",
+      "computedHash": "ad5b1fc52807e9afa4635e59218a026b164dc58b6c3f41b0f7c644dcd6ccf572"
+    },
+    "zod-validation-expert": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/web-development/zod-validation-expert/SKILL.md",
+      "computedHash": "8fd8eb38d99ba483ff3a17389e4db8ade789599cd6d90fdb1a25e9b6d23e2ed3"
+    },
+    "zustand-store-ts": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/web-development/zustand-store-ts/SKILL.md",
+      "computedHash": "e64757e2c716354bb18cea6b1e2ae09c83964d9a2cd20e5c04cc2c42ce204e0b"
+    }
+  }
+}
