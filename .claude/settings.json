@@ -1,4 +1,7 @@
 {
+  "env": {
+    "SKILLSMP_API_KEY": "sk_live_skillsmp_ryLp_rTVp9S3YBpIM3z0BhRNa4uyOMNJlfB0UrpJnxY"
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -11,6 +14,7 @@
       }
     ]
   },
+  "enabledMcpjsonServers": ["skillsmp"],
   "permissions": {
     "allow": [
       "Bash(pnpm install*)",
