@@ -43,3 +43,12 @@ Thumbs.db
 
 # MCP config (contains personal tokens — each dev uses their own)
 .mcp.json
+
+# Spike sandbox build artifacts
+tools/spike-heroui-native/node_modules/
+tools/spike-heroui-native/dist/
+tools/spike-heroui-native/.cache/
+tools/spike-heroui-native/.expo/
+tools/spike-heroui-native/uniwind-types.d.ts
+tools/spike-heroui-native/spike-render.png
+tools/spike-heroui-native/pnpm-lock.yaml
