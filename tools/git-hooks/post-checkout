@@ -1,0 +1,19 @@
+#!/bin/bash
+# =============================================================================
+# Git post-checkout hook
+# =============================================================================
+# 触发时机：git checkout / git switch 切换分支后
+# 作用：自动同步 .claude/skills → .qoder/skills，确保多 IDE skill 一致
+# =============================================================================
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || exit 0)"
+[ -z "$PROJECT_ROOT" ] && exit 0
+
+SYNC_SCRIPT="$PROJECT_ROOT/tools/sync-skills.sh"
+
+if [ -x "$SYNC_SCRIPT" ]; then
+  echo "🔧 切换分支，自动同步 skills..."
+  bash "$SYNC_SCRIPT"
+else
+  echo "⚠️  sync-skills.sh 不存在或不可执行，跳过 skill 同步"
+fi

@@ -8,7 +8,8 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
-    "sync:skills": "bash tools/sync-skills.sh"
+    "sync:skills": "bash tools/sync-skills.sh",
+    "setup:hooks": "bash tools/setup-git-hooks.sh"
   },
   "devDependencies": {
     "turbo": "^2.5.4",

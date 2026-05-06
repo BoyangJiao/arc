@@ -152,16 +152,37 @@ const gainColor = '#00A86B';
 
 ## 八、Skill 应用时机
 
+### 核心开发 Skills
+
 | Skill | 何时用 |
 |:---|:---|
-| `init` | 每次重大架构变更后更新本文件 |
-| `update-config` | 配置 hooks、permission 白名单 |
-| `fewer-permission-prompts` | Stage 1 末跑一次，减少日常弹窗 |
-| `session-start-hook` | 已配置（SessionStart 自动 pnpm install） |
-| `simplify` | 每完成一个大功能模块后清理代码 |
-| `review` | 任何涉及金融计算或支付的 PR |
-| `security-review` | Stage 2 末、Stage 4 上架前 |
-| `claude-api` | 接入 Claude API 时，确保 prompt caching 默认开 |
+| `heroui-native` | 使用 HeroUI Native OSS 组件（Button / Card / TextField 等） |
+| `heroui-native-pro` | 使用 HeroUI Pro Native 组件（DatePicker / Stepper / SlideButton 等） |
+| `heroui-pro-design-taste` | 生成 UI / 审查设计质量 / 提升视觉细节 |
+| `vercel-react-native-skills` | RN 组件开发、列表性能优化、动画、原生模块 |
+| `vercel-composition-patterns` | 组件 API 设计、复合组件、props 膨胀重构 |
+| `drizzle-orm-expert` | Schema 设计、关系查询、migration 编写 |
+| `supabase-postgres-best-practices` | SQL 查询优化、RLS 策略、索引设计 |
+| `tanstack-query-expert` | 数据获取、缓存策略、optimistic update |
+| `zustand-store-ts` | 新建 / 重构 Zustand Store |
+| `zod-validation-expert` | Schema 验证、表单校验、类型推断 |
+| `typescript-pro` | 复杂类型系统、泛型设计 |
+| `i18n-localization` | 检测硬编码文案、管理翻译文件 |
+
+### 质量保障 Skills
+
+| Skill | 何时用 |
+|:---|:---|
+| `find-bugs` | 提交前审查分支变更中的 bug |
+| `security-best-practices` | Stage 2 末、Stage 4 上架前安全审查 |
+| `code-review` | 任何涉及金融计算或支付的 PR |
+| `smart-commit` | 生成规范 commit message、推送代码 |
+
+### 工具 Skills（按需）
+
+| Skill | 何时用 |
+|:---|:---|
+| `skill-creator` | 创建 / 改进自定义 Skill |
 
 ---
 
@@ -175,10 +196,16 @@ pnpm lint             # ESLint 检查
 pnpm typecheck        # TypeScript 检查
 pnpm format           # Prettier 格式化
 
+# Git Hooks & Skills 同步
+pnpm setup:hooks      # 首次设置 git hooks（仅需运行一次）
+pnpm sync:skills      # 手动同步 .claude/skills → .qoder/skills
+
 # packages/db 就绪后：
 pnpm --filter @arc/db generate   # 生成 Drizzle migration
 pnpm --filter @arc/db push       # 推送 schema 到 Supabase
 ```
+
+> **注意**：`pnpm setup:hooks` 后，`git pull` 和 `git checkout` 会自动触发 skill 同步，无需手动执行 `sync:skills`。
 
 ---
 
