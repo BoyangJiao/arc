@@ -11,17 +11,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@arc/i18n": "workspace:*",
+    "@heroui-pro/react": "1.0.0-beta.2",
+    "decimal.js": "^10.5.0",
     "expo": "~54.0.33",
     "expo-router": "~4.0.21",
     "expo-status-bar": "~3.0.9",
+    "heroui-native-pro": "1.0.0-beta.2",
+    "nativewind": "^4.1.23",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.6.0",
-    "nativewind": "^4.1.23",
-    "tailwindcss": "^3.4.17",
-    "decimal.js": "^10.5.0",
-    "@arc/i18n": "workspace:*"
+    "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",

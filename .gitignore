@@ -40,3 +40,6 @@ pnpm-debug.log*
 # system
 .DS_Store
 Thumbs.db
+
+# MCP config (contains personal tokens — each dev uses their own)
+.mcp.json
