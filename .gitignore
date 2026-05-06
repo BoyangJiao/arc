@@ -34,6 +34,9 @@ pnpm-debug.log*
 # turbo
 .turbo/
 
+# qoder
+.qoder/
+
 # system
 .DS_Store
 Thumbs.db
