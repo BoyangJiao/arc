@@ -65,8 +65,8 @@
 |:---|:---|
 | 跨端框架 | Expo SDK 54 + Expo Router（file-based） |
 | 语言 | TypeScript strict |
-| 样式 | NativeWind v4 + Tailwind CSS |
-| UI 组件 | HeroUI Pro（待集成）+ 自建 finance/charts |
+| 样式 | Uniwind + Tailwind CSS v4 |
+| UI 组件 | HeroUI Native (OSS) + HeroUI Native Pro + 自建 finance/charts |
 | 状态管理 | Zustand + TanStack Query |
 | 表单 | React Hook Form + Zod |
 | 后端 | Supabase（PostgreSQL + Auth + RLS + Storage） |

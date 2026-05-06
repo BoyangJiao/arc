@@ -68,6 +68,8 @@ Arc 是一个面向中国全球资产配置者的投资追踪 App，需要同时
 
 ### 样式：NativeWind v4 + Tailwind CSS + HeroUI Pro
 
+> ⚠️ **本节已被 [ADR 002](./002-ui-library-decision.md) 取代**：实际样式栈为 Uniwind + Tailwind v4 + HeroUI Native (OSS + Pro)。下方原文保留作为历史背景。
+
 **选择**：NativeWind 作为 React Native 的 Tailwind 实现；HeroUI Pro 作为组件库基础
 
 **架构**：分层封装（见 CLAUDE.md §五）

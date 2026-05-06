@@ -1,12 +1,31 @@
-import { Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
+import { View, ScrollView } from "react-native";
+import { useState } from "react";
+import { Button, Card, Switch, Text } from "@arc/ui";
+import { useTranslation } from "@arc/i18n";
 
 export default function HomeScreen() {
   const { t } = useTranslation();
+  const [dark, setDark] = useState(false);
+
   return (
-    <View className="flex-1 items-center justify-center bg-black">
-      <Text className="text-white text-2xl font-bold">{t("common.appName")}</Text>
-      <Text className="text-neutral-400 text-sm mt-2">{t("common.notInvestmentAdvice")}</Text>
-    </View>
+    <ScrollView
+      contentContainerStyle={{ padding: 24, gap: 16 }}
+      className="flex-1 bg-background"
+    >
+      <Text className="text-2xl font-semibold">{t("common.appName")}</Text>
+
+      <Card>
+        <View className="p-4 gap-3">
+          <Text>{t("debug.heroUiTitle")}</Text>
+          <Button>
+            <Button.Label>{t("common.appName")}</Button.Label>
+          </Button>
+          <View className="flex-row items-center gap-2">
+            <Switch isSelected={dark} onSelectedChange={setDark} />
+            <Text>{t("settings.darkMode")}</Text>
+          </View>
+        </View>
+      </Card>
+    </ScrollView>
   );
 }

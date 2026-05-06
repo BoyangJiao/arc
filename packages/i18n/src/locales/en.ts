@@ -15,4 +15,10 @@ export const en = {
     deviation: "Deviation from target",
     sharesNeeded: "Shares needed to reach target allocation",
   },
+  settings: {
+    darkMode: "Dark mode",
+  },
+  debug: {
+    heroUiTitle: "HeroUI Native",
+  },
 };

@@ -37,19 +37,24 @@ ADR 001 的核心承诺是「一套代码同时出 Native App + Web」，因此*
 3. 任何 HeroUI Native 路径（OSS 或 Pro）都强制依赖 Uniwind，无替代选项
 4. `apps/mobile/package.json` 已声明 `heroui-native-pro` 依赖，但配置层尚未配套 — 当前状态本身就是不一致的
 
-### 决策二：MVP 阶段使用 `heroui-native` OSS，**不**使用 `heroui-native-pro`
+## 决策二：Day 1 使用 `heroui-native-pro`
 
-| 维度 | OSS (v1.0.2) | Pro (v1.0.0-beta.2) |
-|:---|:---:|:---:|
-| 稳定性 | GA | Beta |
-| 与 CLAUDE.md §3.1「金融严谨性」精神 | ✅ | ⚠️ |
-| Pro 独占组件（NumberField / DateRangePicker / Stepper / Calendar） | ❌ | ✅ |
-| 升级路径 | 后期 `heroui-pro install` 一键加装 | — |
+| 维度 | 决策 |
+|:---|:---|
+| 安装 | 同时安装 `heroui-native`（OSS）+ `heroui-native-pro`（Pro） |
+| 使用策略 | 所有 Pro 组件（NumberField / DateRangePicker / Stepper / Calendar 等）直接使用 |
+| 封装纪律 | 通过 `packages/ui/primitives/` 薄封装 re-export，业务代码只 `import { X } from '@arc/ui'` |
+| Pro GA 后 | 直接 `pnpm update heroui-native-pro` 升级版本号，零迁移 |
 
-**Pro 组件如何过渡**：MVP 阶段对 Pro 独占组件的需求采取以下处理：
-- **NumberField / NumberStepper**：自建简化版（基于 OSS Input + decimal.js），UI 层薄封装，将来 Pro GA 后替换实现，业务代码无感
-- **DateRangePicker**：MVP 用两个独立 `Date` 输入或 OSS 已有的简化方案；TWR/MWR 区间分析功能可推迟到 Pro GA 后再做精修
-- **Stepper / Calendar**：MVP 不需要
+**理由**：
+- Pro 是 OSS 的超集，API 完全兼容，不是另一个库
+- Pro beta 的"beta"是发布标签，底层复用 OSS v1.0.2 的稳定基础设施（Uniwind / Reanimated / Gesture Handler）
+- §3.1「金融严谨性」指的是**计算精度**（decimal.js），不是 UI 渲染稳定性 — 二者是不同维度的风险
+- 如果自建组件后再迁移 Pro，需要重写 props/事件绑定；直接用 Pro → GA 后只需升版本号
+- HeroUI 有全职团队维护、开源生态、MCP + AI Skill 支持，长期可持续性有保障
+- 许可证已购买，1 年更新窗口内 Pro 大概率 GA，不用就是浪费
+
+**降级预案**：如果某个 Pro 组件出 bug 影响发版，在 `packages/ui/primitives/` 层临时换成自建替代，业务代码无感
 
 ### 决策三：Pro 许可证保留，不退款
 
@@ -79,7 +84,7 @@ ADR 001 的核心承诺是「一套代码同时出 Native App + Web」，因此*
 4. `apps/mobile/global.css`：按官方文档改 v4 + Uniwind 语法
 5. `packages/ui/primitives/`：建立 `re-export heroui-native` 的薄封装，业务代码只 import `@arc/ui`
 6. `packages/ui/tokens/semantic.ts`：用 CSS 变量声明，Web/RN 单一真相源
-7. **移除** `heroui-native-pro` 依赖（直至 GA）；保留 Pro license
+7. **保留** `heroui-native-pro` 依赖，通过 `packages/ui/primitives/` 薄封装 re-export
 8. 同步更新 CLAUDE.md §四的「样式」与「UI 组件」行
 9. 修订 ADR 001 §样式 章节，注明被本 ADR 取代
 
@@ -98,9 +103,9 @@ ADR 001 的核心承诺是「一套代码同时出 Native App + Web」，因此*
 ## 后果
 
 ### 共同后果（无论分支 A 或 B）
-- ✅ 解决 ADR 001 中"NativeWind + HeroUI"不兼容的内在矛盾
-- ✅ 保留 Pro 许可证价值，未来可升级
-- ⚠️ NumberField / DateRangePicker 在 MVP 阶段需自建简化版（约 1-2 周工时）
+- ✅ 解决 ADR 001 中“NativeWind + HeroUI”不兼容的内在矛盾
+- ✅ Pro 许可证价值 Day 1 兑现，组件直接可用
+- ✅ Pro GA 后升级只需 `pnpm update`，零迁移成本
 
 ### 分支 A 特有后果
 - ✅ 真正的"一套代码三端跑"，符合 ADR 001 第 3 条核心约束

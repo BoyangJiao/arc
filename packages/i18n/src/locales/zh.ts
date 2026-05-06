@@ -15,4 +15,10 @@ export const zh = {
     deviation: "偏离目标配置",
     sharesNeeded: "达到目标配置需要的份额变化",
   },
+  settings: {
+    darkMode: "深色模式",
+  },
+  debug: {
+    heroUiTitle: "HeroUI Native",
+  },
 };

@@ -1,13 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'uniwind';
 
-/* HeroUI Native Pro — source paths for Tailwind class scanning */
-/* TODO: when migrating to Tailwind v4 + Uniwind, replace above with:
- *   @import 'tailwindcss';
- *   @import 'uniwind';
- *   @import 'heroui-native/styles';
- *   @import 'heroui-native-pro/styles';
- *   @source './node_modules/heroui-native/lib';
- *   @source './node_modules/heroui-native-pro/lib';
- */
+@import 'heroui-native/styles';
+@import 'heroui-native-pro/styles';
+
+@source './node_modules/heroui-native/lib';
+@source './node_modules/heroui-native-pro/lib';
