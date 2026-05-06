@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "skillsmp": {
+      "command": "npx",
+      "args": ["-y", "skillsmp-mcp-server"]
+    },
+    "heroui-pro": {
+      "type": "http",
+      "url": "https://mcp.heroui.pro/mcp",
+      "headers": {
+        "x-heroui-personal-token": "YOUR_HEROUI_PERSONAL_TOKEN"
+      }
+    }
+  }
+}

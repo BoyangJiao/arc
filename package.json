@@ -16,5 +16,8 @@
     "@typescript-eslint/parser": "^8.32.1",
     "eslint": "^9.27.0"
   },
-  "packageManager": "pnpm@10.33.0"
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "onlyBuiltDependencies": ["heroui-pro", "heroui-native-pro"]
+  }
 }
