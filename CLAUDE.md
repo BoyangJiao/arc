@@ -218,3 +218,19 @@ pnpm --filter @arc/db push       # 推送 schema 到 Supabase
 - **后果**：这个决策带来的利弊
 
 切换模型时必须让新模型阅读最近 3 条 ADR。
+
+---
+
+## 十一、设计稿协作（opt-in）
+
+**默认行为**：日常开发不强制出 Pencil 设计稿 / 截图。
+
+**触发**（任一即可，**用户主导**）：
+- 用户 prompt 要求"出设计稿 / snapshot / 留痕"
+- 用户调用 `/design-snapshot` 命令
+- 用户在 PR 前明示 "make a snapshot"
+
+**适用**：完整 journey 闭环、较大交互或布局变化。**不为**字段微调、间距、文案小改服务。
+
+**工作流**：见 `.claude/skills/design-snapshot/SKILL.md`
+**设计稿**：`designs/<feature>/*.pen`；截图：`docs/screenshots/<feature>/`
