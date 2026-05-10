@@ -410,49 +410,88 @@ export interface FxAdapter {
 
 ---
 
-### Stage 1：MVP-0 端到端骨架（2-3 周，15-30h）
+### Stage 1：MVP-0 端到端骨架（3 周，15-25h）
 
-**目标**：跑通「创建组合 → 手动加一笔 AAPL 交易 → 看到当前市值（带汇率换算）」的端到端最小闭环。**不追求 UI 美观，不追求功能完整**。
+**目标**：3 Tab 骨架 + 「创建组合 → 手动加一笔 AAPL → 看到 CNY 市值」端到端最小闭环。**Markets / Insights Tab 是空态**，把骨架立起来。
 
 **任务清单**：
-- [ ] Monorepo 初始化（pnpm + Turborepo + Expo）
-- [ ] HeroUI 集成 + token 系统建立 + 暗色主题跑通
-- [ ] Supabase 项目建好，Drizzle schema 写完核心表（asset/portfolio/holding/transaction/fx_rate/price_snapshot）
-- [ ] Auth：邮箱 + magic link（不做密码，省事）
-- [ ] 数据源 adapter：Alpha Vantage（美股）+ exchangerate.host（汇率）一条线打通
-- [ ] 5 个最小页面：
-  - [ ] Sign in
-  - [ ] Portfolio list
-  - [ ] Portfolio detail（持仓表 + 总市值）
-  - [ ] Add transaction（含资产搜索）
-  - [ ] Settings（语言/报告货币切换）
+- [ ] Monorepo 初始化（已完成）+ HeroUI Pro / Native 集成（已完成）
+- [ ] `packages/ui/src/tokens/` 落地：Foundation 扩展（info / skeleton / pressed）+ Semantic 12 + Business 5 + `useBusinessTokens` hook（见 ADR 003）
+- [ ] Supabase 项目 + Drizzle schema 核心表（asset / portfolio / holding / transaction / fx_rate / price_snapshot / user_preferences）
+- [ ] Auth：邮箱 + magic link
+- [ ] 数据源 adapter：Alpha Vantage（美股）+ exchangerate.host（汇率）单条链路
+- [ ] **3 Tab 骨架 + Me 全屏页**（IA v2.2 §四）：
+  - [ ] `/sign-in`
+  - [ ] `/(tabs)/index` Portfolio Tab + 默认组合卡片
+  - [ ] `/(tabs)/markets` 空态（"Coming in Stage 2"）
+  - [ ] `/(tabs)/insights` 空态（"Coming in Stage 2"）
+  - [ ] `/portfolio/[id]` 组合详情（持仓表 + 总市值）
+  - [ ] `/portfolio/[id]/transactions/new` 添加交易 Modal
+  - [ ] `/me` 全屏页（渐变头像 + 邮箱 + 设置链接 + 注销，见 ADR 004）
+  - [ ] `/me/settings`（报告货币 / 语言 / 红涨绿跌切换 / 深浅色）
 - [ ] 计算：`computeHoldings(transactions)` + `computeMarketValue(holdings, prices, fx, reportingCurrency)`
 - [ ] i18n 双语（中英），所有文案分离
 - [ ] 部署：Vercel 上 web 版可访问；EAS preview build 可装
 
-**Definition of Done**：
-- ✅ 你自己用 Web 版录入一笔 AAPL，看到 CNY 计价的市值
-- ✅ 切换到 USD，数字符合预期
-- ✅ 切换语言，所有页面没有未翻译的字符串
-- ✅ TestFlight build 在你手机上能开
+**Definition of Done**（对应 user-journeys J1-J5）：
+- ✅ 用 Web 版录入一笔 AAPL → 看到 CNY 市值
+- ✅ 切换报告货币 CNY ↔ USD → 数字精确
+- ✅ 切换语言 zh ↔ en → 全 5 个页面 + 1 Modal 无残留
+- ✅ 切换红涨绿跌偏好 → 涨跌色变化（前提：先有持仓）
+- ✅ TestFlight build 在手机上能开
 
 **推荐模型**：
-- **Opus**：架构搭建（Monorepo、tokens、adapter 接口）—— 一次定型，影响深远
-- **Sonnet**：日常页面/组件实现 —— 主力
-- **Haiku**：补丁、文档 typo、依赖升级 —— 便宜快
+- **Opus**：架构搭建（tokens、adapter 接口）— 一次定型
+- **Sonnet**：页面、表单、组件实现 — 主力
+- **Haiku**：补丁、文档 typo、依赖升级
 
-**推荐 Skills**：
-- `init` —— 第一周生成 CLAUDE.md（写明 Monorepo 路径、技术栈、文案铁律）
-- `simplify` —— 第三周末跑一次，清理早期堆积的临时代码
-- `session-start-hook` —— 配置一个 SessionStart hook，确保任何 Web session 进来都能自动 `pnpm install`
+**推荐 Skills**：`simplify`（第三周末清一次）、`session-start-hook`、`design-snapshot`（按需 opt-in）
 
 **风险提示**：
-- ⚠️ 不要把 i18n 推迟到后期 —— 字符串遍布每个组件，retrofit 极痛苦
-- ⚠️ 不要用 `number` 存金额 —— `0.1 + 0.2 !== 0.3`
+- ⚠️ 不要把 i18n 推迟到后期
+- ⚠️ 不要用 `number` 存金额
+- ⚠️ Markets / Insights 空态文案要克制（不承诺 ETA），只说"coming soon"
 
 ---
 
-### Stage 2：MVP-1 自用版（8-10 周，60-100h）
+### Stage 2：让 3 Tab 真正跑起来（3 周，15-25h）
+
+**目标**：消除 Stage 1 的空态；首登有欢迎；用户每天有打开 app 的理由（Daily Snapshot）；再平衡跑通。
+
+**任务清单**：
+- [ ] **Daily Snapshot 卡片**（Portfolio Tab 顶部）：今日 ¥+352 / +1.2% + 涨跌前 3
+  - [ ] 24h 前估值快照表（`portfolio_value_snapshot`）
+  - [ ] 凌晨 cron 写快照（Supabase Edge Function）
+- [ ] **CSV 导入**（FAB Sheet 第 2 项）：固定模板，预览 → 字段映射 → 确认
+- [ ] **Markets Tab Watchlist**（轻量版）：
+  - [ ] `/(tabs)/markets` 列表（自选 + 实时价 + 涨跌幅）
+  - [ ] `/markets/search` 搜索 Modal（Alpha Vantage）
+  - [ ] `watchlist_item` 表
+- [ ] **Insights Tab Rebalance 基础版**：
+  - [ ] `/insights/rebalance/setup` 首次目标配置（按资产）
+  - [ ] `/insights/rebalance` 当前 vs 目标对比（双环 / 偏离度条）
+  - [ ] `/insights/rebalance/actions` 行动单（"达到目标需要 ±X 股"）
+  - [ ] `target_allocation` 表
+  - [ ] `computeRebalance` 实现（含偏离度阈值、行动单生成）
+- [ ] **首登欢迎屏** `/welcome`：1 屏（30 秒视觉介绍 + "添加第一笔资产"按钮），首次登录后展示一次
+
+**Definition of Done**：
+- ✅ Daily Snapshot 反映真实今日变动
+- ✅ CSV 导入 100 行 < 10s
+- ✅ 用 Watchlist 加 3 个自选 → 实时刷新涨跌
+- ✅ Rebalance 设置 60% AAPL / 40% 现金 → 实测偏离 → 行动单数字正确
+- ✅ 首登欢迎屏 30 秒内能完成 → 进入 Portfolio Tab
+
+**推荐模型**：
+- **Opus**：rebalance 引擎（偏离度算法 / 行动单生成）
+- **Sonnet**：Daily Snapshot UI、CSV 解析、Watchlist 列表
+- **Haiku**：文案打磨、空态升级、欢迎屏文案
+
+**推荐 Skills**：`simplify`、`review`（rebalance 模块必跑）、`design-snapshot`（每个 Tab 完成后 opt-in 出一次稿）
+
+---
+
+### Stage 3：MVP-1 自用版（8-10 周，60-100h）
 
 **目标**：你自己每天能用、能完整管理你的真实持仓。这是最关键的阶段。
 
@@ -466,22 +505,26 @@ export interface FxAdapter {
 - [ ] 资产配置环形图（Web + RN 双实现）
 - [ ] 持仓表：原始币种 + 报告币种双列；点击进资产详情
 - [ ] 资产详情页：历史持仓、交易记录、累计收益率、当前未实现盈亏
-- [ ] 目标配置编辑（按自定义 bucket）
-- [ ] 再平衡视图：当前 vs 目标，偏离度热力，建议份额变化（用「达到目标需要 ±X 股」措辞）
-- [ ] CSV 导入（提供模板）
-- [ ] CSV 导出（备份）
+- [ ] 多时间段图表（1H/1D/1W/1M/YTD/1Y/ALL）
+- [ ] 今日变动指标（持仓行级别）
+- [ ] CSV 导出（备份；Me 入口）
+- [ ] 顶栏右上 **AI 图标点亮**（占位 + 预设 Q&A，不接 LLM）
+- [ ] **Me / Inbox 子页**（价格提醒触发记录，Revolut 范式）
+- [ ] **订阅体系**（Free / Pro / Pro+ 三档）
 
 **P1（强烈建议有）**：
-- [ ] TWR 收益率计算 + 时间区间切换（1W/1M/3M/YTD/1Y/All）
-- [ ] 价格异动提醒（推送 + 邮件）
-- [ ] 红涨绿跌切换
-- [ ] 数字脱敏开关（一键隐藏所有金额）
-- [ ] 简单 watchlist
+- [ ] TWR 收益率计算 + 时间区间切换
+- [ ] 价格异动提醒（推送 + 邮件）→ 落到 Inbox
+- [ ] 数字脱敏开关（`<RedactedNumber>` 组件，见 ADR 003）
+- [ ] Markets 行情分类浏览（Tab 内 segmented control）
+- [ ] **Performance Attribution**（哪些资产贡献了今年收益）
+- [ ] **Drawdown 分析**
 - [ ] 离线本地存储（MMKV）+ 上线时同步
 
 **P2（看时间）**：
 - [ ] 多账户标签（券商/钱包标签，仅展示，不接 API）
 - [ ] 历史净值导出 PDF
+- [ ] 全局搜索 affordance（顶栏左头像旁）
 
 **Definition of Done**：
 - ✅ 你的所有真实持仓全录入，组合视图准确反映你的实际净资产
@@ -489,59 +532,69 @@ export interface FxAdapter {
 - ✅ TWR 数字与雪球/同花顺误差 < 1%（抽 3 个标的验证）
 
 **推荐模型**：
-- **Opus**：再平衡引擎、TWR 算法、QDII 数据 edge case —— 算法密度高，要 Opus
-- **Sonnet**：页面、表单、CSV 解析、状态管理 —— 主力（≈ 70% 时间）
+- **Opus**：TWR / Performance Attribution / Drawdown 算法
+- **Sonnet**：页面、表单、CSV 解析、状态管理 — 主力（≈ 70% 时间）
 - **Haiku**：文案微调、a11y 修复、依赖升级
 
 **推荐 Skills**：
-- `simplify` —— 每完成一个大功能跑一次，避免 5 个月后无法维护
-- `security-review` —— Stage 2 末期跑一次（金融数据敏感）
-- `claude-api` —— 如果决定提前接入 AI 摘要，用这个 skill 保证 prompt caching 默认启用
+- `simplify` — 每完成一个大功能跑一次
+- `security-review` — Stage 3 末期跑一次（金融数据敏感）
+- `claude-api` — 如果提前接入 AI，用这个 skill 保证 prompt caching 默认启用
+- `design-snapshot` — 多组合 + 资产详情 + 收益分析等大块完成后 opt-in 出稿
 
-**节奏建议**：
-- 每周末 demo 给自己看，强迫输出可演示状态
-- 每两周写一篇 ADR 总结当周重大决策
-- 月底看一次成本：API 调用、Vercel 流量、Supabase 用量
+**节奏建议**：每周末 demo；每两周写 ADR；月底看 API / Vercel / Supabase 用量
 
 ---
 
-### Stage 3：MVP-2 闭门测试（4-6 周，30-60h）
+### Stage 4：MVP-2 闭门测试（4-6 周，30-60h）
 
-**目标**：5-15 个种子用户使用，收集反馈，修最严重 bug，验证「自己用得爽 ≠ 别人也觉得爽」。
+**目标**：5-15 个种子用户使用，收集反馈，修最严重 bug，验证「自己用得爽 ≠ 别人也觉得爽」。同时完成"连接 + 协作"扩展。
 
 **任务清单**：
 - [ ] 招募 5-15 个种子用户（朋友、即刻、小红书私信）
 - [ ] 用户反馈渠道：飞书/Notion/简单 Typeform
-- [ ] 用户引导：3 步 onboarding（创建组合 → 添加首个资产 → 设置目标配置）
+- [ ] 用户引导：种子用户用 Stage 2 的欢迎屏即可，**完整 onboarding 推到 Stage 5**
 - [ ] 错误监控：所有 Sentry 报错 < 24h 修复
 - [ ] 性能：首屏 < 2s（Web）、冷启动 < 1.5s（Mobile）
 - [ ] 数据准确性：每个用户至少一次「我的数字怎么不对」的对账
-- [ ] 隐私协议 + 用户协议（用 generator 起初稿，提交时附法律声明）
+- [ ] 隐私协议 + 用户协议（generator 起初稿）
+
+**功能扩展（与 Stage 3 P0 平行可以做的）**：
+- [ ] 🎯 **AI 截图识别导入**（支付宝/同花顺/盈透截图）— Stage 4 P0 差异化亮点（IA v2.2 §六 Stage 4）
+- [ ] 连接管理 UI（券商/交易所/钱包，只读，进 FAB Sheet）
+- [ ] 家庭协作（共享组合 / 权限）
+- [ ] 风险报告 Pro（夏普比率、最大回撤、相关性矩阵）
+- [ ] **AI 接入 LLM**：流式回答 + 上下文注入；详情页 "Why is it moving?" 入口
+- [ ] Good & Bad Decisions（Markets Tab 子模块）
+- [ ] 数据隐私（本地 / 云同步）+ 推送通知配置（Me 子页）
 
 **反馈分级**：
 - P0 数据错误 → 24h 内修
 - P1 严重体验问题 → 1 周内修
 - P2 nice-to-have → 进 backlog
-- P3 个别诉求 → 评估是否符合产品定位，多数延期
+- P3 个别诉求 → 多数延期
 
 **Definition of Done**：
 - ✅ ≥10 个用户使用 ≥4 周
 - ✅ 留存：≥5 用户每周打开 ≥2 次
-- ✅ 净推荐意愿：明确 ≥3 用户说「会推荐给朋友」
+- ✅ 净推荐意愿：明确 ≥3 用户说"会推荐给朋友"
 - ✅ 0 个 P0 / P1 未修
+- ✅ AI 截图识别导入对至少 3 种主流截图（支付宝 / 同花顺 / 盈透）准确率 ≥90%
 
 **推荐模型**：
 - **Sonnet**：bug 修复主力
 - **Haiku**：小修小补（文案、UI 偏移、单测补充）
-- **Opus**：当出现「这个反馈是要改架构还是改实现」的判断题时
+- **Opus**：判断题（"这个反馈是改架构还是改实现"）+ AI 截图识别 prompt 设计
 
 **推荐 Skills**：
-- `review` —— 每个 PR 跑一次（即使没人 review，自己看一遍也有价值）
-- `security-review` —— 进入 Stage 4 前再跑一次
+- `review` — 每个 PR 跑一次
+- `security-review` — 进入 Stage 5 前再跑一次
+- `claude-api` — AI 接入时强制使用，保证 prompt caching 默认启用
+- `design-snapshot` — 大改后 opt-in 出稿
 
 ---
 
-### Stage 4：V1.0 公开发布（4-8 周，30-60h）
+### Stage 5：V1.0 公开发布（4-8 周，30-60h）
 
 **目标**：App Store + 国内安卓上架、订阅系统上线、官网。
 
@@ -563,16 +616,21 @@ export interface FxAdapter {
 - [ ] **官网**：
   - [ ] 一页式 landing（用 Expo Web 复用组件）
   - [ ] 应用商店徽章 + 隐私政策 + 用户协议链接
-- [ ] **AI 模块**（可选 P1）：
-  - [ ] 接入 Claude API（启用 prompt caching）
-  - [ ] 「分析我的组合风险」单一查询场景上线
+- [ ] **AI 深度能力**（Stage 4 已接入 LLM；Stage 5 加深度）：
+  - [ ] **AI 组合体检报告**（Insights，长文 + 图表生成）
+  - [ ] AI 再平衡建议（超越规则引擎）
+  - [ ] AI 决策复盘
+  - [ ] AI 偏好学习（风险偏好 / 投资理念自动 profiling）
+  - [ ] AI 抽屉支持多轮对话 + 历史会话 + 导出报告
   - [ ] 严格 prompt 控制不出现「建议买入/卖出」字样
+- [ ] **完整 onboarding**（多步引导）：3-5 屏首次教学
 
 **Definition of Done**：
 - ✅ App Store 上架成功
 - ✅ 至少 1 家国内安卓商店上架成功
 - ✅ Pro 订阅完成首单（自己买也算）
 - ✅ 官网可访问，SEO 基础元数据齐
+- ✅ AI 组合体检报告稳定运行 ≥1 周
 
 **推荐模型**：
 - **Opus**：合规审查、AI prompt 设计、订阅状态机
@@ -637,11 +695,12 @@ export interface FxAdapter {
 | `update-config` | 配置 hooks（如 SessionStart 自动 install）、permission 白名单 | Stage 0 |
 | `fewer-permission-prompts` | Stage 1 末期跑一次，减少日常摩擦 | Stage 1 |
 | `session-start-hook` | Web sessions 自动准备测试/lint 环境 | Stage 1 |
-| `simplify` | 每完成一个大功能模块（再平衡引擎、CSV 导入...） | Stage 2 / Stage 3 |
+| `simplify` | 每完成一个大功能模块（再平衡引擎、CSV 导入...） | Stage 2 / Stage 3 / Stage 4 |
 | `review` | 任何涉及金融计算或支付的代码 | Stage 2+ |
-| `security-review` | Stage 2 末、Stage 4 上架前 | Stage 2 / Stage 4 |
-| `claude-api` | 接入 LLM 的任意时刻；保证 prompt caching 默认开 | Stage 4 |
-| `loop` | 监控 CI、轮询 App Store 审核状态 | Stage 4 |
+| `security-review` | Stage 3 末、Stage 5 上架前 | Stage 3 / Stage 5 |
+| `claude-api` | 接入 LLM 的任意时刻；保证 prompt caching 默认开 | Stage 4 / Stage 5 |
+| `loop` | 监控 CI、轮询 App Store 审核状态 | Stage 5 |
+| `design-snapshot` | 完整 journey 闭环或较大布局调整后 opt-in 出稿 | 任意 Stage（用户主导触发）|
 | `keybindings-help` | 个人偏好；想自定义 Claude Code 快捷键时 | 任何阶段 |
 
 ---
@@ -671,9 +730,9 @@ export interface FxAdapter {
 
 | 模块 | 推迟到 |
 |:---|:---|
-| 端到端 E2E（Detox/Playwright） | Stage 3 末 |
-| 视觉回归 | Stage 4 |
-| 性能基准 | Stage 4 |
+| 端到端 E2E（Detox/Playwright） | Stage 4 末 |
+| 视觉回归 | Stage 5 |
+| 性能基准 | Stage 5 |
 
 ### 10.3 不需要测
 
@@ -699,7 +758,7 @@ export interface FxAdapter {
 | **preview** | EAS preview + Vercel preview | 共享 staging Supabase 项目 |
 | **prod** | TestFlight + 生产 Web | 生产 Supabase |
 
-> ⚠️ MVP 阶段可以只有 dev + prod 两环境，省事；Stage 3 招种子用户时再拆 staging。
+> ⚠️ MVP 阶段可以只有 dev + prod 两环境，省事；Stage 4 招种子用户时再拆 staging。
 
 ### 11.2 发布流程
 
@@ -759,10 +818,11 @@ git push → CI 跑测试 + lint
 |:---|:---|
 | Stage 0 末 | 产品名敲定、设计 token 锁定 |
 | Stage 1 末 | 数据模型定型（之后只增不改） |
-| Stage 2 中 | 是否提前引入 AI 模块 |
-| Stage 2 末 | 是否进入 Stage 3（自评满意 + 自用 ≥4 周） |
-| Stage 3 末 | 是否启动公司主体注册（看种子用户反馈） |
-| Stage 4 中 | 是否需要专项律师 review（看是否含支付/AI） |
+| Stage 2 末 | 是否进入 Stage 3（核心 Tab 全部跑通 + 自用 ≥2 周） |
+| Stage 3 中 | 是否提前引入 AI 模块（一般 Stage 4 才接，但可前置 prompt 设计） |
+| Stage 3 末 | 是否进入 Stage 4（自评满意 + 自用 ≥4 周） |
+| Stage 4 末 | 是否启动公司主体注册（看种子用户反馈） |
+| Stage 5 中 | 是否需要专项律师 review（看是否含支付/AI） |
 
 ## 附录 B：紧急情况预案
 

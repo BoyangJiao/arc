@@ -37,6 +37,13 @@ pnpm-debug.log*
 # qoder
 .qoder/
 
+# planning scratchpad (Delta screenshots, IA reference, designer drafts — local only)
+.tempref/
+
+
+
+
+
 # system
 .DS_Store
 Thumbs.db

@@ -1,7 +1,7 @@
 /**
  * rebalance — 再平衡引擎
  *
- * Stage 2 P0 实施。
+ * Stage 2 P0 实施（注：本仓库重新编号后，rebalance 基础版属于新 Stage 2）。
  *
  * CLAUDE.md 文案铁律：
  * - 输出永不出现"建议买入/卖出/应该 ..."字样
