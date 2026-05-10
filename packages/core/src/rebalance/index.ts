@@ -8,7 +8,7 @@
  * - 用"达到目标配置需要的份额变化为 ±X" / "偏离目标配置 Y%"
  *
  * ADR 003 涉及：
- * - deviationWarning / deviationCritical 是 Semantic 层 token，不在此模块直接引用颜色
+ * - deviationWarning / deviationCritical 是 Business 层 token（v3 删除 Semantic 层），不在此模块直接引用颜色
  */
 
 import type Decimal from "decimal.js";

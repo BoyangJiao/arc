@@ -150,30 +150,33 @@ packages/ui/
 | **blocks/** | DashboardLayout, AuthForm, SettingsPanel | ✅ 是（基于 Pro 源码） |
 | **finance/** | PriceCell, PnLBadge, AllocationDonut, MaskedNumber, AssetRow, GainLossArrow, CurrencyAmount | ❌ 否（纯自建） |
 | **charts/** | LineChart, AreaChart, DonutChart, TreeMap, CandlestickChart | ❌ 否（Recharts/Victory Native 直接用） |
-| **tokens/** | colors.ts, spacing.ts, typography.ts, semantic.ts（含红涨绿跌切换） | ❌ 否（纯常量） |
+| **tokens/** | foundation 扩展 (info / skeleton / *-pressed)、business.ts（含红涨绿跌切换）、useBusinessTokens hook | ❌ 否（纯常量 + Context） |
 
 ### 4.3 Token 系统设计
 
+详见 **ADR 003 v3 — Design Tokens 架构**。要点：
+
+- **3 层架构**：Primitive → Foundation → Component；Business 平行 Foundation
+- **沿用 HeroUI Native Foundation** 作为业务消费层（无独立 Semantic 翻译层）
+- **Arc 仅扩 7 个 Foundation token**：`info` / `info-foreground` / `skeleton` + 5 套 `*-pressed`
+- **5 个 Business token**：`gain` / `loss` / `pnl-neutral` / `deviation-warning` / `deviation-critical`，全部映射到 Foundation
+- **红涨绿跌切换发生在 Business 层**：Foundation `success` 永远绿、`danger` 永远红；Business `gain → success/danger` 由 `useBusinessTokens()` hook 根据用户偏好切换
+
 ```ts
-// packages/ui/tokens/semantic.ts
-export const semanticTokens = {
-  light: {
-    gain: { red: '#E1372E', green: '#00A86B' },  // 红涨绿跌可切换
-    loss: { red: '#00A86B', green: '#E1372E' },
-    surface: '#FFFFFF',
-    surfaceElevated: '#F7F7F8',
-    // ...
-  },
-  dark: {
-    gain: { red: '#FF3B30', green: '#00FF88' },
-    loss: { red: '#00FF88', green: '#FF3B30' },
-    surface: '#0B0B0E',
-    surfaceElevated: '#16161A',
-  },
+// packages/ui/src/tokens/business.ts（伪代码示意）
+export const useBusinessTokens = () => {
+  const { financeColorMode } = useUserPreferences();
+  return {
+    gain: financeColorMode === 'redUpGreenDown' ? 'danger' : 'success',
+    loss: financeColorMode === 'redUpGreenDown' ? 'success' : 'danger',
+    pnlNeutral: 'muted',
+    deviationWarning: 'warning-soft',
+    deviationCritical: 'danger-soft',
+  };
 };
 ```
 
-用户偏好（红涨绿跌 vs 绿涨红跌）+ 主题（亮/暗）= 4 种组合，全部由 token 切换。
+用户偏好（红涨绿跌 vs 绿涨红跌）+ 主题（亮/暗）= 4 种组合，由 Business hook + HeroUI 主题切换共同处理。
 
 ### 4.4 自建组件命名规约
 
@@ -191,10 +194,6 @@ export const semanticTokens = {
 > 实际操作中如果 HeroUI v3→v4 大改，也走同样流程吸收 breaking change。
 
 ---
-
-| **finance/** | PriceCell, PnLBadge, AllocationDonut, MaskedNumber, AssetRow, GainLossArrow, CurrencyAmount | ❌ 否（纯自建） |
-| **charts/** | LineChart, AreaChart, DonutChart, TreeMap, CandlestickChart | ❌ 否（Recharts/Victory Native 直接用） |
-| **tokens/** | colors.ts, spacing.ts, typography.ts, semantic.ts（含红涨绿跌切换） | ❌ 否（纯常量） |
 
 ## 五、数据模型设计
 
