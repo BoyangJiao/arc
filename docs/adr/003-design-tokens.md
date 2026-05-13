@@ -1,9 +1,9 @@
-# ADR 003 — Design Tokens 架构（v3）
+# ADR 003 — Design Tokens 架构（v3.1）
 
 - **状态**: 已接受
-- **日期**: 2026-05-11（v3）
+- **日期**: 2026-05-13（v3.1）
 - **作者**: BoyangJiao + Claude
-- **相关 ADR**: 002（UI 库选型），CLAUDE.md §六（涨跌色铁律）
+- **相关 ADR**: 002（UI 库选型），**005（色阶系统）**，CLAUDE.md §六（涨跌色铁律）
 
 ---
 
@@ -13,9 +13,14 @@
 |:---|:---|:---|
 | v1 | 2026-05-07 | 4 层架构：Primitive → Foundation → Semantic（含 finance）→ Component |
 | v2 | 2026-05-10 | Semantic 层拆为「UI 角色 Semantic」+「Business」两条平行分支；Semantic「按需映射」 |
-| **v3** | **2026-05-11** | **删除 Semantic 层**；业务直接消费 HeroUI Foundation；Business 层保留；加 HeroUI token 速查表与"重新评估触发条件" |
+| v3 | 2026-05-11 | 删除 Semantic 层；业务直接消费 HeroUI Foundation；Business 层保留；加 HeroUI token 速查表与"重新评估触发条件" |
+| **v3.1** | **2026-05-13** | **Primitive 层扩展为完整 7 个 Tailwind v4 OKLCH 色阶**（brand / green / red / orange / blue / neutral + 单值常量）；Foundation token 改为引用色阶 `var(--color-XXX-NNN)`；新增 ADR 005 单独记录色阶系统 |
 
-**v3 触发原因**：v2 的「按需 Semantic」规则强迫开发者每次决定 "用 Semantic 还是 Foundation"，混用迷惑。EV 计算（见 §决策七）证明对 Arc 这种**单产品 + 单团队 + 选定 HeroUI** 的场景，Semantic 层是纯成本无收益。删除 Semantic 后架构更干净、维护更轻、且保留 Business 层覆盖业务语义。
+**v3.1 触发原因**：v3 中 Primitive 层仅包含 4 个常量（white / black / snow / eclipse）+ sizing，HeroUI Foundation 的实际颜色值是硬编码 hex。这违反"色彩科学方法"原则——任何 token 调整需手改 hex，无法系统性派生。v3.1 通过引入 Tailwind v4 `@theme` 块定义完整 11-stop 色阶，让 Foundation 通过 `var()` 引用色阶，实现:
+- 调整 anchor → 整套派生色自动更新
+- Light / Dark mode 都从同一色阶取不同 stop
+- chart-1 ~ chart-5 继续用 `oklch(from ...)` 派生公式
+- 业务代码仍只消费 Foundation 名（不接触色阶 token，遵守 §决策八跳级规则）
 
 ---
 
@@ -37,9 +42,12 @@ v3 给出最终架构。
 ### 决策一：3 层架构 — Foundation 直接给业务消费 + Business 平行子层
 
 ```
-Layer 1  Primitive       (HeroUI: white / black / snow / eclipse + sizing)
+Layer 1  Primitive       (7 OKLCH 色阶: brand / green / red / orange / blue / neutral
+                          + 4 常量: white / black / snow / eclipse + sizing)
+                          【v3.1 扩展，详见 ADR 005】
                 ↓
 Layer 2  Foundation      (HeroUI 26 + Pro 5 + Arc 扩 7 = 38)
+                          【实际值通过 var(--color-XXX-NNN) 引用 Primitive 色阶】
             ↓                                  ↓
 Layer 3  Component       (业务代码消费层)     ← Business（Arc 业务 token: 5 + 派生 ≈ 20）
                                                 ↓
@@ -48,8 +56,8 @@ Layer 3  Component       (业务代码消费层)     ← Business（Arc 业务 t
 
 | 层 | 职责 | 谁定义 | 谁能引用 |
 |:---|:---|:---|:---|
-| **Primitive** | 色阶 / 不变常量（白、黑、snow、eclipse）+ sizing | HeroUI 提供，Arc 必要时加 | Foundation 引用；Business 严禁直引（除规则 B 例外） |
-| **Foundation** | 主题意图 + UI 角色（accent / surface / muted ...）| HeroUI Native 提供 26、Pro 提供 5、Arc 扩 7 | Component 直接引用，Business 也引用 |
+| **Primitive** | OKLCH 色阶（7 个 palette × 11 stops）+ 不变常量（白、黑、snow、eclipse）+ sizing | HeroUI 提供基础 4 常量，**Arc 扩展完整色阶（v3.1）** | Foundation 引用；Business 严禁直引（除规则 B 例外）；**业务代码也禁用 `bg-brand-300` 等色阶 utility** |
+| **Foundation** | 主题意图 + UI 角色（accent / surface / muted ...）| HeroUI Native 提供 26、Pro 提供 5、Arc 扩 7；**实际值通过 `var(--color-XXX-NNN)` 引用色阶** | Component 直接引用，Business 也引用 |
 | **Business** | 业务领域 token（gain / loss / pnl-neutral / deviation-* ...）| Arc 自定，全部映射到 Foundation | Component 引用 |
 | **Component** | 业务代码消费层；通过 className 间接消费 Foundation 与 Business | 业务页面 + 自建组件 | — |
 
