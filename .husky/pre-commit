@@ -1,0 +1,5 @@
+#!/bin/sh
+# Arc pre-commit hook (managed by husky)
+# - Run lint-staged on changed files only (fast, deterministic)
+# - See package.json "lint-staged" config for per-file-pattern actions
+pnpm exec lint-staged

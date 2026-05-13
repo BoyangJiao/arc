@@ -48,16 +48,20 @@ export interface Asset {
 }
 
 /** 构造 Asset ID（便于业务代码统一） */
-export const composeAssetId = (market: Market, symbol: string): string =>
-  `${market}:${symbol}`;
+export const composeAssetId = (market: Market, symbol: string): string => `${market}:${symbol}`;
 
-/** 解析 Asset ID 回 market + symbol */
+/** 解析 Asset ID 回 market + symbol。
+ *  Throws on missing market, missing symbol, or empty/whitespace symbol. */
 export const parseAssetId = (id: string): { market: Market; symbol: string } => {
   const [market, ...rest] = id.split(":");
   if (!market || rest.length === 0) {
     throw new Error(`Invalid asset id: ${id}`);
   }
-  return { market: market as Market, symbol: rest.join(":") };
+  const symbol = rest.join(":");
+  if (symbol.length === 0) {
+    throw new Error(`Invalid asset id (empty symbol): ${id}`);
+  }
+  return { market: market as Market, symbol };
 };
 
 // ─── 交易 (Transaction) ──────────────────────────────────────────────────

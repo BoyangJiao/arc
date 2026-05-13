@@ -7,17 +7,29 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "sync:skills": "bash tools/sync-skills.sh",
-    "setup:hooks": "bash tools/setup-git-hooks.sh"
+    "prepare": "husky"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",
     "culori": "^4.0.2",
     "eslint": "^9.27.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.4",
     "prettier": "^3.5.3",
     "turbo": "^2.5.4"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,css,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "packageManager": "pnpm@10.33.0",
   "pnpm": {

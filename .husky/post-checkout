@@ -1,0 +1,11 @@
+#!/bin/sh
+# Arc post-checkout hook (managed by husky)
+# Auto-sync .claude/skills → .qoder/skills after branch switch.
+# See tools/sync-skills.sh and docs/HARNESS.md.
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || exit 0)"
+[ -z "$PROJECT_ROOT" ] && exit 0
+
+SYNC_SCRIPT="$PROJECT_ROOT/tools/sync-skills.sh"
+if [ -x "$SYNC_SCRIPT" ]; then
+  bash "$SYNC_SCRIPT" >/dev/null 2>&1 || true
+fi
