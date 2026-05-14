@@ -1,23 +1,49 @@
 /**
- * tokens/ — 设计 token 单一真相源
+ * tokens/ — Arc 设计 token 公共 API
  *
- * 当前状态：**占位**。目前业务/UI 直接使用 HeroUI Native 默认 token
- * （bg-background / text-foreground / bg-card 等），在 global.css 中由
- * `heroui-native/styles` 注入。
+ * 架构（详见 docs/adr/003-design-tokens.md v3.1）：
+ *   - **Primitive**（apps/mobile/global.css `@theme` 块）— 7 OKLCH 色阶 + 4 常量 + sizing
+ *   - **Foundation**（HeroUI Native 26 + Pro 5 + Arc 扩 7 = 38）— 通过 var() 引用 Primitive
+ *   - **Business**（本文件）— 5 业务 token + 派生，全部映射到 Foundation
+ *   - **Component** — 业务代码消费层
  *
- * 待办（未来由用户/Claude 完成）：
- * 1. 颜色：定义 brand / accent / semantic（gain/loss/warning/info）
- * 2. 涨跌色切换：semantic.gain/loss 接入 useColorScheme + 用户偏好
- *    （CLAUDE.md §六：支持「红涨绿跌」与「绿涨红跌」两套，禁止硬编码颜色值）
- * 3. 字号、间距、圆角的语义层（避免业务里出现 text-2xl / p-4 这样的散值）
+ * 业务消费规则（ADR 003 v3.1 §决策二，黑白分明）：
+ *   - 「这是 UI 元素」→ 用 HeroUI Foundation className（bg-surface / text-foreground / bg-accent ...）
+ *   - 「这是业务数据」（涨跌 / 偏离）→ 用 useBusinessClasses() 拿字面量 className
  *
- * 完成后业务代码改为：
- *   import { semanticTokens } from '@arc/ui';
- *   const gainColor = semanticTokens[theme].gain[colorScheme];
+ * Stage 1 速查（详见 docs/adr/003-design-tokens.md 附录 A）：
+ *   - 页面背景：bg-background
+ *   - 卡片背景：bg-surface
+ *   - 主文字：text-foreground
+ *   - 次文字：text-muted
+ *   - 链接 / 强调：text-accent
+ *   - 主按钮：bg-accent text-accent-foreground
+ *   - 涨跌徽章：useBusinessClasses() → classes.gain / classes.loss
  */
 
-export type SemanticTheme = "redUpGreenDown" | "greenUpRedDown";
-export type ColorScheme = "light" | "dark";
+// Business token 类型 + 纯函数（可在非 React 环境用，如服务端 / 测试）
+export {
+  buildBusinessTokens,
+  DEFAULT_FINANCE_COLOR_MODE,
+  type BusinessTokenMap,
+  type FinanceColorMode,
+  type FoundationStatusToken,
+  type FoundationSoftToken,
+} from "./business";
 
-// 占位常量。真实实现见上方 TODO。
-export const DEFAULT_THEME: SemanticTheme = "redUpGreenDown";
+// Business className 字面量映射
+export {
+  buildBusinessClasses,
+  tokenToClasses,
+  type BusinessClassMap,
+  type BusinessClassSet,
+} from "./business-classes";
+
+// React Context + hooks
+export {
+  BusinessTokensProvider,
+  useBusinessTokens,
+  useBusinessClasses,
+  useFinanceColorMode,
+  type BusinessTokensProviderProps,
+} from "./business-context";
