@@ -1,12 +1,23 @@
 # CLAUDE.md — Arc 项目规范与指令
 
-> **阅读顺序**：本文件是所有模型切换时的最小必读上下文。完整背景请阅读：
+> **阅读顺序**：本文件是所有模型切换时的最小必读上下文。
+>
+> **🔴 P0 — 每次新会话必读（按此顺序）**：
+>
+> 1. **`.specify/session-state.md`** — 当前进度、待办、最近决策、活跃 blocker（live snapshot）
+> 2. 本文件 — 项目铁律 + 工程约束
+> 3. **`.specify/constitution.md`** — 项目宪法（P0 约束 + 禁忌文案）
+>
+> **按需阅读**：
 >
 > - `docs/project-background.md` — 产品定位、市场、风险登记册
 > - `docs/development-plan.md` — 阶段拆解、模型分工、Skill 应用时机
 > - `docs/preflight-checklist.md` — Stage 0 准备清单
 > - `docs/legal-risk-map.md` — 法律风险与文案合规
 > - `docs/adr/` — 关键架构决策记录
+> - `.specify/feature-specs/<name>.md` — 当前 feature 的契约（如手头工作涉及）
+>
+> **会话结束 / 上下文将满时**：调用 `/checkpoint` skill 更新 `session-state.md`，下一会话才能无缝接续。
 
 ---
 

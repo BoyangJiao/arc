@@ -32,8 +32,12 @@ jobs:
           node-version: 22.x
           cache: "pnpm"
 
+      # `--ignore-scripts` skips heroui-native-pro / heroui-pro postinstall hooks
+      # that fetch private artifacts via HEROUI_AUTH_TOKEN (not in CI). The
+      # public npm tarballs include all .d.ts files needed for typecheck/lint/test;
+      # binary artifacts only matter at runtime in the actual app.
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Typecheck (all workspaces)
         run: pnpm typecheck
@@ -41,5 +45,8 @@ jobs:
       - name: Lint (all workspaces)
         run: pnpm lint
 
-      - name: Test (@arc/core property-based tests)
-        run: pnpm --filter @arc/core test
+      # `pnpm test` runs turbo test across all workspaces with a `test` script
+      # (currently @arc/core, @arc/ui, @arc/data-sources). New packages that
+      # add `test` script will be picked up automatically — no workflow edit.
+      - name: Test (all workspaces)
+        run: pnpm test
