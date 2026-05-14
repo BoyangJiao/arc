@@ -4,12 +4,26 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "@arc/core": "workspace:*",
     "decimal.js": "^10.5.0"
   },
   "devDependencies": {
-    "typescript": "~5.9.2"
+    "@supabase/supabase-js": "^2.105.2",
+    "fast-check": "^4.8.0",
+    "typescript": "~5.9.2",
+    "vitest": "^4.1.6"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "*"
+  },
+  "peerDependenciesMeta": {
+    "@supabase/supabase-js": {
+      "optional": true
+    }
   }
 }

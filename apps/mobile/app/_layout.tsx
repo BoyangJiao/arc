@@ -2,21 +2,22 @@
  * Root layout — providers + auth-gated navigation guards.
  *
  * Provider order (outside in):
- *   GestureHandlerRootView   — RN gesture system root
- *     SafeAreaProvider       — notch / home-indicator awareness
- *       HeroUINativeProvider — HeroUI theme + portal root
- *         AuthProvider       — Supabase Auth session state (Stage 1 step 2)
- *           AppShell         — uses useAuth() + useUserPreferences() + drives BusinessTokensProvider
- *             BusinessTokensProvider — feeds gain/loss color from user prefs (Stage 1 step 5)
- *               <Stack>      — expo-router file-based routing
+ *   GestureHandlerRootView      — RN gesture system root
+ *     SafeAreaProvider          — notch / home-indicator awareness
+ *       HeroUINativeProvider    — HeroUI theme + portal root
+ *         QueryClientProvider   — TanStack Query cache (Stage 1 step 3)
+ *           AuthProvider        — Supabase Auth session state (Stage 1 step 2)
+ *             AppShell          — drives BusinessTokensProvider from user prefs
+ *               BusinessTokensProvider — gain/loss color from prefs (Stage 1 step 5)
+ *                 <Stack>       — expo-router file-based routing
  *
  * Auth guard logic (in AppShell):
- *   - loading=true → render Stack as-is (Splash-equivalent; expo-router's first paint)
+ *   - loading=true → render Stack as-is (Splash-equivalent)
  *   - signed out + currently inside protected route → redirect to /sign-in
  *   - signed in + currently on /sign-in or /auth/* → redirect to /
  *
- * Once Stage 1 step 4 adds (tabs) group, this auth guard can move into a
- * (tabs)/_layout.tsx for cleaner segment-based protection.
+ * Stage 1 step 4 will move auth guard into (tabs)/_layout.tsx for cleaner
+ * segment-based protection once the tab group exists.
  */
 
 import "../global.css";
@@ -27,10 +28,12 @@ import { Stack, useRouter, useSegments, type Href } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { HeroUINativeProvider } from "heroui-native";
+import { QueryClientProvider } from "@tanstack/react-query";
 
 import { BusinessTokensProvider, DEFAULT_FINANCE_COLOR_MODE } from "@arc/ui";
 
 import { AuthProvider, useAuth } from "../src/lib/auth";
+import { queryClient } from "../src/lib/query-client";
 import { useUserPreferences } from "../src/lib/user-preferences";
 
 export default function RootLayout() {
@@ -38,9 +41,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <HeroUINativeProvider>
-          <AuthProvider>
-            <AppShell />
-          </AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <AppShell />
+            </AuthProvider>
+          </QueryClientProvider>
         </HeroUINativeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
