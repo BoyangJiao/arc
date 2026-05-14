@@ -196,15 +196,15 @@ const gainColor = "#00A86B";
 ## 九、常用命令
 
 ```bash
-pnpm install          # 安装依赖
+pnpm install          # 安装依赖（同时自动安装 husky git hooks）
 pnpm dev              # 启动开发（Turborepo 并行）
 pnpm build            # 构建所有包
 pnpm lint             # ESLint 检查
 pnpm typecheck        # TypeScript 检查
+pnpm test             # 运行 property-based tests（@arc/core）
 pnpm format           # Prettier 格式化
 
-# Git Hooks & Skills 同步
-pnpm setup:hooks      # 首次设置 git hooks（仅需运行一次）
+# Skills 同步（通常由 git hooks 自动触发）
 pnpm sync:skills      # 手动同步 .claude/skills → .qoder/skills
 
 # packages/db 就绪后：
@@ -212,7 +212,7 @@ pnpm --filter @arc/db generate   # 生成 Drizzle migration
 pnpm --filter @arc/db push       # 推送 schema 到 Supabase
 ```
 
-> **注意**：`pnpm setup:hooks` 后，`git pull` 和 `git checkout` 会自动触发 skill 同步，无需手动执行 `sync:skills`。
+> **注意**：Git hooks 由 husky 管理，`pnpm install` 时自动安装。`git pull` 和 `git checkout` 会自动触发 skill 同步，无需手动执行 `sync:skills`。
 
 ---
 
