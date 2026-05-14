@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
+    "mobile": "pnpm --filter @arc/mobile start",
+    "mobile:ios": "pnpm --filter @arc/mobile ios",
+    "mobile:web": "pnpm --filter @arc/mobile web",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",

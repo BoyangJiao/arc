@@ -24,7 +24,19 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  /**
+   * Magic link flow — Stage 4 production path. Email contains a clickable link
+   * that opens the app via deep link. Stage 1 dev with Expo Go is brittle here
+   * (Mac Safari can't bridge to sim), so prefer signInWithOtpCode in dev.
+   */
   signInWithMagicLink: (email: string, redirectTo: string) => Promise<{ error: Error | null }>;
+  /**
+   * 6-digit OTP code flow — Stage 1 dev path. Email contains a code; user types
+   * it back into the app. No deep link needed; works in Expo Go + Mac browser.
+   */
+  signInWithOtpCode: (email: string) => Promise<{ error: Error | null }>;
+  /** Verify the 6-digit code the user typed in. */
+  verifyOtpCode: (email: string, token: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<{ error: Error | null }>;
 }
 
@@ -67,6 +79,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             emailRedirectTo: redirectTo,
             shouldCreateUser: true,
           },
+        });
+        return { error: error ?? null };
+      },
+      signInWithOtpCode: async (email) => {
+        // Omitting emailRedirectTo triggers Supabase to send the OTP email
+        // template (with `{{ .Token }}`) instead of the magic-link template.
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            shouldCreateUser: true,
+          },
+        });
+        return { error: error ?? null };
+      },
+      verifyOtpCode: async (email, token) => {
+        const { error } = await supabase.auth.verifyOtp({
+          email,
+          token,
+          type: "email",
         });
         return { error: error ?? null };
       },

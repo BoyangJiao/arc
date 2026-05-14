@@ -1,6 +1,6 @@
-# Feature: Auth — Magic Link (Stage 1 step 2)
+# Feature: Auth — Magic Link + OTP Code (Stage 1 step 2)
 
-- **Status**: Done (code) / Pending user action (Supabase Dashboard URL config)
+- **Status**: Done (code) — dual flow: OTP code primary (dev), magic link secondary (Stage 4 prod path kept warm)
 - **Author**: BoyangJiao + Claude
 - **Created**: 2026-05-14
 - **Implements**: user-journeys J1（首次注册并登录）、IA v2.2 §四 `/sign-in` & `/me`
@@ -10,9 +10,32 @@
 
 ## Why
 
-Stage 1 J1 验收要求：用户首次打开 Arc → 输入邮箱 → 收链接 → 点链接 → 进入 Portfolio Tab，**全程无密码**。Supabase Auth 的 `signInWithOtp` + PKCE flow 是这套流程的最简实现。
+Stage 1 J1 验收要求：用户首次打开 Arc → 输入邮箱 → 完成登录 → 进入 Portfolio Tab，**全程无密码**。
 
 Stage 1 J3 / J4 / J5 都依赖"已登录用户"才能展示 / 切换 user_preferences。所以 J1 是 J3-J5 的硬前置。
+
+## 双流 (OTP 验证码 + 邮件链接) 的由来
+
+我们最初实现了**邮件链接（magic link）+ PKCE deep link** flow。Stage 1 dev 验证时遇到了根本性阻塞：
+
+**Mac 浏览器无法跨进程边界打开 iOS 模拟器中的 Expo Go**。具体表现：
+
+- 用户在 mac 邮件客户端 / 浏览器里点击 magic link
+- 浏览器 follow Supabase 的 302 重定向到 `exp://127.0.0.1:8081/--/auth/callback?code=xyz`
+- macOS Safari 看到 `exp://` 这个 scheme，**没有应用注册**（Expo Go 在 iOS sim 进程里、不是 mac 进程）
+- → 浏览器留在空白页（连 URL 都不显示），deep link 永远不会回到 sim 中的 app
+
+这不是 bug，是 macOS + iOS sim 进程隔离的限制。**真机 + standalone build（Stage 4+）就没这个问题** —— 因为 `arc://` scheme 注册在真机系统级，邮件 app 直接调起 Arc。
+
+**解法**：Stage 1-3 dev 阶段切换到 **OTP 6 位验证码** flow，不依赖 deep link：
+
+1. 用户输入邮箱 → `signInWithOtp({ email })`（**没有** `emailRedirectTo`）
+2. Supabase 发出 OTP 邮件模板（含 `{{ .Token }}`）
+3. 用户从邮件里读 6 位代码 → 在 app 中输入
+4. `verifyOtp({ email, token, type: 'email' })` 完成 session 建立
+5. 跟 magic link 同样落到 AuthProvider → root 守卫 redirect → 自动建 portfolio + preferences
+
+magic link **保留为 secondary** —— UI 中作为次按钮，Stage 4+ 上架后变成主流。
 
 ---
 
@@ -168,20 +191,23 @@ https://localhost:8081/auth/callback                  ← Web 开发（HTTPS）
 完成上面"你需要做的 2 件事"之后：
 
 ```bash
-# 1. 确保 mobile 重启吃到新 env
-cd apps/mobile
-pnpm start --clear
+# 1. 启动 Metro
+pnpm mobile  # = pnpm --filter @arc/mobile start
 
-# 2. Expo Go 中：
-#   - 进入 app → 应自动重定向到 /sign-in（你目前的视觉验证 home 会被替换）
-#   - 输入邮箱 → tap "发送登录链接"
-#   - UI flip 到 "请检查邮箱"
-#   - 邮箱客户端打开 → 点链接
-#   - 系统提示"在 Expo Go 中打开"→ 同意
-#   - app 进入 /auth/callback → "正在验证登录…"
-#   - 几百 ms 后 → 自动回到 / (Portfolio Tab)
-#   - 顶部 PnL Preview 卡片 → 验证 Business token 颜色（gain 绿、loss 红，默认 mode）
+# 2. Expo Go (iOS sim) 中走 OTP 验证码流（推荐）：
+#   - 进入 app → 自动重定向到 /sign-in
+#   - 输入邮箱 → tap "发送验证码"
+#   - UI flip 到 "验证码已发送"
+#   - 在 mac 邮件 app 打开 Supabase 邮件 → 读出 6 位代码（不要点链接）
+#   - 在 sim 中输入 6 位代码 → tap "登录"
+#   - "验证中…" 短暂 → 自动回 / (Home)
+#   - 顶部 PnL Preview 卡 → 验证 Business token 颜色（gain 绿、loss 红，默认 mode）
 #   - tap 底部 "退出登录" → 自动回 /sign-in
+
+# Magic link 流（Stage 4 standalone build 后才推荐用）：
+#   - 在 sign-in 页 tap "改用邮件链接登录"
+#   - 输入邮箱 → 发送 → 在「真机」邮件 app 点链接
+#   - （Expo Go dev 不要测，会 stuck 空白页）
 
 # 3. 数据库验证（Supabase Dashboard SQL editor 或 MCP）
 SELECT id, email, created_at FROM auth.users ORDER BY created_at DESC LIMIT 1;
