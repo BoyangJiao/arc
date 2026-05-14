@@ -17,12 +17,14 @@
     "@types/react": "~19.1.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-safe-area-context": "^5.6.2",
     "uniwind": "^1.6.4",
     "fast-check": "^4.8.0",
     "vitest": "^4.1.6"
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "react-native-safe-area-context": "*"
   }
 }

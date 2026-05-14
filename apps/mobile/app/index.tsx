@@ -1,6 +1,6 @@
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import { useState } from "react";
-import { Button, Card, Switch, Text, useBusinessClasses } from "@arc/ui";
+import { Button, Card, Screen, Switch, Text, useBusinessClasses } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
 import { useAuth } from "../src/lib/auth";
@@ -16,7 +16,7 @@ export default function HomeScreen() {
   const [dark, setDark] = useState(false);
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }} className="flex-1 bg-background">
+    <Screen>
       <Text className="text-2xl font-semibold">{t("common.appName")}</Text>
 
       {user ? <Text className="text-muted text-xs">{user.email}</Text> : null}
@@ -55,6 +55,6 @@ export default function HomeScreen() {
           <Button.Label>{t("auth.signOut")}</Button.Label>
         </Button>
       ) : null}
-    </ScrollView>
+    </Screen>
   );
 }

@@ -16,3 +16,4 @@ export { Button, Card, Switch, HeroUINativeProvider } from "heroui-native";
 
 // ── 受主题感知的基础原语 ─────────────────────────────────────────────────────
 export { Text } from "./Text";
+export { Screen, type ScreenProps } from "./Screen";

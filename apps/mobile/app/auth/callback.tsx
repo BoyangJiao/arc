@@ -14,10 +14,10 @@
  */
 
 import { useEffect, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import { Stack, router, useLocalSearchParams, type Href } from "expo-router";
 
-import { Button, Card, Text } from "@arc/ui";
+import { Button, Card, Screen, Text } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
 import { supabase } from "../../src/lib/supabase";
@@ -65,8 +65,7 @@ export default function AuthCallbackScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView
-        className="flex-1 bg-background"
+      <Screen
         contentContainerStyle={{
           padding: 24,
           gap: 24,
@@ -91,7 +90,7 @@ export default function AuthCallbackScreen() {
             <Text className="text-foreground">{t("auth.callbackVerifying")}</Text>
           </View>
         )}
-      </ScrollView>
+      </Screen>
     </>
   );
 }

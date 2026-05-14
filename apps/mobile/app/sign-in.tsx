@@ -31,11 +31,11 @@
  */
 
 import { useState } from "react";
-import { ScrollView, TextInput, View } from "react-native";
+import { TextInput, View } from "react-native";
 import { Stack } from "expo-router";
 import * as Linking from "expo-linking";
 
-import { Button, Card, Text } from "@arc/ui";
+import { Button, Card, Screen, Text } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
 import { useAuth } from "../src/lib/auth";
@@ -132,8 +132,7 @@ export default function SignInScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView
-        className="flex-1 bg-background"
+      <Screen
         contentContainerStyle={{
           padding: 24,
           gap: 24,
@@ -173,7 +172,7 @@ export default function SignInScreen() {
         )}
 
         <Text className="text-muted text-xs text-center">{t("common.notInvestmentAdvice")}</Text>
-      </ScrollView>
+      </Screen>
     </>
   );
 }
@@ -218,7 +217,11 @@ function StartCard({
           keyboardType="email-address"
           placeholder={t("auth.emailPlaceholder")}
           editable={!busy}
-          className="bg-field text-field-foreground rounded-md px-3 py-2 border border-field-border"
+          // Stage 1 step 4 backlog: replace with HeroUI <TextField/> primitive.
+          // Until then, set explicit fontSize + lineHeight via style to avoid
+          // iOS's quirky default placeholder spacing.
+          style={{ fontSize: 16, lineHeight: 22 }}
+          className="bg-field text-field-foreground rounded-md px-3 py-3 border border-field-border"
         />
         {errorMsg ? <Text className="text-danger">{errorMsg}</Text> : null}
         <Button onPress={onSendCode} isDisabled={busy}>
@@ -269,7 +272,9 @@ function CodeInputCard({
           maxLength={OTP_MAX_LENGTH}
           placeholder={t("auth.codePlaceholder")}
           editable={!isVerifying}
-          className="bg-field text-field-foreground rounded-md px-3 py-2 border border-field-border text-2xl tracking-widest text-center"
+          // Stage 1 step 4 backlog: replace with HeroUI <OtpInput/> primitive.
+          style={{ fontSize: 24, lineHeight: 32, letterSpacing: 4, textAlign: "center" }}
+          className="bg-field text-field-foreground rounded-md px-3 py-3 border border-field-border"
         />
         {errorMsg ? <Text className="text-danger">{errorMsg}</Text> : null}
         <Button onPress={onVerify} isDisabled={isVerifying || code.length < OTP_MIN_LENGTH}>
