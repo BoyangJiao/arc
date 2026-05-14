@@ -32,12 +32,21 @@ jobs:
           node-version: 22.x
           cache: "pnpm"
 
-      # `--ignore-scripts` skips heroui-native-pro / heroui-pro postinstall hooks
-      # that fetch private artifacts via HEROUI_AUTH_TOKEN (not in CI). The
-      # public npm tarballs include all .d.ts files needed for typecheck/lint/test;
-      # binary artifacts only matter at runtime in the actual app.
+      # heroui-native-pro / heroui-pro postinstall scripts download private
+      # artifacts (lib/, src/, styles/) using HEROUI_AUTH_TOKEN. Without the
+      # artifact:
+      #   - .d.ts files (in lib/) are missing → typecheck fails
+      #   - styles/ missing → metro/web bundle fails (not exercised in CI but
+      #     would break Edge Function builds)
+      #
+      # The CI/CD token must be set as a GitHub Actions repo secret named
+      # HEROUI_AUTH_TOKEN. Get it from https://heroui.pro/dashboard → Tokens.
+      # Add via: GitHub repo Settings → Secrets and variables → Actions →
+      # New repository secret. Use the **CI/CD Token** (not Personal Token).
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        env:
+          HEROUI_AUTH_TOKEN: ${{ secrets.HEROUI_AUTH_TOKEN }}
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck (all workspaces)
         run: pnpm typecheck

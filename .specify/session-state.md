@@ -70,7 +70,7 @@ Stage 1 complete = 4 done. Currently 4/5 done, just step 4 left.
 - **HeroUI Foundation only**: no Tailwind built-in colors (`bg-red-500` etc.) in business code. ESLint enforces.
 - **i18n required**: no hardcoded user-facing strings. Use `t()` from `@arc/i18n`. Add to both `zh.ts` and `en.ts` simultaneously.
 - **Supabase RLS**: client writes to `price_snapshots`/`fx_rates` will fail (expected); reads work for everyone. Stage 4 fixes via Edge Function.
-- **heroui-native-pro postinstall**: needs `HEROUI_AUTH_TOKEN` (CI) or macOS keychain login (`npx heroui-pro login`, dev). CI uses `--ignore-scripts` to skip.
+- **heroui-native-pro postinstall**: needs `HEROUI_AUTH_TOKEN` (CI) or macOS keychain login (`npx heroui-pro login`, dev). CI reads token from GitHub Secret `HEROUI_AUTH_TOKEN` (CI/CD token from heroui.pro/dashboard, NOT Personal Token).
 - **OTP length 8**: this Supabase project (jdvlzkictwinkgcvgwew) is configured for 8-digit; code accepts 6-10.
 - **Expo Go quirk**: Mac browser cannot trigger `exp://` deep link to sim. Use OTP code flow for dev. Magic link only works in standalone build (Stage 4).
 
