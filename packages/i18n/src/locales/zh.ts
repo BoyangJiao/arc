@@ -18,6 +18,23 @@ export const zh = {
   settings: {
     darkMode: "深色模式",
   },
+  auth: {
+    welcomeTitle: "登录循迹",
+    welcomeSubtitle: "输入邮箱，我们会发送一个登录链接",
+    emailLabel: "邮箱",
+    emailPlaceholder: "you@example.com",
+    sendLink: "发送登录链接",
+    sending: "发送中…",
+    sentTitle: "请检查邮箱",
+    sentBody: "我们向 {{email}} 发送了一个登录链接，点击它即可完成登录。",
+    resend: "重新发送",
+    invalidEmail: "请输入有效的邮箱地址",
+    sendFailed: "发送失败，请稍后再试",
+    callbackVerifying: "正在验证登录…",
+    callbackFailed: "登录验证失败",
+    callbackTryAgain: "返回重试",
+    signOut: "退出登录",
+  },
   debug: {
     heroUiTitle: "HeroUI Native",
   },
