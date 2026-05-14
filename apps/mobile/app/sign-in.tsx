@@ -41,7 +41,11 @@ import { useTranslation } from "@arc/i18n";
 import { useAuth } from "../src/lib/auth";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const OTP_LENGTH = 6;
+
+// Supabase OTP token length is configurable per project (default 6, often 8).
+// We accept the range and let `verifyOtp` decide on the server.
+const OTP_MIN_LENGTH = 6;
+const OTP_MAX_LENGTH = 10;
 
 type FlowState =
   | "start"
@@ -101,7 +105,7 @@ export default function SignInScreen() {
   };
 
   const onVerifyCode = async () => {
-    if (code.length !== OTP_LENGTH || !/^\d+$/.test(code)) {
+    if (code.length < OTP_MIN_LENGTH || code.length > OTP_MAX_LENGTH || !/^\d+$/.test(code)) {
       setErrorMsg(t("auth.invalidCode"));
       return;
     }
@@ -256,19 +260,19 @@ function CodeInputCard({
         <Text className="text-foreground">{t("auth.codeLabel")}</Text>
         <TextInput
           value={code}
-          onChangeText={(v) => onChangeCode(v.replace(/\D/g, "").slice(0, OTP_LENGTH))}
+          onChangeText={(v) => onChangeCode(v.replace(/\D/g, "").slice(0, OTP_MAX_LENGTH))}
           autoCapitalize="none"
           autoComplete="one-time-code"
           autoCorrect={false}
           inputMode="numeric"
           keyboardType="number-pad"
-          maxLength={OTP_LENGTH}
+          maxLength={OTP_MAX_LENGTH}
           placeholder={t("auth.codePlaceholder")}
           editable={!isVerifying}
           className="bg-field text-field-foreground rounded-md px-3 py-2 border border-field-border text-2xl tracking-widest text-center"
         />
         {errorMsg ? <Text className="text-danger">{errorMsg}</Text> : null}
-        <Button onPress={onVerify} isDisabled={isVerifying || code.length !== OTP_LENGTH}>
+        <Button onPress={onVerify} isDisabled={isVerifying || code.length < OTP_MIN_LENGTH}>
           <Button.Label>{isVerifying ? t("auth.verifying") : t("auth.verify")}</Button.Label>
         </Button>
         <Button variant="ghost" onPress={onBack} isDisabled={isVerifying}>

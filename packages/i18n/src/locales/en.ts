@@ -20,19 +20,19 @@ export const en = {
   },
   auth: {
     welcomeTitle: "Sign in to Arc",
-    welcomeSubtitle: "Enter your email — we'll send you a 6-digit code",
+    welcomeSubtitle: "Enter your email — we'll send you a sign-in code",
     emailLabel: "Email",
     emailPlaceholder: "you@example.com",
     // Primary flow — OTP code (works in dev + prod)
     sendCode: "Send code",
     sending: "Sending…",
     codeSentTitle: "Code sent",
-    codeSentBody: "We sent it to {{email}}. Enter the 6-digit code from the email.",
+    codeSentBody: "We sent it to {{email}}. Enter the code from the email.",
     codeLabel: "Code",
-    codePlaceholder: "6-digit code",
+    codePlaceholder: "Code from email",
     verify: "Sign in",
     verifying: "Verifying…",
-    invalidCode: "Please enter the full 6-digit code",
+    invalidCode: "Please enter the full code from the email (6-10 digits)",
     verifyFailed: "Code is invalid or expired",
     // Magic link (Stage 4 production / advanced)
     sendLink: "Use email link instead",

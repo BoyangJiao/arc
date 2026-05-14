@@ -20,19 +20,19 @@ export const zh = {
   },
   auth: {
     welcomeTitle: "登录循迹",
-    welcomeSubtitle: "输入邮箱，我们会发送一个 6 位验证码",
+    welcomeSubtitle: "输入邮箱，我们会发送一个验证码",
     emailLabel: "邮箱",
     emailPlaceholder: "you@example.com",
     // Primary flow — OTP code (works in dev + prod)
     sendCode: "发送验证码",
     sending: "发送中…",
     codeSentTitle: "验证码已发送",
-    codeSentBody: "已发送到 {{email}}，请输入邮件中的 6 位验证码",
+    codeSentBody: "已发送到 {{email}}，请输入邮件中的验证码",
     codeLabel: "验证码",
-    codePlaceholder: "6 位数字",
+    codePlaceholder: "邮件中的数字代码",
     verify: "登录",
     verifying: "验证中…",
-    invalidCode: "请输入完整的 6 位验证码",
+    invalidCode: "请输入邮件中的完整验证码（6-10 位数字）",
     verifyFailed: "验证码错误或已过期",
     // Magic link (Stage 4 production / advanced)
     sendLink: "改用邮件链接登录",
