@@ -8,7 +8,18 @@
  */
 
 // ── HeroUI Native (OSS) re-exports ──────────────────────────────────────────
-export { Button, Card, Switch, HeroUINativeProvider } from "heroui-native";
+export {
+  Button,
+  Card,
+  Switch,
+  HeroUINativeProvider,
+  // Form fields (compound — Label/Input/Description/FieldError used together)
+  TextField,
+  Label,
+  Input,
+  Description,
+  FieldError,
+} from "heroui-native";
 
 // ── HeroUI Native Pro re-exports ────────────────────────────────────────────
 // 待业务实际使用时按需打开（避免不必要的打包体积/peer 警告）：

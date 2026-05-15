@@ -118,7 +118,9 @@ function AppShell() {
         <Stack.Screen
           name="portfolio/[id]/transactions/new"
           options={{
-            presentation: "modal",
+            // ADR 006 §决策六: iOS native form sheet (card-stack effect, parent edge visible).
+            // Web/Android fall back to a full-screen modal automatically.
+            presentation: "formSheet",
             headerShown: true,
           }}
         />
