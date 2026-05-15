@@ -2,24 +2,28 @@
  * (tabs)/index.tsx — Portfolio Tab (Home)
  *
  * Per IA v2.2 §四:
- * - Top area: total asset value (large font) + total PnL (colored)
+ * - Top area: total asset value (large font) in reporting currency
  * - Portfolio card list: each card shows name + holdings count + market value
  * - Tap card → router.push(`/portfolio/${id}`)
  * - Empty state guidance if no portfolio / no holdings
  * - Top bar: left avatar (Me entry), no title text, right empty (AI in Stage 3+)
+ *
+ * Fix 4 (audit): total value now uses usePortfolioValuation (price + FX +
+ * computeMarketValue chain), not raw cost basis. S1-AC-2/3 verifiable.
  */
 
 import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
-import { useMemo } from "react";
 import Decimal from "decimal.js";
 import { Card, FLOATING_TAB_BAR_BOTTOM_INSET, Screen, Text } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
-import { computeHoldings } from "@arc/core";
 
 import { useAuth } from "../../src/lib/auth";
-import { usePortfolios, useTransactions } from "../../src/lib/queries";
+import { formatMoney } from "../../src/lib/format-money";
+import { usePortfolios, usePortfolioValuation } from "../../src/lib/queries";
 import { useUserPreferences } from "../../src/lib/user-preferences";
+
+const ZERO = new Decimal(0);
 
 export default function PortfolioTab() {
   const { t } = useTranslation();
@@ -27,32 +31,22 @@ export default function PortfolioTab() {
   const { user } = useAuth();
 
   const { prefs } = useUserPreferences();
-
   const reportingCurrency = prefs?.reportingCurrency ?? "CNY";
-  const currencySymbol = reportingCurrency === "CNY" ? "¥" : "$";
 
   // Fetch portfolios
   const { data: portfolios, isPending: portfoliosLoading } = usePortfolios();
 
-  // For Stage 1: single portfolio — get its transactions
+  // Stage 1: single portfolio
   const defaultPortfolio = portfolios?.[0];
-  const { data: transactions } = useTransactions(defaultPortfolio?.id);
+  const {
+    data: valuation,
+    isFetching: valuationFetching,
+    isError: valuationError,
+  } = usePortfolioValuation(defaultPortfolio?.id, reportingCurrency);
 
-  // Compute holdings from transactions
-  const holdings = useMemo(() => {
-    if (!transactions || transactions.length === 0) return [];
-    return computeHoldings(transactions);
-  }, [transactions]);
-
-  // For Stage 1 simplified: show total value as sum of holdings × avg cost
-  // Real valuation requires live prices; we show cost basis as a placeholder when prices unavailable
-  const totalCostBasis = useMemo(() => {
-    let total = new Decimal(0);
-    for (const h of holdings) {
-      total = total.plus(h.shares.times(h.averageCost));
-    }
-    return total;
-  }, [holdings]);
+  const holdingsCount = valuation?.perAsset.length ?? 0;
+  const hasHoldings = holdingsCount > 0;
+  const totalValueText = formatMoney(valuation?.totalValue ?? ZERO, reportingCurrency);
 
   const handleAvatarPress = () => {
     router.push("/me" as Href);
@@ -64,7 +58,11 @@ export default function PortfolioTab() {
 
   return (
     <Screen
-      contentContainerStyle={{ padding: 24, gap: 16, paddingBottom: FLOATING_TAB_BAR_BOTTOM_INSET }}
+      contentContainerStyle={{
+        padding: 24,
+        gap: 16,
+        paddingBottom: FLOATING_TAB_BAR_BOTTOM_INSET,
+      }}
     >
       {/* Top bar: avatar left, no title */}
       <View className="flex-row items-center justify-between mb-4">
@@ -82,13 +80,9 @@ export default function PortfolioTab() {
       {/* Total asset value — visual focus */}
       <View className="mb-6">
         <Text className="text-muted text-sm mb-1">{t("portfolio.totalValue")}</Text>
-        <Text className="text-foreground text-4xl font-bold">
-          {currencySymbol}
-          {totalCostBasis.toFixed(2)}
-        </Text>
-        {holdings.length > 0 && (
-          <Text className="text-muted text-xs mt-1">{t("common.disclaimer")}</Text>
-        )}
+        <Text className="text-foreground text-4xl font-bold">{totalValueText}</Text>
+        {hasHoldings && <Text className="text-muted text-xs mt-1">{t("common.disclaimer")}</Text>}
+        {valuationError && <Text className="text-danger text-xs mt-1">{t("common.error")}</Text>}
       </View>
 
       {/* Portfolio cards */}
@@ -112,13 +106,12 @@ export default function PortfolioTab() {
                   <View>
                     <Text className="text-foreground font-semibold text-lg">{portfolio.name}</Text>
                     <Text className="text-muted text-sm">
-                      {t("portfolio.holdingsCount", { count: holdings.length })}
+                      {t("portfolio.holdingsCount", { count: holdingsCount })}
                     </Text>
                   </View>
                   <View className="items-end">
                     <Text className="text-foreground font-semibold">
-                      {currencySymbol}
-                      {totalCostBasis.toFixed(2)}
+                      {valuationFetching && !valuation ? t("common.loading") : totalValueText}
                     </Text>
                   </View>
                 </View>
@@ -129,7 +122,7 @@ export default function PortfolioTab() {
       )}
 
       {/* Empty holdings state within default portfolio */}
-      {defaultPortfolio && holdings.length === 0 && (
+      {defaultPortfolio && !hasHoldings && !valuationFetching && (
         <View className="mt-4">
           <Card>
             <Pressable

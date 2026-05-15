@@ -46,6 +46,7 @@ export const computeMarketValue = (
 
   return {
     assetId: holding.assetId,
+    shares: holding.shares,
     priceNative: quote.price,
     valueNative,
     nativeCurrency: holding.currency,

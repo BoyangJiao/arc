@@ -210,6 +210,8 @@ export interface UserPreferences {
  */
 export interface MarketValuation {
   readonly assetId: string;
+  /** 该 holding 的份额（与 source Holding 相同；冗余字段方便 UI 渲染） */
+  readonly shares: Decimal;
   /** 原始币种价 */
   readonly priceNative: Decimal;
   /** 原始币种市值 = price × shares */

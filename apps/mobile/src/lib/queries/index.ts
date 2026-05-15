@@ -12,3 +12,4 @@ export {
   useCreateTransaction,
   type CreateTransactionInput,
 } from "./use-transactions";
+export { usePortfolioValuation } from "./use-portfolio-valuation";
