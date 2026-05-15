@@ -73,8 +73,20 @@
 ### Components
 
 - 业务代码永远 `import { Button } from '@arc/ui'`
-- 绝不直接 `import { Button } from 'heroui-native'` 或 `'heroui-native-pro'`
-- `packages/ui/primitives/` 是唯一的 re-export 入口
+- 绝不直接 `import` 自 `heroui-native` / `heroui-native-pro` / `react-native-safe-area-context` / `lucide-react-native` / `@gorhom/*` / `@dicebear/*`
+- `@arc/ui` 是接口层，对外只暴露 flat namespace；内部分层（primitives / primitives-pro / wrappers / navigation / finance / charts / avatar / tokens）业务代码不感知
+- 详见 ADR 006
+
+### Real-flow integrity
+
+- Dev / test / preview 提效手段允许**减少操作步骤**（自动填邮箱、加长 token 寿命、缓存 OTP autofill），但**严禁跳过任何业务链路环节**：
+  - Auth（认证 / 会话 / RLS）
+  - Hooks（React Query / Zustand 等真实数据获取层）
+  - Adapter（外部 API 调用 / cache / rate limit）
+  - Compute（领域计算 — TWR / 再平衡 / FX / valuation）
+- 一旦出现 `if (DEV_*) return mock` 类短路代码视为违反铁律，必须改造为真实链路 + 真实数据（dev seed 走 SQL 注入）
+- 唯一例外：单元测试 / property-based test 内部的 per-test mock，需保证测试隔离
+- 详见 ADR 007
 
 ---
 
@@ -103,6 +115,8 @@
 - ADR 003 v3.1: 3 层 token 架构（Primitive 色阶 → Foundation → Component/Business）
 - ADR 004: 头像用 `@dicebear/collection` gradient
 - ADR 005: Color scales 用 OKLCH，业务代码不接触色阶 utility
+- ADR 006: `@arc/ui` 五层结构（primitives / primitives-pro / wrappers / navigation / finance / charts / avatar / tokens）+ 非 HeroUI 组件归位决策树
+- ADR 007: Dev auth 持久化（不绕 auth，靠 AsyncStorage + 拉长 refresh token）+ 种子数据走 SQL 注入
 - monorepo 结构: CLAUDE.md §五（apps/mobile + packages/{ui,core,db,i18n,data-sources}）
 - 设计稿 / 截图归档默认 opt-in: CLAUDE.md §十一（design-snapshot skill 用户触发）
 

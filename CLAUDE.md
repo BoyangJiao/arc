@@ -75,6 +75,12 @@
 - 业务代码只能通过 `packages/data-sources/` 的 adapter 接口访问外部 API
 - 不准在 `apps/` 或 `packages/core/` 中直接 `fetch` 厂商 API
 
+### 3.5 真实链路不可绕过（ADR 007）
+
+- Dev / test / preview 期间允许**减少操作步骤**（autofill、缓存、缩短确认），但**禁止跳过**任何业务链路环节：Auth / Hooks / Adapter / Compute
+- 禁止 `if (DEV_*) return mock` 类短路。dev 种子数据走 `tools/seed-dev-data.ts` SQL 注入到真实 Supabase dev project
+- 单元测试 / property-based test 内的 per-test mock 是允许的例外
+
 ---
 
 ## 四、技术栈
@@ -106,14 +112,17 @@ arc/
 ├── apps/
 │   └── mobile/              ← Expo 应用（含 Web 输出）
 │       ├── app/             ← Expo Router 文件路由（页面）
-│       └── components/      ← 业务组件（页面级，不可复用到其他 app）
+│       └── src/             ← 业务侧 lib / 页面级组件（不可复用到其他 app）
 ├── packages/
-│   ├── ui/                  ← UI 基建层
-│   │   ├── primitives/      ← re-export HeroUI（薄封装）
-│   │   ├── blocks/          ← HeroUI Pro 源码 blocks
-│   │   ├── finance/         ← 自建领域组件（PriceCell / PnLBadge / AllocationDonut...）
-│   │   ├── charts/          ← 图表（Web/RN 双实现）
-│   │   └── tokens/          ← 颜色/字号/间距/语义色（含红涨绿跌切换）
+│   ├── ui/                  ← UI 基建层（接口层，对外 flat namespace；ADR 006）
+│   │   ├── tokens/          ← 设计 tokens（自有 — 颜色/字号/间距/语义色，含红涨绿跌切换）
+│   │   ├── primitives/      ← T0  — HeroUI Native OSS 归位（薄 re-export → 未来按需 copy-in）
+│   │   ├── primitives-pro/  ← T0p — HeroUI Native Pro 归位（独立目录便于法务隔离）
+│   │   ├── wrappers/        ← T1  — 第三方包薄封装（safe-area / lucide / gorhom-sheet / dicebear）
+│   │   ├── navigation/      ← T2  — 自建导航容器（FloatingTabBar / CustomStackHeader）
+│   │   ├── finance/         ← T2  — 自建金融领域组件（PriceCell / PnLBadge / AllocationDonut / MaskedNumber）
+│   │   ├── charts/          ← T2  — 图表（Web/RN 双实现）
+│   │   └── avatar/          ← T2  — 渐变头像（ADR 004 落地）
 │   ├── core/                ← 领域逻辑（无 UI/IO 依赖）
 │   │   ├── domain/          ← 类型定义（Asset / Holding / Transaction / Portfolio）
 │   │   ├── returns/         ← TWR / MWR / 累计收益率
@@ -128,10 +137,21 @@ arc/
 ├── docs/
 │   ├── adr/                 ← Architecture Decision Records
 │   └── *.md                 ← 项目文档
-└── tools/                   ← 一次性脚本
+└── tools/                   ← 一次性脚本（含 seed-dev-data.ts，ADR 007）
 ```
 
-**铁律**：业务代码永远 `import { Button } from '@arc/ui'`，绝不直接 `import { Button } from '@heroui/react'`。
+**铁律**：业务代码永远 `import { Button } from '@arc/ui'`；绝不直接 `import` 自 `heroui-native` / `heroui-native-pro` / `react-native-safe-area-context` / `lucide-react-native` / `@gorhom/*` / `@dicebear/*`。`@arc/ui` 内部分层是接口层细节，业务不感知。
+
+**遇到一个 UI 元素该归到哪一层？决策树（ADR 006）**：
+
+1. HeroUI Native OSS 有同名同义组件？→ `primitives/`
+2. HeroUI Native Pro 有？→ `primitives-pro/`
+3. 是 RN 生态事实标准的非 HeroUI 包？→ `wrappers/`（接口稳定的薄封装）
+4. 是导航容器类（tab bar / header / drawer / sheet）且生态无合适方案？→ `navigation/`
+5. 是 Arc 金融领域专属组件？→ `finance/`
+6. 是图表？→ `charts/`
+7. 是头像？→ `avatar/`
+8. 都不是 → 一次性讨论再归位，**禁止 ad-hoc 跨出 `@arc/ui`**
 
 ---
 
@@ -216,14 +236,16 @@ pnpm test             # 运行 property-based tests（@arc/core）
 pnpm format           # Prettier 格式化
 
 # Skills 同步（通常由 git hooks 自动触发）
-pnpm sync:skills      # 手动同步 .claude/skills → .qoder/skills
+#   canonical source: .claude/skills/ (纳入 Git)
+#   本地镜像: .qoder/skills/ 等 (gitignored)
+pnpm sync:skills      # 手动同步 canonical → 本地镜像
 
 # packages/db 就绪后：
 pnpm --filter @arc/db generate   # 生成 Drizzle migration
 pnpm --filter @arc/db push       # 推送 schema 到 Supabase
 ```
 
-> **注意**：Git hooks 由 husky 管理，`pnpm install` 时自动安装。`git pull` 和 `git checkout` 会自动触发 skill 同步，无需手动执行 `sync:skills`。
+> **注意**：Git hooks 由 husky 管理，`pnpm install` 时自动安装。`git commit`（skills 有变更时）、`git pull` 和 `git checkout` 均会自动触发 skill 同步，无需手动执行 `sync:skills`。
 
 ---
 
@@ -251,8 +273,8 @@ pnpm --filter @arc/db push       # 推送 schema 到 Supabase
 
 **工程 Harness**（自动化质量基线）：
 
-- husky pre-commit → lint-staged 自动 prettier
-- husky post-checkout/post-merge → 自动 sync skills 到多 IDE
+- husky pre-commit → lint-staged 自动 prettier + skills 有变更时同步到本地镜像
+- husky post-checkout/post-merge → 自动 sync skills（canonical source → 本地镜像）
 - GitHub Actions pre-push → typecheck + lint + property tests
 - Claude SessionStart hook → 自动 typecheck + 提示 constitution 更新
 - packages/core 的 property-based tests（vitest + fast-check）守护 Decimal / Asset ID / 数据模型不变性
