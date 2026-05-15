@@ -37,6 +37,8 @@ export interface TabBarColorSet {
   shadow: string;
   /** Pill border color (subtle depth separator) */
   pillBorder: string;
+  /** Pill background (translucent — expo-blur incompatibility; ADR 006 §决策四) */
+  pillBackground: string;
 }
 
 /**
@@ -68,11 +70,13 @@ export const TAB_BAR_COLORS: Record<"light" | "dark", TabBarColorSet> = {
     inactive: "#98989b", // neutral-500 (Foundation: --muted equivalent)
     shadow: "#000000", // standard iOS shadow color
     pillBorder: "rgba(0, 0, 0, 0.06)", // very subtle dark edge
+    pillBackground: "rgba(255, 255, 255, 0.88)", // translucent white capsule (expo-blur stand-in)
   },
   dark: {
     active: "#50ff6c", // brand-300 / accent
     inactive: "#b7b7ba", // neutral-400
     shadow: "#000000", // standard shadow color
     pillBorder: "rgba(255, 255, 255, 0.08)", // subtle light edge for depth
+    pillBackground: "rgba(30, 30, 30, 0.85)", // translucent dark capsule (expo-blur stand-in)
   },
 };

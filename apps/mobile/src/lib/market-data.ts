@@ -30,7 +30,6 @@ const ALPHAVANTAGE_KEY = process.env.EXPO_PUBLIC_ALPHAVANTAGE_API_KEY;
 if (!ALPHAVANTAGE_KEY) {
   // Defer the throw to first use; lets dev tools / Supabase-only screens render.
   // The price hook will surface the missing key as a user-visible error.
-  // eslint-disable-next-line no-console
   console.warn("[market-data] EXPO_PUBLIC_ALPHAVANTAGE_API_KEY missing — price queries will fail");
 }
 

@@ -6,10 +6,8 @@
  */
 
 import { View } from "react-native";
-import { Screen, Text } from "@arc/ui";
+import { FLOATING_TAB_BAR_BOTTOM_INSET, Screen, Text } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
-
-import { FLOATING_TAB_BAR_BOTTOM_INSET } from "../../src/components/FloatingTabBar";
 
 export default function InsightsTab() {
   const { t } = useTranslation();

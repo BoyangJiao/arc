@@ -11,11 +11,13 @@
 import { useMemo } from "react";
 import { Tabs } from "expo-router";
 import { useTranslation } from "@arc/i18n";
+import { FloatingTabBar } from "@arc/ui";
 
-import FloatingTabBar from "../../src/components/FloatingTabBar";
+import { useColorMode } from "../../src/lib/theme";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
+  const { colorMode } = useColorMode();
 
   const screenOptions = useMemo(
     () => ({
@@ -28,7 +30,10 @@ export default function TabsLayout() {
   );
 
   return (
-    <Tabs tabBar={(props) => <FloatingTabBar {...props} />} screenOptions={screenOptions}>
+    <Tabs
+      tabBar={(props) => <FloatingTabBar {...props} colorMode={colorMode} t={t} />}
+      screenOptions={screenOptions}
+    >
       <Tabs.Screen
         name="index"
         options={{

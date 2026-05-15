@@ -13,12 +13,11 @@ import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { useMemo } from "react";
 import Decimal from "decimal.js";
-import { Card, Screen, Text } from "@arc/ui";
+import { Card, FLOATING_TAB_BAR_BOTTOM_INSET, Screen, Text } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import { computeHoldings } from "@arc/core";
 
 import { useAuth } from "../../src/lib/auth";
-import { FLOATING_TAB_BAR_BOTTOM_INSET } from "../../src/components/FloatingTabBar";
 import { usePortfolios, useTransactions } from "../../src/lib/queries";
 import { useUserPreferences } from "../../src/lib/user-preferences";
 

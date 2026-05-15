@@ -1,26 +1,28 @@
 /**
  * FloatingTabBar — iOS 26-style floating capsule tab bar
  *
+ * ADR 006 §决策四: 自建优于 react-native-bottom-tabs（跨端一致 > 单端原生）。
+ * 归位于 @arc/ui/navigation/（T2 自建导航容器层）。
+ *
  * Design characteristics:
  * - Floating capsule shape: centered, not full-width, rounded pill
- * - Frosted glass background via expo-blur BlurView
- * - Compact size: ~50px height, ~65% screen width, horizontally centered
+ * - Frosted glass background via translucent rgba (expo-blur 暂不兼容 SDK 54)
+ * - Compact size: ~52px height, ~65% screen width, horizontally centered
  * - Bottom offset: ~8px above safe area bottom
  * - Active tab: accent color icon + label
  * - Inactive tab: muted color icon + label
- * - Rounded corners (cornerRadius ~25)
  * - Subtle shadow (light) / border (dark) for depth
- * - Dark Mode: darker tint, border instead of shadow
+ *
+ * 颜色全部走 TAB_BAR_COLORS token（含 pillBackground）— 业务消费方零硬编码颜色。
  */
 
 import { useCallback, useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BarChart3, TrendingUp, Lightbulb, type LucideIcon } from "lucide-react-native";
-import { Text, TAB_BAR_COLORS } from "@arc/ui";
-import { useTranslation } from "@arc/i18n";
 
-import { useColorMode } from "../lib/theme";
+import { Text } from "../primitives/Text";
+import { TAB_BAR_COLORS } from "../tokens/navigation-colors";
 
 /** Route-name → Lucide icon component map */
 const TAB_ICONS: Record<string, LucideIcon> = {
@@ -81,18 +83,26 @@ const TAB_BAR_BOTTOM_GAP = 8;
  */
 export const FLOATING_TAB_BAR_BOTTOM_INSET = TAB_BAR_BOTTOM_GAP + FLOATING_TAB_BAR_HEIGHT;
 
-export default function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { colorMode } = useColorMode();
-  const { t } = useTranslation();
+export interface FloatingTabBarProps extends BottomTabBarProps {
+  /** Current color mode — passed in so this primitive doesn't reach into app-specific ThemeProvider. */
+  colorMode: "light" | "dark";
+  /** Translation function for tab labels (i18n decoupling — app owns i18next). */
+  t: (key: string) => string;
+}
+
+export function FloatingTabBar({
+  state,
+  descriptors,
+  navigation,
+  colorMode,
+  t,
+}: FloatingTabBarProps) {
   const insets = useSafeAreaInsets();
   const isDark = colorMode === "dark";
 
   const tabColors = TAB_BAR_COLORS[colorMode];
-
   const activeColor = tabColors.active;
   const inactiveColor = tabColors.inactive;
-
-  const pillBackground = isDark ? "rgba(30, 30, 30, 0.85)" : "rgba(255, 255, 255, 0.88)";
 
   const containerStyle = useMemo(
     () => ({
@@ -126,7 +136,7 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Botto
         style={[
           styles.pill,
           isDark ? styles.pillDark : styles.pillLight,
-          { backgroundColor: pillBackground },
+          { backgroundColor: tabColors.pillBackground },
         ]}
       >
         {state.routes.map((route, index) => {
