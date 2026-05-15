@@ -11,9 +11,6 @@ import type { Currency, Transaction, TransactionType } from "@arc/core";
 
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
-import { DEV_TRANSACTIONS } from "./dev-seed";
-
-const DEV_BYPASS = process.env.EXPO_PUBLIC_DEV_BYPASS_AUTH === "true";
 
 interface DBTransactionRow {
   id: string;
@@ -51,7 +48,6 @@ export const useTransactions = (
     enabled: !!user && !!portfolioId,
     queryFn: async (): Promise<Transaction[]> => {
       if (!portfolioId) return [];
-      if (DEV_BYPASS) return DEV_TRANSACTIONS.filter((tx) => tx.portfolioId === portfolioId);
 
       const { data, error } = await supabase
         .from("transactions")

@@ -11,9 +11,6 @@ import type { Currency, Portfolio } from "@arc/core";
 
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
-import { DEV_PORTFOLIOS } from "./dev-seed";
-
-const DEV_BYPASS = process.env.EXPO_PUBLIC_DEV_BYPASS_AUTH === "true";
 
 interface DBPortfolioRow {
   id: string;
@@ -39,7 +36,6 @@ export const usePortfolios = (): UseQueryResult<Portfolio[], Error> => {
     enabled: !!user,
     queryFn: async (): Promise<Portfolio[]> => {
       if (!user) return [];
-      if (DEV_BYPASS) return DEV_PORTFOLIOS;
 
       const { data, error } = await supabase
         .from("portfolios")
@@ -61,7 +57,6 @@ export const usePortfolio = (id: string | undefined): UseQueryResult<Portfolio |
     enabled: !!user && !!id,
     queryFn: async (): Promise<Portfolio | null> => {
       if (!user || !id) return null;
-      if (DEV_BYPASS) return DEV_PORTFOLIOS.find((p) => p.id === id) ?? null;
 
       const { data, error } = await supabase
         .from("portfolios")
