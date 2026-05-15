@@ -24,6 +24,8 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+# generic .env.<flavor>.local pattern (ADR 007 — covers apps/mobile/.env.dev.local etc.)
+.env.*.local
 
 # debug
 npm-debug.log*

@@ -1,0 +1,41 @@
+name: Supabase Dev Heartbeat
+
+# Per ADR 007 §决策三补: Supabase free-tier auto-pauses a project after 7 days
+# of inactivity (90-day data retention; project may be reclaimed beyond that).
+# This workflow makes a tiny REST call once a week so the dev project's
+# activity counter resets, regardless of human dev cadence.
+#
+# Uses the anon key (least privilege) — enough to count as activity.
+# pg_cron deliberately NOT used: if the project itself is paused, pg_cron
+# wouldn't run either, creating a deadlock. The ping MUST be external.
+
+on:
+  schedule:
+    # Monday 09:00 UTC = Monday 17:00 China time (start of work week).
+    - cron: "0 9 * * 1"
+  # Manual trigger for testing the workflow itself.
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping dev Supabase REST endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Hit /rest/v1/portfolios?select=id&limit=1
+        env:
+          URL: ${{ secrets.SUPABASE_DEV_URL }}
+          KEY: ${{ secrets.SUPABASE_DEV_ANON_KEY }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then
+            echo "::error::SUPABASE_DEV_URL or SUPABASE_DEV_ANON_KEY secret is not set."
+            echo "Configure them in repo Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          # -f makes curl exit non-zero on HTTP ≥ 400 (so a paused project surfaces clearly).
+          curl -fsS \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY" \
+            "$URL/rest/v1/portfolios?select=id&limit=1" \
+            > /dev/null
+          echo "Heartbeat OK at $(date -u +%Y-%m-%dT%H:%M:%SZ)"

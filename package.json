@@ -14,9 +14,11 @@
     "test:watch": "turbo run test:watch",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "sync:skills": "bash tools/sync-skills.sh",
+    "seed:dev": "tsx tools/seed-dev-data.ts",
     "prepare": "husky"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.105.2",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",
     "culori": "^4.0.2",
@@ -24,6 +26,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.4",
     "prettier": "^3.5.3",
+    "tsx": "^4.19.2",
     "turbo": "^2.5.4"
   },
   "lint-staged": {
