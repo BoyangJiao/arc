@@ -75,7 +75,7 @@ Stage 1 complete = **当前 4.5/5**。Step 4 审计后发现核心 DoD 未达成
 1. ⏳ User review ADR-006 / ADR-007 → 状态从「提议」改为「已接受」
 2. ⏳ 修 lint 红线：FloatingTabBar rgba 挪入 `TAB_BAR_COLORS.*.pillBackground`；同步迁移到 `packages/ui/src/navigation/FloatingTabBar.tsx`
 3. ⏳ 删 `DEV_BYPASS_AUTH` 全链路 + 整删 `apps/mobile/src/lib/queries/dev-seed.ts`
-4. ⏳ Supabase dev project Dashboard 把 refresh token absolute lifetime 调到 60 天
+4. ~~Supabase dev project Dashboard 把 refresh token absolute lifetime 调到 60 天~~ — Free tier 无此项；默认即"事实上无 absolute lifetime"，跳过（ADR 007 §决策二修订）
 5. ⏳ 写 `tools/seed-dev-data.ts`（service role + 真 SQL 注入）+ `pnpm seed:dev`
 6. ⏳ 接通真实数据：Portfolio Detail HoldingRow 用 `usePrice` + `useFxRate`，Portfolio Tab 用 `computePortfolioValuation`
 7. ⏳ 修 transactions/new：`composeAssetId` + Decimal 校验 + 日期字段 + Pro NumberField/DatePicker/Segment + currency 由 assetId 反推
