@@ -78,11 +78,14 @@ importers:
         specifier: ~3.0.9
         version: 3.0.9(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
       heroui-native:
-        specifier: ^1.0.2
-        version: 1.0.2(29c2c5460fdad46cc4955f8a6aaa6c01)
+        specifier: ^1.0.3
+        version: 1.0.3(29c2c5460fdad46cc4955f8a6aaa6c01)
       heroui-native-pro:
-        specifier: 1.0.0-beta.2
-        version: 1.0.0-beta.2
+        specifier: 1.0.0-beta.3
+        version: 1.0.0-beta.3
+      lucide-react-native:
+        specifier: ^1.16.0
+        version: 1.16.0(react-native-svg@15.12.1(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
       react:
         specifier: 19.1.0
         version: 19.1.0
@@ -212,11 +215,11 @@ importers:
   packages/ui:
     dependencies:
       heroui-native:
-        specifier: ^1.0.2
-        version: 1.0.2(29c2c5460fdad46cc4955f8a6aaa6c01)
+        specifier: ^1.0.3
+        version: 1.0.3(29c2c5460fdad46cc4955f8a6aaa6c01)
       heroui-native-pro:
-        specifier: 1.0.0-beta.2
-        version: 1.0.0-beta.2
+        specifier: 1.0.0-beta.3
+        version: 1.0.0-beta.3
     devDependencies:
       '@types/react':
         specifier: ~19.1.0
@@ -3328,11 +3331,11 @@ packages:
   hermes-parser@0.35.0:
     resolution: {integrity: sha512-9JLjeHxBx8T4CAsydZR49PNZUaix+WpQJwu9p2010lu+7Kwl6D/7wYFFJxoz+aXkaaClp9Zfg6W6/zVlSJORaA==}
 
-  heroui-native-pro@1.0.0-beta.2:
-    resolution: {integrity: sha512-vvl3lvbNjVLq+1DrD4dSpi8R4Z3uT/OM+VJiZSYKwIerMQbwHWcAevo2zeQcJ+8pmY+ID/koeLrHDJHBmPbR3w==}
+  heroui-native-pro@1.0.0-beta.3:
+    resolution: {integrity: sha512-TdczMDjvtUHAG83iRB6HA8fPgkAJAeR01mqQJ6Sm0+FUKYwh29rhxYjFbwTa5bXKq6smXDOn4yPupMb8sRtIWw==}
 
-  heroui-native@1.0.2:
-    resolution: {integrity: sha512-tGoI8OvURTN5tCzoBJ9bqlXeYdvz70e2Jcc/anEhRHYqdhHuzYRwsx76e07oT0avrAV6jXDXSBef7mcVEKj0gQ==}
+  heroui-native@1.0.3:
+    resolution: {integrity: sha512-FBhnb/NdcevP0VhwVYHIFSKq7YnEuY5uUoK5UwlFpSZfMuyIyTN8dsckh+W1c2zk5EX4sVukqDQ1gjli/aH1hA==}
     peerDependencies:
       '@gorhom/bottom-sheet': ^5.2.8
       react: '>=19.0.0'
@@ -3874,6 +3877,13 @@ packages:
 
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
+
+  lucide-react-native@1.16.0:
+    resolution: {integrity: sha512-clxA22OvrNUHB2tQQEvURN8KJ5/vbUV/6GSctU1aCoFlJmDwNrdo8xxNTG535tu7iOATZCth6R2AW1kbva+g6A==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-native: '*'
+      react-native-svg: ^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -8645,12 +8655,12 @@ snapshots:
     dependencies:
       hermes-estree: 0.35.0
 
-  heroui-native-pro@1.0.0-beta.2:
+  heroui-native-pro@1.0.0-beta.3:
     dependencies:
       chalk: 5.6.2
       heroui-pro: 1.0.0-beta.6
 
-  heroui-native@1.0.2(29c2c5460fdad46cc4955f8a6aaa6c01):
+  heroui-native@1.0.3(29c2c5460fdad46cc4955f8a6aaa6c01):
     dependencies:
       react: 19.1.0
       react-native: 0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0)
@@ -9132,6 +9142,12 @@ snapshots:
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
+
+  lucide-react-native@1.16.0(react-native-svg@15.12.1(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0):
+    dependencies:
+      react: 19.1.0
+      react-native: 0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0)
+      react-native-svg: 15.12.1(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
 
   magic-string@0.30.21:
     dependencies:

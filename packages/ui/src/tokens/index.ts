@@ -47,3 +47,11 @@ export {
   useFinanceColorMode,
   type BusinessTokensProviderProps,
 } from "./business-context";
+
+// Navigation color values (for React Navigation style APIs that don't support className)
+export {
+  NAVIGATION_COLORS,
+  TAB_BAR_COLORS,
+  type NavigationColorSet,
+  type TabBarColorSet,
+} from "./navigation-colors";

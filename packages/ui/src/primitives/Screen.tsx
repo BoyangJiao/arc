@@ -8,6 +8,12 @@
  * 业务页面统一用 `<Screen>` 包裹，不直接用裸 ScrollView/SafeAreaView，
  * 这样 status bar 遮挡 / 安全区错误这种问题在 1 个地方修，不在 N 个页面修。
  *
+ * NOTE: SafeAreaView from react-native-safe-area-context is a third-party
+ * component that does NOT participate in Uniwind's runtime theme-switching.
+ * className passed to it gets statically resolved and won't react to dark mode.
+ * We therefore apply className to a Uniwind-aware <View> wrapper, and use
+ * SafeAreaView purely for its safe-area inset behaviour (style-only, no className).
+ *
  * @example
  *   <Screen>
  *     <Text>...</Text>
@@ -51,19 +57,23 @@ export function Screen({
 }: ScreenProps) {
   if (!scroll) {
     return (
-      <SafeAreaView edges={edges} className={className}>
-        <View className="flex-1">{children}</View>
-      </SafeAreaView>
+      <View className={className}>
+        <SafeAreaView edges={edges} style={{ flex: 1 }}>
+          <View className="flex-1">{children}</View>
+        </SafeAreaView>
+      </View>
     );
   }
   return (
-    <SafeAreaView edges={edges} className={className}>
-      <ScrollView
-        contentContainerStyle={contentContainerStyle}
-        keyboardShouldPersistTaps={keyboardShouldPersistTaps}
-      >
-        {children}
-      </ScrollView>
-    </SafeAreaView>
+    <View className={className}>
+      <SafeAreaView edges={edges} style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={contentContainerStyle}
+          keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+        >
+          {children}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }

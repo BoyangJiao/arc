@@ -108,6 +108,10 @@ export interface Holding {
   readonly averageCost: Decimal;
   /** 累计已投入成本（含手续费，原始币种） */
   readonly totalCostBasis: Decimal;
+  /** 累计已实现盈亏（原始币种） */
+  readonly realizedPnL: Decimal;
+  /** 累计分红收入（原始币种） */
+  readonly totalDividends: Decimal;
   /** 持仓所属 portfolio（便于多组合时分组） */
   readonly portfolioId: string;
   /** 与资产同币种，便于直接做计算时引用 */
@@ -213,6 +217,12 @@ export interface MarketValuation {
   readonly nativeCurrency: Currency;
   /** 报告币种市值（已经过 FX 换算） */
   readonly valueReporting: Decimal;
+  /** 报告币种成本 = shares × averageCost × fxRate */
+  readonly costBasisReporting: Decimal;
+  /** 未实现盈亏（报告币种） = valueReporting - costBasisReporting */
+  readonly unrealizedPnL: Decimal;
+  /** 未实现盈亏百分比 = unrealizedPnL / costBasisReporting × 100 */
+  readonly unrealizedPnLPercent: Decimal;
   readonly reportingCurrency: Currency;
   /** 计算所用汇率快照（便于审计） */
   readonly fxRateUsed: Decimal;
@@ -225,6 +235,12 @@ export interface PortfolioValuation {
   readonly portfolioId: string;
   readonly reportingCurrency: Currency;
   readonly totalValue: Decimal;
+  /** 报告币种总成本 */
+  readonly totalCostBasis: Decimal;
+  /** 总未实现盈亏（报告币种） */
+  readonly totalUnrealizedPnL: Decimal;
+  /** 总未实现盈亏百分比 */
+  readonly totalUnrealizedPnLPercent: Decimal;
   readonly perAsset: ReadonlyArray<MarketValuation>;
   readonly computedAt: string;
 }

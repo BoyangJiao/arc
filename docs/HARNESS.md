@@ -23,17 +23,38 @@ Arc's solo + AI-pair-programming workflow.
 
 Managed via [husky](https://typicode.github.io/husky/) (set automatically by `prepare` script in `package.json`).
 
-| Hook            | Trigger                       | What it does                                                                                                                               |
-| :-------------- | :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
-| `pre-commit`    | `git commit`                  | Runs `pnpm exec lint-staged` on staged files only (fast, ~2s for typical commit). Currently: prettier on `.{ts,tsx,json,md,css,yml,yaml}`. |
-| `post-checkout` | `git checkout` / `git switch` | Runs `tools/sync-skills.sh` quietly (sync `.claude/skills` → `.qoder/skills`).                                                             |
-| `post-merge`    | `git pull` (if merge happens) | Same as `post-checkout`.                                                                                                                   |
+| Hook            | Trigger                       | What it does                                                                                                                                                                                                                         |
+| :-------------- | :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pre-commit`    | `git commit`                  | 1. Runs `pnpm exec lint-staged` on staged files only (fast, ~2s). Currently: prettier on `.{ts,tsx,json,md,css,yml,yaml}`.<br>2. If `.claude/skills` has staged changes → runs `tools/sync-skills.sh` to keep local mirrors in sync. |
+| `post-checkout` | `git checkout` / `git switch` | Runs `tools/sync-skills.sh` quietly (sync canonical skills → local mirrors).                                                                                                                                                         |
+| `post-merge`    | `git pull` (if merge happens) | Same as `post-checkout`.                                                                                                                                                                                                             |
 
 **Setup**: hooks install automatically when running `pnpm install` (via `prepare` lifecycle script). Manual install: `pnpm exec husky init`.
 
 **Bypass**: `git commit --no-verify` (use sparingly; CI gate will still catch).
 
 **Migration note**: `tools/git-hooks/` (custom `core.hooksPath` approach) was removed in favor of husky. The old `pnpm setup:hooks` script no longer exists.
+
+---
+
+### Skills 同步架构
+
+项目采用 **canonical source + 本地镜像** 模式管理跨 IDE 的 skills：
+
+- **Canonical source**：`.claude/skills/` — 纳入 Git 版本控制，随代码提交推送
+- **本地镜像**：`.qoder/skills/` — 在 `.gitignore` 中，仅本地可见
+- **同步方向**：单向，canonical → 镜像
+- **同步脚本**：`tools/sync-skills.sh`（以 `.claude/skills` 为 source of truth）
+
+当未来引入新 IDE/Agent（如 Codex、Cursor）时，只需在同步脚本中添加新的镜像目录即可，无需改变 canonical source。
+
+| 触发时机   | Hook            | 说明                                       |
+| :--------- | :-------------- | :----------------------------------------- |
+| 提交代码时 | `pre-commit`    | 检测 `.claude/skills` 有 staged 变更才执行 |
+| 切换分支后 | `post-checkout` | 静默执行，确保镜像与当前分支一致           |
+| 拉取代码后 | `post-merge`    | 静默执行，同步远程新增/变更的 skills       |
+
+手动同步：`pnpm sync:skills`
 
 ---
 

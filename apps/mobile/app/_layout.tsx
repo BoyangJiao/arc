@@ -5,48 +5,63 @@
  *   GestureHandlerRootView      — RN gesture system root
  *     SafeAreaProvider          — notch / home-indicator awareness
  *       HeroUINativeProvider    — HeroUI theme + portal root
- *         QueryClientProvider   — TanStack Query cache (Stage 1 step 3)
- *           AuthProvider        — Supabase Auth session state (Stage 1 step 2)
+ *         QueryClientProvider   — TanStack Query cache
+ *           AuthProvider        — Supabase Auth session state
  *             AppShell          — drives BusinessTokensProvider from user prefs
- *               BusinessTokensProvider — gain/loss color from prefs (Stage 1 step 5)
+ *               BusinessTokensProvider — gain/loss color from prefs
  *                 <Stack>       — expo-router file-based routing
  *
  * Auth guard logic (in AppShell):
  *   - loading=true → render Stack as-is (Splash-equivalent)
  *   - signed out + currently inside protected route → redirect to /sign-in
- *   - signed in + currently on /sign-in or /auth/* → redirect to /
+ *   - signed in + currently on /sign-in or /auth/* → redirect to /(tabs)
  *
- * Stage 1 step 4 will move auth guard into (tabs)/_layout.tsx for cleaner
- * segment-based protection once the tab group exists.
+ * Route structure (Stage 1 step 4):
+ *   Stack (root)
+ *   ├─ (tabs)        — Tab navigator (protected)
+ *   ├─ portfolio/    — Portfolio detail + transactions (protected)
+ *   ├─ me/           — Me page + settings (protected)
+ *   ├─ sign-in       — Public
+ *   └─ auth/         — Public (callback)
  */
 
 import "../global.css";
 import "@arc/i18n";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Stack, useRouter, useSegments, type Href } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { HeroUINativeProvider } from "heroui-native";
 import { QueryClientProvider } from "@tanstack/react-query";
 
-import { BusinessTokensProvider, DEFAULT_FINANCE_COLOR_MODE } from "@arc/ui";
+import { BusinessTokensProvider, DEFAULT_FINANCE_COLOR_MODE, NAVIGATION_COLORS } from "@arc/ui";
 
 import { AuthProvider, useAuth } from "../src/lib/auth";
 import { queryClient } from "../src/lib/query-client";
+import { ThemeProvider, useColorMode } from "../src/lib/theme";
 import { useUserPreferences } from "../src/lib/user-preferences";
+
+/**
+ * Design-token-aligned navigation colors.
+ * Keep in sync with global.css Foundation tokens.
+ * Values live in packages/ui/src/tokens/navigation-colors.ts (lint-exempted).
+ */
+const NAV_COLORS = NAVIGATION_COLORS;
 
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <HeroUINativeProvider>
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <AppShell />
-            </AuthProvider>
-          </QueryClientProvider>
-        </HeroUINativeProvider>
+        <ThemeProvider>
+          <HeroUINativeProvider>
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <AppShell />
+              </AuthProvider>
+            </QueryClientProvider>
+          </HeroUINativeProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
@@ -60,15 +75,14 @@ export default function RootLayout() {
 function AppShell() {
   const { session, loading } = useAuth();
   const { prefs } = useUserPreferences();
+  const { colorMode } = useColorMode();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     if (loading) return;
 
-    // expo-router segments: ['sign-in'] | ['auth', 'callback'] | [] | future ['(tabs)', ...]
-    // Cast to string because typed-routes feature narrows segment[] to known route literals;
-    // we just need a stringly compare for guard logic.
+    // Determine if we're on a public route
     const seg0 = segments[0] as string | undefined;
     const inAuthFlow = seg0 === "sign-in" || seg0 === "auth";
 
@@ -76,14 +90,53 @@ function AppShell() {
       // Logged-out user on a protected screen → bounce to sign-in.
       router.replace("/sign-in" as Href);
     } else if (session && inAuthFlow) {
-      // Already signed in but somehow on the auth screen → go home.
-      router.replace("/");
+      // Already signed in but somehow on the auth screen → go to tabs.
+      router.replace("/(tabs)" as Href);
     }
   }, [session, loading, segments, router]);
 
+  const colors = NAV_COLORS[colorMode];
+
+  // Memoize screen options to avoid unnecessary re-renders of Stack children
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      contentStyle: { backgroundColor: colors.background },
+      headerStyle: { backgroundColor: colors.card },
+      headerTintColor: colors.text,
+    }),
+    [colors]
+  );
+
   return (
     <BusinessTokensProvider mode={prefs?.financeColorMode ?? DEFAULT_FINANCE_COLOR_MODE}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={screenOptions}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+        <Stack.Screen name="portfolio/[id]/index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="portfolio/[id]/transactions/new"
+          options={{
+            presentation: "modal",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="me/index"
+          options={{
+            headerShown: false,
+            animation: "slide_from_left",
+          }}
+        />
+        <Stack.Screen
+          name="me/settings"
+          options={{
+            headerShown: false,
+            animation: "slide_from_left",
+          }}
+        />
+      </Stack>
     </BusinessTokensProvider>
   );
 }

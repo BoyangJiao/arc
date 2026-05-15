@@ -52,6 +52,8 @@ describe("Domain type readonly invariants", () => {
       shares: new Decimal(10),
       averageCost: new Decimal("180.00"),
       totalCostBasis: new Decimal("1800.00"),
+      realizedPnL: new Decimal(0),
+      totalDividends: new Decimal(0),
       portfolioId: "p-1",
       currency: "USD",
     };

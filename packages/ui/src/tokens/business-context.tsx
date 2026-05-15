@@ -30,7 +30,15 @@
  *   }
  */
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 import {
   buildBusinessTokens,
@@ -40,7 +48,15 @@ import {
 } from "./business";
 import { buildBusinessClasses, type BusinessClassMap } from "./business-classes";
 
-const BusinessTokensContext = createContext<FinanceColorMode>(DEFAULT_FINANCE_COLOR_MODE);
+interface BusinessTokensContextValue {
+  mode: FinanceColorMode;
+  setFinanceColorMode: (mode: FinanceColorMode) => void;
+}
+
+const BusinessTokensContext = createContext<BusinessTokensContextValue>({
+  mode: DEFAULT_FINANCE_COLOR_MODE,
+  setFinanceColorMode: () => {},
+});
 
 export interface BusinessTokensProviderProps {
   /** 用户当前涨跌色偏好。未传则用 DEFAULT_FINANCE_COLOR_MODE。 */
@@ -52,13 +68,29 @@ export interface BusinessTokensProviderProps {
  * Provider — 把当前用户偏好注入到子树
  *
  * Stage 1 J5 实施时挂在 RootLayout，从 user_preferences 读 mode。
- * Stage 1 早期可暂不挂（Default mode 会被消费）。
+ * 同时暴露 setFinanceColorMode 以便 Settings 页面可立即切换。
  */
 export function BusinessTokensProvider({
   mode = DEFAULT_FINANCE_COLOR_MODE,
   children,
 }: BusinessTokensProviderProps) {
-  return <BusinessTokensContext.Provider value={mode}>{children}</BusinessTokensContext.Provider>;
+  const [currentMode, setCurrentMode] = useState<FinanceColorMode>(mode);
+
+  // Sync from prop (e.g., when prefs load from DB after initial render)
+  useEffect(() => {
+    setCurrentMode(mode);
+  }, [mode]);
+
+  const setFinanceColorMode = useCallback((newMode: FinanceColorMode) => {
+    setCurrentMode(newMode);
+  }, []);
+
+  const value = useMemo<BusinessTokensContextValue>(
+    () => ({ mode: currentMode, setFinanceColorMode }),
+    [currentMode, setFinanceColorMode]
+  );
+
+  return <BusinessTokensContext.Provider value={value}>{children}</BusinessTokensContext.Provider>;
 }
 
 /**
@@ -72,7 +104,7 @@ export function BusinessTokensProvider({
  * 如需 className，用 useBusinessClasses() 而非自己拼接（Tailwind 编译期不识别拼接）。
  */
 export function useBusinessTokens(): BusinessTokenMap {
-  const mode = useContext(BusinessTokensContext);
+  const { mode } = useContext(BusinessTokensContext);
   return useMemo(() => buildBusinessTokens(mode), [mode]);
 }
 
@@ -85,11 +117,15 @@ export function useBusinessTokens(): BusinessTokenMap {
  *   <View className={classes.gain.bgSoft}>...</View>
  */
 export function useBusinessClasses(): BusinessClassMap {
-  const mode = useContext(BusinessTokensContext);
+  const { mode } = useContext(BusinessTokensContext);
   return useMemo(() => buildBusinessClasses(mode), [mode]);
 }
 
-/** 测试 / 高级用法：直接读当前 mode（一般不需要）*/
-export function useFinanceColorMode(): FinanceColorMode {
-  return useContext(BusinessTokensContext);
+/** 读取当前 finance color mode + setter。Settings 页面用 setter 实现即时切换。 */
+export function useFinanceColorMode(): {
+  financeColorMode: FinanceColorMode;
+  setFinanceColorMode: (mode: FinanceColorMode) => void;
+} {
+  const { mode, setFinanceColorMode } = useContext(BusinessTokensContext);
+  return { financeColorMode: mode, setFinanceColorMode };
 }

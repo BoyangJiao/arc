@@ -20,6 +20,29 @@ import type { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "./supabase";
 
+// ─── DEV ONLY: Auth Bypass ───────────────────────────────────────────────────
+// When EXPO_PUBLIC_DEV_BYPASS_AUTH=true, skip real Supabase auth and inject a
+// mock session so devs/QA can enter the app immediately.
+const DEV_BYPASS_AUTH = process.env.EXPO_PUBLIC_DEV_BYPASS_AUTH === "true";
+
+const DEV_MOCK_USER: User = {
+  id: "dev-user-bypass",
+  email: "dev@arc.local",
+  app_metadata: {},
+  user_metadata: {},
+  aud: "authenticated",
+  created_at: new Date().toISOString(),
+} as unknown as User;
+
+const DEV_MOCK_SESSION: Session = {
+  access_token: "dev-bypass-token",
+  refresh_token: "dev-bypass-refresh",
+  expires_in: 99999,
+  token_type: "bearer",
+  user: DEV_MOCK_USER,
+} as unknown as Session;
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface AuthContextValue {
   session: Session | null;
   user: User | null;
@@ -43,10 +66,13 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(DEV_BYPASS_AUTH ? DEV_MOCK_SESSION : null);
+  const [loading, setLoading] = useState(!DEV_BYPASS_AUTH);
 
   useEffect(() => {
+    // DEV ONLY: bypass real auth — session already set above.
+    if (DEV_BYPASS_AUTH) return;
+
     // Restore cached session on cold start.
     supabase.auth
       .getSession()
@@ -73,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       loading,
       signInWithMagicLink: async (email, redirectTo) => {
+        if (DEV_BYPASS_AUTH) return { error: null };
         const { error } = await supabase.auth.signInWithOtp({
           email,
           options: {
@@ -83,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error ?? null };
       },
       signInWithOtpCode: async (email) => {
+        if (DEV_BYPASS_AUTH) return { error: null };
         // Omitting emailRedirectTo triggers Supabase to send the OTP email
         // template (with `{{ .Token }}`) instead of the magic-link template.
         const { error } = await supabase.auth.signInWithOtp({
@@ -94,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error ?? null };
       },
       verifyOtpCode: async (email, token) => {
+        if (DEV_BYPASS_AUTH) return { error: null };
         const { error } = await supabase.auth.verifyOtp({
           email,
           token,
@@ -102,6 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error ?? null };
       },
       signOut: async () => {
+        // DEV ONLY: no-op when bypassing auth.
+        if (DEV_BYPASS_AUTH) return { error: null };
         const { error } = await supabase.auth.signOut();
         return { error: error ?? null };
       },
