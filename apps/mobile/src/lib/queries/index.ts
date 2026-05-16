@@ -12,4 +12,5 @@ export {
   useCreateTransaction,
   type CreateTransactionInput,
 } from "./use-transactions";
+export { usePortfolioHoldings } from "./use-portfolio-holdings";
 export { usePortfolioValuation } from "./use-portfolio-valuation";

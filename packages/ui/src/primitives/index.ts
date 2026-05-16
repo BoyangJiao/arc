@@ -13,6 +13,9 @@ export {
   Card,
   Switch,
   HeroUINativeProvider,
+  cn,
+  Surface,
+  PressableFeedback,
   // Form fields (compound — Label/Input/Description/FieldError used together)
   TextField,
   Label,

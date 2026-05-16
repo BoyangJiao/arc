@@ -17,11 +17,15 @@ import { View } from "react-native";
 import { useLocalSearchParams, useRouter, Stack, type Href } from "expo-router";
 import { Button, Card, Screen, Text, useStackScreenOptions } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
-import { parseAssetId, type Currency, type MarketValuation } from "@arc/core";
+import { parseAssetId, type Currency, type Holding, type MarketValuation } from "@arc/core";
 import Decimal from "decimal.js";
 
 import { formatMoney } from "../../../src/lib/format-money";
-import { usePortfolio, usePortfolioValuation } from "../../../src/lib/queries";
+import {
+  usePortfolio,
+  usePortfolioHoldings,
+  usePortfolioValuation,
+} from "../../../src/lib/queries";
 import { useUserPreferences } from "../../../src/lib/user-preferences";
 
 const ZERO = new Decimal(0);
@@ -37,16 +41,22 @@ export default function PortfolioDetailScreen() {
   // Fetch portfolio metadata
   const { data: portfolio } = usePortfolio(id);
 
+  const { holdings, isPending: holdingsPending } = usePortfolioHoldings(id);
+
   // Full valuation chain (transactions → holdings → prices → FX → totals)
   const {
     data: valuation,
     isPending: valuationPending,
+    isFetching: valuationFetching,
     isError: valuationError,
     error: valuationErrorObj,
   } = usePortfolioValuation(id, reportingCurrency);
 
-  const perAsset = valuation?.perAsset ?? [];
-  const isEmpty = !valuationPending && perAsset.length === 0;
+  const valuationByAsset = new Map(
+    (valuation?.perAsset ?? []).map((row) => [row.assetId, row] as const)
+  );
+  const isEmpty = !holdingsPending && holdings.length === 0;
+  const showHoldingsTable = holdings.length > 0;
 
   const handleAddTransaction = () => {
     router.push(`/portfolio/${id}/transactions/new` as Href);
@@ -75,8 +85,8 @@ export default function PortfolioDetailScreen() {
           )}
         </View>
 
-        {/* Holdings table */}
-        {valuationPending ? (
+        {/* Holdings table — list all holdings from transactions; merge priced rows when ready */}
+        {holdingsPending ? (
           <Text className="text-muted">{t("common.loading")}</Text>
         ) : isEmpty ? (
           <Card>
@@ -92,7 +102,7 @@ export default function PortfolioDetailScreen() {
               </Button>
             </View>
           </Card>
-        ) : (
+        ) : showHoldingsTable ? (
           <View className="gap-3">
             {/* Table header — 4 columns: asset / shares / native price / reporting value */}
             <View className="flex-row px-2 pb-2">
@@ -108,15 +118,24 @@ export default function PortfolioDetailScreen() {
               </Text>
             </View>
 
-            {/* Holdings rows */}
-            {perAsset.map((row) => (
-              <HoldingRow key={row.assetId} valuation={row} reportingCurrency={reportingCurrency} />
-            ))}
+            {holdings.map((holding) => {
+              const row = valuationByAsset.get(holding.assetId);
+              return (
+                <HoldingRow
+                  key={holding.assetId}
+                  holding={holding}
+                  valuation={row}
+                  quoteLoading={!row && (valuationPending || valuationFetching)}
+                  reportingCurrency={reportingCurrency}
+                  t={t}
+                />
+              );
+            })}
           </View>
-        )}
+        ) : null}
 
         {/* Add transaction CTA (inline button — Stage 1 no real FAB) */}
-        {perAsset.length > 0 && (
+        {holdings.length > 0 && (
           <View className="mt-6">
             <Button onPress={handleAddTransaction}>
               <Button.Label>{t("portfolio.addTransaction")}</Button.Label>
@@ -134,29 +153,36 @@ export default function PortfolioDetailScreen() {
 }
 
 interface HoldingRowProps {
-  valuation: MarketValuation;
+  holding: Holding;
+  valuation: MarketValuation | undefined;
+  quoteLoading: boolean;
   reportingCurrency: Currency;
+  t: (key: string) => string;
 }
 
-function HoldingRow({ valuation, reportingCurrency }: HoldingRowProps) {
-  const { symbol } = parseAssetId(valuation.assetId);
+function HoldingRow({ holding, valuation, quoteLoading, reportingCurrency, t }: HoldingRowProps) {
+  const { symbol } = parseAssetId(holding.assetId);
+  const priceLabel = valuation
+    ? valuation.priceNative.toFixed(2)
+    : quoteLoading
+      ? t("portfolioDetail.quoteLoading")
+      : t("portfolioDetail.priceUnavailable");
+  const valueLabel = valuation
+    ? formatMoney(valuation.valueReporting, reportingCurrency)
+    : quoteLoading
+      ? t("portfolioDetail.quoteLoading")
+      : t("portfolioDetail.priceUnavailable");
 
   return (
     <Card>
       <View className="flex-row items-center px-3 py-3">
         <View className="flex-1">
           <Text className="text-foreground font-medium">{symbol}</Text>
-          <Text className="text-muted text-xs">{valuation.nativeCurrency}</Text>
+          <Text className="text-muted text-xs">{holding.currency}</Text>
         </View>
-        <Text className="text-foreground w-16 text-right text-sm">
-          {valuation.shares.toFixed(2)}
-        </Text>
-        <Text className="text-foreground w-20 text-right text-sm">
-          {valuation.priceNative.toFixed(2)}
-        </Text>
-        <Text className="text-foreground w-24 text-right text-sm font-medium">
-          {formatMoney(valuation.valueReporting, reportingCurrency)}
-        </Text>
+        <Text className="text-foreground w-16 text-right text-sm">{holding.shares.toFixed(2)}</Text>
+        <Text className="text-muted w-20 text-right text-sm">{priceLabel}</Text>
+        <Text className="text-foreground w-24 text-right text-sm font-medium">{valueLabel}</Text>
       </View>
     </Card>
   );

@@ -30,6 +30,7 @@ export const zh = {
     addTransaction: "添加交易",
     noPortfolios: "暂无组合",
     noPortfoliosHint: "创建你的第一个组合开始追踪",
+    partialQuotes: "部分持仓行情暂未加载（{{loaded}}/{{total}}）",
   },
   portfolioDetail: {
     totalMarketValue: "总市值",
@@ -40,6 +41,8 @@ export const zh = {
     pnl: "盈亏",
     emptyHoldings: "该组合暂无持仓",
     emptyHoldingsHint: "添加一笔交易开始记录",
+    priceUnavailable: "—",
+    quoteLoading: "加载中…",
   },
   transaction: {
     addTitle: "添加交易",

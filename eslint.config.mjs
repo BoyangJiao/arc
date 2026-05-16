@@ -124,6 +124,11 @@ export default [
                 "Import icons from `@arc/ui` (wrappers/icons hub). ADR 006 §决策一.",
             },
             {
+              name: "@expo/vector-icons",
+              message:
+                "Import tab-bar icons via `<TabBarIcon>` from `@arc/ui`. ADR 006 §决策一.",
+            },
+            {
               name: "react-native-svg",
               message:
                 "If you need SVG primitives, expose them through `@arc/ui/wrappers`. ADR 006 §决策一.",

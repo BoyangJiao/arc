@@ -27,7 +27,6 @@
 import { useMemo } from "react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import {
-  computeHoldings,
   computePortfolioValuation,
   parseAssetId,
   type Currency,
@@ -35,10 +34,11 @@ import {
   type PortfolioValuation,
   type PriceQuote,
 } from "@arc/core";
-import { fetchFxWithCache, fetchPriceWithCache } from "@arc/data-sources";
+import { fetchFxWithCache, fetchPriceWithCache, RateLimitError } from "@arc/data-sources";
+import type { Holding } from "@arc/core";
 
 import { fxCache, priceCache, registry } from "../market-data";
-import { useTransactions } from "./use-transactions";
+import { usePortfolioHoldings } from "./use-portfolio-holdings";
 
 /** Cache freshness window for prices in this query (ms). */
 const PRICE_FRESHNESS_MS = 60 * 1000;
@@ -46,17 +46,67 @@ const PRICE_FRESHNESS_MS = 60 * 1000;
 /** Cache freshness window for FX rates in this query (ms). */
 const FX_FRESHNESS_MS = 4 * 60 * 60 * 1000;
 
+/** Alpha Vantage free tier: 5 req/min — wait between retries when throttled. */
+const AV_RATE_LIMIT_BACKOFF_MS = 12_500;
+
+/** Small gap between symbols to avoid bursting the per-minute cap on cold start. */
+const AV_INTER_SYMBOL_GAP_MS = 350;
+
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const fetchQuoteForHolding = async (
+  holding: Holding,
+  freshnessMs: number
+): Promise<PriceQuote | null> => {
+  const adapter = registry.resolvePriceAdapterByAssetId(holding.assetId);
+  const { symbol } = parseAssetId(holding.assetId);
+
+  const maxAttempts = 3;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fetchPriceWithCache({
+        adapter,
+        symbol,
+        cache: priceCache,
+        freshnessMs,
+      });
+    } catch (err) {
+      if (err instanceof RateLimitError && attempt < maxAttempts - 1) {
+        await sleep(err.retryAfterMs ?? AV_RATE_LIMIT_BACKOFF_MS);
+        continue;
+      }
+      console.warn(
+        `[portfolio-valuation] price fetch failed for ${holding.assetId}:`,
+        err instanceof Error ? err.message : err
+      );
+      return null;
+    }
+  }
+  return null;
+};
+
+/**
+ * Fetch quotes sequentially with rate-limit backoff.
+ * Parallel fan-out caused flaky 1/2/3 holding counts when AV throttled mid-flight.
+ */
+const fetchAllQuotes = async (
+  holdings: readonly Holding[],
+  freshnessMs: number
+): Promise<PriceQuote[]> => {
+  const quotes: PriceQuote[] = [];
+  for (let i = 0; i < holdings.length; i++) {
+    if (i > 0) await sleep(AV_INTER_SYMBOL_GAP_MS);
+    const quote = await fetchQuoteForHolding(holdings[i], freshnessMs);
+    if (quote) quotes.push(quote);
+  }
+  return quotes;
+};
+
 export const usePortfolioValuation = (
   portfolioId: string | undefined,
   reportingCurrency: Currency
 ): UseQueryResult<PortfolioValuation | null, Error> => {
-  const { data: transactions } = useTransactions(portfolioId);
-
-  // Derive holdings from transactions (pure; safe in useMemo).
-  const holdings = useMemo(
-    () => (transactions && transactions.length > 0 ? computeHoldings(transactions) : []),
-    [transactions]
-  );
+  const { holdings, data: transactions } = usePortfolioHoldings(portfolioId);
 
   // Cache key includes a transaction-list fingerprint so adding a tx invalidates.
   const txFingerprint = useMemo(
@@ -71,27 +121,8 @@ export const usePortfolioValuation = (
     queryFn: async (): Promise<PortfolioValuation | null> => {
       if (!portfolioId || holdings.length === 0) return null;
 
-      // 1) Fan out price fetches per holding (each goes through cache → adapter).
-      const quoteResults = await Promise.allSettled(
-        holdings.map(async (h): Promise<PriceQuote> => {
-          const adapter = registry.resolvePriceAdapterByAssetId(h.assetId);
-          const { symbol } = parseAssetId(h.assetId);
-          return await fetchPriceWithCache({
-            adapter,
-            symbol,
-            cache: priceCache,
-            freshnessMs: PRICE_FRESHNESS_MS,
-          });
-        })
-      );
-      const quotes: PriceQuote[] = [];
-      for (const result of quoteResults) {
-        if (result.status === "fulfilled") {
-          quotes.push(result.value);
-        }
-        // rejected → skip that holding silently (computePortfolioValuation already
-        // skips holdings without a quote in perAsset; total stays consistent)
-      }
+      // 1) Sequential price fetches (AV free tier: 5/min; parallel caused flaky counts).
+      const quotes = await fetchAllQuotes(holdings, PRICE_FRESHNESS_MS);
 
       // 2) Unique non-identity currency pairs.
       const pairs = new Set<string>();

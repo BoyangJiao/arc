@@ -30,6 +30,7 @@ export const en = {
     addTransaction: "Add Transaction",
     noPortfolios: "No portfolios yet",
     noPortfoliosHint: "Create your first portfolio to start tracking",
+    partialQuotes: "Some quotes are still loading ({{loaded}}/{{total}})",
   },
   portfolioDetail: {
     totalMarketValue: "Total Market Value",
@@ -40,6 +41,8 @@ export const en = {
     pnl: "P&L",
     emptyHoldings: "No holdings in this portfolio",
     emptyHoldingsHint: "Add a transaction to get started",
+    priceUnavailable: "—",
+    quoteLoading: "Loading…",
   },
   transaction: {
     addTitle: "Add Transaction",

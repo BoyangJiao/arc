@@ -20,7 +20,7 @@ import { useTranslation } from "@arc/i18n";
 
 import { useAuth } from "../../src/lib/auth";
 import { formatMoney } from "../../src/lib/format-money";
-import { usePortfolios, usePortfolioValuation } from "../../src/lib/queries";
+import { usePortfolios, usePortfolioHoldings, usePortfolioValuation } from "../../src/lib/queries";
 import { useUserPreferences } from "../../src/lib/user-preferences";
 
 const ZERO = new Decimal(0);
@@ -38,13 +38,18 @@ export default function PortfolioTab() {
 
   // Stage 1: single portfolio
   const defaultPortfolio = portfolios?.[0];
+  const { holdings, isPending: holdingsPending } = usePortfolioHoldings(defaultPortfolio?.id);
   const {
     data: valuation,
     isFetching: valuationFetching,
     isError: valuationError,
   } = usePortfolioValuation(defaultPortfolio?.id, reportingCurrency);
 
-  const holdingsCount = valuation?.perAsset.length ?? 0;
+  // Count from transactions (authoritative), not priced rows (AV rate-limit may drop quotes).
+  const holdingsCount = holdings.length;
+  const pricedCount = valuation?.perAsset.length ?? 0;
+  const hasPartialQuotes =
+    holdingsCount > 0 && pricedCount > 0 && pricedCount < holdingsCount && !valuationFetching;
   const hasHoldings = holdingsCount > 0;
   const totalValueText = formatMoney(valuation?.totalValue ?? ZERO, reportingCurrency);
 
@@ -78,6 +83,11 @@ export default function PortfolioTab() {
         <Text className="text-muted text-sm mb-1">{t("portfolio.totalValue")}</Text>
         <Text className="text-foreground text-4xl font-bold">{totalValueText}</Text>
         {hasHoldings && <Text className="text-muted text-xs mt-1">{t("common.disclaimer")}</Text>}
+        {hasPartialQuotes && (
+          <Text className="text-muted text-xs mt-1">
+            {t("portfolio.partialQuotes", { loaded: pricedCount, total: holdingsCount })}
+          </Text>
+        )}
         {valuationError && <Text className="text-danger text-xs mt-1">{t("common.error")}</Text>}
       </View>
 
@@ -118,7 +128,7 @@ export default function PortfolioTab() {
       )}
 
       {/* Empty holdings state within default portfolio */}
-      {defaultPortfolio && !hasHoldings && !valuationFetching && (
+      {defaultPortfolio && !hasHoldings && !holdingsPending && !valuationFetching && (
         <View className="mt-4">
           <Card>
             <Pressable

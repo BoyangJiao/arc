@@ -8,3 +8,4 @@
  */
 
 export * from "./icons";
+export * from "./tab-bar-icons";

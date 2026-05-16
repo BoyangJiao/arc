@@ -10,6 +10,7 @@ export {
   FloatingTabBar,
   FLOATING_TAB_BAR_HEIGHT,
   FLOATING_TAB_BAR_BOTTOM_INSET,
+  TAB_BAR_SAFE_OFFSET_ADDON_PX,
   type FloatingTabBarProps,
 } from "./FloatingTabBar";
 
