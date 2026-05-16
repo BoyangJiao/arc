@@ -6,7 +6,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "generate": "drizzle-kit generate",
-    "push": "drizzle-kit push"
+    "studio": "drizzle-kit studio",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
     "drizzle-orm": "^0.43.1",
@@ -14,6 +15,7 @@
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.1",
+    "dotenv": "^16.4.5",
     "typescript": "~5.9.2"
   }
 }

@@ -1,0 +1,13 @@
+---
+description: No hard-coded UI strings — use @arc/i18n
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# i18n
+
+- No hard-coded user-facing strings in components.
+- Use `useTranslation()` from `@arc/i18n`.
+- Add keys to both `en.ts` and `zh.ts` when adding copy.
+
+Skill: `.claude/skills/i18n-localization/` (synced to `.cursor/skills/` after `pnpm sync:skills`).

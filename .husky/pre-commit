@@ -1,0 +1,42 @@
+#!/bin/sh
+# Arc pre-commit hook (managed by husky)
+# - Secret leak guard: refuse to commit any service_role JWT (ADR 007 §决策三)
+# - Run lint-staged on changed files only (fast, deterministic)
+# - Auto-sync .claude/skills → .qoder/skills, .cursor/skills when skills change
+# See package.json "lint-staged" config for per-file-pattern actions
+
+# ─── Secret leak guard (ADR 007) ────────────────────────────────────────────
+# Block commits that contain a Supabase service_role JWT literal.
+# Heuristic: an env-style assignment (= or :) followed by a long JWT-shaped value.
+# Excludes this hook itself, ADRs, env templates, and the seed script — those
+# all reference the *pattern* (not the secret) for documentation purposes.
+SCAN_EXCLUDE=":!.husky/pre-commit :!docs/adr/** :!**/.env*.example :!tools/seed-dev-data.ts"
+# `|| true` on each grep prevents `sh -e` (husky runs hooks with -e) from aborting
+# the hook when grep finds no matches — that's the *success* case for a leak guard.
+LEAKS=$( (git diff --cached -U0 -- . $SCAN_EXCLUDE \
+  | grep -E '^\+' \
+  | grep -E '(service_role|SERVICE_ROLE_KEY)' \
+  | grep -E '[=:][[:space:]]*"?eyJ[A-Za-z0-9_-]{20,}"?') || true )
+if [ -n "$LEAKS" ]; then
+  echo "❌ Pre-commit blocked: looks like a Supabase service_role JWT is being committed."
+  echo "   Matched lines (truncated):"
+  echo "$LEAKS" | head -5 | sed 's/^/     /'
+  echo "   If this is a false positive, run \`git commit --no-verify\` and explain in the message."
+  echo "   See ADR 007 §决策三 — service role key must stay in apps/mobile/.env.dev.local."
+  exit 1
+fi
+
+pnpm exec lint-staged
+
+# Skills sync: detect changes in .claude/skills → mirror IDEs (.qoder/, .cursor/)
+# Note: mirror dirs are gitignored; sync is local-only
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || exit 0)"
+[ -z "$PROJECT_ROOT" ] && exit 0
+
+SYNC_SCRIPT="$PROJECT_ROOT/tools/sync-skills.sh"
+CLAUDE_SKILLS="$PROJECT_ROOT/.claude/skills"
+
+# Only run sync if .claude/skills has staged changes
+if [ -x "$SYNC_SCRIPT" ] && git diff --cached --name-only -- "$CLAUDE_SKILLS" | grep -q .; then
+  bash "$SYNC_SCRIPT"
+fi

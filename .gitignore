@@ -24,6 +24,8 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+# generic .env.<flavor>.local pattern (ADR 007 — covers apps/mobile/.env.dev.local etc.)
+.env.*.local
 
 # debug
 npm-debug.log*
@@ -37,6 +39,31 @@ pnpm-debug.log*
 # qoder
 .qoder/
 
+# cursor (skills mirrored from .claude/skills via tools/sync-skills.sh)
+.cursor/skills/
+
+# planning scratchpad (Delta screenshots, IA reference, designer drafts — local only)
+.tempref/
+
+
+
+
+
 # system
 .DS_Store
 Thumbs.db
+
+# MCP config (contains personal tokens — each dev uses their own)
+.mcp.json
+
+# Spike sandbox build artifacts
+tools/spike-heroui-native/node_modules/
+tools/spike-heroui-native/dist/
+tools/spike-heroui-native/.cache/
+tools/spike-heroui-native/.expo/
+tools/spike-heroui-native/uniwind-types.d.ts
+tools/spike-heroui-native/spike-render.png
+tools/spike-heroui-native/pnpm-lock.yaml
+
+# Claude Code per-developer permissions (contains shell command history)
+.claude/settings.local.json

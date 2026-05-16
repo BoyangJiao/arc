@@ -1,0 +1,26 @@
+{
+  "git.openRepositoryInParentFolders": "always",
+  "git.autoRepositoryDetection": true,
+  "git.confirmSync": false,
+  "github.gitAuthentication": true,
+  "githubPullRequests.queries": [
+    {
+      "label": "Local Pull Request Branches",
+      "query": "default"
+    },
+    {
+      "label": "Arc — open PRs",
+      "query": "repo:BoyangJiao/arc is:open sort:updated-desc"
+    },
+    {
+      "label": "Arc — my PRs",
+      "query": "repo:BoyangJiao/arc is:open author:@me sort:updated-desc"
+    },
+    {
+      "label": "All Open",
+      "query": "default"
+    }
+  ],
+  "githubPullRequests.defaultMergeMethod": "squash",
+  "githubPullRequests.createOnPublishBranch": false
+}

@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=YOUR_DEV_PROJECT_REF"
+    },
+    "skillsmp": {
+      "command": "npx",
+      "args": ["-y", "skillsmp-mcp-server"]
+    },
+    "heroui-pro": {
+      "type": "http",
+      "url": "https://mcp.heroui.pro/mcp",
+      "headers": {
+        "x-heroui-personal-token": "YOUR_HEROUI_PERSONAL_TOKEN"
+      }
+    }
+  }
+}

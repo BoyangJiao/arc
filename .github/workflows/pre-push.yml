@@ -1,0 +1,61 @@
+name: Pre-push Quality Gate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main, "dev/**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Typecheck + Lint + Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.33.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "pnpm"
+
+      # heroui-native-pro / heroui-pro postinstall scripts download private
+      # artifacts (lib/, src/, styles/) using HEROUI_AUTH_TOKEN. Without the
+      # artifact:
+      #   - .d.ts files (in lib/) are missing → typecheck fails
+      #   - styles/ missing → metro/web bundle fails (not exercised in CI but
+      #     would break Edge Function builds)
+      #
+      # The CI/CD token must be set as a GitHub Actions repo secret named
+      # HEROUI_AUTH_TOKEN. Get it from https://heroui.pro/dashboard → Tokens.
+      # Add via: GitHub repo Settings → Secrets and variables → Actions →
+      # New repository secret. Use the **CI/CD Token** (not Personal Token).
+      - name: Install dependencies
+        env:
+          HEROUI_AUTH_TOKEN: ${{ secrets.HEROUI_AUTH_TOKEN }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck (all workspaces)
+        run: pnpm typecheck
+
+      - name: Lint (all workspaces)
+        run: pnpm lint
+
+      # `pnpm test` runs turbo test across all workspaces with a `test` script
+      # (currently @arc/core, @arc/ui, @arc/data-sources). New packages that
+      # add `test` script will be picked up automatically — no workflow edit.
+      - name: Test (all workspaces)
+        run: pnpm test

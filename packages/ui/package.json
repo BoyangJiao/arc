@@ -4,16 +4,42 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.2",
+    "heroui-native": "^1.0.3",
+    "heroui-native-pro": "1.0.0-beta.3",
+    "react-native-gesture-handler": "^2.28.0"
   },
   "devDependencies": {
-    "typescript": "~5.9.2",
+    "@expo/vector-icons": "^15.0.3",
     "@types/react": "~19.1.0",
+    "expo-router": "~6.0.23",
+    "fast-check": "^4.8.0",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-native": "0.81.5",
+    "react-native-gesture-handler": "^2.28.0",
+    "react-native-reanimated": "~4.1.1",
+    "react-native-safe-area-context": "^5.6.2",
+    "react-native-svg": "^15.12.1",
+    "typescript": "~5.9.2",
+    "uniwind": "^1.6.4",
+    "vitest": "^4.1.6"
   },
   "peerDependencies": {
+    "@expo/vector-icons": "*",
+    "expo-router": "~6.0.23",
+    "lucide-react-native": "*",
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "react-native-gesture-handler": ">=2.28.0",
+    "react-native-reanimated": ">=4.0.0",
+    "react-native-safe-area-context": "*",
+    "react-native-svg": "*"
   }
 }

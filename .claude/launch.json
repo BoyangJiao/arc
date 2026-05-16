@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mobile-ios",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@arc/mobile", "ios"],
+      "port": 8081
+    },
+    {
+      "name": "mobile-android",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@arc/mobile", "android"],
+      "port": 8081
+    },
+    {
+      "name": "mobile-web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@arc/mobile", "web"],
+      "port": 8081
+    },
+    {
+      "name": "mobile-start",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@arc/mobile", "start"],
+      "port": 8081
+    }
+  ]
+}

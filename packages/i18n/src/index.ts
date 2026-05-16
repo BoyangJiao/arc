@@ -22,4 +22,6 @@ if (!i18n.isInitialized) {
   });
 }
 
+export { useTranslation } from "react-i18next";
+
 export default i18n;

@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "spike-heroui-native",
+    "slug": "spike-heroui-native",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "platforms": ["ios", "android", "web"],
+    "newArchEnabled": true,
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    }
+  }
+}

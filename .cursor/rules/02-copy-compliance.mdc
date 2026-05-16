@@ -1,0 +1,17 @@
+---
+description: UI copy compliance — forbidden investment-advice language (P0)
+alwaysApply: true
+---
+
+# Copy compliance
+
+**Never use:** 建议买入/卖出, 推荐购买, 应该买/卖, 将获得 X% 收益, 预期回报, 保本, 专业建议, 投资顾问, 理财规划
+
+**Use instead:**
+
+- 「达到目标配置需要的份额变化为 X」
+- 「偏离目标配置 Y%」
+- Price/NAV labels: 「仅供参考，可能延迟」
+- Global disclaimer: 「本工具不构成投资建议」
+
+Full list: `CLAUDE.md` §二 and `.specify/constitution.md`.

@@ -4,17 +4,44 @@
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
+    "mobile": "pnpm --filter @arc/mobile start",
+    "mobile:ios": "pnpm --filter @arc/mobile ios",
+    "mobile:web": "pnpm --filter @arc/mobile web",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "sync:skills": "bash tools/sync-skills.sh",
+    "seed:dev": "tsx tools/seed-dev-data.ts",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "turbo": "^2.5.4",
-    "prettier": "^3.5.3",
+    "@supabase/supabase-js": "^2.105.2",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",
-    "eslint": "^9.27.0"
+    "culori": "^4.0.2",
+    "eslint": "^9.27.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.4",
+    "prettier": "^3.5.3",
+    "tsx": "^4.19.2",
+    "turbo": "^2.5.4"
   },
-  "packageManager": "pnpm@10.33.0"
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,css,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "heroui-pro",
+      "heroui-native-pro"
+    ]
+  }
 }

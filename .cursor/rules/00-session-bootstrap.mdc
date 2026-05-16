@@ -1,0 +1,12 @@
+---
+description: Session handoff — complements AGENTS.md (read order is defined there)
+alwaysApply: true
+---
+
+# Session bootstrap
+
+**Read order:** see `AGENTS.md` (session-state → CLAUDE.md → constitution).
+
+**Before ending work:** update `.specify/session-state.md` (`/checkpoint` in Cursor or Claude Code).
+
+**Cross-IDE:** `session-state.md` is the only handoff artifact — do not rely on chat history when switching tools.
