@@ -87,7 +87,7 @@ export const createSupabasePriceCache = (client: SupabaseClient): PriceCache => 
     if (error) {
       // Stage 1: client writes likely fail RLS; swallow + log.
       // Stage 2 will move to Edge Function with service role.
-      // eslint-disable-next-line no-console
+
       console.warn("[price-cache] write failed (expected under client RLS):", error.message);
     }
   },

@@ -65,7 +65,6 @@ export const createSupabaseFxCache = (client: SupabaseClient): FxCache => ({
       { onConflict: "from_currency,to_currency,as_of" }
     );
     if (error) {
-      // eslint-disable-next-line no-console
       console.warn("[fx-cache] write failed (expected under client RLS):", error.message);
     }
   },
