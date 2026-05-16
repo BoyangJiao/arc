@@ -2,7 +2,7 @@
 # Arc pre-commit hook (managed by husky)
 # - Secret leak guard: refuse to commit any service_role JWT (ADR 007 §决策三)
 # - Run lint-staged on changed files only (fast, deterministic)
-# - Auto-sync .claude/skills → .qoder/skills when skills change
+# - Auto-sync .claude/skills → .qoder/skills, .cursor/skills when skills change
 # See package.json "lint-staged" config for per-file-pattern actions
 
 # ─── Secret leak guard (ADR 007) ────────────────────────────────────────────
@@ -28,8 +28,8 @@ fi
 
 pnpm exec lint-staged
 
-# Skills sync: detect changes in .claude/skills and sync to .qoder/skills
-# Note: .qoder/ is gitignored, sync is local-only to keep both IDEs in sync
+# Skills sync: detect changes in .claude/skills → mirror IDEs (.qoder/, .cursor/)
+# Note: mirror dirs are gitignored; sync is local-only
 PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || exit 0)"
 [ -z "$PROJECT_ROOT" ] && exit 0
 

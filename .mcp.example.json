@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=YOUR_DEV_PROJECT_REF"
+    },
     "skillsmp": {
       "command": "npx",
       "args": ["-y", "skillsmp-mcp-server"]

@@ -1,0 +1,13 @@
+---
+description: UI imports must go through @arc/ui (ADR 006)
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# @arc/ui only
+
+Business code imports UI from `@arc/ui` only — never directly from `heroui-native`, `heroui-native-pro`, `react-native-safe-area-context`, `lucide-react-native`, `@gorhom/*`, `@dicebear/*`.
+
+Layer decision tree (ADR 006): OSS primitive → Pro primitive → wrapper → navigation → finance → charts → avatar. See `CLAUDE.md` §五.
+
+Gain/loss colors: `packages/ui/tokens/semantic.ts` — no hard-coded hex for up/down.

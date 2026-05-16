@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": ".claude/hooks/session-start.sh"
+      }
+    ],
+    "stop": [
+      {
+        "command": ".claude/hooks/quality-gate.sh",
+        "timeout": 120
+      }
+    ]
+  }
+}

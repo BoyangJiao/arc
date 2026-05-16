@@ -39,6 +39,9 @@ pnpm-debug.log*
 # qoder
 .qoder/
 
+# cursor (skills mirrored from .claude/skills via tools/sync-skills.sh)
+.cursor/skills/
+
 # planning scratchpad (Delta screenshots, IA reference, designer drafts — local only)
 .tempref/
 

@@ -1,0 +1,15 @@
+---
+description: Financial math and data-model invariants (P0)
+alwaysApply: true
+---
+
+# Financial & data invariants
+
+- **Never use `number` for money** (price, quantity, cost, FX, NAV). Use `decimal.js` (`Decimal`).
+- **Five laws** (details in `.specify/data-model-invariants.md`):
+  1. Asset ID `market:symbol` is immutable once written
+  2. Holdings = Σ(transactions) + Σ(snapshot adjustments) — no direct holding edits
+  3. External APIs only via `packages/data-sources/` adapters
+  4. Store original currency; convert only for display
+  5. Historical values use historical prices/FX; current uses latest — never mix
+- **ADR 007:** No `if (DEV_*) return mock` shortcuts. Dev data via `pnpm seed:dev` into real Supabase dev project. Per-test mocks in unit tests are OK.

@@ -9,13 +9,18 @@ Arc's solo + AI-pair-programming workflow.
 
 ---
 
-## Layer 1 — `.claude/hooks/` — Claude Code Session Automation
+## Layer 1 — Session automation (Claude Code + Cursor)
 
-| Hook               | Trigger                    | What it does                                                                                                                                                                                                                        |
-| :----------------- | :------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session-start.sh` | Every Claude session start | (remote only) `pnpm install --silent`<br>(always) checks `.specify/constitution.md` mtime → reminds AI to re-read if updated within 7 days<br>(always) runs `pnpm typecheck` and reports 6/6 status; surfaces first 5 errors if any |
+Shared scripts live in `.claude/hooks/`. Both IDEs run the same checks.
 
-**Effect**: any new Claude session starts with a known-good baseline (deps installed, typecheck status known, constitution freshness flagged).
+| Script             | Claude Code (`settings.json`) | Cursor (`.cursor/hooks.json`) | What it does                                                                                                                                                                                                                        |
+| :----------------- | :---------------------------- | :---------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session-start.sh` | SessionStart                  | `sessionStart`                | (remote only) `pnpm install --silent`<br>(always) checks `.specify/constitution.md` mtime → reminds AI to re-read if updated within 7 days<br>(always) runs `pnpm typecheck` and reports 6/6 status; surfaces first 5 errors if any |
+| `quality-gate.sh`  | Stop                          | `stop` (120s timeout)         | Blocks task completion if `pnpm typecheck` or `@arc/core` tests fail                                                                                                                                                                |
+
+**Cursor rules**: `.cursor/rules/*.mdc` — P0 bootstrap, financial invariants, copy compliance; file-scoped UI/i18n rules.
+
+**Effect**: any new AI session starts with a known-good baseline; ending a Cursor agent run is gated the same way as Claude Code Stop.
 
 ---
 
@@ -42,11 +47,11 @@ Managed via [husky](https://typicode.github.io/husky/) (set automatically by `pr
 项目采用 **canonical source + 本地镜像** 模式管理跨 IDE 的 skills：
 
 - **Canonical source**：`.claude/skills/` — 纳入 Git 版本控制，随代码提交推送
-- **本地镜像**：`.qoder/skills/` — 在 `.gitignore` 中，仅本地可见
+- **本地镜像**：`.qoder/skills/`、`.cursor/skills/` — 在 `.gitignore` 中，仅本地可见
 - **同步方向**：单向，canonical → 镜像
 - **同步脚本**：`tools/sync-skills.sh`（以 `.claude/skills` 为 source of truth）
 
-当未来引入新 IDE/Agent（如 Codex、Cursor）时，只需在同步脚本中添加新的镜像目录即可，无需改变 canonical source。
+新 IDE 只需在 `tools/sync-skills.sh` 的 `MIRROR_DIRS` 增加目标路径。
 
 | 触发时机   | Hook            | 说明                                       |
 | :--------- | :-------------- | :----------------------------------------- |

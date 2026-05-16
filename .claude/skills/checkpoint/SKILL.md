@@ -1,11 +1,11 @@
 ---
 name: checkpoint
-description: Update .specify/session-state.md with current project progress so the next Claude session can resume cold without losing context. Trigger at end of major work blocks ("commit-equivalent moments"), before context window fills, or on user request ("checkpoint", "save state", "/checkpoint", "before I close, save").
+description: Update .specify/session-state.md with current project progress so the next AI session (Cursor, Claude Code, etc.) can resume cold without losing context. Trigger at end of major work blocks ("commit-equivalent moments"), before context window fills, or on user request ("checkpoint", "save state", "/checkpoint", "before I close, save").
 ---
 
 # checkpoint
 
-Snapshot the live project state into `.specify/session-state.md` so any future Claude session (this user, this repo) can resume from cold with zero context loss.
+Snapshot the live project state into `.specify/session-state.md` so any future AI session (Cursor, Claude Code, this repo) can resume from cold with zero context loss.
 
 ## When to invoke
 

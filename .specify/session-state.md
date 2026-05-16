@@ -1,6 +1,6 @@
 # Arc — Session State (Live)
 
-> **READ THIS FIRST in every new Claude Code session.**
+> **READ THIS FIRST in every new AI session** (Cursor, Claude Code, Qoder, etc.).
 >
 > This file is the single living snapshot of "where we are right now". It's
 > intentionally short and high-frequency-update. Stable rules go in
@@ -8,7 +8,7 @@
 > in `feature-specs/`. This file answers: **"if I dropped in cold, what would
 > I need to know to keep working?"**
 >
-> Update mechanism: invoke the `/checkpoint` skill (see `.claude/skills/checkpoint/`)
+> Update mechanism: `/checkpoint` (Cursor command or Claude skill — see `.claude/skills/checkpoint/`)
 > at end of major work blocks, OR before context window fills.
 >
 > **Last updated**: 2026-05-15 by Claude Opus 4.7 (Stage 1 step 4 audit + ADR 006/007 起草)

@@ -237,7 +237,7 @@ pnpm format           # Prettier 格式化
 
 # Skills 同步（通常由 git hooks 自动触发）
 #   canonical source: .claude/skills/ (纳入 Git)
-#   本地镜像: .qoder/skills/ 等 (gitignored)
+#   本地镜像: .qoder/skills/, .cursor/skills/ (gitignored)
 pnpm sync:skills      # 手动同步 canonical → 本地镜像
 
 # packages/db 就绪后：
