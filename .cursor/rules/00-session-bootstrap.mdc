@@ -1,19 +1,12 @@
 ---
-description: Cold-start read order and session handoff for any AI session (Cursor, Claude Code, etc.)
+description: Session handoff — complements AGENTS.md (read order is defined there)
 alwaysApply: true
 ---
 
 # Session bootstrap
 
-**New session — read in order:**
+**Read order:** see `AGENTS.md` (session-state → CLAUDE.md → constitution).
 
-1. `.specify/session-state.md` — current progress, blockers, next actions
-2. `CLAUDE.md` — project rules and structure
-3. `.specify/constitution.md` — P0 constraints and forbidden copy
+**Before ending work:** update `.specify/session-state.md` (`/checkpoint` in Cursor or Claude Code).
 
-**Before ending a substantial work block:**
-
-- Update `.specify/session-state.md` (use `/checkpoint` or follow `.claude/skills/checkpoint/SKILL.md`)
-- Commit and push when code changed
-
-**Cross-IDE handoff:** `session-state.md` is the single live snapshot; do not rely on chat history when switching between Cursor and Claude Code.
+**Cross-IDE:** `session-state.md` is the only handoff artifact — do not rely on chat history when switching tools.

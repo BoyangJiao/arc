@@ -17,7 +17,7 @@
 > - `docs/adr/` — 关键架构决策记录
 > - `.specify/feature-specs/<name>.md` — 当前 feature 的契约（如手头工作涉及）
 >
-> **会话结束 / 上下文将满时**：调用 `/checkpoint` skill 更新 `session-state.md`，下一会话才能无缝接续。
+> **会话结束 / 上下文将满时**：更新 `session-state.md`（Cursor：`/checkpoint`；Claude Code：`.claude/skills/checkpoint/`），下一会话才能无缝接续。多工具入口见 `AGENTS.md`。
 
 ---
 
@@ -276,7 +276,7 @@ pnpm --filter @arc/db push       # 推送 schema 到 Supabase
 - husky pre-commit → lint-staged 自动 prettier + skills 有变更时同步到本地镜像
 - husky post-checkout/post-merge → 自动 sync skills（canonical source → 本地镜像）
 - GitHub Actions pre-push → typecheck + lint + property tests
-- Claude SessionStart hook → 自动 typecheck + 提示 constitution 更新
+- Claude SessionStart / Cursor `sessionStart` hook → 自动 typecheck + 提示 constitution 更新
 - packages/core 的 property-based tests（vitest + fast-check）守护 Decimal / Asset ID / 数据模型不变性
 
 完整说明：`docs/HARNESS.md`

@@ -22,22 +22,22 @@ project orientation, this directory reads as **enforceable constraints**.
 
 ## How specs are enforced
 
-| Layer                      | What it enforces                                                                                       |
-| :------------------------- | :----------------------------------------------------------------------------------------------------- |
-| `typecheck`                | Type constraints (Decimal types, readonly fields)                                                      |
-| `eslint`                   | Code-style constraints (no `number` for money, no hard-coded colors, no hard-coded strings) — Stage 2+ |
-| `pre-commit hook` (husky)  | Lint + format on changed files                                                                         |
-| `pre-push CI gate`         | Typecheck + lint + property-based tests on every push                                                  |
-| `Claude Code SessionStart` | Re-reads constitution on session start; reminds AI                                                     |
-| Human review               | Anything machines can't enforce                                                                        |
+| Layer                               | What it enforces                                                                                       |
+| :---------------------------------- | :----------------------------------------------------------------------------------------------------- |
+| `typecheck`                         | Type constraints (Decimal types, readonly fields)                                                      |
+| `eslint`                            | Code-style constraints (no `number` for money, no hard-coded colors, no hard-coded strings) — Stage 2+ |
+| `pre-commit hook` (husky)           | Lint + format on changed files                                                                         |
+| `pre-push CI gate`                  | Typecheck + lint + property-based tests on every push                                                  |
+| Claude / Cursor session start hooks | typecheck baseline + constitution freshness reminder                                                   |
+| Human review                        | Anything machines can't enforce                                                                        |
 
 ## Relationship to `.claude/skills/`
 
-| `.specify/`                               | `.claude/skills/`                       |
-| :---------------------------------------- | :-------------------------------------- |
-| What the code **must do**                 | How the AI **should work**              |
-| Read by humans + AI alike                 | Loaded only by Claude Code skill system |
-| Slow-changing (constitution rarely edits) | Can iterate skills freely               |
+| `.specify/`                               | `.claude/skills/`                                                                                  |
+| :---------------------------------------- | :------------------------------------------------------------------------------------------------- |
+| What the code **must do**                 | How the AI **should work**                                                                         |
+| Read by humans + AI alike                 | Invoked via IDE skill systems (canonical in `.claude/skills/`, mirrored to `.cursor/skills/` etc.) |
+| Slow-changing (constitution rarely edits) | Can iterate skills freely                                                                          |
 
 ## When to update
 
