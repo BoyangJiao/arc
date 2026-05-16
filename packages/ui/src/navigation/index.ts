@@ -14,4 +14,10 @@ export {
   type FloatingTabBarProps,
 } from "./FloatingTabBar";
 
+export {
+  SwipeableActionsRow,
+  type SwipeableActionsRowProps,
+  type SwipeAction,
+} from "./SwipeableActionsRow";
+
 export * from "./header";

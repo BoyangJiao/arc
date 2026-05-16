@@ -13,9 +13,9 @@
  * single TanStack Query with proper invalidation.
  */
 
-import { Alert, Pressable, View } from "react-native";
+import { Alert, View } from "react-native";
 import { useLocalSearchParams, useRouter, Stack, type Href } from "expo-router";
-import { Button, Card, Screen, Text, Trash2, useStackScreenOptions } from "@arc/ui";
+import { Button, Card, Screen, SwipeableActionsRow, Text, useStackScreenOptions } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import { parseAssetId, type Currency, type Holding, type MarketValuation } from "@arc/core";
 import Decimal from "decimal.js";
@@ -221,24 +221,30 @@ function HoldingRow({
       : t("portfolioDetail.priceUnavailable");
 
   return (
-    <Card>
-      <View className="flex-row items-center px-3 py-3">
-        <View className="flex-1">
-          <Text className="text-foreground font-medium">{symbol}</Text>
-          <Text className="text-muted text-xs">{holding.currency}</Text>
+    <SwipeableActionsRow
+      actions={[
+        {
+          key: "delete",
+          label: t("portfolioDetail.removeHolding"),
+          destructive: true,
+          accessibilityLabel: t("portfolioDetail.removeHolding"),
+          onPress: onRemove,
+        },
+      ]}
+    >
+      <Card>
+        <View className="flex-row items-center px-3 py-3">
+          <View className="flex-1">
+            <Text className="text-foreground font-medium">{symbol}</Text>
+            <Text className="text-muted text-xs">{holding.currency}</Text>
+          </View>
+          <Text className="text-foreground w-16 text-right text-sm">
+            {holding.shares.toFixed(2)}
+          </Text>
+          <Text className="text-muted w-20 text-right text-sm">{priceLabel}</Text>
+          <Text className="text-foreground w-24 text-right text-sm font-medium">{valueLabel}</Text>
         </View>
-        <Text className="text-foreground w-16 text-right text-sm">{holding.shares.toFixed(2)}</Text>
-        <Text className="text-muted w-20 text-right text-sm">{priceLabel}</Text>
-        <Text className="text-foreground w-20 text-right text-sm font-medium">{valueLabel}</Text>
-        <Pressable
-          onPress={onRemove}
-          accessibilityLabel={t("portfolioDetail.removeHolding")}
-          hitSlop={8}
-          className="ml-1 p-1 active:opacity-60"
-        >
-          <Trash2 size={18} className="text-muted" />
-        </Pressable>
-      </View>
-    </Card>
+      </Card>
+    </SwipeableActionsRow>
   );
 }

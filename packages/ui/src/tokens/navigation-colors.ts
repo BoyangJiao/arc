@@ -61,6 +61,31 @@ export const NAVIGATION_COLORS: Record<"light" | "dark", NavigationColorSet> = {
 };
 
 /**
+ * Swipe action color set (used by SwipeableActionsRow).
+ * StyleSheet-only context (Pressable bg + Text color in reanimated swipeable
+ * action panel), so raw colors are required — same rationale as TAB_BAR_COLORS.
+ *
+ * Stage 1 simplification: single set (not light/dark keyed). The destructive
+ * red stays consistent across themes (iOS HIG convention); the neutral grey
+ * uses a mid-tone that reads OK in both modes. Stage 3 can split if a real
+ * contrast issue emerges.
+ */
+export interface SwipeActionColorSet {
+  /** Default (non-destructive) action background */
+  neutralBg: string;
+  /** Destructive action background (e.g. Delete) */
+  destructiveBg: string;
+  /** Action label color (white reads on both neutral + destructive) */
+  label: string;
+}
+
+export const SWIPE_ACTION_COLORS: SwipeActionColorSet = {
+  neutralBg: "#71717a", // --color-neutral-500 (mid grey readable both modes)
+  destructiveBg: "#e11d48", // --color-red-600 (HIG destructive convention)
+  label: "#ffffff", // --color-white (paired with both bgs)
+};
+
+/**
  * Floating tab bar color palette keyed by color mode.
  * Consumed by FloatingTabBar component via StyleSheet (raw values required).
  */
