@@ -11,6 +11,9 @@
 > Update mechanism: `/checkpoint` (Cursor command or Claude skill — see `.claude/skills/checkpoint/`)
 > at end of major work blocks, OR before context window fills.
 >
+> **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets
+> (this file is committed to Git).
+>
 > **Last updated**: 2026-05-17 by Claude Opus 4.7 (Stage 1 sign-off + merge prep)
 
 ---
