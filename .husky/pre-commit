@@ -28,10 +28,10 @@ KEY_LEAKS=$(printf '%s\n' "$ADDED_LINES" \
 [ -n "$KEY_LEAKS" ] && LEAKS="${LEAKS}
 ${KEY_LEAKS}"
 
-# Postgres URL with non-placeholder password in path
+# Postgres URL with non-placeholder password (avoid / inside [] — breaks BSD grep)
 DB_LEAKS=$(printf '%s\n' "$ADDED_LINES" \
-  | grep -E 'postgresql://[^[:space:]]+:[^[:space:]/]+@' \
-  | grep -viE 'YOUR_|password|changeme|xxx' || true)
+  | grep -E 'postgresql://[^[:space:]]+:[^@]+@' \
+  | grep -viE 'YOUR_|PASSWORD|changeme|xxx' || true)
 [ -n "$DB_LEAKS" ] && LEAKS="${LEAKS}
 ${DB_LEAKS}"
 
