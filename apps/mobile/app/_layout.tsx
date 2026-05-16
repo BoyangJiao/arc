@@ -32,10 +32,14 @@ import { useEffect, useMemo } from "react";
 import { Stack, useRouter, useSegments, type Href } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { HeroUINativeProvider } from "heroui-native";
 import { QueryClientProvider } from "@tanstack/react-query";
 
-import { BusinessTokensProvider, DEFAULT_FINANCE_COLOR_MODE, NAVIGATION_COLORS } from "@arc/ui";
+import {
+  BusinessTokensProvider,
+  DEFAULT_FINANCE_COLOR_MODE,
+  HeroUINativeProvider,
+  NAVIGATION_COLORS,
+} from "@arc/ui";
 
 import { AuthProvider, useAuth } from "../src/lib/auth";
 import { queryClient } from "../src/lib/query-client";
