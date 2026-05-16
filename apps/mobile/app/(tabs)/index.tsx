@@ -15,7 +15,7 @@
 import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
-import { Card, FLOATING_TAB_BAR_BOTTOM_INSET, Screen, Text } from "@arc/ui";
+import { Card, FLOATING_TAB_BAR_BOTTOM_INSET, Screen, Text, UserAvatar } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
 import { useAuth } from "../../src/lib/auth";
@@ -64,14 +64,10 @@ export default function PortfolioTab() {
         paddingBottom: FLOATING_TAB_BAR_BOTTOM_INSET,
       }}
     >
-      {/* Top bar: avatar left, no title */}
+      {/* Top bar: avatar left (ADR 004 dicebear), no title */}
       <View className="flex-row items-center justify-between mb-4">
-        <Pressable onPress={handleAvatarPress} accessibilityLabel={t("me.title")}>
-          <View className="w-10 h-10 rounded-full bg-accent items-center justify-center">
-            <Text className="text-accent-foreground text-sm font-semibold">
-              {user?.email?.charAt(0).toUpperCase() ?? "?"}
-            </Text>
-          </View>
+        <Pressable onPress={handleAvatarPress} accessibilityLabel={t("me.title")} hitSlop={8}>
+          <UserAvatar seed={user?.email} size={40} />
         </Pressable>
         {/* Right side: empty in Stage 1-2 (AI icon in Stage 3+) */}
         <View className="w-10 h-10" />

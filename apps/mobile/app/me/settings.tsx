@@ -14,7 +14,7 @@
 
 import { Pressable, View } from "react-native";
 import { Stack } from "expo-router";
-import { Switch, Screen, Text, useFinanceColorMode } from "@arc/ui";
+import { Switch, Screen, Text, useFinanceColorMode, useStackScreenOptions } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import i18n from "@arc/i18n";
 import type { FinanceColorMode, Currency, Locale } from "@arc/core";
@@ -52,14 +52,14 @@ export default function SettingsScreen() {
     i18n.changeLanguage(locale);
   };
 
+  const screenOptions = useStackScreenOptions({
+    title: t("settings.title"),
+    backType: "chevron",
+  });
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: t("settings.title"),
-        }}
-      />
+      <Stack.Screen options={screenOptions} />
       <Screen>
         <View className="gap-4">
           {/* Reporting Currency */}

@@ -20,11 +20,21 @@
  *   surface a clear error. Stage 2's asset-search Modal removes this friction.
  */
 
-import { useCallback, useState } from "react";
-import { Pressable, View } from "react-native";
+import { useState } from "react";
+import { View } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import Decimal from "decimal.js";
-import { Button, Description, FieldError, Input, Label, Screen, Text, TextField } from "@arc/ui";
+import {
+  Button,
+  Description,
+  FieldError,
+  Input,
+  Label,
+  Screen,
+  Text,
+  TextField,
+  useStackScreenOptions,
+} from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import { composeAssetId, type Currency, type Market } from "@arc/core";
 
@@ -131,25 +141,17 @@ export default function AddTransactionScreen() {
     router.back();
   };
 
-  const handleClose = useCallback(() => {
-    router.back();
-  }, [router]);
-
   const isSubmitting = createTransaction.isPending;
   const todayLabel = new Date().toLocaleDateString();
 
+  const screenOptions = useStackScreenOptions({
+    title: t("transaction.addTitle"),
+    backType: "close",
+  });
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: t("transaction.addTitle"),
-          headerLeft: () => (
-            <Pressable onPress={handleClose} hitSlop={8} accessibilityLabel={t("common.close")}>
-              <Text className="text-accent text-base">{t("common.close")}</Text>
-            </Pressable>
-          ),
-        }}
-      />
+      <Stack.Screen options={screenOptions} />
       <Screen edges={["bottom"]}>
         <View className="gap-4">
           {/* Asset symbol — required, locked to US market in Stage 1 */}

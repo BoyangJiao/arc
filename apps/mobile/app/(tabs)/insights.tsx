@@ -3,10 +3,12 @@
  *
  * Per IA v2.2 §四: "Stage 1 = 空态 + Coming soon"
  * Central illustration + text, no action buttons.
+ *
+ * Fix 6b: replaces emoji + handrolled layout with HeroUI Pro EmptyState
+ * + Lucide Lightbulb icon (matches the insights tab bar icon).
  */
 
-import { View } from "react-native";
-import { FLOATING_TAB_BAR_BOTTOM_INSET, Screen, Text } from "@arc/ui";
+import { EmptyState, FLOATING_TAB_BAR_BOTTOM_INSET, Lightbulb, Screen } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
 export default function InsightsTab() {
@@ -14,14 +16,15 @@ export default function InsightsTab() {
 
   return (
     <Screen scroll={false} contentContainerStyle={{ paddingBottom: FLOATING_TAB_BAR_BOTTOM_INSET }}>
-      <View className="flex-1 items-center justify-center px-8">
-        <Text className="text-6xl mb-6">💡</Text>
-        <Text className="text-foreground text-xl font-semibold text-center mb-2">
-          {t("insights.title")}
-        </Text>
-        <Text className="text-muted text-center mb-2">{t("insights.comingSoon")}</Text>
-        <Text className="text-muted text-xs text-center">{t("insights.comingSoonHint")}</Text>
-      </View>
+      <EmptyState className="flex-1 px-8 justify-center">
+        <EmptyState.Header>
+          <EmptyState.Media variant="icon">
+            <Lightbulb size={28} className="text-muted" />
+          </EmptyState.Media>
+          <EmptyState.Title>{t("insights.title")}</EmptyState.Title>
+          <EmptyState.Description>{t("insights.comingSoon")}</EmptyState.Description>
+        </EmptyState.Header>
+      </EmptyState>
     </Screen>
   );
 }

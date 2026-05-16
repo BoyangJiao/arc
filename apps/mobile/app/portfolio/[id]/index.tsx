@@ -15,7 +15,7 @@
 
 import { View } from "react-native";
 import { useLocalSearchParams, useRouter, Stack, type Href } from "expo-router";
-import { Button, Card, Screen, Text } from "@arc/ui";
+import { Button, Card, Screen, Text, useStackScreenOptions } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import { parseAssetId, type Currency, type MarketValuation } from "@arc/core";
 import Decimal from "decimal.js";
@@ -52,15 +52,14 @@ export default function PortfolioDetailScreen() {
     router.push(`/portfolio/${id}/transactions/new` as Href);
   };
 
+  const screenOptions = useStackScreenOptions({
+    title: portfolio?.name ?? t("portfolio.title"),
+    backType: "chevron",
+  });
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: portfolio?.name ?? t("portfolio.title"),
-          headerBackTitle: t("common.back"),
-        }}
-      />
+      <Stack.Screen options={screenOptions} />
       <Screen>
         {/* Total market value section */}
         <View className="mb-6">
