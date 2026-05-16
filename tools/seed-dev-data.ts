@@ -10,9 +10,13 @@
  *   pnpm seed:dev --email <your-email> [--mode reset|append]
  *
  * Reads from:
- *   apps/mobile/.env.dev.local   (gitignored)
+ *   <repo-root>/.env.dev.local   (gitignored)
  *     SUPABASE_DEV_URL=https://<project>.supabase.co
  *     SUPABASE_DEV_SERVICE_ROLE_KEY=eyJ...   ← Dashboard → Settings → API → service_role
+ *
+ *   ↑ File lives at repo root, NOT apps/mobile/. Metro/Expo only knows the
+ *   standard .env names; a non-standard one under apps/mobile/ crashes the
+ *   bundler ("Unexpected token" on the # comment). See ADR 007.
  *
  * Safety rails (ADR 007 §决策三 - service role key 防线):
  *   1. URL must not contain "prod" / "production"
@@ -32,7 +36,7 @@ import { createClient } from "@supabase/supabase-js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const REPO_ROOT = resolve(__dirname, "..");
-const ENV_FILE = resolve(REPO_ROOT, "apps/mobile/.env.dev.local");
+const ENV_FILE = resolve(REPO_ROOT, ".env.dev.local");
 
 interface SeedArgs {
   email: string;
@@ -74,7 +78,7 @@ Usage:
   pnpm seed:dev --email <email> --mode reset
   pnpm seed:dev --email <email> --mode append
 
-Env file: apps/mobile/.env.dev.local (gitignored; see .env.dev.example)
+Env file: <repo-root>/.env.dev.local (gitignored; see .env.dev.example)
   SUPABASE_DEV_URL
   SUPABASE_DEV_SERVICE_ROLE_KEY
 `);
@@ -84,7 +88,7 @@ function loadEnvFile(path: string): Record<string, string> {
   if (!existsSync(path)) {
     die(
       `Env file not found: ${path}\n` +
-        `Copy apps/mobile/.env.dev.example → .env.dev.local and fill in the service role key.`
+        `Copy .env.dev.example → .env.dev.local (both at repo root) and fill in the service role key.`
     );
   }
   const raw = readFileSync(path, "utf8");
@@ -193,8 +197,8 @@ async function main() {
   const url = env.SUPABASE_DEV_URL;
   const key = env.SUPABASE_DEV_SERVICE_ROLE_KEY;
 
-  if (!url) die("SUPABASE_DEV_URL missing in apps/mobile/.env.dev.local");
-  if (!key) die("SUPABASE_DEV_SERVICE_ROLE_KEY missing in apps/mobile/.env.dev.local");
+  if (!url) die("SUPABASE_DEV_URL missing in .env.dev.local (repo root)");
+  if (!key) die("SUPABASE_DEV_SERVICE_ROLE_KEY missing in .env.dev.local (repo root)");
 
   // Safety rail 1: never accidentally run against prod
   if (/prod|production/i.test(url)) {
