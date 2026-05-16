@@ -11,127 +11,131 @@
 > Update mechanism: `/checkpoint` (Cursor command or Claude skill — see `.claude/skills/checkpoint/`)
 > at end of major work blocks, OR before context window fills.
 >
-> **Last updated**: 2026-05-16 by Cursor (行情 cache-first + AV 限额应对 + 左滑删除；大量改动未 commit)
+> **Last updated**: 2026-05-17 by Claude Opus 4.7 (Stage 1 sign-off + merge prep)
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                             |
-| :-------------------- | :---------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | Stage 1 (MVP-0 端到端骨架)                                                                                        |
-| **Step**              | **Stage 1 代码收尾 + dev 行情策略** — 待 commit 未提交 diff + S1-AC-1～6 人工验收（S1-AC-5 推迟 Stage 2）         |
-| **Branch**            | `dev/stage-1` — **ahead 1** of `origin/dev/stage-1`；另有 **~15 文件未 commit**（见 git status）                  |
-| **Last commit**       | `45e57cd` — fix(mobile): validate symbols on add, delete holdings, smarter quote fetch                            |
-| **PR**                | [#5](https://github.com/BoyangJiao/arc/pull/5) — OPEN — 本地 `typecheck` / `test` ✅；push 前需 commit 工作区改动 |
-| **CI status**         | 本地 gate ✅（2026-05-16）；远程待 push 后确认                                                                    |
-| **Mobile dev server** | 用户本地 Metro；改 `.env` 后需 `pnpm --filter @arc/mobile start --clear`                                          |
-| **gh CLI**            | Installed at `~/.local/bin/gh` (v2.92.0), already on PATH; auth via `GH_TOKEN` env var                            |
+| Field                 | Value                                                                                                                                           |
+| :-------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 1 → Stage 2 transition**                                                                                                                |
+| **Step**              | Stage 1 ✅ SIGNED OFF — merging dev/stage-1 → main, then opening dev/stage-2                                                                    |
+| **Branch**            | `dev/stage-1` clean + pushed; about to merge to `main`                                                                                          |
+| **Last commit**       | `f819520` — chore(mobile): metro monorepo paths                                                                                                 |
+| **PR**                | [#5](https://github.com/BoyangJiao/arc/pull/5) — ready to merge                                                                                 |
+| **CI status**         | Local typecheck ✅ / lint ✅ (6/6 packages) / test ✅ (47 + 14 + 31)                                                                            |
+| **Mobile dev server** | 用户本地 Metro；改 `.env` / 切 dev toggle 后建议 `--clear` 重启                                                                                 |
+| **gh CLI**            | Installed at `~/.local/bin/gh` (v2.92.0); user revoked all PATs 2026-05-17 — re-create one with `repo` scope when next needed for `gh` commands |
 
-## Stage 1 step progress
+## Stage 1 — SIGNED OFF (2026-05-17)
 
-| #   | Step                                                                           | Status      | Commits               |
-| :-- | :----------------------------------------------------------------------------- | :---------- | :-------------------- |
-| 1   | Drizzle DB schema + RLS + Supabase migrations                                  | ✅ done     | `00bbd2b`             |
-| 2   | Auth (OTP code primary; magic link secondary; PKCE deep link)                  | ✅ done     | `ade7787` → `3da0fb8` |
-| 3   | Data source adapters (Alpha Vantage US + Frankfurter FX + cache + 31 tests)    | ✅ done     | `dc426f1`             |
-| 4   | 5 real pages (Portfolio Tab, detail, add-tx modal, Settings, Me + tabs layout) | ✅ 代码就位 | `1c439db` 等          |
-| 5   | Business token system + ESLint guard                                           | ✅ done     | `5d398af`             |
+| #   | Step                                                                           | Status  |
+| :-- | :----------------------------------------------------------------------------- | :------ |
+| 1   | Drizzle DB schema + RLS + Supabase migrations                                  | ✅ done |
+| 2   | Auth (OTP code primary; magic link secondary; PKCE deep link)                  | ✅ done |
+| 3   | Data source adapters (Alpha Vantage US + Frankfurter FX + cache + tests)       | ✅ done |
+| 4   | 5 real pages (Portfolio Tab, detail, add-tx modal, Settings, Me + tabs layout) | ✅ done |
+| 5   | Business token system + ESLint guard                                           | ✅ done |
 
-Stage 1 complete = **代码 ~5/5，验收待勾**。S1-AC-5（涨跌色可见 UI）**用户决定推迟到 Stage 2**（有图表后更易验证）；其余 S1-AC-1～4、6 需人工跑一遍。
+### S1-AC sign-off table
 
-### Step 4 审计核心结论（2026-05-15 by Claude Opus 4.7）
+| AC      | Journey                                 | Result                                   | Verified by                                                                      |
+| :------ | :-------------------------------------- | :--------------------------------------- | :------------------------------------------------------------------------------- |
+| S1-AC-1 | J1 — First-time login                   | ✅ user verified                         | Manual (2026-05-17)                                                              |
+| S1-AC-2 | J2 — Add transaction → CNY market value | ✅ user verified                         | Manual (2026-05-17)                                                              |
+| S1-AC-3 | J3 — Switch reporting currency          | ✅ user verified                         | Manual (2026-05-17)                                                              |
+| S1-AC-4 | J4 — Switch language zh ↔ en            | ✅ user verified                         | Manual (2026-05-17)                                                              |
+| S1-AC-5 | J5 — Red-up/green-down toggle           | ⏸ deferred to Stage 2                    | User decision — needs charts / Daily Snapshot for meaningful visual verification |
+| S1-AC-6 | Build & deploy                          | ✅ web bundle clean; TestFlight optional | Local `expo export` + gates                                                      |
 
-- **P0-1/2/3 数据链路断裂**：`usePrice` / `useFxRate` / `computeMarketValue` 全未被任何页面调用；Portfolio Tab/Detail 展示的"总市值"实为成本基（cost basis）；切换报告货币只换符号不换数字。**S1-AC-2 / S1-AC-3 未达成。**
-- **P0-4 Lint 红线**：FloatingTabBar.tsx 两处硬编码 rgba 违反 step 5 加的 `no-restricted-syntax`。session-state 此前标 ✅ 是错的。
-- **P0-5 transactions/new 偏离铁律**：用 `Number()` 校验金融数值、用字符串拼接 `assetId` 不走 `composeAssetId()`、缺日期字段、`currency` 硬编码 `"USD"` 与 symbol 输入不一致。
-- **P0-6 ADR 004 未落地**：手写圆+首字母替代了 dicebear gradient avatar；Portfolio Tab 与 Me 两处复制粘贴。
-- **根因**：`DEV_BYPASS_AUTH` + 前端 dev-seed 把 auth + hooks 链路全短路 → 真实数据流从未跑过 → P0 长期掩盖。
+### Stage 1 outcome summary
 
-### 应对（已就位 / 待执行）
+- 3 Tab skeleton + Me full-screen page + transaction form sheet + auth gating
+- Real Alpha Vantage + Frankfurter data flow end-to-end (Decimal everywhere)
+- @arc/ui interface layer with 8 sub-layers (ADR 006) — business code zero direct 3rd-party imports
+- Dev experience: FixtureAdapter behind Settings toggle (ADR 008) — 90% of dev runs zero-network
+- Tests: 92 total (core 31 + data-sources 47 + ui 14)
+- Lint: enforced across all 6 workspaces (one ESLint config, one CI check)
 
-- ✅ 起草 ADR-006「`@arc/ui` 分层 + 非 HeroUI 组件归位规范」
-- ✅ 起草 ADR-007「Dev Auth 持久化 + 种子数据 SQL 注入策略」
-- ✅ 更新 constitution.md 加铁律「真实链路不可绕过」+ 扩展 Components 铁律覆盖所有第三方包
-- ✅ 更新 CLAUDE.md §三新增 §3.5、§五 monorepo 结构改 8 层 + 决策树
-- ✅ 上述 P0 修复项已在 2026-05-15～16 落地（见 `1c439db` 及此前 commits）
-- ✅ `pnpm seed:dev` 用户已跑通；dev Supabase 有 seed 报价 + HOOD 占位价
-- ⏳ **剩**：commit 本 session 未提交改动 → push PR #5 → S1-AC-1～4、6 人工验收 → Stage 1 签字
+### ADRs landed in Stage 1
 
-## Recent decisions (last 7 days)
-
-- **行情 `cache-first`（**DEV** 默认）** — `EXPO_PUBLIC_MARKET_DATA_POLICY=cache-first`；内存 → AsyncStorage → Supabase；仅下拉刷新 / 新 ticker 首次校验打 AV。`live` 模式在 AV 限流时回退 stale 缓存。
-- **组合详情左滑删除** — `@arc/ui` `SwipeableActionsRow`（ReanimatedSwipeable）；行尾垃圾桶已移除。
-- **DB migration 0002** — `price_snapshots` / `fx_rates` authenticated INSERT（dev 持久化缓存）；0001 为 US `assets` INSERT。
-- **FloatingTabBar 对齐 Crypto Wallet 模板** — HeroUI `Surface` + `PressableFeedback`；仅图标无文字；Ionicons outline/filled（`@arc/ui/wrappers/tab-bar-icons`）。列表/空态仍用 Lucide。
-- **S1-AC-5 推迟** — Stage 1 不做涨跌色预览 UI；Stage 2 有 Daily Snapshot / 图表后再验。
-- **iOS 26 floating tab bar** — 自建 FloatingTabBar（ADR 006 navigation 层）；expo-blur SDK 54 不兼容，模板用 HeroUI Surface 替代半透明胶囊。
-- **Dark Mode via ThemeProvider** — useColorMode() hook + Appearance.setColorScheme()；Screen 组件背景色从 SafeAreaView 移到 Uniwind-aware View。
-- **BusinessTokensProvider 内部状态** — financeColorMode 改为内部 useState 管理，暴露 setFinanceColorMode，解决跨组件切换问题。
-- **Dev seed via SQL** — `pnpm seed:dev` → `tools/seed-dev-data.ts`（ADR 007）；已删 DEV_BYPASS / dev-seed.ts。
-- **OTP code primary, magic link secondary** — Mac browser can't bridge `exp://` deep links to iOS sim's Expo Go; OTP works everywhere.
-- **Screen primitive in `@arc/ui`** — every screen uses `<Screen>` for safe-area + scroll.
+| ADR      | Topic                                                               |
+| :------- | :------------------------------------------------------------------ |
+| 001      | Tech Stack (Expo + Supabase + Drizzle + decimal.js)                 |
+| 002      | UI library decision (HeroUI Native + Pro + Uniwind + Tailwind v4)   |
+| 003 v3.1 | Design Tokens 架构（Foundation 直消费 + Business 平行）             |
+| 004      | Avatar generation (dicebear gradient)                               |
+| 005      | Tailwind v4 OKLCH 色阶系统                                          |
+| 006      | `@arc/ui` 分层 + 非 HeroUI 组件归位规范（Header Atoms / Sheet 等）  |
+| 007      | Dev Auth 持久化 + 种子数据 SQL 注入策略（real-flow integrity 铁律） |
+| 008      | Dev 行情数据策略：FixtureAdapter + Settings 双档开关                |
 
 ## Active blockers / waiting on user
 
-- ⚠️ **Alpha Vantage 免费档已触限** — 调试期勿下拉刷新；用 seed/缓存价。配额恢复后再拉一次写入缓存。
-- ⏳ **Supabase SQL** — 若未执行：应用 `0001_assets_authenticated_insert.sql` + `0002_market_cache_public_read_authenticated_insert.sql`
-- ⏳ **Stage 1 人工验收**（J1–J4、J6；J5 推迟 Stage 2）
+- **None.** Stage 1 signed off. Ready to merge → main → open dev/stage-2.
 
 ## Immediate next actions (next session, 按顺序)
 
-1. **Commit 工作区**（cache-first、persistent cache、SwipeableActionsRow、migration 0002、data-sources 去重等）→ `git push` PR #5
-2. 确认 `apps/mobile/.env` 为 `EXPO_PUBLIC_MARKET_DATA_POLICY=cache-first`；Metro `--clear` 后验总市值 ≈ **¥84,719**（4 持仓 + seed/HOOD 缓存）
-3. 按 `.specify/stage-acceptance-criteria.md` 跑 S1-AC-1～4、6
-4. Stage 1 签字 → Stage 2 规划
+1. **Merge `dev/stage-1` → `main`** (merge commit, preserve history). PR #5 closes.
+2. **Create `dev/stage-2` from updated main**; push origin.
+3. **Stage 2 planning**: prioritize the 4 big modules listed in dev plan §七:
+   - Daily Snapshot card (Portfolio Tab top)
+   - CSV import (FAB Sheet)
+   - Markets Tab Watchlist (lightweight)
+   - Insights Tab Rebalance basics (target allocation + 行动单)
+4. Discuss S1-AC-5 verification path — likely lands naturally with Daily Snapshot
 
-## Open decisions / questions for user
+## Open decisions / questions for user (Stage 2 onset)
 
-- ADR-006 / 007 中的待确认项（见各自正文「实施清单」）
-- Pro license 商业分发合规性沟通时点（建议 Stage 4 末做一次正式商务确认）
+- Stage 2 priority order across the 4 modules (BoyangJiao to decide; Daily Snapshot is the natural first since it gives users a reason to open the app daily — per development-plan.md §七 Stage 2 goal)
+- Whether to add the suggested follow-up smoke-test workflow (live-vs-fixture contract assertion) — defer until first regression appears
 
 ## Critical mental model (gotchas easy to forget)
 
 - **Decimal.js everywhere**: any financial number is Decimal, never `number`. ESLint catches; tests catch (`packages/core/__tests__/decimal.spec.ts`).
 - **Asset ID immutable**: `market:symbol` (e.g., `US:AAPL`); written via `composeAssetId()` from `@arc/core`. Never reassign.
-- **Business tokens for gain/loss**: business code does NOT use `text-success` / `text-danger` directly for PnL. Use `useBusinessClasses()` from `@arc/ui`. ESLint will eventually enforce; for now CR.
+- **Business tokens for gain/loss**: business code does NOT use `text-success` / `text-danger` directly for PnL. Use `useBusinessClasses()` from `@arc/ui`.
 - **HeroUI Foundation only**: no Tailwind built-in colors (`bg-red-500` etc.) in business code. ESLint enforces.
 - **i18n required**: no hardcoded user-facing strings. Use `t()` from `@arc/i18n`. Add to both `zh.ts` and `en.ts` simultaneously.
-- **Supabase RLS**: migration `0002` 允许 authenticated INSERT 行情/汇率缓存；未应用 migration 时 client 写仍会 warn，内存+AsyncStorage 仍有效。
-- **AV 限额 → 总市值 0**: `live` 策略 + 15min 过期 → 全 miss → 全限流 → 无报价。用 `cache-first` 或 stale 回退；seed 价见下表。
-- **Dev seed 报价（USD）**: AAPL 189.50、MSFT 420.30、NVDA 875.00；FX USD→CNY 7.20；HOOD 占位 77.00（`dev-cost-basis`）。10/5/8/10 股 → 约 **¥84,719** 总市值。
-- **heroui-native-pro postinstall**: needs `HEROUI_AUTH_TOKEN` (CI) or macOS keychain login (`npx heroui-pro login`, dev). CI reads token from GitHub Secret `HEROUI_AUTH_TOKEN` (CI/CD token from heroui.pro/dashboard, NOT Personal Token).
+- **Market data toggle**: dev default is **fixture mode** (zero network). Toggle in Me → Settings to switch real ↔ fixture. Production builds force live regardless. See ADR 008.
+- **Real-flow integrity (铁律 3.5)**: no `if (DEV) return mock` short-circuits in hooks. Implementation-layer swap (FixtureAdapter) is OK, hook-layer mock is not.
+- **Supabase RLS**: migrations 0001 (assets INSERT) + 0002 (price_snapshots / fx_rates RLS) both applied. Stage 4 will move cache writes to Edge Function.
+- **Pro components via subpath**: `import { EmptyState } from "heroui-native-pro/empty-state"` — top-level `import { X } from "heroui-native-pro"` pulls chart-indicator → requires @shopify/react-native-skia → bundle fails.
+- **heroui-native-pro postinstall**: needs `HEROUI_AUTH_TOKEN` (CI) or macOS keychain login (`npx heroui-pro login`, dev). CI reads token from GitHub Secret `HEROUI_AUTH_TOKEN`.
 - **OTP length 8**: this Supabase project (jdvlzkictwinkgcvgwew) is configured for 8-digit; code accepts 6-10.
-- **Expo Go quirk**: Mac browser cannot trigger `exp://` deep link to sim. Use OTP code flow for dev. Magic link only works in standalone build (Stage 4).
-- **SafeAreaView is NOT Uniwind-aware**: react-native-safe-area-context 的 SafeAreaView 不被 Uniwind 运行时拦截，className 在编译期静态解析。背景色必须放在外层 View 上。
-- **expo-blur 版本不兼容**: Expo SDK 54 期望 expo-blur ~15.0.8，npm 安装的 v55 报 Unimplemented component。已移除，改用半透明 View。
-- **pnpm monorepo Metro 解析**: 新装的包需在 apps/mobile/node_modules 下存在，且需重启 Metro（--clear）才能识别。
-- **inline Stack.Screen options 导致全页刷新**: 在 new.tsx 等页面中不要写 inline options 对象（每次 re-render 新引用），应在 \_layout.tsx 中静态声明。
+- **SafeAreaView is NOT Uniwind-aware**: 用 `<Screen>` from `@arc/ui`, not raw SafeAreaView. ESLint enforces in apps/.
+- **expo-blur 不兼容 SDK 54**: 已移除；FloatingTabBar 用 HeroUI Surface 半透明胶囊。
+- **.env.dev.local at repo root** (NOT under apps/mobile/): Metro parses .env-named files under apps/ as JS source; repo-root location sidesteps that.
+- **.claude/settings.local.json is gitignored**: per-dev permissions can contain shell command literals (incl. secrets); never tracked.
 
 ## Active env / config snapshot
 
-| File                        | Status                                                                                |
-| :-------------------------- | :------------------------------------------------------------------------------------ |
-| `apps/mobile/.env`          | Supabase + AV key；**`MARKET_DATA_POLICY=cache-first`**（勿改回 `live` 除非要测实时） |
-| `.env.dev.local`            | repo root；`pnpm seed:dev` 用 service_role（用户已配置）                              |
-| Migrations pending          | `0001` assets INSERT；`0002` price_snapshots/fx_rates RLS — 需在 Supabase 执行        |
-| Supabase project            | `jdvlzkictwinkgcvgwew` (Tokyo, Postgres 17.6.1, ACTIVE_HEALTHY)                       |
-| Supabase Auth redirect URLs | Configured: `arc://auth/callback`, `arc://**`, `exp://**/--/auth/callback`, etc.      |
-| Supabase SMTP               | Resend configured (custom SMTP enabled)                                               |
-| GitHub branch               | `dev/stage-1` (3 commits ahead of main on first commit, now ~10 ahead)                |
-| GitHub Actions              | Pre-push Quality Gate (push + PR triggers)                                            |
-| Husky                       | pre-commit (prettier on staged) + post-checkout/merge (sync skills)                   |
-| Stop hook                   | `.claude/hooks/quality-gate.sh` runs typecheck + tests on AI signal completion        |
+| File                         | Status                                                                                 |
+| :--------------------------- | :------------------------------------------------------------------------------------- |
+| `apps/mobile/.env`           | Supabase + AV key; `MARKET_DATA_POLICY` removed (replaced by Settings toggle, ADR 008) |
+| `.env.dev.local` (repo root) | service_role for `pnpm seed:dev`; user maintains locally                               |
+| Migrations applied           | `0001` assets INSERT; `0002` price_snapshots / fx_rates RLS                            |
+| Supabase project             | `jdvlzkictwinkgcvgwew` (Tokyo, Postgres 17.6.1, ACTIVE_HEALTHY)                        |
+| Supabase Auth redirect URLs  | Configured: `arc://auth/callback`, `arc://**`, `exp://**/--/auth/callback`, etc.       |
+| Supabase SMTP                | Resend configured (custom SMTP enabled)                                                |
+| GitHub branch                | `dev/stage-1` ready to merge to `main`                                                 |
+| GitHub Actions               | Pre-push Quality Gate + Supabase weekly heartbeat (lands on `main` post-merge)         |
+| Husky                        | pre-commit (secret scan + prettier on staged) + post-checkout/merge (sync skills)      |
+| Stop hook                    | `.claude/hooks/quality-gate.sh` runs typecheck + tests on AI signal completion         |
 
 ## Recent ADRs (most relevant first)
 
-| ADR            | Topic                                                             |
-| :------------- | :---------------------------------------------------------------- |
-| 005            | Tailwind v4 OKLCH 色阶系统                                        |
-| 003 v3.1       | Design Tokens 架构（Foundation 直消费 + Business 平行）           |
-| 004            | Avatar generation (dicebear gradient)                             |
-| 002 (branch A) | UI library decision (HeroUI Native + Pro + Uniwind + Tailwind v4) |
-| 001            | Tech stack (Expo + Supabase + Drizzle + decimal.js)               |
+| ADR      | Topic                                                |
+| :------- | :--------------------------------------------------- |
+| 008      | Dev 行情数据策略：FixtureAdapter + Settings 双档开关 |
+| 007      | Dev Auth 持久化 + 种子数据 SQL 注入策略              |
+| 006      | `@arc/ui` 分层架构 + 非 HeroUI 组件归位              |
+| 005      | Tailwind v4 OKLCH 色阶系统                           |
+| 003 v3.1 | Design Tokens 架构                                   |
+| 004      | Avatar generation (dicebear)                         |
+| 002      | UI library decision                                  |
+| 001      | Tech stack                                           |
 
 ## How to use this file
 
