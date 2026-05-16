@@ -27,7 +27,7 @@
  */
 
 import type { ReactNode } from "react";
-import { ScrollView, View, type ScrollViewProps } from "react-native";
+import { RefreshControl, ScrollView, View, type ScrollViewProps } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 
 export interface ScreenProps {
@@ -41,6 +41,9 @@ export interface ScreenProps {
   contentContainerStyle?: ScrollViewProps["contentContainerStyle"];
   /** ScrollView 是否 keyboardDismiss on tap. 默认 'on-drag'（用户滚动时收起键盘）*/
   keyboardShouldPersistTaps?: ScrollViewProps["keyboardShouldPersistTaps"];
+  /** Pull-to-refresh (scroll=true only). */
+  refreshing?: boolean;
+  onRefresh?: () => void | Promise<void>;
   children: ReactNode;
 }
 
@@ -53,6 +56,8 @@ export function Screen({
   className = "flex-1 bg-background",
   contentContainerStyle = DEFAULT_CONTENT_STYLE,
   keyboardShouldPersistTaps = "handled",
+  refreshing = false,
+  onRefresh,
   children,
 }: ScreenProps) {
   if (!scroll) {
@@ -70,6 +75,11 @@ export function Screen({
         <ScrollView
           contentContainerStyle={contentContainerStyle}
           keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} />
+            ) : undefined
+          }
         >
           {children}
         </ScrollView>

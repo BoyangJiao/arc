@@ -270,7 +270,37 @@ async function main() {
   if (txErr) die(`Transaction insert failed: ${txErr.message}`);
   console.log(`✓ Inserted ${txRows.length} transactions (AAPL/MSFT/NVDA, spread over 3 months)`);
 
-  console.log(`\n✅ Seed complete. Cold-start the app — Portfolio Tab should show 3 holdings.`);
+  // Step 6: seed price_snapshots so dev navigation hits Supabase cache instead of
+  // Alpha Vantage on every screen open (AV free tier: 5 req/min).
+  const asOf = new Date().toISOString();
+  const priceRows = [
+    { asset_id: "US:AAPL", as_of: asOf, price: "189.50", currency: "USD", source: "seed-dev" },
+    { asset_id: "US:MSFT", as_of: asOf, price: "420.30", currency: "USD", source: "seed-dev" },
+    { asset_id: "US:NVDA", as_of: asOf, price: "875.00", currency: "USD", source: "seed-dev" },
+  ];
+  const { error: priceErr } = await supabase
+    .from("price_snapshots")
+    .upsert(priceRows as never, { onConflict: "asset_id,as_of" });
+  if (priceErr) die(`price_snapshots upsert failed: ${priceErr.message}`);
+  console.log(`✓ Seeded ${priceRows.length} price_snapshots (dev cache — not live quotes)`);
+
+  // Step 7: seed USD→CNY FX row for reporting-currency conversion without Frankfurter on first paint.
+  const { error: fxErr } = await supabase.from("fx_rates").upsert(
+    {
+      from_currency: "USD",
+      to_currency: "CNY",
+      as_of: asOf,
+      rate: "7.20",
+      source: "seed-dev",
+    } as never,
+    { onConflict: "from_currency,to_currency,as_of" }
+  );
+  if (fxErr) die(`fx_rates upsert failed: ${fxErr.message}`);
+  console.log(`✓ Seeded USD→CNY fx_rates row`);
+
+  console.log(
+    `\n✅ Seed complete. Cold-start the app — Portfolio Tab should show 3 holdings with fast cached quotes.`
+  );
 }
 
 main().catch((err: unknown) => {

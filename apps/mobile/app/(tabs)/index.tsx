@@ -43,6 +43,7 @@ export default function PortfolioTab() {
     data: valuation,
     isFetching: valuationFetching,
     isError: valuationError,
+    refreshValuation,
   } = usePortfolioValuation(defaultPortfolio?.id, reportingCurrency);
 
   // Count from transactions (authoritative), not priced rows (AV rate-limit may drop quotes).
@@ -68,6 +69,8 @@ export default function PortfolioTab() {
         gap: 16,
         paddingBottom: FLOATING_TAB_BAR_BOTTOM_INSET,
       }}
+      refreshing={valuationFetching && !!valuation}
+      onRefresh={() => refreshValuation()}
     >
       {/* Top bar: avatar left (ADR 004 dicebear), no title */}
       <View className="flex-row items-center justify-between mb-4">

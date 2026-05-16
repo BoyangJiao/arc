@@ -7,7 +7,13 @@
 
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import Decimal from "decimal.js";
-import type { Currency, Transaction, TransactionType } from "@arc/core";
+import {
+  parseAssetId,
+  type Currency,
+  type Market,
+  type Transaction,
+  type TransactionType,
+} from "@arc/core";
 
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
@@ -75,6 +81,32 @@ export interface CreateTransactionInput {
   notes?: string;
 }
 
+/**
+ * Ensure `assets` row exists before inserting a transaction (FK).
+ * Stage 1 US-only: name defaults to symbol until Stage 2 search enriches metadata.
+ */
+const ensureAssetExists = async (assetId: string): Promise<void> => {
+  const { market, symbol } = parseAssetId(assetId);
+  if (market !== "US") {
+    throw new Error("Stage 1 only supports US market assets");
+  }
+
+  const { error } = await supabase.from("assets").upsert(
+    {
+      id: assetId,
+      market: market as Market,
+      symbol,
+      name: symbol,
+      currency: "USD",
+    },
+    { onConflict: "id", ignoreDuplicates: true }
+  );
+
+  if (error) {
+    throw new Error(`Could not register asset ${assetId}: ${error.message}`);
+  }
+};
+
 export const useCreateTransaction = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -82,6 +114,8 @@ export const useCreateTransaction = () => {
   return useMutation({
     mutationFn: async (input: CreateTransactionInput) => {
       if (!user) throw new Error("Not signed in");
+
+      await ensureAssetExists(input.assetId);
 
       const { error } = await supabase.from("transactions").insert({
         portfolio_id: input.portfolioId,
@@ -100,6 +134,7 @@ export const useCreateTransaction = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["transactions", variables.portfolioId] });
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolioValuation", variables.portfolioId] });
     },
   });
 };

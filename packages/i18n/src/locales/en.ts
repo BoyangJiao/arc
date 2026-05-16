@@ -46,7 +46,7 @@ export const en = {
   },
   transaction: {
     addTitle: "Add Transaction",
-    assetSearch: "e.g. AAPL / MSFT / NVDA",
+    assetSearch: "e.g. AAPL, GOOGL, TSLA",
     marketUsHint: "Stage 1 supports US stocks only; other markets coming soon",
     type: "Type",
     buy: "Buy",

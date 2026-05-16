@@ -5,26 +5,16 @@
  *   transactions → computeHoldings → fan out usePrice + useFxRate per holding
  *   → computePortfolioValuation → returns aggregated MarketValuation[] + totals
  *
- * Why a single useQuery rather than per-holding hooks: hooks can't be called in
- * a loop. We *could* use TanStack's useQueries but a single query keyed on the
- * portfolio + reporting currency gives one loading/error state to the UI,
- * predictable cache invalidation, and triggers per-asset adapter calls (each
- * passes through @arc/data-sources cache layer) inside a Promise.all.
+ * Performance / Alpha Vantage free tier (5 req/min):
+ *   - Default: 15 min TanStack staleTime + Supabase price_snapshots cache reads
+ *   - Sequential symbol fetches with backoff on RateLimitError
+ *   - `refreshValuation()` bypasses cache once (pull-to-refresh)
  *
- * Returns a PortfolioValuation (from @arc/core) ready to render:
- *   - .totalValue (Decimal, reporting currency)
- *   - .totalCostBasis / .totalUnrealizedPnL / ...Percent
- *   - .perAsset[]: each row has priceNative / valueNative / valueReporting /
- *     unrealizedPnL — both native and reporting columns the IA contract requires
- *
- * Stage 1 contract:
- *   - One reporting currency (from user prefs) at a time
- *   - Skips holdings whose adapter is unregistered (logs to console; row absent)
- *   - Skips holdings whose FX rate cannot be resolved (row absent)
- *   - Empty holdings → returns null totals (caller renders empty-state)
+ * Dev tip: run `pnpm seed:dev` — it also seeds price_snapshots so cold starts
+ * avoid hitting AV on every navigation.
  */
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import {
   computePortfolioValuation,
@@ -34,14 +24,19 @@ import {
   type PortfolioValuation,
   type PriceQuote,
 } from "@arc/core";
-import { fetchFxWithCache, fetchPriceWithCache, RateLimitError } from "@arc/data-sources";
+import {
+  DEFAULT_PRICE_FRESHNESS_MS,
+  fetchFxWithCache,
+  fetchPriceWithCache,
+  RateLimitError,
+} from "@arc/data-sources";
 import type { Holding } from "@arc/core";
 
 import { fxCache, priceCache, registry } from "../market-data";
 import { usePortfolioHoldings } from "./use-portfolio-holdings";
 
-/** Cache freshness window for prices in this query (ms). */
-const PRICE_FRESHNESS_MS = 60 * 1000;
+/** Align with @arc/data-sources default (15 min) — not 60s — to reduce AV calls. */
+const PRICE_FRESHNESS_MS = DEFAULT_PRICE_FRESHNESS_MS;
 
 /** Cache freshness window for FX rates in this query (ms). */
 const FX_FRESHNESS_MS = 4 * 60 * 60 * 1000;
@@ -102,29 +97,36 @@ const fetchAllQuotes = async (
   return quotes;
 };
 
+export type PortfolioValuationQuery = UseQueryResult<PortfolioValuation | null, Error> & {
+  /** Force a fresh quote fetch (freshnessMs=0) — use for pull-to-refresh. */
+  refreshValuation: () => Promise<void>;
+};
+
 export const usePortfolioValuation = (
   portfolioId: string | undefined,
   reportingCurrency: Currency
-): UseQueryResult<PortfolioValuation | null, Error> => {
+): PortfolioValuationQuery => {
   const { holdings, data: transactions } = usePortfolioHoldings(portfolioId);
+  const bypassCacheRef = useRef(false);
 
-  // Cache key includes a transaction-list fingerprint so adding a tx invalidates.
   const txFingerprint = useMemo(
     () => (transactions ? `${transactions.length}:${transactions.at(-1)?.id ?? ""}` : "0"),
     [transactions]
   );
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ["portfolioValuation", portfolioId, reportingCurrency, txFingerprint],
     enabled: !!portfolioId && holdings.length > 0,
     staleTime: PRICE_FRESHNESS_MS,
+    gcTime: PRICE_FRESHNESS_MS * 2,
     queryFn: async (): Promise<PortfolioValuation | null> => {
       if (!portfolioId || holdings.length === 0) return null;
 
-      // 1) Sequential price fetches (AV free tier: 5/min; parallel caused flaky counts).
-      const quotes = await fetchAllQuotes(holdings, PRICE_FRESHNESS_MS);
+      const freshnessMs = bypassCacheRef.current ? 0 : PRICE_FRESHNESS_MS;
+      bypassCacheRef.current = false;
 
-      // 2) Unique non-identity currency pairs.
+      const quotes = await fetchAllQuotes(holdings, freshnessMs);
+
       const pairs = new Set<string>();
       for (const h of holdings) {
         if (h.currency !== reportingCurrency) {
@@ -132,7 +134,6 @@ export const usePortfolioValuation = (
         }
       }
 
-      // 3) Fan out FX fetches in parallel.
       const fxResults = await Promise.allSettled(
         Array.from(pairs).map(async (pair): Promise<FxRate> => {
           const [from, to] = pair.split("->") as [Currency, Currency];
@@ -152,8 +153,14 @@ export const usePortfolioValuation = (
         }
       }
 
-      // 4) Aggregate via @arc/core.
       return computePortfolioValuation(portfolioId, holdings, quotes, fxRates, reportingCurrency);
     },
   });
+
+  const refreshValuation = useCallback(async (): Promise<void> => {
+    bypassCacheRef.current = true;
+    await query.refetch();
+  }, [query.refetch]);
+
+  return { ...query, refreshValuation };
 };

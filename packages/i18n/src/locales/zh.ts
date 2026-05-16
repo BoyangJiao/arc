@@ -46,7 +46,7 @@ export const zh = {
   },
   transaction: {
     addTitle: "添加交易",
-    assetSearch: "如 AAPL / MSFT / NVDA",
+    assetSearch: "如 AAPL、GOOGL、TSLA",
     marketUsHint: "Stage 1 仅支持美股；其他市场即将上线",
     type: "类型",
     buy: "买入",
