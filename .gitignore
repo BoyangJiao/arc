@@ -64,3 +64,6 @@ tools/spike-heroui-native/.expo/
 tools/spike-heroui-native/uniwind-types.d.ts
 tools/spike-heroui-native/spike-render.png
 tools/spike-heroui-native/pnpm-lock.yaml
+
+# Claude Code per-developer permissions (contains shell command history)
+.claude/settings.local.json
