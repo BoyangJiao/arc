@@ -11,22 +11,22 @@
 > Update mechanism: `/checkpoint` (Cursor command or Claude skill — see `.claude/skills/checkpoint/`)
 > at end of major work blocks, OR before context window fills.
 >
-> **Last updated**: 2026-05-16 by Cursor (Stage 1 收尾：valuation 接通 + FloatingTabBar 模板风 + Ionicons tab icons)
+> **Last updated**: 2026-05-16 by Cursor (行情 cache-first + AV 限额应对 + 左滑删除；大量改动未 commit)
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                       |
-| :-------------------- | :---------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | Stage 1 (MVP-0 端到端骨架)                                                                                  |
-| **Step**              | **Stage 1 代码收尾基本完成** — 待用户跑 S1-AC-1～6 人工验收（S1-AC-5 涨跌色可视化推迟到 Stage 2）           |
-| **Branch**            | `dev/stage-1` (ahead of origin; push 后更新 PR #5)                                                          |
-| **Last commit**       | `1c439db` — fix(stage-1): wire portfolio valuation + template-style FloatingTabBar                          |
-| **PR**                | [#5](https://github.com/BoyangJiao/arc/pull/5) — OPEN — 本地 `typecheck` / `lint` / `test` ✅；push 后看 CI |
-| **CI status**         | 本地 gate ✅（2026-05-16）；远程待 push 后确认                                                              |
-| **Mobile dev server** | Running on port 8081 (Metro with --clear, started this session)                                             |
-| **gh CLI**            | Installed at `~/.local/bin/gh` (v2.92.0), already on PATH; auth via `GH_TOKEN` env var                      |
+| Field                 | Value                                                                                                             |
+| :-------------------- | :---------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | Stage 1 (MVP-0 端到端骨架)                                                                                        |
+| **Step**              | **Stage 1 代码收尾 + dev 行情策略** — 待 commit 未提交 diff + S1-AC-1～6 人工验收（S1-AC-5 推迟 Stage 2）         |
+| **Branch**            | `dev/stage-1` — **ahead 1** of `origin/dev/stage-1`；另有 **~15 文件未 commit**（见 git status）                  |
+| **Last commit**       | `45e57cd` — fix(mobile): validate symbols on add, delete holdings, smarter quote fetch                            |
+| **PR**                | [#5](https://github.com/BoyangJiao/arc/pull/5) — OPEN — 本地 `typecheck` / `test` ✅；push 前需 commit 工作区改动 |
+| **CI status**         | 本地 gate ✅（2026-05-16）；远程待 push 后确认                                                                    |
+| **Mobile dev server** | 用户本地 Metro；改 `.env` 后需 `pnpm --filter @arc/mobile start --clear`                                          |
+| **gh CLI**            | Installed at `~/.local/bin/gh` (v2.92.0), already on PATH; auth via `GH_TOKEN` env var                            |
 
 ## Stage 1 step progress
 
@@ -55,10 +55,14 @@ Stage 1 complete = **代码 ~5/5，验收待勾**。S1-AC-5（涨跌色可见 UI
 - ✅ 更新 constitution.md 加铁律「真实链路不可绕过」+ 扩展 Components 铁律覆盖所有第三方包
 - ✅ 更新 CLAUDE.md §三新增 §3.5、§五 monorepo 结构改 8 层 + 决策树
 - ✅ 上述 P0 修复项已在 2026-05-15～16 落地（见 `1c439db` 及此前 commits）
-- ⏳ **剩**：`pnpm seed:dev` + S1-AC-1～4、6 人工验收 → Stage 1 签字 → Stage 2
+- ✅ `pnpm seed:dev` 用户已跑通；dev Supabase 有 seed 报价 + HOOD 占位价
+- ⏳ **剩**：commit 本 session 未提交改动 → push PR #5 → S1-AC-1～4、6 人工验收 → Stage 1 签字
 
 ## Recent decisions (last 7 days)
 
+- **行情 `cache-first`（**DEV** 默认）** — `EXPO_PUBLIC_MARKET_DATA_POLICY=cache-first`；内存 → AsyncStorage → Supabase；仅下拉刷新 / 新 ticker 首次校验打 AV。`live` 模式在 AV 限流时回退 stale 缓存。
+- **组合详情左滑删除** — `@arc/ui` `SwipeableActionsRow`（ReanimatedSwipeable）；行尾垃圾桶已移除。
+- **DB migration 0002** — `price_snapshots` / `fx_rates` authenticated INSERT（dev 持久化缓存）；0001 为 US `assets` INSERT。
 - **FloatingTabBar 对齐 Crypto Wallet 模板** — HeroUI `Surface` + `PressableFeedback`；仅图标无文字；Ionicons outline/filled（`@arc/ui/wrappers/tab-bar-icons`）。列表/空态仍用 Lucide。
 - **S1-AC-5 推迟** — Stage 1 不做涨跌色预览 UI；Stage 2 有 Daily Snapshot / 图表后再验。
 - **iOS 26 floating tab bar** — 自建 FloatingTabBar（ADR 006 navigation 层）；expo-blur SDK 54 不兼容，模板用 HeroUI Surface 替代半透明胶囊。
@@ -70,14 +74,16 @@ Stage 1 complete = **代码 ~5/5，验收待勾**。S1-AC-5（涨跌色可见 UI
 
 ## Active blockers / waiting on user
 
-- ⏳ **Stage 1 人工验收**（J1–J4、J6；J5 推迟 Stage 2）— 需真登录 + 可选 `pnpm seed:dev`
+- ⚠️ **Alpha Vantage 免费档已触限** — 调试期勿下拉刷新；用 seed/缓存价。配额恢复后再拉一次写入缓存。
+- ⏳ **Supabase SQL** — 若未执行：应用 `0001_assets_authenticated_insert.sql` + `0002_market_cache_public_read_authenticated_insert.sql`
+- ⏳ **Stage 1 人工验收**（J1–J4、J6；J5 推迟 Stage 2）
 
 ## Immediate next actions (next session, 按顺序)
 
-1. `git push` 更新 PR #5，确认 CI 绿
-2. `pnpm seed:dev --email <你的邮箱>`（`.env.dev.local` 配好 service role）
-3. 按 `.specify/stage-acceptance-criteria.md` 跑 S1-AC-1～4、6（Web + 可选 iOS / `expo export`）
-4. Stage 1 签字 → 开 Stage 2 规划（Daily Snapshot / Watchlist / 模板 UI port / Expo 55 spike）
+1. **Commit 工作区**（cache-first、persistent cache、SwipeableActionsRow、migration 0002、data-sources 去重等）→ `git push` PR #5
+2. 确认 `apps/mobile/.env` 为 `EXPO_PUBLIC_MARKET_DATA_POLICY=cache-first`；Metro `--clear` 后验总市值 ≈ **¥84,719**（4 持仓 + seed/HOOD 缓存）
+3. 按 `.specify/stage-acceptance-criteria.md` 跑 S1-AC-1～4、6
+4. Stage 1 签字 → Stage 2 规划
 
 ## Open decisions / questions for user
 
@@ -91,7 +97,9 @@ Stage 1 complete = **代码 ~5/5，验收待勾**。S1-AC-5（涨跌色可见 UI
 - **Business tokens for gain/loss**: business code does NOT use `text-success` / `text-danger` directly for PnL. Use `useBusinessClasses()` from `@arc/ui`. ESLint will eventually enforce; for now CR.
 - **HeroUI Foundation only**: no Tailwind built-in colors (`bg-red-500` etc.) in business code. ESLint enforces.
 - **i18n required**: no hardcoded user-facing strings. Use `t()` from `@arc/i18n`. Add to both `zh.ts` and `en.ts` simultaneously.
-- **Supabase RLS**: client writes to `price_snapshots`/`fx_rates` will fail (expected); reads work for everyone. Stage 4 fixes via Edge Function.
+- **Supabase RLS**: migration `0002` 允许 authenticated INSERT 行情/汇率缓存；未应用 migration 时 client 写仍会 warn，内存+AsyncStorage 仍有效。
+- **AV 限额 → 总市值 0**: `live` 策略 + 15min 过期 → 全 miss → 全限流 → 无报价。用 `cache-first` 或 stale 回退；seed 价见下表。
+- **Dev seed 报价（USD）**: AAPL 189.50、MSFT 420.30、NVDA 875.00；FX USD→CNY 7.20；HOOD 占位 77.00（`dev-cost-basis`）。10/5/8/10 股 → 约 **¥84,719** 总市值。
 - **heroui-native-pro postinstall**: needs `HEROUI_AUTH_TOKEN` (CI) or macOS keychain login (`npx heroui-pro login`, dev). CI reads token from GitHub Secret `HEROUI_AUTH_TOKEN` (CI/CD token from heroui.pro/dashboard, NOT Personal Token).
 - **OTP length 8**: this Supabase project (jdvlzkictwinkgcvgwew) is configured for 8-digit; code accepts 6-10.
 - **Expo Go quirk**: Mac browser cannot trigger `exp://` deep link to sim. Use OTP code flow for dev. Magic link only works in standalone build (Stage 4).
@@ -102,16 +110,18 @@ Stage 1 complete = **代码 ~5/5，验收待勾**。S1-AC-5（涨跌色可见 UI
 
 ## Active env / config snapshot
 
-| File                        | Status                                                                           |
-| :-------------------------- | :------------------------------------------------------------------------------- |
-| `apps/mobile/.env`          | exists locally; Supabase URL/anon-key + Alpha Vantage key set; gitignored        |
-| Supabase project            | `jdvlzkictwinkgcvgwew` (Tokyo, Postgres 17.6.1, ACTIVE_HEALTHY)                  |
-| Supabase Auth redirect URLs | Configured: `arc://auth/callback`, `arc://**`, `exp://**/--/auth/callback`, etc. |
-| Supabase SMTP               | Resend configured (custom SMTP enabled)                                          |
-| GitHub branch               | `dev/stage-1` (3 commits ahead of main on first commit, now ~10 ahead)           |
-| GitHub Actions              | Pre-push Quality Gate (push + PR triggers)                                       |
-| Husky                       | pre-commit (prettier on staged) + post-checkout/merge (sync skills)              |
-| Stop hook                   | `.claude/hooks/quality-gate.sh` runs typecheck + tests on AI signal completion   |
+| File                        | Status                                                                                |
+| :-------------------------- | :------------------------------------------------------------------------------------ |
+| `apps/mobile/.env`          | Supabase + AV key；**`MARKET_DATA_POLICY=cache-first`**（勿改回 `live` 除非要测实时） |
+| `.env.dev.local`            | repo root；`pnpm seed:dev` 用 service_role（用户已配置）                              |
+| Migrations pending          | `0001` assets INSERT；`0002` price_snapshots/fx_rates RLS — 需在 Supabase 执行        |
+| Supabase project            | `jdvlzkictwinkgcvgwew` (Tokyo, Postgres 17.6.1, ACTIVE_HEALTHY)                       |
+| Supabase Auth redirect URLs | Configured: `arc://auth/callback`, `arc://**`, `exp://**/--/auth/callback`, etc.      |
+| Supabase SMTP               | Resend configured (custom SMTP enabled)                                               |
+| GitHub branch               | `dev/stage-1` (3 commits ahead of main on first commit, now ~10 ahead)                |
+| GitHub Actions              | Pre-push Quality Gate (push + PR triggers)                                            |
+| Husky                       | pre-commit (prettier on staged) + post-checkout/merge (sync skills)                   |
+| Stop hook                   | `.claude/hooks/quality-gate.sh` runs typecheck + tests on AI signal completion        |
 
 ## Recent ADRs (most relevant first)
 
