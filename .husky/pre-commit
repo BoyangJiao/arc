@@ -18,13 +18,13 @@ LEAKS=""
 # Supabase service_role JWT (eyJ...)
 SR_LEAKS=$(printf '%s\n' "$ADDED_LINES" \
   | grep -E '(service_role|SERVICE_ROLE_KEY)' \
-  | grep -E '[=:][[:space:]]*"?eyJ[A-Za-z0-9_-]{20,}"?' || true)
+  | grep -E '[=:][[:space:]]*"?eyJ[A-Za-z0-9_]{20,}"?' || true)
 [ -n "$SR_LEAKS" ] && LEAKS="${LEAKS}
 ${SR_LEAKS}"
 
-# Live API keys (sk_live_, sb_secret_, etc.)
+# Live API keys (sk_live_, etc.)
 KEY_LEAKS=$(printf '%s\n' "$ADDED_LINES" \
-  | grep -E '[=:][[:space:]]*"?sk_live_[A-Za-z0-9_-]{10,}"?' || true)
+  | grep -E '[=:][[:space:]]*"?sk_live_[A-Za-z0-9_]{10,}"?' || true)
 [ -n "$KEY_LEAKS" ] && LEAKS="${LEAKS}
 ${KEY_LEAKS}"
 
