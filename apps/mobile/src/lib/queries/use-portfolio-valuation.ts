@@ -81,19 +81,33 @@ const fetchQuoteForHolding = async (
 };
 
 /**
- * Fetch quotes sequentially with rate-limit backoff.
- * Parallel fan-out caused flaky 1/2/3 holding counts when AV throttled mid-flight.
+ * Fetch quotes: cache hits first (no AV call, no inter-symbol delay), then network
+ * only for misses — so a new symbol (e.g. HOOD) does not wait behind cached seed rows.
  */
 const fetchAllQuotes = async (
   holdings: readonly Holding[],
   freshnessMs: number
 ): Promise<PriceQuote[]> => {
   const quotes: PriceQuote[] = [];
-  for (let i = 0; i < holdings.length; i++) {
+  const needsNetwork: Holding[] = [];
+
+  for (const holding of holdings) {
+    if (freshnessMs > 0) {
+      const cached = await priceCache.get(holding.assetId, freshnessMs);
+      if (cached) {
+        quotes.push(cached);
+        continue;
+      }
+    }
+    needsNetwork.push(holding);
+  }
+
+  for (let i = 0; i < needsNetwork.length; i++) {
     if (i > 0) await sleep(AV_INTER_SYMBOL_GAP_MS);
-    const quote = await fetchQuoteForHolding(holdings[i], freshnessMs);
+    const quote = await fetchQuoteForHolding(needsNetwork[i], 0);
     if (quote) quotes.push(quote);
   }
+
   return quotes;
 };
 

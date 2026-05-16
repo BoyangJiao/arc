@@ -30,7 +30,8 @@ export const en = {
     addTransaction: "Add Transaction",
     noPortfolios: "No portfolios yet",
     noPortfoliosHint: "Create your first portfolio to start tracking",
-    partialQuotes: "Some quotes are still loading ({{loaded}}/{{total}})",
+    partialQuotes: "Quotes loaded for {{loaded}}/{{total}} holdings",
+    partialQuotesMissing: "{{missing}} without a quote — pull to refresh",
   },
   portfolioDetail: {
     totalMarketValue: "Total Market Value",
@@ -41,13 +42,23 @@ export const en = {
     pnl: "P&L",
     emptyHoldings: "No holdings in this portfolio",
     emptyHoldingsHint: "Add a transaction to get started",
-    priceUnavailable: "—",
+    priceUnavailable: "N/A",
     quoteLoading: "Loading…",
+    quoteUnavailableHint:
+      "No quote for this row — check the US ticker (e.g. GOOGL, TSLA). Invalid or non-US symbols cannot be priced in Stage 1.",
+    partialQuotes: "Quotes loaded for {{loaded}}/{{total}} holdings",
+    partialQuotesMissing: "{{missing}} without a quote — pull to refresh",
+    removeHolding: "Remove",
+    removeHoldingTitle: "Remove holding",
+    removeHoldingMessage:
+      "Delete all transactions for {{symbol}} in this portfolio. The holding will be cleared.",
+    removeHoldingFailed: "Could not delete — try again",
   },
   transaction: {
     addTitle: "Add Transaction",
     assetSearch: "e.g. AAPL, GOOGL, TSLA",
-    marketUsHint: "Stage 1 supports US stocks only; other markets coming soon",
+    marketUsHint:
+      "Stage 1: US tickers only. Use a valid symbol (e.g. AAPL, GOOGL) — typos show no quote.",
     type: "Type",
     buy: "Buy",
     sell: "Sell",
@@ -64,6 +75,9 @@ export const en = {
     success: "Transaction added",
     required: "This field is required",
     invalidNumber: "Please enter a valid number",
+    symbolNotFound: 'US ticker "{{symbol}}" was not found — check the spelling',
+    symbolRateLimited: "Market data is rate-limited — try again in a minute",
+    validatingSymbol: "Validating symbol…",
   },
   markets: {
     title: "Markets",

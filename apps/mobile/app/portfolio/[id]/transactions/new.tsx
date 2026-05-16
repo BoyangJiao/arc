@@ -119,6 +119,18 @@ export default function AddTransactionScreen() {
     };
   };
 
+  const resolveCreateError = (err: unknown): string => {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.startsWith("SYMBOL_NOT_FOUND:")) {
+      const sym = msg.slice("SYMBOL_NOT_FOUND:".length) || symbol.trim().toUpperCase();
+      return t("transaction.symbolNotFound", { symbol: sym });
+    }
+    if (msg === "SYMBOL_RATE_LIMITED") {
+      return t("transaction.symbolRateLimited");
+    }
+    return msg.length > 0 ? msg : t("common.error");
+  };
+
   const handleSubmit = async () => {
     if (!portfolioId) return;
     const result = validate();
@@ -126,19 +138,22 @@ export default function AddTransactionScreen() {
 
     const assetId = composeAssetId(STAGE_1_MARKET, result.values.symbol);
 
-    await createTransaction.mutateAsync({
-      portfolioId,
-      assetId,
-      type: "BUY",
-      shares: result.values.shares.toString(),
-      pricePerShare: result.values.pricePerShare.toString(),
-      currency: STAGE_1_MARKET_CURRENCY,
-      fee: result.values.fee.toString(),
-      tradeDate: new Date().toISOString(),
-      notes: notes.trim() || undefined,
-    });
-
-    router.back();
+    try {
+      await createTransaction.mutateAsync({
+        portfolioId,
+        assetId,
+        type: "BUY",
+        shares: result.values.shares.toString(),
+        pricePerShare: result.values.pricePerShare.toString(),
+        currency: STAGE_1_MARKET_CURRENCY,
+        fee: result.values.fee.toString(),
+        tradeDate: new Date().toISOString(),
+        notes: notes.trim() || undefined,
+      });
+      router.back();
+    } catch {
+      // Error surfaced via createTransaction.isError below.
+    }
   };
 
   const isSubmitting = createTransaction.isPending;
@@ -247,7 +262,7 @@ export default function AddTransactionScreen() {
           <View className="mt-4">
             <Button onPress={handleSubmit} isDisabled={isSubmitting}>
               <Button.Label>
-                {isSubmitting ? t("transaction.submitting") : t("transaction.submit")}
+                {isSubmitting ? t("transaction.validatingSymbol") : t("transaction.submit")}
               </Button.Label>
             </Button>
           </View>
@@ -255,7 +270,7 @@ export default function AddTransactionScreen() {
           {/* Error display (e.g. FK violation when asset isn't pre-seeded) */}
           {createTransaction.isError && (
             <Text className="text-danger text-sm text-center">
-              {createTransaction.error?.message ?? t("common.error")}
+              {resolveCreateError(createTransaction.error)}
             </Text>
           )}
         </View>

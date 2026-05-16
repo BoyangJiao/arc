@@ -15,7 +15,9 @@ import {
   type TransactionType,
 } from "@arc/core";
 
+import { validateUsSymbol } from "../validate-us-symbol";
 import { useAuth } from "../../lib/auth";
+import { priceCache } from "../market-data";
 import { supabase } from "../../lib/supabase";
 
 interface DBTransactionRow {
@@ -115,6 +117,21 @@ export const useCreateTransaction = () => {
     mutationFn: async (input: CreateTransactionInput) => {
       if (!user) throw new Error("Not signed in");
 
+      const { symbol } = parseAssetId(input.assetId);
+      const validation = await validateUsSymbol(symbol);
+      if (!validation.ok) {
+        if (validation.code === "not_found") {
+          throw new Error(`SYMBOL_NOT_FOUND:${symbol}`);
+        }
+        if (validation.code === "rate_limited") {
+          throw new Error("SYMBOL_RATE_LIMITED");
+        }
+        throw new Error(validation.message);
+      }
+
+      // Best-effort cache warm-up so the new row has a quote on first paint.
+      void priceCache.set(validation.quote);
+
       await ensureAssetExists(input.assetId);
 
       const { error } = await supabase.from("transactions").insert({
@@ -128,6 +145,28 @@ export const useCreateTransaction = () => {
         trade_date: input.tradeDate,
         notes: input.notes || null,
       });
+
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["transactions", variables.portfolioId] });
+      queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolioValuation", variables.portfolioId] });
+    },
+  });
+};
+
+/** Remove all transactions for one asset in a portfolio (holding goes to zero). */
+export const useDeleteAssetTransactions = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { portfolioId: string; assetId: string }) => {
+      const { error } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("portfolio_id", input.portfolioId)
+        .eq("asset_id", input.assetId);
 
       if (error) throw error;
     },

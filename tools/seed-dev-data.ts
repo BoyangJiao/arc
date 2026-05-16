@@ -113,6 +113,19 @@ function die(msg: string): never {
   exit(1);
 }
 
+/** Trim and fix common copy-paste mistakes (e.g. `https://https://xxx.supabase.co`). */
+function normalizeSupabaseUrl(raw: string): string {
+  let url = raw.trim().replace(/\/+$/, "");
+  // Collapse repeated scheme prefixes from Dashboard copy + manual `https://` prefix.
+  while (/^https?:\/\/https?:\/\//i.test(url)) {
+    url = url.replace(/^https?:\/\//i, "");
+  }
+  if (!/^https?:\/\//i.test(url)) {
+    url = `https://${url}`;
+  }
+  return url;
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // Seed payload
 
@@ -194,10 +207,10 @@ async function main() {
   const args = parseArgs();
   const env = loadEnvFile(ENV_FILE);
 
-  const url = env.SUPABASE_DEV_URL;
-  const key = env.SUPABASE_DEV_SERVICE_ROLE_KEY;
+  const url = normalizeSupabaseUrl(env.SUPABASE_DEV_URL ?? "");
+  const key = (env.SUPABASE_DEV_SERVICE_ROLE_KEY ?? "").trim();
 
-  if (!url) die("SUPABASE_DEV_URL missing in .env.dev.local (repo root)");
+  if (!env.SUPABASE_DEV_URL?.trim()) die("SUPABASE_DEV_URL missing in .env.dev.local (repo root)");
   if (!key) die("SUPABASE_DEV_SERVICE_ROLE_KEY missing in .env.dev.local (repo root)");
 
   // Safety rail 1: never accidentally run against prod

@@ -13,15 +13,16 @@
  * single TanStack Query with proper invalidation.
  */
 
-import { View } from "react-native";
+import { Alert, Pressable, View } from "react-native";
 import { useLocalSearchParams, useRouter, Stack, type Href } from "expo-router";
-import { Button, Card, Screen, Text, useStackScreenOptions } from "@arc/ui";
+import { Button, Card, Screen, Text, Trash2, useStackScreenOptions } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import { parseAssetId, type Currency, type Holding, type MarketValuation } from "@arc/core";
 import Decimal from "decimal.js";
 
 import { formatMoney } from "../../../src/lib/format-money";
 import {
+  useDeleteAssetTransactions,
   usePortfolio,
   usePortfolioHoldings,
   usePortfolioValuation,
@@ -58,9 +59,35 @@ export default function PortfolioDetailScreen() {
   );
   const isEmpty = !holdingsPending && holdings.length === 0;
   const showHoldingsTable = holdings.length > 0;
+  const holdingsCount = holdings.length;
+  const pricedCount = valuation?.perAsset.length ?? 0;
+  const hasPartialQuotes =
+    holdingsCount > 0 && pricedCount > 0 && pricedCount < holdingsCount && !valuationFetching;
+
+  const deleteAssetTransactions = useDeleteAssetTransactions();
 
   const handleAddTransaction = () => {
     router.push(`/portfolio/${id}/transactions/new` as Href);
+  };
+
+  const handleRemoveHolding = (assetId: string, symbol: string) => {
+    if (!id) return;
+    Alert.alert(
+      t("portfolioDetail.removeHoldingTitle"),
+      t("portfolioDetail.removeHoldingMessage", { symbol }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("portfolioDetail.removeHolding"),
+          style: "destructive",
+          onPress: () => {
+            void deleteAssetTransactions.mutateAsync({ portfolioId: id, assetId }).catch(() => {
+              Alert.alert(t("common.error"), t("portfolioDetail.removeHoldingFailed"));
+            });
+          },
+        },
+      ]
+    );
   };
 
   const screenOptions = useStackScreenOptions({
@@ -79,6 +106,14 @@ export default function PortfolioDetailScreen() {
             {formatMoney(valuation?.totalValue ?? ZERO, reportingCurrency)}
           </Text>
           <Text className="text-muted text-xs mt-1">{t("common.disclaimer")}</Text>
+          {hasPartialQuotes && (
+            <Text className="text-muted text-xs mt-1">
+              {t("portfolioDetail.partialQuotes", { loaded: pricedCount, total: holdingsCount })}{" "}
+              {t("portfolioDetail.partialQuotesMissing", {
+                missing: holdingsCount - pricedCount,
+              })}
+            </Text>
+          )}
           {valuationError && (
             <Text className="text-danger text-xs mt-1">
               {valuationErrorObj?.message ?? t("common.error")}
@@ -128,6 +163,9 @@ export default function PortfolioDetailScreen() {
                   valuation={row}
                   quoteLoading={!row && (valuationPending || valuationFetching)}
                   reportingCurrency={reportingCurrency}
+                  onRemove={() =>
+                    handleRemoveHolding(holding.assetId, parseAssetId(holding.assetId).symbol)
+                  }
                   t={t}
                 />
               );
@@ -158,10 +196,18 @@ interface HoldingRowProps {
   valuation: MarketValuation | undefined;
   quoteLoading: boolean;
   reportingCurrency: Currency;
+  onRemove: () => void;
   t: (key: string) => string;
 }
 
-function HoldingRow({ holding, valuation, quoteLoading, reportingCurrency, t }: HoldingRowProps) {
+function HoldingRow({
+  holding,
+  valuation,
+  quoteLoading,
+  reportingCurrency,
+  onRemove,
+  t,
+}: HoldingRowProps) {
   const { symbol } = parseAssetId(holding.assetId);
   const priceLabel = valuation
     ? valuation.priceNative.toFixed(2)
@@ -183,7 +229,15 @@ function HoldingRow({ holding, valuation, quoteLoading, reportingCurrency, t }: 
         </View>
         <Text className="text-foreground w-16 text-right text-sm">{holding.shares.toFixed(2)}</Text>
         <Text className="text-muted w-20 text-right text-sm">{priceLabel}</Text>
-        <Text className="text-foreground w-24 text-right text-sm font-medium">{valueLabel}</Text>
+        <Text className="text-foreground w-20 text-right text-sm font-medium">{valueLabel}</Text>
+        <Pressable
+          onPress={onRemove}
+          accessibilityLabel={t("portfolioDetail.removeHolding")}
+          hitSlop={8}
+          className="ml-1 p-1 active:opacity-60"
+        >
+          <Trash2 size={18} className="text-muted" />
+        </Pressable>
       </View>
     </Card>
   );

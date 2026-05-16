@@ -18,6 +18,7 @@ export {
   ChevronLeft,
   ChevronRight,
   X,
+  Trash2,
   // Empty state / placeholders
   TrendingDown,
   Sparkles,

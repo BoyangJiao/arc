@@ -88,7 +88,8 @@ export default function PortfolioTab() {
         {hasHoldings && <Text className="text-muted text-xs mt-1">{t("common.disclaimer")}</Text>}
         {hasPartialQuotes && (
           <Text className="text-muted text-xs mt-1">
-            {t("portfolio.partialQuotes", { loaded: pricedCount, total: holdingsCount })}
+            {t("portfolio.partialQuotes", { loaded: pricedCount, total: holdingsCount })}{" "}
+            {t("portfolio.partialQuotesMissing", { missing: holdingsCount - pricedCount })}
           </Text>
         )}
         {valuationError && <Text className="text-danger text-xs mt-1">{t("common.error")}</Text>}

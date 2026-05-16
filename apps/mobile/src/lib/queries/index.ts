@@ -10,6 +10,7 @@ export { usePortfolios, usePortfolio, useEnsureDefaultPortfolio } from "./use-po
 export {
   useTransactions,
   useCreateTransaction,
+  useDeleteAssetTransactions,
   type CreateTransactionInput,
 } from "./use-transactions";
 export { usePortfolioHoldings } from "./use-portfolio-holdings";
