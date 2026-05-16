@@ -11,7 +11,7 @@
 SCAN_EXCLUDE=":!.husky/pre-commit :!docs/adr/** :!**/.env*.example :!tools/seed-dev-data.ts"
 
 STAGED_DIFF=$(git diff --cached -U0 -- . $SCAN_EXCLUDE 2>/dev/null || true)
-ADDED_LINES=$(printf '%s\n' "$STAGED_DIFF" | grep -E '^\+' | grep -v '^\+\+\+' || true)
+ADDED_LINES=$(printf '%s\n' "$STAGED_DIFF" | grep -E '^\+' | grep -vE '^\+\+\+' || true)
 
 LEAKS=""
 
