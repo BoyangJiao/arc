@@ -20,10 +20,11 @@ import { parseAssetId } from "@arc/core";
 import type { PriceQuote } from "@arc/core";
 import { fetchPriceWithCache } from "@arc/data-sources";
 
-import { priceCache, registry } from "../market-data";
+import { getRegistry, priceCache } from "../market-data";
 import {
   CACHE_FIRST_READ_FRESHNESS_MS,
   isCacheFirstMarketData,
+  isFixtureMarketData,
   readPriceFreshnessMs,
 } from "../market-data-policy";
 
@@ -53,10 +54,14 @@ export const usePrice = (
       if (!assetId) {
         throw new Error("assetId is required");
       }
-      const adapter = registry.resolvePriceAdapterByAssetId(assetId);
+      const adapter = getRegistry().resolvePriceAdapterByAssetId(assetId);
       const { symbol } = parseAssetId(assetId);
 
-      if (!forceNetwork && isCacheFirstMarketData()) {
+      // cache-first mode: prefer any cached row; refuse cache miss to avoid
+      // burning AV quota outside an explicit pull-to-refresh.
+      // (fixture mode reads from FixtureAdapter which is essentially free —
+      // no need to guard; goes through fetchPriceWithCache normally.)
+      if (!forceNetwork && isCacheFirstMarketData() && !isFixtureMarketData()) {
         const cached = await priceCache.get(assetId, CACHE_FIRST_READ_FRESHNESS_MS);
         if (cached) return cached;
         throw new Error(`No cached quote for ${assetId}. Pull to refresh on the portfolio screen.`);

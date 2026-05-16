@@ -104,6 +104,12 @@ export const en = {
     greenUpRedDown: "Green up, red down",
     languageZh: "中文",
     languageEn: "English",
+    devOnlyHeader: "Dev only",
+    useRealMarketData: "Fetch real market data",
+    useRealMarketDataOnHint:
+      "ON. Pull-to-refresh and new tickers call Alpha Vantage (note: 25/day free quota)",
+    useRealMarketDataOffHint:
+      "OFF. All quotes come from local dev-fixtures/quotes.json — zero network calls",
   },
   rebalance: {
     title: "Rebalance",

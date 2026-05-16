@@ -13,7 +13,7 @@ import Decimal from "decimal.js";
 import type { Currency, FxRate } from "@arc/core";
 import { fetchFxWithCache } from "@arc/data-sources";
 
-import { fxCache, registry } from "../market-data";
+import { fxCache, getRegistry } from "../market-data";
 
 export interface UseFxRateOptions {
   freshnessMs?: number;
@@ -44,7 +44,7 @@ export const useFxRate = (
         };
       }
       return fetchFxWithCache({
-        adapter: registry.fxAdapter,
+        adapter: getRegistry().fxAdapter,
         from,
         to,
         cache: fxCache,

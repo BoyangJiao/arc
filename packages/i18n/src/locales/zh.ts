@@ -102,6 +102,11 @@ export const zh = {
     greenUpRedDown: "绿涨红跌",
     languageZh: "中文",
     languageEn: "English",
+    devOnlyHeader: "仅开发模式可见",
+    useRealMarketData: "拉取真实行情",
+    useRealMarketDataOnHint:
+      "打开。下拉刷新或加新代号时会调用 Alpha Vantage（注意 25/day 免费配额）",
+    useRealMarketDataOffHint: "关闭。所有报价来自本地 dev-fixtures/quotes.json，零网络调用",
   },
   rebalance: {
     title: "再平衡",

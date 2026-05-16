@@ -1,18 +1,30 @@
 /**
- * Market data wiring — instantiates Arc adapter registry + layered caches.
+ * Market data wiring — instantiates Arc adapter registries + layered caches.
  *
- * Singletons (constructed once on app start, reused for the whole session).
+ * Two registries, picked per call by current policy:
+ *   - dev + Settings toggle OFF (default) → fixture registry (zero network)
+ *   - dev + Settings toggle ON              → live registry (Alpha Vantage + Frankfurter)
+ *   - prod                                   → live registry (always)
  *
- * Cache layers (read order): memory → AsyncStorage → Supabase.
- * Fetch policy: see market-data-policy.ts (`cache-first` in __DEV__ by default).
+ * Toggling the Settings switch flips which registry the NEXT fetch uses; no
+ * Metro restart required. Queries already cached stay until pull-to-refresh.
  *
- * Stage 3 will register additional adapters (Tushare for CN/HK, CoinGecko for
- * crypto, etc.) via the same registry — business hooks unchanged.
+ * Cache layers (shared across both registries):
+ *   memory → AsyncStorage → Supabase price_snapshots / fx_rates
+ *
+ * Adapter consumers must call `getRegistry()` (function) — NOT a module-level
+ * `registry` const — so policy switches take effect at fetch time. Cache
+ * layer remains plain singletons (cache content is policy-agnostic).
+ *
+ * Stage 2/3 adds adapters for CN/HK/CRYPTO/FUND via the same registry —
+ * business hooks unchanged. Fixture data extends by editing
+ * apps/mobile/src/lib/dev-fixtures/quotes.json.
  */
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   createAlphaVantageAdapter,
+  createFixtureRegistry,
   createFrankfurterAdapter,
   createMemoryFxCache,
   createMemoryPriceCache,
@@ -20,34 +32,58 @@ import {
   createSupabaseFxCache,
   createSupabasePriceCache,
   type AdapterRegistry,
+  type FixtureData,
   type FxCache,
   type PriceCache,
 } from "@arc/data-sources";
 
-import { marketDataPolicy } from "./market-data-policy";
+import fixtureData from "./dev-fixtures/quotes.json";
+import { getEffectivePolicy, isFixtureMarketData } from "./market-data-policy";
 import { createPersistentFxCache, createPersistentPriceCache } from "./persistent-market-cache";
 import { supabase } from "./supabase";
 
-export { marketDataPolicy, isCacheFirstMarketData } from "./market-data-policy";
+export {
+  getEffectivePolicy,
+  isCacheFirstMarketData,
+  isFixtureMarketData,
+  isLiveMarketData,
+  useMarketDataPolicyStore,
+} from "./market-data-policy";
+
+// ──────────────────────────────────────────────────────────────────────────
+// Live (real network) registry
 
 const ALPHAVANTAGE_KEY = process.env.EXPO_PUBLIC_ALPHAVANTAGE_API_KEY;
 
-if (!ALPHAVANTAGE_KEY) {
-  // Defer the throw to first use; lets dev tools / Supabase-only screens render.
-  // The price hook will surface the missing key as a user-visible error.
+if (!ALPHAVANTAGE_KEY && !__DEV__) {
+  // In dev, fixture mode is the default — missing AV key is fine.
+  // In prod, it's a real misconfig; warn loudly.
   console.warn("[market-data] EXPO_PUBLIC_ALPHAVANTAGE_API_KEY missing — price queries will fail");
 }
 
-const fxAdapter = createFrankfurterAdapter();
-
-const priceAdaptersForRegistry = ALPHAVANTAGE_KEY
+const liveFxAdapter = createFrankfurterAdapter();
+const livePriceAdapters = ALPHAVANTAGE_KEY
   ? { US: createAlphaVantageAdapter({ apiKey: ALPHAVANTAGE_KEY }) }
   : {};
 
-export const registry: AdapterRegistry = createRegistry({
-  priceAdapters: priceAdaptersForRegistry,
-  fxAdapter,
+const liveRegistry: AdapterRegistry = createRegistry({
+  priceAdapters: livePriceAdapters,
+  fxAdapter: liveFxAdapter,
 });
+
+// ──────────────────────────────────────────────────────────────────────────
+// Fixture (zero-network) registry
+
+const fixtureRegistry: AdapterRegistry = createFixtureRegistry(fixtureData as FixtureData);
+
+// ──────────────────────────────────────────────────────────────────────────
+// Policy-aware accessor — read this per call.
+
+export const getRegistry = (): AdapterRegistry =>
+  isFixtureMarketData() ? fixtureRegistry : liveRegistry;
+
+// ──────────────────────────────────────────────────────────────────────────
+// Caches (shared across both registries)
 
 const supabasePriceCache = createSupabasePriceCache(supabase);
 const supabaseFxCache = createSupabaseFxCache(supabase);
@@ -59,6 +95,12 @@ export const fxCache: FxCache = createMemoryFxCache(
   createPersistentFxCache(AsyncStorage, supabaseFxCache)
 );
 
+// ──────────────────────────────────────────────────────────────────────────
+// Boot diagnostic
+
 if (__DEV__) {
-  console.info(`[market-data] policy=${marketDataPolicy} (pull-to-refresh to fetch live quotes)`);
+  console.info(
+    `[market-data] policy=${getEffectivePolicy()} ` +
+      `(toggle in Me → Settings to switch fixture ↔ real)`
+  );
 }

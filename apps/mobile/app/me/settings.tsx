@@ -19,6 +19,7 @@ import { useTranslation } from "@arc/i18n";
 import i18n from "@arc/i18n";
 import type { FinanceColorMode, Currency, Locale } from "@arc/core";
 
+import { useMarketDataPolicyStore } from "../../src/lib/market-data";
 import { useUserPreferences } from "../../src/lib/user-preferences";
 import { useColorMode } from "../../src/lib/theme";
 
@@ -27,6 +28,8 @@ export default function SettingsScreen() {
   const { prefs, update } = useUserPreferences();
   const { colorMode, toggleColorMode } = useColorMode();
   const { financeColorMode, setFinanceColorMode } = useFinanceColorMode();
+  const useRealMarketData = useMarketDataPolicyStore((s) => s.useRealMarketData);
+  const setUseRealMarketData = useMarketDataPolicyStore((s) => s.setUseRealMarketData);
 
   const isDark = colorMode === "dark";
 
@@ -96,6 +99,28 @@ export default function SettingsScreen() {
             <Text className="text-foreground text-base">{t("settings.darkMode")}</Text>
             <Switch isSelected={isDark} onSelectedChange={toggleColorMode} />
           </View>
+
+          {/* Dev-only: market data policy toggle (ADR 008) */}
+          {__DEV__ && (
+            <View className="mt-6 gap-2">
+              <Text className="text-muted text-xs uppercase tracking-wide px-1">
+                {t("settings.devOnlyHeader")}
+              </Text>
+              <View className="flex-row items-center justify-between bg-surface px-4 py-4 rounded-xl">
+                <View className="flex-1 mr-4">
+                  <Text className="text-foreground text-base">
+                    {t("settings.useRealMarketData")}
+                  </Text>
+                  <Text className="text-muted text-xs mt-1">
+                    {useRealMarketData
+                      ? t("settings.useRealMarketDataOnHint")
+                      : t("settings.useRealMarketDataOffHint")}
+                  </Text>
+                </View>
+                <Switch isSelected={useRealMarketData} onSelectedChange={setUseRealMarketData} />
+              </View>
+            </View>
+          )}
         </View>
       </Screen>
     </>

@@ -15,8 +15,12 @@ import {
   RateLimitError,
 } from "@arc/data-sources";
 
-import { CACHE_FIRST_READ_FRESHNESS_MS, isCacheFirstMarketData } from "./market-data-policy";
-import { priceCache, registry } from "./market-data";
+import {
+  CACHE_FIRST_READ_FRESHNESS_MS,
+  isCacheFirstMarketData,
+  isLiveMarketData,
+} from "./market-data-policy";
+import { getRegistry, priceCache } from "./market-data";
 
 export type ValidateUsSymbolResult =
   | { ok: true; quote: PriceQuote }
@@ -36,14 +40,15 @@ export const validateUsSymbol = async (symbol: string): Promise<ValidateUsSymbol
 
   let adapter;
   try {
-    adapter = registry.resolvePriceAdapterByAssetId(assetId);
+    adapter = getRegistry().resolvePriceAdapterByAssetId(assetId);
   } catch {
     return { ok: false, code: "no_adapter", message: "US market adapter not configured" };
   }
 
-  const readFreshness = isCacheFirstMarketData()
-    ? CACHE_FIRST_READ_FRESHNESS_MS
-    : DEFAULT_PRICE_FRESHNESS_MS;
+  // fixture / cache-first → any cached row is fresh; live → 15min window.
+  const readFreshness = isLiveMarketData()
+    ? DEFAULT_PRICE_FRESHNESS_MS
+    : CACHE_FIRST_READ_FRESHNESS_MS;
 
   const cached = await priceCache.get(assetId, readFreshness);
   if (cached) {

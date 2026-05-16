@@ -27,7 +27,7 @@ import {
   readPriceFreshnessMs,
   valuationQueryStaleTimeMs,
 } from "../market-data-policy";
-import { fxCache, priceCache, registry } from "../market-data";
+import { fxCache, getRegistry, priceCache } from "../market-data";
 import { usePortfolioHoldings } from "./use-portfolio-holdings";
 
 /** Alpha Vantage free tier: 5 req/min — wait between retries when throttled. */
@@ -42,7 +42,7 @@ const fetchQuoteForHolding = async (
   holding: Holding,
   freshnessMs: number
 ): Promise<PriceQuote | null> => {
-  const adapter = registry.resolvePriceAdapterByAssetId(holding.assetId);
+  const adapter = getRegistry().resolvePriceAdapterByAssetId(holding.assetId);
   const { symbol } = parseAssetId(holding.assetId);
 
   const maxAttempts = 3;
@@ -145,7 +145,7 @@ const fetchFxRates = async (pairs: readonly string[], forceNetwork: boolean): Pr
 
     try {
       const rate = await fetchFxWithCache({
-        adapter: registry.fxAdapter,
+        adapter: getRegistry().fxAdapter,
         from,
         to,
         cache: fxCache,

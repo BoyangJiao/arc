@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "description": "Dev-only fixture for FixtureAdapter (ADR 008). When the Settings toggle 'Fetch real market data' is OFF, every price + FX lookup reads from this file instead of calling Alpha Vantage / Frankfurter. Add new tickers here when you need to test pages that reference them. Stage 2/3 will extend to A-shares / HK / crypto / funds.",
+    "asOfNote": "All asOf timestamps default to 2026-05-17 if omitted; that's the snapshot date these prices represent."
+  },
+  "quotes": {
+    "US:AAPL": { "price": "189.50", "currency": "USD", "asOf": "2026-05-17T00:00:00.000Z" },
+    "US:MSFT": { "price": "420.30", "currency": "USD", "asOf": "2026-05-17T00:00:00.000Z" },
+    "US:NVDA": { "price": "875.00", "currency": "USD", "asOf": "2026-05-17T00:00:00.000Z" },
+    "US:HOOD": { "price": "77.00", "currency": "USD", "asOf": "2026-05-17T00:00:00.000Z" }
+  },
+  "fx": {
+    "USD->CNY": { "rate": "7.20", "asOf": "2026-05-17T00:00:00.000Z" },
+    "HKD->CNY": { "rate": "0.92", "asOf": "2026-05-17T00:00:00.000Z" }
+  }
+}
