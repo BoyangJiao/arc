@@ -28,3 +28,13 @@ export type { FrankfurterAdapterConfig } from "./adapters/frankfurter";
 export { createSupabasePriceCache } from "./cache/price-cache";
 export { createSupabaseFxCache } from "./cache/fx-cache";
 export { createMemoryPriceCache, createMemoryFxCache } from "./cache/memory-cache";
+
+// Fixture (dev-only) adapters — ADR 008
+export {
+  createFixturePriceAdapter,
+  createFixtureFxAdapter,
+  createFixtureRegistry,
+  type FixtureData,
+  type FixtureQuote,
+  type FixtureFxRate,
+} from "./adapters/fixture-adapter";
