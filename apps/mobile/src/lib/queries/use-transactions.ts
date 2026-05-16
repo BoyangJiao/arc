@@ -129,8 +129,8 @@ export const useCreateTransaction = () => {
         throw new Error(validation.message);
       }
 
-      // Best-effort cache warm-up so the new row has a quote on first paint.
-      void priceCache.set(validation.quote);
+      // Warm session + Supabase cache so valuation does not re-hit AV for this symbol.
+      await priceCache.set(validation.quote);
 
       await ensureAssetExists(input.assetId);
 
@@ -151,7 +151,7 @@ export const useCreateTransaction = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["transactions", variables.portfolioId] });
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
-      queryClient.invalidateQueries({ queryKey: ["portfolioValuation", variables.portfolioId] });
+      // portfolioValuation refetches when txFingerprint changes — no extra AV burst.
     },
   });
 };
@@ -173,7 +173,6 @@ export const useDeleteAssetTransactions = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["transactions", variables.portfolioId] });
       queryClient.invalidateQueries({ queryKey: ["portfolios"] });
-      queryClient.invalidateQueries({ queryKey: ["portfolioValuation", variables.portfolioId] });
     },
   });
 };

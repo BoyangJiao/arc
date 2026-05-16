@@ -21,6 +21,11 @@ import type { PriceQuote } from "@arc/core";
 import { fetchPriceWithCache } from "@arc/data-sources";
 
 import { priceCache, registry } from "../market-data";
+import {
+  CACHE_FIRST_READ_FRESHNESS_MS,
+  isCacheFirstMarketData,
+  readPriceFreshnessMs,
+} from "../market-data-policy";
 
 export interface UsePriceOptions {
   /** Override cache freshness window (ms). 0 = bypass cache. */
@@ -33,20 +38,35 @@ export const usePrice = (
   assetId: string | null | undefined,
   opts: UsePriceOptions = {}
 ): UseQueryResult<PriceQuote, Error> => {
+  const forceNetwork = opts.freshnessMs === 0;
+  const freshnessMs = opts.freshnessMs ?? readPriceFreshnessMs(false);
+
   return useQuery({
-    queryKey: ["price", assetId, opts.freshnessMs],
+    queryKey: ["price", assetId, forceNetwork ? 0 : freshnessMs],
     enabled: !!assetId && opts.enabled !== false,
+    staleTime: forceNetwork
+      ? 0
+      : freshnessMs > 0 && Number.isFinite(freshnessMs)
+        ? freshnessMs
+        : Infinity,
     queryFn: async () => {
       if (!assetId) {
         throw new Error("assetId is required");
       }
       const adapter = registry.resolvePriceAdapterByAssetId(assetId);
       const { symbol } = parseAssetId(assetId);
+
+      if (!forceNetwork && isCacheFirstMarketData()) {
+        const cached = await priceCache.get(assetId, CACHE_FIRST_READ_FRESHNESS_MS);
+        if (cached) return cached;
+        throw new Error(`No cached quote for ${assetId}. Pull to refresh on the portfolio screen.`);
+      }
+
       return fetchPriceWithCache({
         adapter,
         symbol,
         cache: priceCache,
-        freshnessMs: opts.freshnessMs,
+        freshnessMs: forceNetwork ? 0 : freshnessMs,
       });
     },
   });

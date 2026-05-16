@@ -1,20 +1,21 @@
 /**
- * Market data wiring — instantiates Arc adapter registry + Supabase caches.
+ * Market data wiring — instantiates Arc adapter registry + layered caches.
  *
  * Singletons (constructed once on app start, reused for the whole session).
  *
- * Stage 1 wiring:
- *   - US prices: Alpha Vantage (free 25/day)
- *   - FX rates: Frankfurter (free, no key)
- *   - Cache: Supabase price_snapshots / fx_rates (DI-injected)
+ * Cache layers (read order): memory → AsyncStorage → Supabase.
+ * Fetch policy: see market-data-policy.ts (`cache-first` in __DEV__ by default).
  *
  * Stage 3 will register additional adapters (Tushare for CN/HK, CoinGecko for
  * crypto, etc.) via the same registry — business hooks unchanged.
  */
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   createAlphaVantageAdapter,
   createFrankfurterAdapter,
+  createMemoryFxCache,
+  createMemoryPriceCache,
   createRegistry,
   createSupabaseFxCache,
   createSupabasePriceCache,
@@ -23,7 +24,11 @@ import {
   type PriceCache,
 } from "@arc/data-sources";
 
+import { marketDataPolicy } from "./market-data-policy";
+import { createPersistentFxCache, createPersistentPriceCache } from "./persistent-market-cache";
 import { supabase } from "./supabase";
+
+export { marketDataPolicy, isCacheFirstMarketData } from "./market-data-policy";
 
 const ALPHAVANTAGE_KEY = process.env.EXPO_PUBLIC_ALPHAVANTAGE_API_KEY;
 
@@ -44,5 +49,16 @@ export const registry: AdapterRegistry = createRegistry({
   fxAdapter,
 });
 
-export const priceCache: PriceCache = createSupabasePriceCache(supabase);
-export const fxCache: FxCache = createSupabaseFxCache(supabase);
+const supabasePriceCache = createSupabasePriceCache(supabase);
+const supabaseFxCache = createSupabaseFxCache(supabase);
+
+export const priceCache: PriceCache = createMemoryPriceCache(
+  createPersistentPriceCache(AsyncStorage, supabasePriceCache)
+);
+export const fxCache: FxCache = createMemoryFxCache(
+  createPersistentFxCache(AsyncStorage, supabaseFxCache)
+);
+
+if (__DEV__) {
+  console.info(`[market-data] policy=${marketDataPolicy} (pull-to-refresh to fetch live quotes)`);
+}

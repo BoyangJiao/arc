@@ -101,6 +101,27 @@ describe("fetchPriceWithCache", () => {
     expect(adapterFetch).toHaveBeenCalledOnce();
   });
 
+  test("dedupes concurrent fetches for the same symbol", async () => {
+    let resolveFetch!: (value: PriceQuote) => void;
+    const fetchPromise = new Promise<PriceQuote>((resolve) => {
+      resolveFetch = resolve;
+    });
+    const adapterFetch = vi.fn(async () => fetchPromise);
+    const adapter = makePriceAdapter(adapterFetch);
+    const cache = makePriceCache();
+
+    const p1 = fetchPriceWithCache({ adapter, symbol: "AAPL", cache });
+    const p2 = fetchPriceWithCache({ adapter, symbol: "AAPL", cache });
+
+    const fresh = makePriceQuote();
+    resolveFetch(fresh);
+
+    const [a, b] = await Promise.all([p1, p2]);
+    expect(a).toBe(fresh);
+    expect(b).toBe(fresh);
+    expect(adapterFetch).toHaveBeenCalledOnce();
+  });
+
   test("no cache provided: just calls adapter", async () => {
     const fresh = makePriceQuote();
     const adapter = makePriceAdapter(vi.fn(async () => fresh));

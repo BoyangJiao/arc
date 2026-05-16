@@ -26,6 +26,20 @@ import type { FxAdapter, FxCache, PriceAdapter, PriceCache } from "./interfaces"
 export const DEFAULT_PRICE_FRESHNESS_MS = 15 * 60 * 1000;
 export const DEFAULT_FX_FRESHNESS_MS = 4 * 60 * 60 * 1000;
 
+/** Coalesce concurrent fetches for the same key (validate + valuation racing). */
+const dedupeInFlight = <T>(key: string, run: () => Promise<T>): Promise<T> => {
+  const existing = inFlight.get(key) as Promise<T> | undefined;
+  if (existing) return existing;
+
+  const promise = run().finally(() => {
+    inFlight.delete(key);
+  });
+  inFlight.set(key, promise as Promise<unknown>);
+  return promise;
+};
+
+const inFlight = new Map<string, Promise<unknown>>();
+
 export interface FetchPriceParams {
   adapter: PriceAdapter;
   symbol: string;
@@ -38,17 +52,20 @@ export const fetchPriceWithCache = async (params: FetchPriceParams): Promise<Pri
   const { adapter, symbol, cache, freshnessMs = DEFAULT_PRICE_FRESHNESS_MS } = params;
 
   const assetId = `${adapter.market}:${symbol.toUpperCase()}`;
+  const dedupeKey = `price:${assetId}:${freshnessMs > 0 ? "cached" : "fresh"}`;
 
-  if (cache && freshnessMs > 0) {
-    const hit = await cache.get(assetId, freshnessMs);
-    if (hit) return hit;
-  }
+  return dedupeInFlight(dedupeKey, async () => {
+    if (cache && freshnessMs > 0) {
+      const hit = await cache.get(assetId, freshnessMs);
+      if (hit) return hit;
+    }
 
-  const quote = await adapter.fetchLatest(symbol);
-  if (cache) {
-    void cache.set(quote); // fire-and-forget; warnings logged inside
-  }
-  return quote;
+    const quote = await adapter.fetchLatest(symbol);
+    if (cache) {
+      void cache.set(quote); // fire-and-forget; warnings logged inside
+    }
+    return quote;
+  });
 };
 
 export interface FetchFxParams {
@@ -62,14 +79,18 @@ export interface FetchFxParams {
 export const fetchFxWithCache = async (params: FetchFxParams): Promise<FxRate> => {
   const { adapter, from, to, cache, freshnessMs = DEFAULT_FX_FRESHNESS_MS } = params;
 
-  if (cache && freshnessMs > 0) {
-    const hit = await cache.get(from, to, freshnessMs);
-    if (hit) return hit;
-  }
+  const dedupeKey = `fx:${from}->${to}:${freshnessMs > 0 ? "cached" : "fresh"}`;
 
-  const rate = await adapter.fetchRate(from, to);
-  if (cache) {
-    void cache.set(rate);
-  }
-  return rate;
+  return dedupeInFlight(dedupeKey, async () => {
+    if (cache && freshnessMs > 0) {
+      const hit = await cache.get(from, to, freshnessMs);
+      if (hit) return hit;
+    }
+
+    const rate = await adapter.fetchRate(from, to);
+    if (cache) {
+      void cache.set(rate);
+    }
+    return rate;
+  });
 };

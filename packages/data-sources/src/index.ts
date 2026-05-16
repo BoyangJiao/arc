@@ -27,3 +27,4 @@ export type { FrankfurterAdapterConfig } from "./adapters/frankfurter";
 
 export { createSupabasePriceCache } from "./cache/price-cache";
 export { createSupabaseFxCache } from "./cache/fx-cache";
+export { createMemoryPriceCache, createMemoryFxCache } from "./cache/memory-cache";

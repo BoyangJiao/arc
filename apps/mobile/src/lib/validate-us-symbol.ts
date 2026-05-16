@@ -1,14 +1,22 @@
 /**
  * validateUsSymbol — pre-flight check before recording a US equity transaction.
  *
- * Uses the same Alpha Vantage GLOBAL_QUOTE path as portfolio valuation so
- * invalid tickers (e.g. ROOD) are rejected at submit time, not after save.
+ * cache-first: reuse any cached quote (device / Supabase); only call Alpha Vantage
+ * when there is no cache yet (first time adding that ticker).
+ *
+ * live: normal fetchPriceWithCache with 15 min freshness.
  */
 
 import type { PriceQuote } from "@arc/core";
-import { NotFoundError, RateLimitError } from "@arc/data-sources";
+import {
+  DEFAULT_PRICE_FRESHNESS_MS,
+  fetchPriceWithCache,
+  NotFoundError,
+  RateLimitError,
+} from "@arc/data-sources";
 
-import { registry } from "./market-data";
+import { CACHE_FIRST_READ_FRESHNESS_MS, isCacheFirstMarketData } from "./market-data-policy";
+import { priceCache, registry } from "./market-data";
 
 export type ValidateUsSymbolResult =
   | { ok: true; quote: PriceQuote }
@@ -24,15 +32,35 @@ export const validateUsSymbol = async (symbol: string): Promise<ValidateUsSymbol
     };
   }
 
+  const assetId = `US:${normalized}`;
+
   let adapter;
   try {
-    adapter = registry.resolvePriceAdapterByAssetId(`US:${normalized}`);
+    adapter = registry.resolvePriceAdapterByAssetId(assetId);
   } catch {
     return { ok: false, code: "no_adapter", message: "US market adapter not configured" };
   }
 
+  const readFreshness = isCacheFirstMarketData()
+    ? CACHE_FIRST_READ_FRESHNESS_MS
+    : DEFAULT_PRICE_FRESHNESS_MS;
+
+  const cached = await priceCache.get(assetId, readFreshness);
+  if (cached) {
+    return { ok: true, quote: cached };
+  }
+
+  if (isCacheFirstMarketData()) {
+    console.info(`[validateUsSymbol] cache miss for ${assetId} — one live quote fetch`);
+  }
+
   try {
-    const quote = await adapter.fetchLatest(normalized);
+    const quote = await fetchPriceWithCache({
+      adapter,
+      symbol: normalized,
+      cache: priceCache,
+      freshnessMs: 0,
+    });
     return { ok: true, quote };
   } catch (err) {
     if (err instanceof NotFoundError) {
