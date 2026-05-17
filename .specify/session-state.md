@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-17 by Cursor (Daily Snapshot UAT + dev testing harness + floating Dev Tools)
+> **Last updated**: 2026-05-18 by Claude Opus 4.7 (audit of Cursor's dev-harness; 5-commit split plan ready)
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                         |
-| :-------------------- | :------------------------------------------------------------------------------------------------------------ |
-| **Active stage**      | **Stage 2 — in progress**                                                                                     |
-| **Step**              | J7 Daily Snapshot **implemented + UAT signed off** (6 seed scenarios); **uncommitted** dev-tools overlay work |
-| **Branch**            | `dev/stage-2` (tracks `origin/dev/stage-2`)                                                                   |
-| **Last commit**       | `270b6da` — docs(adr-009): daily snapshot timing + cron + cache-reuse                                         |
-| **PR**                | Stage 2 work on `dev/stage-2`; Stage 1 PR #5 merge status not re-verified this session                        |
-| **CI status**         | Local mobile typecheck ✅ / lint ✅ (last run this session); full monorepo not re-run after all edits         |
-| **Mobile dev server** | User local Metro; after overlay changes use **⌘D → Reload** (not ⌘R on iOS Simulator)                         |
+| Field                 | Value                                                                                                                      |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 2 — in progress**                                                                                                  |
+| **Step**              | J7 Daily Snapshot UAT done; Cursor's dev-harness **audited + 5-commit split plan ready**; awaiting user "go" to apply      |
+| **Branch**            | `dev/stage-2` (tracks `origin/dev/stage-2`) — 1 commit ahead (`1bb402d` Cursor checkpoint), large uncommitted batch on top |
+| **Last commit**       | `1bb402d` — chore(state): Daily Snapshot UAT done, dev harness uncommitted (Cursor)                                        |
+| **PR**                | Stage 2 work on `dev/stage-2`; Stage 1 PR #5 already merged                                                                |
+| **CI status**         | Local monorepo typecheck ✅ / lint ✅ / test ✅ (all FULL TURBO cached this session)                                       |
+| **Mobile dev server** | User local Metro; after overlay changes use **⌘D → Reload** (not ⌘R on iOS Simulator)                                      |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -59,15 +59,39 @@
 
 ## Active blockers / waiting on user
 
-- **Commit** the uncommitted testing-harness + Dev Tools overlay batch when ready (large diff on `dev/stage-2`).
+- **User go-ahead** to apply the 5-commit split (below) for the dev-harness batch.
 - **Optional**: formal sign-off S2-AC-1.6/1.7; Storybook P1 for `@arc/ui/finance`.
 
 ## Immediate next actions (next session, 按顺序)
 
-1. **Commit** dev testing harness + floating Dev Tools + `seed-core` refactor (single or split PR).
-2. **Stage 2 next module** (user to prioritize): Welcome J6 / Watchlist J8 / Rebalance J9 / CSV J10 — see `docs/development-plan.md` §七.
-3. **Storybook** (P1): `DailySnapshotCard` 4 stories — Expo 54 + Uniwind spike, separate session.
-4. When adding new features: extend `seed-core` scenarios + cheatsheet + FAB panel (pattern: `feature:state`, `pnpm seed:<abbr>:*`).
+**A. Commit the dev-harness batch (5-commit split plan, 2026-05-18 audit)**
+
+| #     | Commit                                                               | Scope                                                                                                                                                                                                                                                                                                                          |
+| :---- | :------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** | `chore(gitignore): supabase CLI tmp + cheatsheet placeholder`        | Add `supabase/.temp/` to `.gitignore` (P2-3); replace hardcoded `jdvlzkictwinkgcvgwew` in `docs/dev-seed-cheatsheet.md` with `<your-project-ref>` (P2-4)                                                                                                                                                                       |
+| **B** | `feat(dev-tools): shared seed-core + CLI extends to --scenario`      | `supabase/functions/_shared/seed-core.ts` + `tools/seed-dev-data.ts` + `package.json` (6 `seed:*` scripts) + `.env.dev.example`. **In this commit: delete `daily-snapshot:happy` from seed-core (P2-1 — dead alias of default; FE never invokes it)**                                                                          |
+| **C** | `feat(dev-tools): dev-seed Edge Function (5-layer security)`         | `supabase/functions/dev-seed/` (new index.ts + README.md) + `package.json` `functions:*` scripts. Audit verified all 5 defenses (prod URL block / `DEV_TOOLS_ENABLED` gate / Bearer auth / scenario whitelist / user-scoped via JWT). **P1**: add Deno unit tests post-cron-deploy (not blocking commit)                       |
+| **D** | `feat(dev-tools): in-app FAB + ScenarioPanel + /me/dev-tools + docs` | `apps/mobile/app/me/dev-tools.tsx` + `apps/mobile/src/components/dev-tools/` + `apps/mobile/src/lib/dev-tools/` + root `_layout.tsx` overlay mount + `settings.tsx` CTA + i18n + `.vscode/tasks.json` + `.cursor/commands/seed-dev.md` + `docs/testing-strategy.md` + `docs/dev-seed-cheatsheet.md` + feature-spec + CLAUDE.md |
+| **E** | `chore(design): regenerate Pencil Stage 1 design file`               | `tools/generate-stage1-design-pen.mjs` + `docs/design/Arc stage1 design.pen`. **Independent** of dev-harness — Stage 1 cleanup, separate commit                                                                                                                                                                                |
+
+Order: A → B → C → D → E. Verify `pnpm typecheck` / `lint` / `test` after each.
+
+**B. Production cron go-live (when ready)**
+
+1. `brew install supabase/tap/supabase` (one-time)
+2. `openssl rand -hex 32` → save the secret
+3. `supabase link --project-ref jdvlzkictwinkgcvgwew && supabase secrets set DAILY_SNAPSHOT_SECRET=<secret>`
+4. `supabase functions deploy daily-snapshot`
+5. GitHub repo Settings → Secrets: `SUPABASE_DAILY_SNAPSHOT_URL` + `DAILY_SNAPSHOT_SECRET`
+6. GitHub Actions → Daily Snapshot → Run workflow → verify response
+
+**C. Stage 2 next module**
+
+User to prioritize: Welcome J6 / Watchlist J8 / Rebalance J9 / CSV J10 — see `docs/development-plan.md` §七. Default recommendation: **CSV J10** (biggest self-use unlock; aligns with "scratch your own itch").
+
+**D. Pattern for future features**
+
+Extend `seed-core` scenarios + cheatsheet + FAB panel using `feature:state` naming + `pnpm seed:<abbr>:*` aliases.
 
 ## Open decisions / questions
 
@@ -82,6 +106,8 @@
 - **iOS Simulator refresh**: **⌘D → Reload** (⌘R is screenshot on user's machine).
 - **DEV_SEED_EMAIL** in repo-root `.env.dev.local` powers `pnpm seed:*` without `--email`.
 - **Supabase CLI**: `pnpm postinstall:supabase-cli` after `pnpm install` (pnpm blocks supabase postinstall by default).
+- **`daily-snapshot:happy` is a dead alias** in `seed-core.ts` — exact clone of `default`, FE never invokes it. Schedule to delete in commit B above.
+- **`supabase/.temp/`** appears after `pnpm supabase` runs; add to `.gitignore` (commit A above) so it doesn't keep showing up in `git status`.
 - All prior Stage 1 gotchas still apply (FixtureAdapter, @arc/ui imports, OTP 8-digit, etc.).
 
 ## Active env / config snapshot
