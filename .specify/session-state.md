@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-18 by Claude Opus 4.7 (audit of Cursor's dev-harness; 5-commit split plan ready)
+> **Last updated**: 2026-05-18 by Claude Opus 4.7 (P1 Deno tests for dev-seed landed; Stage 2 priority confirmed: Daily Snapshot → Watchlist → Rebalance; CSV downgraded to Stage 3 末)
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                                      |
-| :-------------------- | :------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 2 — in progress**                                                                                                  |
-| **Step**              | J7 Daily Snapshot UAT done; Cursor's dev-harness **audited + 5-commit split plan ready**; awaiting user "go" to apply      |
-| **Branch**            | `dev/stage-2` (tracks `origin/dev/stage-2`) — 1 commit ahead (`1bb402d` Cursor checkpoint), large uncommitted batch on top |
-| **Last commit**       | `1bb402d` — chore(state): Daily Snapshot UAT done, dev harness uncommitted (Cursor)                                        |
-| **PR**                | Stage 2 work on `dev/stage-2`; Stage 1 PR #5 already merged                                                                |
-| **CI status**         | Local monorepo typecheck ✅ / lint ✅ / test ✅ (all FULL TURBO cached this session)                                       |
-| **Mobile dev server** | User local Metro; after overlay changes use **⌘D → Reload** (not ⌘R on iOS Simulator)                                      |
+| Field                 | Value                                                                                                                                                   |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Active stage**      | **Stage 2 — in progress**                                                                                                                               |
+| **Step**              | J7 Daily Snapshot done; dev-harness 5-commit batch landed; **P1 Deno tests for dev-seed handler added**; cron production go-live pending user CLI steps |
+| **Branch**            | `dev/stage-2` (tracks `origin/dev/stage-2`) — uncommitted: dev-seed handler refactor + Deno tests + docs                                                |
+| **Last commit**       | `12b106d` — chore(design): regenerate Pencil Stage 1 design file via deterministic script                                                               |
+| **PR**                | Stage 2 work on `dev/stage-2`; Stage 1 PR #5 already merged                                                                                             |
+| **CI status**         | Local monorepo typecheck ✅ / lint ✅ / test ✅ (all FULL TURBO cached this session)                                                                    |
+| **Mobile dev server** | User local Metro; after overlay changes use **⌘D → Reload** (not ⌘R on iOS Simulator)                                                                   |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -37,13 +37,14 @@
 
 ### Uncommitted work (this session — commit before next feature)
 
-- **`docs/testing-strategy.md`** — layered testing playbook
-- **`docs/dev-seed-cheatsheet.md`** — persistent seed/UAT command reference
-- **`supabase/functions/_shared/seed-core.ts`** — shared seed logic (CLI + Edge Function)
-- **`supabase/functions/dev-seed/`** — dev-only seed Edge Function (`DEV_TOOLS_ENABLED=true`)
-- **`pnpm seed:*` shortcuts**, `.vscode/tasks.json`, `.cursor/commands/seed-dev.md`
-- **`DevToolsFloatingOverlay`** — global draggable purple DEV FAB + bottom sheet (`__DEV__`)
-- i18n + settings link; `package.json` `postinstall:supabase-cli` + `pnpm supabase` via local binary
+- **`supabase/functions/dev-seed/handler.ts`** — pure HTTP handler extracted from `index.ts` (DI for createClient / runSeedForUser / env)
+- **`supabase/functions/dev-seed/index.ts`** — now thin shell that wires real deps into `makeHandler`
+- **`supabase/functions/dev-seed/handler.test.ts`** — Deno unit tests, 18 cases covering all 5 security layers + happy path + JWT user-id smuggling defense
+- **`supabase/functions/dev-seed/README.md`** — appended unit-test instructions (`brew install deno && pnpm test:functions`)
+- **`supabase/functions/deno.json`** — Deno config + `@supabase/supabase-js` import map
+- **`package.json`** — added `test:functions` + `functions:deploy:daily-snapshot` scripts
+- **`docs/development-plan.md`** — Stage 2 priority reordered; CSV moved to Stage 3 末
+- **`.specify/session-state.md`** — this file
 
 ## Testing harness (canonical docs)
 
@@ -59,44 +60,68 @@
 
 ## Active blockers / waiting on user
 
-- **User go-ahead** to apply the 5-commit split (below) for the dev-harness batch.
-- **Optional**: formal sign-off S2-AC-1.6/1.7; Storybook P1 for `@arc/ui/finance`.
+- **Daily-snapshot cron production go-live**: user runs interactive Supabase CLI + GitHub secrets setup (steps in "Immediate next actions B" below). Cannot be automated from this side.
+- **`brew install deno`** before running `pnpm test:functions` (Deno binary not yet on PATH; tests written + ready).
+- **Optional**: formal sign-off S2-AC-1.6/1.7 (will be naturally satisfied once cron runs and `portfolio_value_snapshots` rows accumulate).
 
 ## Immediate next actions (next session, 按顺序)
 
-**A. Commit the dev-harness batch (5-commit split plan, 2026-05-18 audit)**
+**A. Commit the P1-tests batch (this session)**
 
-| #     | Commit                                                               | Scope                                                                                                                                                                                                                                                                                                                          |
-| :---- | :------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A** | `chore(gitignore): supabase CLI tmp + cheatsheet placeholder`        | Add `supabase/.temp/` to `.gitignore` (P2-3); replace hardcoded `jdvlzkictwinkgcvgwew` in `docs/dev-seed-cheatsheet.md` with `<your-project-ref>` (P2-4)                                                                                                                                                                       |
-| **B** | `feat(dev-tools): shared seed-core + CLI extends to --scenario`      | `supabase/functions/_shared/seed-core.ts` + `tools/seed-dev-data.ts` + `package.json` (6 `seed:*` scripts) + `.env.dev.example`. **In this commit: delete `daily-snapshot:happy` from seed-core (P2-1 — dead alias of default; FE never invokes it)**                                                                          |
-| **C** | `feat(dev-tools): dev-seed Edge Function (5-layer security)`         | `supabase/functions/dev-seed/` (new index.ts + README.md) + `package.json` `functions:*` scripts. Audit verified all 5 defenses (prod URL block / `DEV_TOOLS_ENABLED` gate / Bearer auth / scenario whitelist / user-scoped via JWT). **P1**: add Deno unit tests post-cron-deploy (not blocking commit)                       |
-| **D** | `feat(dev-tools): in-app FAB + ScenarioPanel + /me/dev-tools + docs` | `apps/mobile/app/me/dev-tools.tsx` + `apps/mobile/src/components/dev-tools/` + `apps/mobile/src/lib/dev-tools/` + root `_layout.tsx` overlay mount + `settings.tsx` CTA + i18n + `.vscode/tasks.json` + `.cursor/commands/seed-dev.md` + `docs/testing-strategy.md` + `docs/dev-seed-cheatsheet.md` + feature-spec + CLAUDE.md |
-| **E** | `chore(design): regenerate Pencil Stage 1 design file`               | `tools/generate-stage1-design-pen.mjs` + `docs/design/Arc stage1 design.pen`. **Independent** of dev-harness — Stage 1 cleanup, separate commit                                                                                                                                                                                |
+Single commit recommended: `test(dev-seed): Deno unit tests for 5-layer security via injected deps`. Touches:
 
-Order: A → B → C → D → E. Verify `pnpm typecheck` / `lint` / `test` after each.
+- `supabase/functions/dev-seed/handler.ts` (new — extracted handler)
+- `supabase/functions/dev-seed/index.ts` (now wires deps into makeHandler)
+- `supabase/functions/dev-seed/handler.test.ts` (new — 18 Deno tests)
+- `supabase/functions/dev-seed/README.md` (test instructions appended)
+- `supabase/functions/deno.json` (new — Deno config + import map)
+- `package.json` (`test:functions` + `functions:deploy:daily-snapshot`)
+- `docs/development-plan.md` (CSV → Stage 3 末)
+- `.specify/session-state.md` (this file)
 
-**B. Production cron go-live (when ready)**
+Optionally split docs (CSV reprioritization) into its own commit if you prefer clean atomic history.
 
-1. `brew install supabase/tap/supabase` (one-time)
-2. `openssl rand -hex 32` → save the secret
-3. `supabase link --project-ref jdvlzkictwinkgcvgwew && supabase secrets set DAILY_SNAPSHOT_SECRET=<secret>`
-4. `supabase functions deploy daily-snapshot`
-5. GitHub repo Settings → Secrets: `SUPABASE_DAILY_SNAPSHOT_URL` + `DAILY_SNAPSHOT_SECRET`
-6. GitHub Actions → Daily Snapshot → Run workflow → verify response
+**B. Production cron go-live (USER — interactive CLI; do this next)**
 
-**C. Stage 2 next module**
+```bash
+# 1) Supabase CLI auth (one-time)
+pnpm supabase login                                  # browser OAuth flow
+pnpm supabase link --project-ref jdvlzkictwinkgcvgwew
 
-User to prioritize: Welcome J6 / Watchlist J8 / Rebalance J9 / CSV J10 — see `docs/development-plan.md` §七. Default recommendation: **CSV J10** (biggest self-use unlock; aligns with "scratch your own itch").
+# 2) Generate + store the shared secret on Supabase
+SECRET=$(openssl rand -hex 32)
+echo "Copy this to GitHub secrets in step 4: $SECRET"
+pnpm supabase secrets set DAILY_SNAPSHOT_SECRET=$SECRET
+
+# 3) Deploy the Edge Function
+pnpm functions:deploy:daily-snapshot
+
+# 4) Configure GitHub Actions secrets
+#    Repo Settings → Secrets and variables → Actions → New repository secret:
+#      SUPABASE_DAILY_SNAPSHOT_URL = https://jdvlzkictwinkgcvgwew.supabase.co/functions/v1/daily-snapshot
+#      DAILY_SNAPSHOT_SECRET       = <the SECRET printed in step 2>
+
+# 5) Smoke test
+#    GitHub → Actions → "Daily Snapshot" → Run workflow → "Run workflow"
+#    Verify: workflow goes green; "Edge Function response" shows portfoliosProcessed >= 1
+#    Then SELECT portfolio_id, as_of, total_value FROM portfolio_value_snapshots ORDER BY as_of DESC LIMIT 5;
+```
+
+**C. Stage 2 next module (priority confirmed 2026-05-18)**
+
+**Daily Snapshot ✅ → Watchlist (next) → Rebalance → Welcome**. CSV moved to Stage 3 末 (see `docs/development-plan.md`).
+
+Watchlist plan: create `.specify/feature-specs/watchlist-stage-2.md` (`/(tabs)/markets` list + `/markets/search` AV modal + `watchlist_item` table + Drizzle migration 0004).
 
 **D. Pattern for future features**
 
-Extend `seed-core` scenarios + cheatsheet + FAB panel using `feature:state` naming + `pnpm seed:<abbr>:*` aliases.
+Extend `seed-core` scenarios + cheatsheet + FAB panel using `feature:state` naming + `pnpm seed:<abbr>:*` aliases. New Edge Functions should follow the dev-seed `handler.ts` + `index.ts` split so they're unit-testable.
 
 ## Open decisions / questions
 
-- Stage 2 priority order among Welcome / Watchlist / Rebalance / CSV (Daily Snapshot done).
+- **Resolved 2026-05-18**: Stage 2 order = Daily Snapshot ✅ → Watchlist → Rebalance → Welcome; CSV → Stage 3 末.
 - Whether to ADR the Dev Tools overlay + `dev-seed` Edge Function pattern (optional; cheatsheet + README exist).
+- Whether to add Deno test coverage to the daily-snapshot Edge Function as well (currently no unit tests; high-leverage if we refactor it through the same `handler.ts` split pattern — defer until first bug).
 
 ## Critical mental model (gotchas easy to forget)
 
