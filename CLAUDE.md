@@ -243,6 +243,11 @@ pnpm sync:skills      # 手动同步 canonical → 本地镜像
 # packages/db 就绪后：
 pnpm --filter @arc/db generate   # 生成 Drizzle migration
 pnpm --filter @arc/db push       # 推送 schema 到 Supabase
+
+# Dev UAT 种子数据（Layer 4 — 见 docs/dev-seed-cheatsheet.md；DEV_SEED_EMAIL in .env.dev.local）：
+pnpm seed:default | pnpm seed:ds:happy | pnpm seed:ds:first-day | …  # 短命令
+# IDE: Cmd+Shift+P → Tasks: Run Task → Seed: …
+# Cursor chat: /seed-dev + 场景名
 ```
 
 > **注意**：Git hooks 由 husky 管理，`pnpm install` 时自动安装。`git commit`（skills 有变更时）、`git pull` 和 `git checkout` 均会自动触发 skill 同步，无需手动执行 `sync:skills`。

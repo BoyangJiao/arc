@@ -114,6 +114,50 @@ export const en = {
       "ON. Pull-to-refresh and new tickers call Alpha Vantage (note: 25/day free quota)",
     useRealMarketDataOffHint:
       "OFF. All quotes come from local dev-fixtures/quotes.json — zero network calls",
+    openDevTools: "Dev tools",
+    openDevToolsHint: "Or use the purple DEV floating button (bottom-right)",
+  },
+  devTools: {
+    title: "Dev tools",
+    subtitle: "Reset and seed data for the signed-in account. Same scenarios as pnpm seed:dev.",
+    successTitle: "Scenario applied",
+    successBody:
+      "Data written. If the UI looks stale, use ⌘D → Reload, or pull to refresh on Portfolio.",
+    errorTitle: "Could not apply scenario",
+    goPortfolio: "Open Portfolio",
+    applied: "Applied",
+    reloadHint: "If numbers look wrong: ⌘D → Dev Menu → Reload.",
+    fabOpen: "Open dev tools",
+    fabDock: "Dock to screen edge",
+    closePanel: "Close",
+    fabHint: "Tip: drag the purple DEV button on any screen; tap ◂ to dock to the edge.",
+    fabDragHint: "Drag the DEV button to reposition",
+    scenarios: {
+      default: {
+        label: "Daily default",
+        hint: "Full Daily Snapshot card, ~+2%",
+      },
+      bigGain: {
+        label: "Big gain +10%",
+        hint: "Large positive numbers and gain colors",
+      },
+      bigLoss: {
+        label: "Big loss -5%",
+        hint: "Loss colors and negative sign",
+      },
+      mixedMovers: {
+        label: "Mixed movers Top-3",
+        hint: "Sort order + red/green chips; try with color-mode toggle",
+      },
+      firstDay: {
+        label: "First day",
+        hint: "No baseline snapshot — placeholder copy",
+      },
+      empty: {
+        label: "Empty portfolio",
+        hint: "Daily Snapshot card hidden",
+      },
+    },
   },
   rebalance: {
     title: "Rebalance",

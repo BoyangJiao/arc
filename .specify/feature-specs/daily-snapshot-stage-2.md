@@ -358,9 +358,29 @@ After step 7, S2-AC-1.1–1.7 should pass end-to-end manually. After step 6 land
 
 ---
 
+## Test plan (per `docs/testing-strategy.md`)
+
+> Single email, multi-scenario verification. Switch UI states via
+> `pnpm seed:dev --email <you> --scenario <name>` then cold-start the app.
+
+| AC                           | Layer(s)                  | Artifact / how to run                                                                                 |
+| :--------------------------- | :------------------------ | :---------------------------------------------------------------------------------------------------- |
+| S2-AC-1.1 主路径             | L1 + L4 (+ future L2)     | `packages/core/__tests__/compute-daily-delta.spec.ts` + `seed:dev --scenario daily-snapshot:happy`    |
+| S2-AC-1.1 主路径 (大涨/大跌) | L4                        | `--scenario daily-snapshot:big-gain` / `:big-loss` (sign / coloring extremes)                         |
+| S2-AC-1.2 首日占位           | L4 (+ future L2)          | `--scenario daily-snapshot:first-day`                                                                 |
+| S2-AC-1.3 空组合             | L4 (+ future L2)          | `--scenario daily-snapshot:empty`                                                                     |
+| S2-AC-1.4 Top-3 排序         | **L1 property test** + L4 | Property: random N holdings → top 3 by \|deltaPercent\|; UI: `--scenario daily-snapshot:mixed-movers` |
+| S2-AC-1.5 红涨绿跌切换       | L4 + L5                   | `--scenario daily-snapshot:mixed-movers` → Me → Settings 切 finance color mode, 验无 remount          |
+| S2-AC-1.6 cron idempotent    | L7                        | `curl -X POST` Edge Function twice → 行数不变; UNIQUE constraint                                      |
+| S2-AC-1.7 无外部 API 调用    | L7                        | Local `supabase functions serve` + 断言 outbound HTTP = 0                                             |
+
+**结果**：7 条 AC 里 5 条只动 `seed:dev --scenario` + 一个邮箱即可。
+
+---
+
 ## Verification checklist before merging back to `main`
 
-- [ ] All 7 S2-AC-1.x acceptance criteria manually verified on iOS sim
+- [ ] All 7 S2-AC-1.x acceptance criteria manually verified on iOS sim (走 Test plan 表)
 - [ ] `pnpm typecheck` 6/6 ✅
 - [ ] `pnpm lint` 6/6 ✅
 - [ ] `pnpm test` ✅ (core gains property tests for `computeDailyDelta`)

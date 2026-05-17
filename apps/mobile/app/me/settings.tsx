@@ -13,7 +13,7 @@
  */
 
 import { Pressable, View } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, type Href } from "expo-router";
 import { Switch, Screen, Text, useFinanceColorMode, useStackScreenOptions } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import i18n from "@arc/i18n";
@@ -25,6 +25,7 @@ import { useColorMode } from "../../src/lib/theme";
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { prefs, update } = useUserPreferences();
   const { colorMode, toggleColorMode } = useColorMode();
   const { financeColorMode, setFinanceColorMode } = useFinanceColorMode();
@@ -119,6 +120,21 @@ export default function SettingsScreen() {
                 </View>
                 <Switch isSelected={useRealMarketData} onSelectedChange={setUseRealMarketData} />
               </View>
+
+              <Pressable
+                onPress={() => router.push("/me/dev-tools" as Href)}
+                className="active:opacity-70"
+              >
+                <View className="flex-row items-center justify-between bg-surface px-4 py-4 rounded-xl">
+                  <View className="flex-1 mr-4">
+                    <Text className="text-foreground text-base">{t("settings.openDevTools")}</Text>
+                    <Text className="text-muted text-xs mt-1">
+                      {t("settings.openDevToolsHint")}
+                    </Text>
+                  </View>
+                  <Text className="text-accent text-lg">›</Text>
+                </View>
+              </Pressable>
             </View>
           )}
         </View>

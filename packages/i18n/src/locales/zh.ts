@@ -111,6 +111,49 @@ export const zh = {
     useRealMarketDataOnHint:
       "打开。下拉刷新或加新代号时会调用 Alpha Vantage（注意 25/day 免费配额）",
     useRealMarketDataOffHint: "关闭。所有报价来自本地 dev-fixtures/quotes.json，零网络调用",
+    openDevTools: "开发工具",
+    openDevToolsHint: "也可使用右下角紫色 DEV 悬浮钮",
+  },
+  devTools: {
+    title: "开发工具",
+    subtitle: "为当前登录账号重置并注入测试数据。与 pnpm seed:dev 使用相同场景。",
+    successTitle: "场景已应用",
+    successBody: "数据已写入。若界面未更新，请 ⌘D → Reload，或在组合页下拉刷新。",
+    errorTitle: "场景应用失败",
+    goPortfolio: "打开组合页",
+    applied: "已应用",
+    reloadHint: "切换场景后若数字未变：⌘D 打开开发菜单 → Reload。",
+    fabOpen: "打开开发工具",
+    fabDock: "贴边隐藏",
+    closePanel: "关闭",
+    fabHint: "提示：任意页面右下角紫色 DEV 钮可拖拽；点 ◂ 贴边隐藏。",
+    fabDragHint: "拖动 DEV 钮可改变位置",
+    scenarios: {
+      default: {
+        label: "日常默认",
+        hint: "完整今日变动卡，约 +2%",
+      },
+      bigGain: {
+        label: "大涨 +10%",
+        hint: "验证书号数字与涨色",
+      },
+      bigLoss: {
+        label: "大跌 -5%",
+        hint: "验证跌色与负号",
+      },
+      mixedMovers: {
+        label: "涨跌混合 Top-3",
+        hint: "排序 + 红绿 chip，可配合涨跌色设置",
+      },
+      firstDay: {
+        label: "首日占位",
+        hint: "无昨日快照，显示首次启动文案",
+      },
+      empty: {
+        label: "空仓",
+        hint: "不显示今日变动卡",
+      },
+    },
   },
   rebalance: {
     title: "再平衡",
