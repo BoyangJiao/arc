@@ -23,8 +23,9 @@ build/
 !.env.example
 !.env*.example
 
-# supabase local dev (supabase start)
+# supabase local dev (supabase start) + CLI tmp output (login / functions deploy)
 .supabase/
+supabase/.temp/
 
 # debug
 npm-debug.log*
