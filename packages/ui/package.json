@@ -19,6 +19,7 @@
   "devDependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@types/react": "~19.1.0",
+    "decimal.js": "^10.5.0",
     "expo-router": "~6.0.23",
     "fast-check": "^4.8.0",
     "react": "19.1.0",
@@ -33,6 +34,7 @@
   },
   "peerDependencies": {
     "@expo/vector-icons": "*",
+    "decimal.js": "*",
     "expo-router": "~6.0.23",
     "lucide-react-native": "*",
     "react": "*",
