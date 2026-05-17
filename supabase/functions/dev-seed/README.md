@@ -53,3 +53,12 @@ curl -X POST \
 ## App usage
 
 Me → Settings → **Dev tools** → tap a scenario → Portfolio Tab refreshes (⌘D → Reload if needed).
+
+## Unit tests
+
+Handler logic (5 security layers + happy path) is unit-tested with Deno's built-in test runner. `handler.ts` is decoupled from `Deno.serve` / Supabase client / network so tests run hermetically.
+
+```bash
+brew install deno     # one-time
+pnpm test:functions   # → deno test --allow-env (from supabase/functions/)
+```
