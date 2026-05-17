@@ -15,6 +15,16 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "sync:skills": "bash tools/sync-skills.sh",
     "seed:dev": "tsx tools/seed-dev-data.ts",
+    "seed:default": "tsx tools/seed-dev-data.ts",
+    "seed:ds:gain": "tsx tools/seed-dev-data.ts --scenario daily-snapshot:big-gain",
+    "seed:ds:loss": "tsx tools/seed-dev-data.ts --scenario daily-snapshot:big-loss",
+    "seed:ds:mixed": "tsx tools/seed-dev-data.ts --scenario daily-snapshot:mixed-movers",
+    "seed:ds:first-day": "tsx tools/seed-dev-data.ts --scenario daily-snapshot:first-day",
+    "seed:ds:empty": "tsx tools/seed-dev-data.ts --scenario daily-snapshot:empty",
+    "postinstall:supabase-cli": "node node_modules/supabase/scripts/postinstall.js",
+    "supabase": "node_modules/supabase/bin/supabase",
+    "functions:deploy:dev-seed": "node_modules/supabase/bin/supabase functions deploy dev-seed",
+    "functions:secrets:dev-tools": "node_modules/supabase/bin/supabase secrets set DEV_TOOLS_ENABLED=true",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -26,6 +36,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.4",
     "prettier": "^3.5.3",
+    "supabase": "^2.98.2",
     "tsx": "^4.19.2",
     "turbo": "^2.5.4"
   },
