@@ -311,8 +311,71 @@ async function main() {
   if (fxErr) die(`fx_rates upsert failed: ${fxErr.message}`);
   console.log(`✓ Seeded USD→CNY fx_rates row`);
 
+  // Step 8: seed a "yesterday" portfolio_value_snapshots row so the
+  // Daily Snapshot card (Stage 2 J7) renders immediately in dev — no need
+  // to wait 24h for the GitHub Actions cron to write a baseline.
+  // We pick prices ~2% LOWER than the current seed so today's view shows a
+  // ~+2% gain card (positive delta + colored mover chips).
+  //
+  // Per spec §UI contract: card compares against the most-recent snapshot
+  // strictly BEFORE now. Use yesterday at 23:00 UTC — matches what the
+  // production cron would have written.
+  const yesterdayAt23UTC = (() => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - 1);
+    d.setUTCHours(23, 0, 0, 0);
+    return d.toISOString();
+  })();
+  // Per-asset baseline values in USD native (~2% below current seed),
+  // then converted to CNY @ 7.20 for the reporting-currency totals.
+  const BASELINE = {
+    AAPL: { shares: "10", priceNative: "185.79" }, // 189.50 × ~0.98
+    MSFT: { shares: "5", priceNative: "412.05" }, // 420.30 × ~0.98
+    NVDA: { shares: "8", priceNative: "857.50" }, // 875.00 × ~0.98
+  } as const;
+  const FX_USD_CNY = 7.2;
+  const perAssetSnapshot = Object.entries(BASELINE).map(([sym, { shares, priceNative }]) => {
+    const valueNative = Number(shares) * Number(priceNative);
+    return {
+      assetId: `US:${sym}`,
+      shares,
+      valueNative: valueNative.toFixed(2),
+      currency: "USD",
+      valueReporting: (valueNative * FX_USD_CNY).toFixed(2),
+    };
+  });
+  const totalValueReporting = perAssetSnapshot
+    .reduce((acc, a) => acc + Number(a.valueReporting), 0)
+    .toFixed(2);
+  // Cost basis: same shares × the original BUY prices from SEED_TRANSACTIONS,
+  // converted at the same FX. (This is dev-fake; the real cron would track
+  // cumulative cost properly. Stage 2 card only displays total/delta, not
+  // cost-basis-derived numbers, so this approximation is harmless.)
+  const totalCostBasisReporting = SEED_TRANSACTIONS.reduce((acc, tx) => {
+    return acc + Number(tx.shares) * Number(tx.price_per_share) * FX_USD_CNY;
+  }, 0).toFixed(2);
+
+  const { error: snapErr } = await supabase.from("portfolio_value_snapshots").upsert(
+    {
+      portfolio_id: portfolioId,
+      as_of: yesterdayAt23UTC,
+      total_value: totalValueReporting,
+      total_cost_basis: totalCostBasisReporting,
+      reporting_currency: "CNY",
+      per_asset: perAssetSnapshot,
+      source: "manual",
+    } as never,
+    { onConflict: "portfolio_id,as_of" }
+  );
+  if (snapErr) die(`portfolio_value_snapshots upsert failed: ${snapErr.message}`);
   console.log(
-    `\n✅ Seed complete. Cold-start the app — Portfolio Tab should show 3 holdings with fast cached quotes.`
+    `✓ Seeded yesterday's snapshot (Daily Snapshot card baseline; ≈¥${totalValueReporting})`
+  );
+
+  console.log(
+    `\n✅ Seed complete. Cold-start the app — Portfolio Tab should show:` +
+      `\n   • Daily Snapshot card at top (≈ +2% gain vs yesterday's baseline)` +
+      `\n   • Total value below + 3 holdings with fast cached quotes`
   );
 }
 
