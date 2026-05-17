@@ -246,3 +246,68 @@ export interface PortfolioValuation {
   readonly perAsset: ReadonlyArray<MarketValuation>;
   readonly computedAt: string;
 }
+
+// ─── 每日快照 (Daily Snapshot — Stage 2 J7) ───────────────────────────────
+
+/**
+ * SnapshotAsset — 快照时点某个持仓的明细
+ * 见 .specify/feature-specs/daily-snapshot-stage-2.md
+ */
+export interface SnapshotAsset {
+  readonly assetId: string;
+  readonly shares: Decimal;
+  readonly valueNative: Decimal;
+  readonly currency: Currency;
+  readonly valueReporting: Decimal;
+}
+
+/**
+ * PortfolioDailySnapshot — 单日 portfolio 估值快照
+ *
+ * 由 Edge Function `daily-snapshot` 在 23:00 UTC 写入；用户开 app 时只读，
+ * 不主动写。Top-3 movers 通过比较 (today valuation - 昨日 snapshot) 计算。
+ *
+ * `reportingCurrency` 冗余存储：避免用户切换报告货币后历史快照失效。
+ */
+export interface PortfolioDailySnapshot {
+  readonly portfolioId: string;
+  /** Snapshot 时点（ISO 8601）。Cron 固定 23:00:00Z，但同一字段也接受 manual 任意时点。*/
+  readonly asOf: string;
+  readonly reportingCurrency: Currency;
+  readonly totalValue: Decimal;
+  readonly totalCostBasis: Decimal;
+  readonly perAsset: ReadonlyArray<SnapshotAsset>;
+  readonly source: "edge-function" | "manual";
+  /** 写入时间（DB 自动 default now）*/
+  readonly createdAt: string;
+}
+
+/**
+ * AssetDelta — 单个资产的日变动（mover 排序用）
+ * deltaPercent 在 baseline value 为 0 时（新买入）返回 0（不是 Infinity / NaN）
+ */
+export interface AssetDelta {
+  readonly assetId: string;
+  readonly deltaReporting: Decimal;
+  readonly deltaPercent: Decimal;
+  readonly currentValueReporting: Decimal;
+}
+
+/**
+ * DailyDelta — 整个 portfolio 的日变动汇总
+ *
+ * `status` 区分三种 UI 状态（feature spec §UI Contract）：
+ *   - 'ok'              → 正常渲染卡片
+ *   - 'no-baseline'     → 渲染 placeholder（"首次启动，明日开始追踪"）
+ *   - 'empty-portfolio' → 卡片不渲染
+ */
+export interface DailyDelta {
+  readonly status: "ok" | "no-baseline" | "empty-portfolio";
+  readonly totalDeltaReporting: Decimal;
+  readonly totalDeltaPercent: Decimal;
+  /** 已按 abs(deltaPercent) 降序排序 */
+  readonly movers: ReadonlyArray<AssetDelta>;
+  /** 比较的 baseline snapshot 日期（ISO 8601）。status='no-baseline' 时为 null. */
+  readonly baselineAsOf: string | null;
+  readonly currentReportingCurrency: Currency;
+}
