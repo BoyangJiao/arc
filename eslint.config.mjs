@@ -10,6 +10,11 @@ export default [
       "**/.expo/**",
       "**/drizzle/migrations/**",
       "tools/**",
+      // Supabase Edge Functions run in Deno (not Node); they URL-import deps
+      // and use Deno globals. ESLint with the @typescript-eslint config and
+      // monorepo Node TS settings can't validate them. Deno itself + the
+      // `supabase functions deploy` toolchain own that check.
+      "supabase/functions/**",
     ],
   },
   {
