@@ -1,0 +1,49 @@
+name: Daily Snapshot
+
+# Per ADR 008 §决策五 + .specify/feature-specs/daily-snapshot-stage-2.md
+# §"Snapshot timing": runs at 23:00 UTC daily (= 07:00 北京次日, US market
+# closed, CN market not yet open). Calls the Supabase Edge Function
+# `daily-snapshot` which writes one row per portfolio to
+# `portfolio_value_snapshots` using cached prices/FX only (zero external
+# market-data calls).
+#
+# Idempotent: same UTC date → same as_of timestamp → primary key collision →
+# ON CONFLICT DO UPDATE. Retrying or manually triggering on the same day
+# overwrites; never duplicates.
+
+on:
+  schedule:
+    # 23:00 UTC daily — Mon-Sun. US close (21:00 UTC) has settled by then;
+    # CN open (01:30 UTC) is still 2.5h away.
+    - cron: "0 23 * * *"
+  # Manual trigger for testing the workflow / Edge Function pairing.
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    name: Invoke daily-snapshot Edge Function
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: POST to Supabase Edge Function
+        env:
+          URL: ${{ secrets.SUPABASE_DAILY_SNAPSHOT_URL }}
+          SECRET: ${{ secrets.DAILY_SNAPSHOT_SECRET }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$SECRET" ]; then
+            echo "::error::SUPABASE_DAILY_SNAPSHOT_URL or DAILY_SNAPSHOT_SECRET secret is not set."
+            echo "Configure them in repo Settings → Secrets and variables → Actions:"
+            echo "  SUPABASE_DAILY_SNAPSHOT_URL = https://<project>.supabase.co/functions/v1/daily-snapshot"
+            echo "  DAILY_SNAPSHOT_SECRET       = (same value set on Supabase via 'supabase secrets set DAILY_SNAPSHOT_SECRET=...')"
+            exit 1
+          fi
+          # -f fails on HTTP ≥ 400 (auth fail / function error surfaces).
+          # -S still prints errors on failure (without -s noise on success).
+          RESPONSE=$(curl -fsS -X POST \
+            -H "Authorization: Bearer $SECRET" \
+            -H "Content-Type: application/json" \
+            "$URL")
+          echo "Edge Function response:"
+          echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
+          echo ""
+          echo "Snapshot completed at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
