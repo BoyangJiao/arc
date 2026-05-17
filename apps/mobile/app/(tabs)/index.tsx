@@ -15,15 +15,35 @@
 import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
-import { Card, FLOATING_TAB_BAR_BOTTOM_INSET, Screen, Text, UserAvatar } from "@arc/ui";
+import {
+  Card,
+  DailySnapshotCard,
+  FLOATING_TAB_BAR_BOTTOM_INSET,
+  Screen,
+  Text,
+  UserAvatar,
+} from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
+import { parseAssetId } from "@arc/core";
 
 import { useAuth } from "../../src/lib/auth";
-import { formatMoney } from "../../src/lib/format-money";
-import { usePortfolios, usePortfolioHoldings, usePortfolioValuation } from "../../src/lib/queries";
+import { currencySymbol, formatMoney } from "../../src/lib/format-money";
+import {
+  useDailyDelta,
+  usePortfolios,
+  usePortfolioHoldings,
+  usePortfolioValuation,
+} from "../../src/lib/queries";
 import { useUserPreferences } from "../../src/lib/user-preferences";
 
 const ZERO = new Decimal(0);
+
+/** Render Decimal with explicit sign + 2 decimals, like "+352.20" / "-12.30" / "0.00". */
+const formatSignedDecimal = (value: Decimal): string => {
+  if (value.isZero()) return value.toFixed(2);
+  const sign = value.isPositive() ? "+" : "-";
+  return `${sign}${value.abs().toFixed(2)}`;
+};
 
 export default function PortfolioTab() {
   const { t } = useTranslation();
@@ -45,6 +65,9 @@ export default function PortfolioTab() {
     isError: valuationError,
     refreshValuation,
   } = usePortfolioValuation(defaultPortfolio?.id, reportingCurrency);
+
+  // Stage 2 J7 — Daily Snapshot (composes valuation + yesterday's snapshot)
+  const dailyDelta = useDailyDelta(defaultPortfolio?.id, reportingCurrency);
 
   // Count from transactions (authoritative), not priced rows (AV rate-limit may drop quotes).
   const holdingsCount = holdings.length;
@@ -81,7 +104,28 @@ export default function PortfolioTab() {
         <View className="w-10 h-10" />
       </View>
 
-      {/* Total asset value — visual focus */}
+      {/* Stage 2 J7 — Daily Snapshot card (top of page, primary signal) */}
+      {dailyDelta.data && (
+        <DailySnapshotCard
+          delta={dailyDelta.data}
+          title={t("dailySnapshot.title")}
+          noBaselineMessage={t("dailySnapshot.noBaseline")}
+          disclaimer={t("common.disclaimer")}
+          formatAmount={(amount) =>
+            `${currencySymbol(reportingCurrency)}${formatSignedDecimal(amount)}`
+          }
+          formatPercent={(percent) => `${formatSignedDecimal(percent)}%`}
+          formatAssetLabel={(assetId) => parseAssetId(assetId).symbol}
+          onMoverPress={(assetId) => {
+            // Stage 3 will route to asset detail; Stage 2 reserves the tap target.
+            if (__DEV__) {
+              console.info(`[daily-snapshot] tap ${assetId} — asset detail lands in Stage 3`);
+            }
+          }}
+        />
+      )}
+
+      {/* Total asset value — secondary signal (Daily Snapshot is the hero now) */}
       <View className="mb-6">
         <Text className="text-muted text-sm mb-1">{t("portfolio.totalValue")}</Text>
         <Text className="text-foreground text-4xl font-bold">{totalValueText}</Text>

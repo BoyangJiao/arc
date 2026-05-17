@@ -15,3 +15,5 @@ export {
 } from "./use-transactions";
 export { usePortfolioHoldings } from "./use-portfolio-holdings";
 export { usePortfolioValuation } from "./use-portfolio-valuation";
+export { useDailySnapshot } from "./use-daily-snapshot";
+export { useDailyDelta, type DailyDeltaResult } from "./use-daily-delta";

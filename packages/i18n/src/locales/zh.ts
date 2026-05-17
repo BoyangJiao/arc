@@ -33,6 +33,10 @@ export const zh = {
     partialQuotes: "行情已加载 {{loaded}}/{{total}} 只",
     partialQuotesMissing: "{{missing}} 只暂无行情，可下拉刷新",
   },
+  dailySnapshot: {
+    title: "今日变动",
+    noBaseline: "首次启动，明日开始追踪每日变动",
+  },
   portfolioDetail: {
     totalMarketValue: "总市值",
     asset: "资产",

@@ -33,6 +33,10 @@ export const en = {
     partialQuotes: "Quotes loaded for {{loaded}}/{{total}} holdings",
     partialQuotesMissing: "{{missing}} without a quote — pull to refresh",
   },
+  dailySnapshot: {
+    title: "Today's change",
+    noBaseline: "First time here — daily change starts tracking tomorrow",
+  },
   portfolioDetail: {
     totalMarketValue: "Total Market Value",
     asset: "Asset",
