@@ -101,6 +101,13 @@ export default function SettingsScreen() {
             <Switch isSelected={isDark} onSelectedChange={toggleColorMode} />
           </View>
 
+          <Pressable onPress={() => router.push("/me/cash-balances" as Href)}>
+            <View className="flex-row items-center justify-between bg-surface px-4 py-4 rounded-xl">
+              <Text className="text-foreground text-base">{t("rebalance.cashBalancesTitle")}</Text>
+              <Text className="text-accent text-lg">›</Text>
+            </View>
+          </Pressable>
+
           {/* Dev-only: market data policy toggle (ADR 008) */}
           {__DEV__ && (
             <View className="mt-6 gap-2">
