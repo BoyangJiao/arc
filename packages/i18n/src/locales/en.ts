@@ -275,6 +275,15 @@ export const en = {
       sumNot100: "Targets must sum to 100% (currently {{actual}}%)",
     },
   },
+  welcome: {
+    title: "Welcome to Arc",
+    body1:
+      "Global asset allocation tracker & rebalance assistant\nTrack assets across platforms and markets in one place",
+    body2: "Target allocation, drift, and rebalance — all with Decimal precision",
+    disclaimer: "Not investment advice",
+    primaryCta: "Add your first asset",
+    skip: "Skip",
+  },
   auth: {
     welcomeTitle: "Sign in to Arc",
     welcomeSubtitle: "Enter your email — we'll send you a sign-in code",

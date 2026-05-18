@@ -267,6 +267,14 @@ export const zh = {
       sumNot100: "目标占比合计须为 100%（当前 {{actual}}%）",
     },
   },
+  welcome: {
+    title: "欢迎来到 Arc",
+    body1: "全球资产配置追踪器 & 再平衡助手\n跨多平台多市场的资产，集中追踪",
+    body2: "目标配置 + 偏离度 + 再平衡，全 Decimal 精度",
+    disclaimer: "本工具不构成投资建议",
+    primaryCta: "添加第一笔资产",
+    skip: "跳过",
+  },
   auth: {
     welcomeTitle: "登录循迹",
     welcomeSubtitle: "输入邮箱，我们会发送一个验证码",
