@@ -210,15 +210,15 @@ export const zh = {
       },
       rbAligned: {
         label: "高度对齐",
-        hint: "各资产偏离约 <1%（绿/中性）",
+        hint: "目标≈当前配置，四条偏离条均应 <5%（灰/中性）",
       },
       rbMild: {
         label: "轻度偏离",
-        hint: "一资产约 +7% / 一资产约 -7%（黄）",
+        hint: "AAPL 约 +7%、MSFT 约 -7%（黄条）；切换后请下拉 Insights 刷新",
       },
       rbHeavy: {
         label: "重度偏离",
-        hint: "一资产约 +15% / 一资产约 -15%（红）",
+        hint: "NVDA 约 +15%、MSFT 约 -15%（红条）；切换后请下拉 Insights 刷新",
       },
     },
   },

@@ -216,15 +216,15 @@ export const en = {
       },
       rbAligned: {
         label: "Aligned",
-        hint: "All deviations within ~1% (green/neutral)",
+        hint: "Targets ≈ current mix — all four bars should be <5% (neutral)",
       },
       rbMild: {
         label: "Mild drift",
-        hint: "One asset ~+7% / one ~-7% (warning tier)",
+        hint: "AAPL ~+7%, MSFT ~-7% (warning bars); pull Insights to refresh after seed",
       },
       rbHeavy: {
         label: "Heavy drift",
-        hint: "One asset ~+15% / one ~-15% (critical tier)",
+        hint: "NVDA ~+15%, MSFT ~-15% (critical bars); pull Insights to refresh after seed",
       },
     },
   },

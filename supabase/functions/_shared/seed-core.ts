@@ -136,30 +136,45 @@ export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = {
     includeTransactions: true,
     baseline: null,
     rebalance: {
-      targets: { "US:AAPL": "12", "US:MSFT": "13", "US:NVDA": "44", "CASH:USD": "31" },
+      targets: {
+        "US:AAPL": "11.85",
+        "US:MSFT": "13.14",
+        "US:NVDA": "43.76",
+        "CASH:USD": "31.25",
+      },
       includeCashTx: true,
     },
-    description: "Targets match allocation — deviations within ~1%.",
+    description: "Targets ≈ fixture current allocation — all bars neutral (<5%).",
   },
   "rebalance:mild-drift": {
     includeTransactions: true,
     baseline: null,
     rebalance: {
-      targets: { "US:AAPL": "12", "US:MSFT": "13", "US:NVDA": "44", "CASH:USD": "31" },
+      targets: {
+        "US:AAPL": "4.85",
+        "US:MSFT": "20.14",
+        "US:NVDA": "43.76",
+        "CASH:USD": "31.25",
+      },
       nvdaPrice: "962.50",
       includeCashTx: true,
     },
-    description: "NVDA price +10% vs targets — mild warning tier on Insights.",
+    description: "AAPL ~+7% / MSFT ~-7% vs fixture current (warning bars).",
   },
   "rebalance:heavy-drift": {
     includeTransactions: true,
     baseline: null,
     rebalance: {
-      targets: { "US:AAPL": "12", "US:MSFT": "13", "US:NVDA": "44", "CASH:USD": "31" },
+      targets: {
+        "US:AAPL": "11.85",
+        "US:MSFT": "28.14",
+        "US:NVDA": "28.76",
+        "CASH:USD": "31.25",
+      },
       nvdaPrice: "1181.25",
       includeCashTx: true,
     },
-    description: "NVDA price +35% vs targets — critical tier on Insights.",
+    description: "NVDA ~+15% / MSFT ~-15% vs fixture current (critical bars).",
   },
 };
 
