@@ -177,10 +177,10 @@ const fetchFxRates = async (pairs: readonly string[], forceNetwork: boolean): Pr
 };
 
 export type PortfolioValuationQuery = UseQueryResult<PortfolioValuation | null, Error> & {
-  /** Force live adapter fetch (Home pull-to-refresh, Insights first visit per session). */
-  refreshValuation: () => Promise<void>;
   /** Recompute from cache / holdings only — no adapter network. */
-  refetchValuationFromCache: () => Promise<void>;
+  refreshFromCache: () => Promise<void>;
+  /** Force live adapter fetch (Home pull-to-refresh, optional strong refresh). */
+  refreshFromLive: () => Promise<void>;
 };
 
 export const usePortfolioValuation = (
@@ -223,14 +223,14 @@ export const usePortfolioValuation = (
     },
   });
 
-  const refreshValuation = useCallback(async (): Promise<void> => {
+  const refreshFromCache = useCallback(async (): Promise<void> => {
+    await query.refetch();
+  }, [query.refetch]);
+
+  const refreshFromLive = useCallback(async (): Promise<void> => {
     forceNetworkRef.current = true;
     await query.refetch();
   }, [query.refetch]);
 
-  const refetchValuationFromCache = useCallback(async (): Promise<void> => {
-    await query.refetch();
-  }, [query.refetch]);
-
-  return { ...query, refreshValuation, refetchValuationFromCache };
+  return { ...query, refreshFromCache, refreshFromLive };
 };

@@ -51,7 +51,7 @@ export default function PortfolioDetailScreen() {
     isFetching: valuationFetching,
     isError: valuationError,
     error: valuationErrorObj,
-    refreshValuation,
+    refreshFromLive,
   } = usePortfolioValuation(id, reportingCurrency);
 
   const valuationByAsset = new Map(
@@ -98,7 +98,7 @@ export default function PortfolioDetailScreen() {
   return (
     <>
       <Stack.Screen options={screenOptions} />
-      <Screen refreshing={valuationFetching && !!valuation} onRefresh={() => refreshValuation()}>
+      <Screen refreshing={valuationFetching && !!valuation} onRefresh={() => refreshFromLive()}>
         {/* Total market value section */}
         <View className="mb-6">
           <Text className="text-muted text-sm mb-1">{t("portfolioDetail.totalMarketValue")}</Text>

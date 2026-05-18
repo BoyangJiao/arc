@@ -44,7 +44,7 @@ export default function InsightsTab() {
   const queryClient = useQueryClient();
   const [isPulling, setIsPulling] = useState(false);
 
-  const { deviations, targets, holdings, isLoading, refreshValuation, refetchValuationFromCache } =
+  const { deviations, targets, holdings, isLoading, refreshFromCache, refreshFromLive } =
     useRebalance(portfolioId, reportingCurrency);
 
   const hasHoldings = holdings.length > 0;
@@ -54,22 +54,22 @@ export default function InsightsTab() {
     if (!portfolioId || !hasHoldings || !hasTargets || !isCacheFirstMarketData()) return;
     const key = insightsSessionValuationKey(portfolioId, reportingCurrency);
     if (!claimInsightsSessionLiveFetch(key)) return;
-    void refreshValuation();
-  }, [portfolioId, reportingCurrency, hasHoldings, hasTargets, refreshValuation]);
+    void refreshFromLive();
+  }, [portfolioId, reportingCurrency, hasHoldings, hasTargets, refreshFromLive]);
 
   const handleRefresh = useCallback(async () => {
     if (!portfolioId) return;
     setIsPulling(true);
     try {
       await Promise.all([
-        refetchValuationFromCache(),
+        refreshFromCache(),
         queryClient.refetchQueries({ queryKey: ["targetAllocations", portfolioId] }),
         queryClient.refetchQueries({ queryKey: ["transactions", portfolioId] }),
       ]);
     } finally {
       setIsPulling(false);
     }
-  }, [portfolioId, queryClient, refetchValuationFromCache]);
+  }, [portfolioId, queryClient, refreshFromCache]);
 
   const labelFor = (assetId: string) =>
     assetLabel(assetId, t(`rebalance.cashNames.${parseCashKey(assetId)}` as const));

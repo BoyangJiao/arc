@@ -63,7 +63,7 @@ export default function PortfolioTab() {
     data: valuation,
     isFetching: valuationFetching,
     isError: valuationError,
-    refreshValuation,
+    refreshFromLive,
   } = usePortfolioValuation(defaultPortfolio?.id, reportingCurrency);
 
   // Stage 2 J7 — Daily Snapshot (composes valuation + yesterday's snapshot)
@@ -93,7 +93,7 @@ export default function PortfolioTab() {
         paddingBottom: FLOATING_TAB_BAR_BOTTOM_INSET,
       }}
       refreshing={valuationFetching && !!valuation}
-      onRefresh={() => refreshValuation()}
+      onRefresh={() => refreshFromLive()}
     >
       {/* Top bar: avatar left (ADR 004 dicebear), no title */}
       <View className="flex-row items-center justify-between mb-4">

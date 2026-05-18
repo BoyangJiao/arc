@@ -40,7 +40,7 @@ export const useRebalance = (portfolioId: string | undefined, reportingCurrency:
     isLoading,
     isFetching,
     error,
-    refreshValuation: valuationQuery.refreshValuation,
-    refetchValuationFromCache: valuationQuery.refetchValuationFromCache,
+    refreshFromCache: valuationQuery.refreshFromCache,
+    refreshFromLive: valuationQuery.refreshFromLive,
   };
 };
