@@ -214,26 +214,29 @@
 
 **触发**：用户想给 portfolio 设置目标配置
 
-**前置**：已有持仓
+**前置**：已有持仓（含可选现金槽 `CASH:USD` / `CASH:CNY` / `CASH:HKD` / `CASH:JPY`，通过 Settings → 现金余额 或 BUY `CASH:*` @ 单价 1.0 登记）
 
 **步骤**：
 
 1. tap Insights Tab → `/(tabs)/insights`
 2. 未设置态：引导 → tap "设置首次目标配置" → `/insights/rebalance/setup` Modal
-3. 列出所有当前持仓资产
-4. 给每个分配目标百分比（拖拽 / 输入）
-5. 必须总和 = 100%（否则不让保存）
+3. 列出所有当前持仓资产（含已持有的 `CASH:*`）
+4. 给每个分配目标百分比（Stage 2 = 数字输入；非拖拽）
+5. 必须总和 = 100% ± 0.01（否则保存按钮 disabled）
 6. 保存 → 回 `/(tabs)/insights`
-7. 看到对比视图：双环图 + 每个资产 +/- 偏差
-8. 偏离 5-10% → `deviation-warning` 色（黄）；>10% → `deviation-critical` 色（红）
-9. tap "生成行动单" → `/insights/rebalance/actions`
-10. 看到 "达到目标配置需要的份额变化为 +5 股 AAPL / -3 股 NVDA"
+7. 看到对比视图：双环图（目标外环 / 当前内环）+ 每资产偏离条
+8. 偏离色阶（固定阈值）：|偏离| ≤ 5% → 中性；5% < |偏离| ≤ 10% → `deviation-warning`（黄）；|偏离| > 10% → `deviation-critical`（红）
+9. tap "查看再平衡行动单" → `/insights/rebalance/actions`
+10. 看到 "份额变化 +5 股 AAPL / -3 股 NVDA" 等（按 |金额| 降序扁平列表，不按买卖分组）
+
+**份额取整（脚注）**：US/CN/HK/FUND → 向下取整至整数股；CRYPTO → 8 位小数；CASH → 2 位小数（JPY 现金 0 位）。
 
 **成功标准**：
 
-- ✅ 文案铁律：永不出现"建议买入"，只说"达到目标需要"
-- ✅ 行动单数字精确（Decimal）
+- ✅ 文案铁律：永不出现"建议买入"，只说"份额变化 / 偏离目标 / 目标配置"
+- ✅ 行动单数字精确（Decimal + 按市场取整）
 - ✅ 偏离度颜色正确（Business token）
+- ✅ 页脚含「仅供参考，不构成投资建议」
 
 ---
 
