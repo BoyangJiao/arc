@@ -1,21 +1,6 @@
--- Stage 2 J9 — Rebalance feature
--- 见 .specify/feature-specs/rebalance-stage-2.md
---
--- ⚠️ Postgres `ALTER TYPE ... ADD VALUE` 不能与同一 transaction 内使用该新枚举值
--- 的其他语句共存。Supabase SQL Editor 默认整段当一个事务，因此本文件分为 3 个
--- 独立批次（用 `;` + 空行隔开）。手动一次性贴入也安全 — PG ≥ 12 支持 ADD VALUE
--- 立即可见。
---
--- 验收：
---   SELECT count(*) FROM pg_policies WHERE tablename = 'target_allocations';  -- 4
---   SELECT count(*) FROM assets WHERE market = 'CASH';                       -- 4
---   SELECT enumlabel FROM pg_enum WHERE enumtypid = 'market'::regtype;         -- 含 CASH
-
--- ─── BATCH 1: extend market_enum ────────────────────────────────────────────
-
-ALTER TYPE "market" ADD VALUE IF NOT EXISTS 'CASH';
-
--- ─── BATCH 2: target_allocations table + RLS ───────────────────────────────
+-- Stage 2 J9 — Rebalance (step 2/3)
+-- 前置：0006_market_enum_cash.sql 已成功提交。
+-- Supabase SQL Editor：单独执行本文件。
 
 CREATE TABLE "target_allocations" (
   "id"              uuid           PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -89,12 +74,3 @@ CREATE POLICY "target_allocations_user_delete"
         AND "portfolios"."user_id" = (SELECT auth.uid())
     )
   );
-
--- ─── BATCH 3: CASH asset seed ───────────────────────────────────────────────
-
-INSERT INTO "assets" ("id", "market", "symbol", "name", "currency") VALUES
-  ('CASH:USD', 'CASH', 'USD', '美元现金', 'USD'),
-  ('CASH:CNY', 'CASH', 'CNY', '人民币现金', 'CNY'),
-  ('CASH:HKD', 'CASH', 'HKD', '港元现金', 'HKD'),
-  ('CASH:JPY', 'CASH', 'JPY', '日元现金', 'JPY')
-ON CONFLICT ("id") DO NOTHING;
