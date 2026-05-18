@@ -19,3 +19,20 @@ export {
 
 export { WatchlistRow, type WatchlistRowProps } from "./WatchlistRow";
 export { WatchlistEmptyState, type WatchlistEmptyStateProps } from "./WatchlistEmptyState";
+
+export {
+  TargetAllocationForm,
+  type TargetAllocationFormProps,
+  type TargetAllocationFormRow,
+  type TargetSumStatus,
+} from "./TargetAllocationForm";
+export { DeviationDonut, type DeviationDonutProps } from "./DeviationDonut";
+export { DeviationBar, type DeviationBarProps } from "./DeviationBar";
+export { RebalanceActionList, type RebalanceActionListProps } from "./RebalanceActionList";
+export {
+  deviationTierFromPercent,
+  type DeviationTier,
+  type RebalanceDonutSegment,
+  type DeviationBarRow,
+  type RebalanceActionRow,
+} from "./rebalance-types";
