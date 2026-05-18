@@ -6,143 +6,115 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-18 by Claude Opus 4.7 (P1 Deno tests + Watchlist spec + watchlist_items schema/migration 0004 all committed; cron secrets rotated 3× → final value live on both sides; cron go-live decision = wait for Stage 2 → main merge; **Watchlist commit plan #2-#8 handing off to Sonnet (Cursor)**; CLAUDE.md §十二 "模型自我路由" rule added)
+> **Last updated**: 2026-05-18 by Cursor Composer (J8 Watchlist shipped + UAT fixes + dev tools two-level menu; uncommitted polish on `dev/stage-2`)
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                                                       |
-| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Active stage**      | **Stage 2 — J8 Watchlist 启动**                                                                                                             |
-| **Step**              | J7 ✅; J8 spec Accepted; commit plan #1 (db schema + migration 0004) landed; **#2-#8 handing off to Sonnet (Cursor)** per CLAUDE.md §十二   |
-| **Branch**            | `dev/stage-2` (tracks `origin/dev/stage-2`) — 3 commits ahead this session; uncommitted: CLAUDE.md §十二 + AGENTS.md route rule + this file |
-| **Last commit**       | `0b2c1fd` — feat(db): watchlist_items schema + migration 0004 + RLS                                                                         |
-| **PR**                | Stage 2 work on `dev/stage-2`; Stage 1 PR #5 already merged                                                                                 |
-| **CI status**         | Local monorepo typecheck ✅ / lint ✅ / test ✅ (all FULL TURBO cached this session)                                                        |
-| **Mobile dev server** | User local Metro; after overlay changes use **⌘D → Reload** (not ⌘R on iOS Simulator)                                                       |
+| Field                 | Value                                                                                                                       |
+| :-------------------- | :-------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 2 — J8 Watchlist UAT**                                                                                              |
+| **Step**              | J7 ✅; J8 code **#1–#8 committed** (`082ab0e`); **UAT + uncommitted fixes** (add UX, dev tools menu, client watchlist seed) |
+| **Branch**            | `dev/stage-2` — last commit `082ab0e`; **~10 files uncommitted** (see below)                                                |
+| **Last commit**       | `082ab0e` — docs(spec): user-journeys J8 cache TTL                                                                          |
+| **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                                              |
+| **CI status**         | Local `pnpm typecheck` 6/6 ✅ (this checkpoint)                                                                             |
+| **Mobile dev server** | User Metro; UI changes → **⌘D → Reload**                                                                                    |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
-| Item                                                                  | Status                                                           |
-| :-------------------------------------------------------------------- | :--------------------------------------------------------------- |
-| DB migration `0003` (`portfolio_value_snapshots` + `per_asset` + RLS) | ✅ applied on dev Supabase (user ran SQL manually)               |
-| `computeDailyDelta` + property tests                                  | ✅ committed                                                     |
-| `DailySnapshotCard` + Portfolio Tab integration                       | ✅ committed                                                     |
-| `daily-snapshot` Edge Function + GH Actions cron                      | ✅ committed (ADR 009)                                           |
-| `seed:dev` + `--scenario` (6 UI states)                               | ✅ committed (`b86f66b` + later uncommitted enhancements)        |
-| **S2-AC-1.1–1.5 UAT** (all `daily-snapshot:*` scenarios)              | ✅ **user verified 2026-05-17**                                  |
-| S2-AC-1.6 / 1.7 (cron idempotent, no external API)                    | ⏳ not formally signed off                                       |
-| S1-AC-5 (red-up/green-down via card)                                  | ✅ verified with `daily-snapshot:mixed-movers` + Settings toggle |
+| Item                                                                  | Status                                             |
+| :-------------------------------------------------------------------- | :------------------------------------------------- |
+| DB migration `0003` (`portfolio_value_snapshots` + `per_asset` + RLS) | ✅ applied on dev Supabase                         |
+| `computeDailyDelta` + property tests                                  | ✅ committed                                       |
+| `DailySnapshotCard` + Portfolio Tab integration                       | ✅ committed                                       |
+| `daily-snapshot` Edge Function + GH Actions cron                      | ✅ committed (ADR 009)                             |
+| `seed:dev` + `--scenario` (6 UI states)                               | ✅ committed                                       |
+| **S2-AC-1.1–1.5 UAT**                                                 | ✅ user verified 2026-05-17                        |
+| S2-AC-1.6 / 1.7 (cron idempotent, no external API)                    | ⏳ not formally signed off                         |
+| S1-AC-5 (red-up/green-down via card)                                  | ✅ `daily-snapshot:mixed-movers` + Settings toggle |
 
 ## Stage 2 — J8 Watchlist progress (started 2026-05-18)
 
-| Item                                                                           | Status                                   |
-| :----------------------------------------------------------------------------- | :--------------------------------------- |
-| Feature spec (`watchlist-stage-2.md`) Accepted; 6 open questions locked        | ✅ committed (`70bd38e`)                 |
-| **Commit plan #1** db schema + migration 0004 + RLS (3 policies)               | ✅ committed (`0b2c1fd`)                 |
-| Apply 0004 to dev Supabase (SQL Editor)                                        | ⏳ **user task** — anytime before #5     |
-| **Commit plan #2** `WatchlistRow` type in `@arc/core`                          | ⏳ (§七 提示：CRUD/型定义类，小模型主场) |
-| **Commit plan #3** AV `searchSymbols` + static-symbols fallback + test         | ⏳ (§七 提示：adapter CRUD)              |
-| **Commit plan #4** `WatchlistRow` + `WatchlistEmptyState` in `@arc/ui/finance` | ⏳ (§七 提示：RN 组件)                   |
-| **Commit plan #5** `use-watchlist` + `use-watchlist-quotes` + Markets Tab      | ⏳ (§七 提示：RN page + TanStack)        |
-| **Commit plan #6** `/markets/search` modal + `use-symbol-search`               | ⏳ (§七 提示：RN form + debounce)        |
-| **Commit plan #7** 3 watchlist seed scenarios + CLI shortcuts                  | ⏳ (§七 提示：种子复制粘贴)              |
-| **Commit plan #8** Update `user-journeys.md` J8 (drop "5s" claim)              | ⏳ (§七 提示：文档微调)                  |
+| Item                                                                       | Status                             |
+| :------------------------------------------------------------------------- | :--------------------------------- |
+| Feature spec (`watchlist-stage-2.md`) Accepted                             | ✅ `70bd38e`                       |
+| Commit plan **#1–#8** (schema → core → adapter → UI → hooks → seed → docs) | ✅ `0b2c1fd` … `082ab0e`           |
+| Migration **0004** applied on dev Supabase                                 | ✅ **user confirmed** (SQL Editor) |
+| **UAT S2-AC-2.1–2.8**                                                      | ⏳ in progress                     |
+| Post-ship fixes (**uncommitted**, typecheck ✅)                            | see §Uncommitted work              |
 
-> **路由说明**：#2-#8 是**任务提示**，不是模型指派。Cursor auto / Composer 接收时按 CLAUDE.md §十二 自评估；卡壳 / hairy edge case 自行升 Opus，无需回到这边批准。
+### Uncommitted work (checkpoint snapshot — commit before next PR slice)
 
-### Uncommitted work (this session — checkpoint commit)
+| Area                 | Files                                                                                                         | What                                                                                                                      |
+| :------------------- | :------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------ |
+| **Add to watchlist** | `use-watchlist.ts`, `markets/search.tsx`, i18n                                                                | `assets` upsert `ignoreDuplicates: true` (RLS INSERT-only); search loading + `router.canGoBack()`; quote errors swallowed |
+| **Dev tools UX**     | `scenarios.ts`, `DevToolsScenarioPanel.tsx`, `invoke-dev-seed.ts`, `run-watchlist-seed-client.ts` (new), i18n | Two-level menu: **功能 → 场景**; watchlist scenarios seed **on-device** (no Edge deploy)                                  |
+| **Edge seed**        | `seed-core.ts`                                                                                                | Clearer error if `watchlist_items` table missing                                                                          |
+| **Session**          | `.specify/session-state.md`                                                                                   | this checkpoint                                                                                                           |
 
-- **`CLAUDE.md`** — added §十二 "模型自我路由（半自动）" rule (durable preference per 2026-05-18 conversation)
-- **`AGENTS.md`** — added cross-tool pointer to §十二
-- **`.specify/session-state.md`** — this file
+Suggested commits (next session):
+
+1. `fix(mobile): watchlist add UX + assets upsert ignoreDuplicates`
+2. `feat(mobile): dev tools feature menu + client watchlist seed`
 
 ## Testing harness (canonical docs)
 
-| Layer        | Arc artifact                                                                                                                         |
-| :----------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| Strategy     | [`docs/testing-strategy.md`](../docs/testing-strategy.md)                                                                            |
-| UAT commands | [`docs/dev-seed-cheatsheet.md`](../docs/dev-seed-cheatsheet.md)                                                                      |
-| CLI          | `pnpm seed:default` / `pnpm seed:ds:*` (needs `DEV_SEED_EMAIL` in `.env.dev.local`)                                                  |
-| IDE          | Cmd+Shift+P → Tasks: Run Task → Seed: …                                                                                              |
-| Cursor       | `/seed-dev` + scenario name                                                                                                          |
-| **App GUI**  | **Purple DEV floating button** (any screen) → scenario sheet; Settings → Dev tools still available                                   |
-| Edge deploy  | `pnpm postinstall:supabase-cli` once → `pnpm supabase login` → `pnpm functions:secrets:dev-tools` → `pnpm functions:deploy:dev-seed` |
+| Layer           | Arc artifact                                                                                               |
+| :-------------- | :--------------------------------------------------------------------------------------------------------- |
+| Strategy        | [`docs/testing-strategy.md`](../docs/testing-strategy.md)                                                  |
+| UAT spec        | [`.specify/feature-specs/watchlist-stage-2.md`](../.specify/feature-specs/watchlist-stage-2.md) §S2-AC-2.x |
+| UAT commands    | [`docs/dev-seed-cheatsheet.md`](../docs/dev-seed-cheatsheet.md)                                            |
+| CLI watchlist   | `pnpm seed:wl:empty` / `pnpm seed:wl:3` / `pnpm seed:wl:stale`                                             |
+| **App DEV FAB** | **功能 → 场景** — 自选场景走 App 内种子；每日快照仍要 Edge `dev-seed` deploy                               |
+| Edge deploy     | `pnpm functions:deploy:dev-seed` + `pnpm functions:secrets:dev-tools` (Daily Snapshot scenarios only)      |
 
 ## Active blockers / waiting on user
 
-- **Migration 0004 SQL apply** — paste `packages/db/drizzle/migrations/0004_watchlist_items.sql` into Supabase SQL Editor (dev project) and run. Verify: `SELECT count(*) FROM pg_policies WHERE tablename='watchlist_items'` → 3; `SELECT relrowsecurity FROM pg_class WHERE relname='watchlist_items'` → t. Non-blocking until commit plan #5 lands queries.
-- **`brew install deno`** before `pnpm test:functions` runs (Deno not on PATH; tests landed + ready).
-- **Daily-snapshot cron production go-live** — DEFERRED to Stage 2 → main merge (decision 2026-05-18). Supabase + GitHub secrets are configured and idle until then. `pnpm typecheck` / `lint` / `test` still green.
+- **Commit uncommitted J8 polish** — UAT fixes + dev tools menu not yet on git (see table above).
+- **`brew install deno`** — before `pnpm test:functions` locally.
+- **Daily-snapshot cron go-live** — deferred to Stage 2 → main merge (2026-05-18).
 
-## Immediate next actions (next session, 按顺序)
+## Immediate next actions (next session)
 
-**A. Commit the checkpoint files (this session — small)**
+**1. Commit uncommitted work** (two logical commits suggested in table above).
 
-Single commit `docs(claude-md): add §十二 模型自我路由 + checkpoint session-state`. Touches:
+**2. Continue J8 UAT** — spec `.specify/feature-specs/watchlist-stage-2.md`:
 
-- `CLAUDE.md` (§十二 new section)
-- `AGENTS.md` (cross-tool pointer)
-- `.specify/session-state.md` (this file)
+- DEV FAB → **自选** → `自选 3 只` / `自选为空` / `自选过期报价` (no Edge deploy needed for watchlist)
+- Or CLI: `pnpm seed:wl:*`
+- **S2-AC-2.1**: search add → loading → auto-close → row visible; cold restart persists
+- Settings fixture toggle OFF for most flows; ON for cache TTL / AV tests
 
-**B. Hand-off to Sonnet (Cursor) — Watchlist commit plan #2-#8**
-
-Per CLAUDE.md §七 + §十二, #2-#6 are RN/CRUD/adapter territory → Sonnet. #7-#8 are doc/seed mechanical → Haiku. Routing rationale:
-
-| #   | Task                                                                                                                                                                                                                                                          | Model  |
-| :-- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----- |
-| #2  | `packages/core/src/domain/watchlist.ts` — `WatchlistRow` type (Decimal-typed quote sub-record, nullable, stale flag)                                                                                                                                          | Sonnet |
-| #3  | `packages/data-sources/src/adapters/alphavantage.ts` — add `searchSymbols(query)` calling AV `SYMBOL_SEARCH`; `static-symbols.ts` top-200 US tickers JSON; new `searchSymbols` wraps static first, falls back to AV on zero matches; vitest for fallback path | Sonnet |
-| #4  | `packages/ui/src/finance/WatchlistRow.tsx` + `WatchlistEmptyState.tsx` — presentational only, takes props; uses `useBusinessClasses().gain/loss/pnlNeutral`; mirror `DailySnapshotCard` structure                                                             | Sonnet |
-| #5  | `apps/mobile/src/lib/queries/use-watchlist.ts` (list/add/remove TanStack hooks) + `use-watchlist-quotes.ts` (per-row quote, 5-min cache TTL, pull-to-refresh bypass) + replace `apps/mobile/app/(tabs)/markets.tsx` stub                                      | Sonnet |
-| #6  | `apps/mobile/app/markets/search.tsx` modal route + `use-symbol-search.ts` (debounced 350ms) — already-in-watchlist results show ✓ + toast; AV 429 inline error                                                                                                | Sonnet |
-| #7  | `supabase/functions/_shared/seed-core.ts` add 3 scenarios `watchlist:empty` / `watchlist:3-items` / `watchlist:stale-quotes`; `tools/seed-dev-data.ts` + `package.json` shortcuts                                                                             | Haiku  |
-| #8  | `docs/user-journeys.md` J8 — replace "实时价 5s 内刷新" with cache-TTL semantics                                                                                                                                                                              | Haiku  |
-
-**Switch-back-to-Opus triggers** (Sonnet/Haiku → 找 Opus 回来):
-
-- #3 fallback edge case: 静态表非空但 AV 429 处理 / 大小写归一 反复改不对
-- 任何 `packages/core/` 算法 (Stage 2 没 — Stage 3 TWR 才会触发)
-- 用户改 J8 验收条款 (回到 spec 重谈)
-- 安全审查 (Stage 2 末)
-
-**C. After #2-#8 done** — manual UAT against S2-AC-2.1-2.8 (per spec §test plan), then either continue to Rebalance (J9) or open Stage 2 → main PR if Watchlist + Rebalance + Welcome all 绿.
-
-**D. Pattern for future features**
-
-Spec → schema/migration → core type → adapter → UI components → app hooks/pages → seed scenarios → doc收尾. New Edge Functions follow dev-seed `handler.ts` + `index.ts` split for testability. Model routing always evaluated at task boundary per §十二.
+**3. After S2-AC-2.x green** — J9 Rebalance or Stage 2 → main PR.
 
 ## Open decisions / questions
 
-- **Resolved 2026-05-18**: Stage 2 order = Daily Snapshot ✅ → Watchlist → Rebalance → Welcome; CSV → Stage 3 末.
-- **Resolved 2026-05-18**: cron go-live deferred to Stage 2 → main merge (no production users yet; secrets idle but configured).
-- **Resolved 2026-05-18**: model routing = semi-automatic per CLAUDE.md §十二 (evaluate at task boundary; suggest don't switch unilaterally).
-- Whether to ADR the Dev Tools overlay + `dev-seed` Edge Function pattern (optional; cheatsheet + README exist).
-- Whether to add Deno test coverage to the daily-snapshot Edge Function as well (currently no unit tests; high-leverage if we refactor it through the same `handler.ts` split pattern — defer until first bug).
+- **Resolved 2026-05-18**: Watchlist DEV seed in App uses **client JWT path** for `watchlist:*` only; portfolio reset scenarios still need Edge Function.
+- **Resolved 2026-05-18**: Dev tools UI = **two-level** (feature picker → scenarios), not flat list.
+- Whether to ADR Dev Tools overlay + dual seed paths (optional).
+- `daily-snapshot:happy` dead alias in `seed-core.ts` — delete when touching seed next.
 
 ## Critical mental model (gotchas easy to forget)
 
 - **Decimal.js everywhere** — see `packages/core/__tests__/`.
-- **Dev seed**: `service_role` only in CLI / Edge Function — never in app bundle. App uses user JWT → `dev-seed`.
-- **Migration 0003 required** for Daily Snapshot seed (`per_asset` column); apply via SQL Editor if `seed` fails.
-- **iOS Simulator refresh**: **⌘D → Reload** (⌘R is screenshot on user's machine).
-- **DEV_SEED_EMAIL** in repo-root `.env.dev.local` powers `pnpm seed:*` without `--email`.
-- **Supabase CLI**: `pnpm postinstall:supabase-cli` after `pnpm install` (pnpm blocks supabase postinstall by default).
-- **`daily-snapshot:happy` is a dead alias** in `seed-core.ts` — exact clone of `default`, FE never invokes it. Schedule to delete in commit B above.
-- **`supabase/.temp/`** appears after `pnpm supabase` runs; add to `.gitignore` (commit A above) so it doesn't keep showing up in `git status`.
+- **`assets` upsert**: RLS allows INSERT only → use `{ onConflict: "id", ignoreDuplicates: true }` or UPDATE fails on seeded symbols (AAPL/NVDA).
+- **Watchlist dev seed**: purple DEV **自选** scenarios = `run-watchlist-seed-client.ts` (user JWT); does **not** reset portfolio. Daily Snapshot scenarios = Edge `dev-seed`.
+- **Dev seed**: `service_role` only in CLI / Edge — never in app bundle.
+- **iOS Simulator refresh**: **⌘D → Reload** (⌘R = screenshot).
+- **Migration 0004** required for watchlist table + DEV watchlist seed.
 - All prior Stage 1 gotchas still apply (FixtureAdapter, @arc/ui imports, OTP 8-digit, etc.).
 
 ## Active env / config snapshot
 
-| File                | Status                                                              |
-| :------------------ | :------------------------------------------------------------------ |
-| `apps/mobile/.env`  | Supabase + AV key                                                   |
-| `.env.dev.local`    | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL` (user: cyberjby@gmail.com)       |
-| Migrations          | `0001`–`0003` on dev project (`0003` user-confirmed applied)        |
-| Supabase project    | `jdvlzkictwinkgcvgwew`                                              |
-| `DEV_TOOLS_ENABLED` | User should set via `pnpm functions:secrets:dev-tools` after deploy |
-| Git branch          | `dev/stage-2`                                                       |
+| File               | Status                                               |
+| :----------------- | :--------------------------------------------------- |
+| `apps/mobile/.env` | Supabase + AV key                                    |
+| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                   |
+| Migrations         | `0001`–`0004` on dev project (**0004 user-applied**) |
+| Supabase project   | `jdvlzkictwinkgcvgwew`                               |
+| Git branch         | `dev/stage-2`                                        |
 
 ## Recent ADRs (most relevant first)
 
@@ -155,6 +127,6 @@ Spec → schema/migration → core type → adapter → UI components → app ho
 
 ## How to use this file
 
-1. Read CLAUDE.md → this file → relevant feature-spec.
-2. For Daily Snapshot UAT: `docs/dev-seed-cheatsheet.md` or purple **DEV** FAB.
+1. Read CLAUDE.md → this file → `watchlist-stage-2.md` if doing J8 UAT.
+2. DEV FAB: pick **自选** or **每日快照**, then a scenario.
 3. End session: `/checkpoint`.
