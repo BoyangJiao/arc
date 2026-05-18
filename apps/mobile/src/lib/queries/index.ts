@@ -26,3 +26,17 @@ export {
 } from "./use-watchlist";
 export { useWatchlistQuotes, type UseWatchlistQuotesOptions } from "./use-watchlist-quotes";
 export { useSymbolSearch, type UseSymbolSearchResult } from "./use-symbol-search";
+export {
+  useTargetAllocations,
+  useUpsertTargetAllocations,
+  useDeleteAllTargetAllocations,
+  targetAllocationsQueryKey,
+} from "./use-target-allocations";
+export { useRebalance } from "./use-rebalance";
+export {
+  useCashBalances,
+  useSaveCashBalances,
+  CASH_ASSET_IDS,
+  type CashBalanceRow,
+  type CashAssetId,
+} from "./use-cash-balances";

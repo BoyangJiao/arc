@@ -28,7 +28,7 @@ import {
   createFrankfurterAdapter,
   createMemoryFxCache,
   createMemoryPriceCache,
-  createRegistry,
+  createDefaultRegistry,
   createSupabaseFxCache,
   createSupabasePriceCache,
   type AdapterRegistry,
@@ -66,7 +66,7 @@ const livePriceAdapters = ALPHAVANTAGE_KEY
   ? { US: createAlphaVantageAdapter({ apiKey: ALPHAVANTAGE_KEY }) }
   : {};
 
-const liveRegistry: AdapterRegistry = createRegistry({
+const liveRegistry: AdapterRegistry = createDefaultRegistry({
   priceAdapters: livePriceAdapters,
   fxAdapter: liveFxAdapter,
 });
