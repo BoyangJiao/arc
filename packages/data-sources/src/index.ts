@@ -19,8 +19,17 @@ export * from "./errors";
 export * from "./registry";
 export * from "./fetch-with-cache";
 
-export { createAlphaVantageAdapter } from "./adapters/alphavantage";
+export {
+  createAlphaVantageAdapter,
+  fetchAlphaVantageQuoteWithChange,
+} from "./adapters/alphavantage";
 export type { AlphaVantageAdapterConfig } from "./adapters/alphavantage";
+
+export { searchStaticSymbols, US_STATIC_SYMBOLS } from "./static-symbols";
+export type { StaticUsSymbol } from "./static-symbols";
+export { searchSymbolsWithFallback } from "./search-symbols";
+export { fetchWatchlistQuoteWithCache, WATCHLIST_QUOTE_FRESHNESS_MS } from "./watchlist-quote";
+export type { WatchlistQuoteFields, FetchWatchlistQuoteParams } from "./watchlist-quote";
 
 export { createFrankfurterAdapter } from "./adapters/frankfurter";
 export type { FrankfurterAdapterConfig } from "./adapters/frankfurter";

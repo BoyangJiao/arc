@@ -25,6 +25,7 @@ import { composeAssetId, type Currency, type Market } from "@arc/core";
 import { NotFoundError } from "../errors";
 import type { FxAdapter, PriceAdapter } from "../interfaces";
 import { createRegistry, type AdapterRegistry } from "../registry";
+import { searchStaticSymbols } from "../static-symbols";
 
 export interface FixtureQuote {
   /** Decimal-as-string (parsed via decimal.js). */
@@ -32,6 +33,8 @@ export interface FixtureQuote {
   readonly currency: Currency;
   /** ISO 8601 timestamp. Defaults to FIXTURE_AS_OF_DEFAULT if absent. */
   readonly asOf?: string;
+  /** Optional day change % for watchlist UI (e.g. "3.21"). */
+  readonly changePercent?: string;
 }
 
 export interface FixtureFxRate {
@@ -84,6 +87,9 @@ export const createFixturePriceAdapter = (market: Market, data: FixtureData): Pr
     // work will expand the fixture schema to include per-date series.
     const latest = await this.fetchLatest(symbol);
     return [latest];
+  },
+  async searchSymbols(query) {
+    return searchStaticSymbols(query);
   },
 });
 
