@@ -148,21 +148,26 @@
 
 ### J6🟢 — 首登欢迎屏
 
-**触发**：Stage 2 起，新用户首次完成 J1 后
+**触发**：Stage 2 起，新用户首次完成 J1 后（`user_preferences.has_seen_welcome = false`）
 
 **步骤**：
 
-1. J1 步骤 6 跳转 `/(tabs)/index` 之前 → 优先跳 `/welcome`
-2. 1 屏：30 秒视觉介绍（Arc 是什么 + 3 个核心能力）
-3. 底部一个按钮："添加第一笔资产" → 直接到 `/portfolio/[id]/transactions/new` Modal
-4. 用户也可以 tap 顶部 X 跳过 → 回 `/(tabs)/index`
-5. 无论哪条路径，下次启动**不再展示**（用户 preference `hasSeenWelcome: true`）
+1. J1 OTP 验证后 → `_layout` 路由门控：prefs settled 且 `hasSeenWelcome === false` → `/welcome`（非 `/(tabs)`）
+2. 单屏：Hero + 定位文案 + 免责声明「本工具不构成投资建议」
+3. 主 CTA「添加第一笔资产」→ `has_seen_welcome` optimistic 置 true + `router.replace("/(tabs)")`（不预开 FAB / 交易 Modal；用户自行发现 FAB）
+4. 页脚「跳过」→ 同上 flip + 进 `/(tabs)`（无额外引导）
+5. 冷启动：已看过 → 直接 `/(tabs)`；手敲 `/welcome` 且已看过 → 自动 redirect `/(tabs)`（防御）
+6. DB 写入失败（如飞行模式）：仍进 `/(tabs)`；本地 cache optimistic；后台重试；下次启动可能再展示 Welcome（可接受，见 spec AC-4.6）
+
+**DEV**：`welcome:fresh` / `welcome:seen`（App DEV 面板 → Welcome）切换 `has_seen_welcome`；`fresh` 后 **Reload** 验首登路径。
+
+**Stage 5 hook**：`app/welcome.tsx` 保持单文件；多步 carousel 届时可能迁到 `app/(onboarding)/`；`has_seen_welcome` 列与 `_layout` 门控不变。
 
 **成功标准**：
 
 - ✅ 30 秒内能完成
-- ✅ "跳过"和"添加第一笔资产"都不阻塞核心流程
-- ✅ 已看过的用户再也不见
+- ✅「跳过」与「添加第一笔资产」均不阻塞核心流程
+- ✅ 已看过的用户不再见 Welcome
 
 ---
 
@@ -413,20 +418,21 @@
 
 ## 七、Journey 与 Stage DoD 的对应
 
-| Stage   | DoD 核心要求                              | 对应 Journey    |
-| :------ | :---------------------------------------- | :-------------- |
-| Stage 1 | "录入一笔 AAPL → 看到 CNY 计价"           | J1 + J2 + J3    |
-| Stage 1 | "切换语言无未翻译"                        | J4              |
-| Stage 1 | "切换红涨绿跌"                            | J5              |
-| Stage 2 | "Daily Snapshot 真实反映今日变动"         | J7              |
-| Stage 2 | "Watchlist 持久化"                        | J8              |
-| Stage 2 | "首次 Rebalance 跑通行动单"               | J9              |
-| Stage 2 | "CSV 100 行 <10s"                         | J10             |
-| Stage 3 | "所有真实持仓录入 + TWR 误差 <1%"         | J11 + J14       |
-| Stage 3 | "多组合 + 配置环形图"                     | J12 + J13       |
-| Stage 4 | "AI 截图识别 ≥90%"                        | J17             |
-| Stage 4 | "AI 接入 LLM"                             | J20             |
-| Stage 5 | "App Store 上架 + Pro 首单 + AI 报告稳定" | J21 + J22 + J23 |
+| Stage   | DoD 核心要求                              | 对应 Journey           |
+| :------ | :---------------------------------------- | :--------------------- |
+| Stage 1 | "录入一笔 AAPL → 看到 CNY 计价"           | J1 + J2 + J3           |
+| Stage 1 | "切换语言无未翻译"                        | J4                     |
+| Stage 1 | "切换红涨绿跌"                            | J5                     |
+| Stage 2 | "Daily Snapshot 真实反映今日变动"         | J7 ✅                  |
+| Stage 2 | "Watchlist 持久化"                        | J8 ✅                  |
+| Stage 2 | "首次 Rebalance 跑通行动单"               | J9 ✅                  |
+| Stage 2 | "首登欢迎屏一次性展示"                    | J6 ✅                  |
+| Stage 3 | "CSV 100 行 <10s"                         | J10（自 Stage 2 下放） |
+| Stage 3 | "所有真实持仓录入 + TWR 误差 <1%"         | J11 + J14              |
+| Stage 3 | "多组合 + 配置环形图"                     | J12 + J13              |
+| Stage 4 | "AI 截图识别 ≥90%"                        | J17                    |
+| Stage 4 | "AI 接入 LLM"                             | J20                    |
+| Stage 5 | "App Store 上架 + Pro 首单 + AI 报告稳定" | J21 + J22 + J23        |
 
 ---
 

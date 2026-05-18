@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-18 by Cursor Auto (J9 #5–#10 landed; rebalance DEV scenario bugfixes **uncommitted** in working tree)
+> **Last updated**: 2026-05-19 by Cursor Auto (J6 Welcome #1–#4 landed; Stage 2 four-feature DoD ready for → main PR)
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                                                |
-| :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 2 — J9 Rebalance (in progress)**                                                                                             |
-| **Step**              | J8 ✅; J9 spec Accepted; commit plan **#1–#10** ✅; **UAT in progress** — rebalance DEV 场景差异化 + DeviationBar 修复 **待 commit** |
-| **Branch**            | `dev/stage-2` — HEAD `dbe4807`; **7 modified + 2 untracked** (see §Immediate next)                                                   |
-| **Last commit**       | `dbe4807` — feat(infra): lint:copy compliance gate + user-journeys J9 sync                                                           |
-| **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                                                       |
-| **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅                                       |
-| **Mobile dev server** | User Metro; UI changes → **⌘D → Reload**                                                                                             |
+| Field                 | Value                                                                                          |
+| :-------------------- | :--------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 2 — wrap-up → `main` PR**                                                              |
+| **Step**              | J7–J9 ✅; **J6 Welcome** commit plan **#1–#4** ✅; **UAT J6 AC-4.1–4.6** ⏳ user sign-off      |
+| **Branch**            | `dev/stage-2` — HEAD `56de855` (+ any prior uncommitted J9 UAT fixes in tree)                  |
+| **Last commit**       | `56de855` — feat(seed): welcome dev scenarios + dev panel feature group                        |
+| **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                 |
+| **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅ |
+| **Mobile dev server** | User Metro; UI changes → **⌘D → Reload**                                                       |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -76,6 +76,19 @@ _(Prior “uncommitted work” table superseded by the above.)_
 | **UAT bugfix** rebalance DEV 三场景 targets 相同 + fixture 忽略 DB 报价 → 场景无差异                                       | ✅ `rebalance-seed-plans.ts` + `warmRebalanceMarketCache`，**未 commit** |
 | **Migration 0009** `assets` RLS 允许 authenticated INSERT `CASH`（DEV seed 写 CASH 资产）                                  | ⏳ SQL 文件已写，**用户需在 Supabase 执行**                              |
 
+## Stage 2 — J6 Welcome progress (2026-05-19)
+
+| Item                                                           | Status                                                                          |
+| :------------------------------------------------------------- | :------------------------------------------------------------------------------ |
+| Feature spec (`welcome-stage-2.md`) Accepted 2026-05-19        | ✅                                                                              |
+| Commit **#1** `/welcome` route + i18n                          | ✅ `4ae3da6`                                                                    |
+| Commit **#2** `useMarkWelcomeSeen` + `_layout` gate            | ✅ `416148d`                                                                    |
+| Commit **#3** `welcome:fresh` / `welcome:seen` DEV client seed | ✅ `56de855`                                                                    |
+| Commit **#4** `user-journeys.md` J6 + session-state            | ✅ this checkpoint                                                              |
+| **UAT S2-AC-4.1–4.6**                                          | ⏳ user (DEV Welcome → fresh/seen, CTA/skip, `/welcome` defense, airplane mode) |
+
+**Stage 2 DoD (four features)**：Daily Snapshot ✅ · Watchlist ✅ · Rebalance ✅ · Welcome ✅ — **ready to open Stage 2 → `main` PR** after J6 UAT.
+
 **Core algorithm contract** (locked):
 
 - `computeRebalance(holdings, valuations, targets) → ReadonlyArray<DeviationItem>` (Stage 2 ignores holdings param; reserved for Stage 3)
@@ -111,7 +124,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 **2. User** — apply migration **0009** on dev Supabase; DEV → 再平衡 → 依次 seed aligned / mild / heavy → Insights 下拉刷新 → sign off S2-AC-3.x.
 
-**3. Stage 2 → `main` PR** — after J9 UAT ✅; Welcome 仍按 development-plan.md 排期。
+**3. Stage 2 → `main` PR** — after J6 UAT AC-4.x ✅ (Welcome DEV → fresh → Reload → CTA/skip → 重启不进 Welcome).
 
 **4. Switch-back-to-Opus triggers** (if still needed):
 
