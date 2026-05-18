@@ -1,8 +1,9 @@
 # Feature: Welcome (Stage 2 — fourth & final feature)
 
-- **Status**: Draft — awaiting BoyangJiao review
-- **Author**: Claude Opus 4.7 (draft) + BoyangJiao (review pending)
+- **Status**: Accepted — 4 tactical decisions locked (BoyangJiao approved 2026-05-19)
+- **Author**: Claude Opus 4.7 (draft) + BoyangJiao (review)
 - **Created**: 2026-05-18
+- **Positioning**: Minimal viable placeholder + Stage 5 foundation. Stage 5 will replace single screen with multi-step onboarding carousel; the `has_seen_welcome` boolean and routing gate survive the upgrade.
 - **Implements**: `docs/user-journeys.md` J6, `docs/development-plan.md` §七 Stage 2 第 4 块
 - **Conforms to**: `.specify/constitution.md` (文案铁律), ADR 006 (`@arc/ui` layering)
 - **Touches**: `apps/mobile` (1 new route + light routing logic), `packages/i18n` (~6 strings), one tiny preference flow
@@ -39,9 +40,14 @@ This is intentionally the **smallest feature in Stage 2**. No data model changes
 
 ---
 
-## Resolved decisions (TBD pending review)
+## Resolved decisions (locked 2026-05-19)
 
-(Locked decisions go here once review concludes — pattern matches DS / Watchlist / Rebalance.)
+1. **CTA target screen** — `/(tabs)/index` simple landing (no FAB pre-open). User discovers the FAB naturally; deeper guidance is Stage 5's onboarding carousel job.
+2. **Skip link visibility** — always visible in the footer. 30s of orientation isn't worth coercing past.
+3. **Routing gate location** — `apps/mobile/app/_layout.tsx` top-level. Survives deep links, single source of truth for "first-time?" check.
+4. **Optimistic flip** — local `hasSeenWelcome=true` immediately on tap + navigate; DB write happens in background, retried by TanStack mutation defaults. Avoids trapping the user behind a spinner; failure modes are acceptable (next session may re-show Welcome — rare and benign).
+
+**Stage 5 hook**: keep `app/welcome.tsx` as a single file. When Stage 5 builds the multi-step carousel, it will likely become `app/(onboarding)/` route group with steps; the `has_seen_welcome` column + routing gate stay; only the screen content gets replaced/expanded. **Do NOT pre-engineer a steps array now** — over-abstraction here is more expensive than the Stage 5 refactor.
 
 ---
 
@@ -217,15 +223,6 @@ Implementation just needs:
 | S2-AC-4.6 failure tolerance | L4 (manual)    | Airplane mode → tap CTA → still navigates; reconnect → flip persists |
 
 L1 unit tests not required (single boolean mutation; covered indirectly by L4 + integration with `useUserPreferences` already exercised).
-
----
-
-## Open questions for your review
-
-1. **CTA target screen** — vote `/(tabs)/index` simple landing (let user discover FAB). Alternative: `/(tabs)/index` with FAB pre-opened — more guided but adds coupling between route and FAB store state. **Vote: simple landing**; Stage 5 onboarding handles deeper guidance.
-2. **Skip link visibility** — vote always visible (footer link). Alternative: hide skip; force user to tap primary CTA. Force-CTA gives slightly higher activation but feels coercive for 30s of orientation. **Vote: always visible**.
-3. **Routing gate location** — vote `app/_layout.tsx` (top-level); alternatives include the auth-success callback or the Tab layout. Top-level is most authoritative + survives deep links. **Vote: `_layout.tsx`**.
-4. **Optimistic flip vs. await-DB** — vote optimistic (set local `hasSeenWelcome=true` immediately + navigate). Server retry handles failures. Avoids trapping user behind a spinner. **Vote: optimistic**.
 
 ---
 
