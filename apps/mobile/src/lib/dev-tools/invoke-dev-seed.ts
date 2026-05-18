@@ -7,7 +7,13 @@
 
 import { queryClient } from "../query-client";
 import { supabase } from "../supabase";
-import { findFeatureForScenario, isWatchlistScenario, type DevSeedScenarioId } from "./scenarios";
+import {
+  findFeatureForScenario,
+  isRebalanceScenario,
+  isWatchlistScenario,
+  type DevSeedScenarioId,
+} from "./scenarios";
+import { runRebalanceSeedClient, RebalanceSeedError } from "./run-rebalance-seed-client";
 import { runWatchlistSeedClient, WatchlistSeedError } from "./run-watchlist-seed-client";
 
 export interface DevSeedInvokeResult {
@@ -15,7 +21,7 @@ export interface DevSeedInvokeResult {
   scenario: string;
   portfolioId: string;
   expectedUi: string[];
-  via: "client-watchlist" | "edge";
+  via: "client-watchlist" | "client-rebalance" | "edge";
 }
 
 interface DevSeedErrorBody {
@@ -31,6 +37,8 @@ export const invalidateDevSeedQueries = async (): Promise<void> => {
     queryClient.invalidateQueries({ queryKey: ["watchlist"] }),
     queryClient.invalidateQueries({ queryKey: ["watchlist-quote"] }),
     queryClient.invalidateQueries({ queryKey: ["symbol-search"] }),
+    queryClient.invalidateQueries({ queryKey: ["targetAllocations"] }),
+    queryClient.invalidateQueries({ queryKey: ["rebalance"] }),
   ]);
 };
 
@@ -111,9 +119,38 @@ const invokeWatchlistClient = async (scenario: DevSeedScenarioId): Promise<DevSe
   };
 };
 
+const invokeRebalanceClient = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
+  if (!isRebalanceScenario(scenario)) {
+    throw new RebalanceSeedError(`Not a rebalance scenario: ${scenario}`);
+  }
+
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    throw new RebalanceSeedError("未登录 — 请先 OTP 登录");
+  }
+
+  const portfolioId = await runRebalanceSeedClient(scenario, user.id);
+  await invalidateDevSeedQueries();
+
+  return {
+    ok: true,
+    scenario,
+    portfolioId,
+    expectedUi: [],
+    via: "client-rebalance",
+  };
+};
+
 export const invokeDevSeed = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
   if (isWatchlistScenario(scenario)) {
     return invokeWatchlistClient(scenario);
+  }
+
+  if (isRebalanceScenario(scenario)) {
+    return invokeRebalanceClient(scenario);
   }
 
   const result = await invokeEdgeDevSeed(scenario);

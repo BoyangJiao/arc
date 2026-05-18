@@ -21,6 +21,10 @@ export const SCENARIOS = [
   "watchlist:empty",
   "watchlist:3-items",
   "watchlist:stale-quotes",
+  "rebalance:empty-target",
+  "rebalance:aligned",
+  "rebalance:mild-drift",
+  "rebalance:heavy-drift",
 ] as const;
 
 export type Scenario = (typeof SCENARIOS)[number];
@@ -38,6 +42,12 @@ export interface ScenarioPlan {
   watchlist?: {
     assetIds: ReadonlyArray<string>;
     staleQuotes?: boolean;
+  };
+  /** When set, seeds target_allocations + optional NVDA price skew for rebalance UAT. */
+  rebalance?: {
+    targets: Readonly<Record<string, string>>;
+    nvdaPrice?: string;
+    includeCashTx?: boolean;
   };
   description: string;
 }
@@ -116,6 +126,41 @@ export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = {
     },
     description: "Watchlist quotes older than 5 min — pull-to-refresh should fetch fresh.",
   },
+  "rebalance:empty-target": {
+    includeTransactions: true,
+    baseline: null,
+    rebalance: { targets: {}, includeCashTx: true },
+    description: "Holdings + CASH:USD, no target_allocations — Insights empty CTA.",
+  },
+  "rebalance:aligned": {
+    includeTransactions: true,
+    baseline: null,
+    rebalance: {
+      targets: { "US:AAPL": "12", "US:MSFT": "13", "US:NVDA": "44", "CASH:USD": "31" },
+      includeCashTx: true,
+    },
+    description: "Targets match allocation — deviations within ~1%.",
+  },
+  "rebalance:mild-drift": {
+    includeTransactions: true,
+    baseline: null,
+    rebalance: {
+      targets: { "US:AAPL": "12", "US:MSFT": "13", "US:NVDA": "44", "CASH:USD": "31" },
+      nvdaPrice: "962.50",
+      includeCashTx: true,
+    },
+    description: "NVDA price +10% vs targets — mild warning tier on Insights.",
+  },
+  "rebalance:heavy-drift": {
+    includeTransactions: true,
+    baseline: null,
+    rebalance: {
+      targets: { "US:AAPL": "12", "US:MSFT": "13", "US:NVDA": "44", "CASH:USD": "31" },
+      nvdaPrice: "1181.25",
+      includeCashTx: true,
+    },
+    description: "NVDA price +35% vs targets — critical tier on Insights.",
+  },
 };
 
 /** UI-facing scenario buttons (subset with stable ids for i18n keys). */
@@ -180,6 +225,17 @@ const monthsAgo = (m: number) => {
   const d = new Date();
   d.setMonth(d.getMonth() - m);
   return d.toISOString();
+};
+
+const SEED_CASH_TX: SeedTx = {
+  asset_id: "CASH:USD",
+  type: "BUY",
+  shares: "5000",
+  price_per_share: "1",
+  currency: "USD",
+  fee: "0",
+  trade_date: monthsAgo(0),
+  notes: "Cash balance (rebalance seed)",
 };
 
 export const SEED_TRANSACTIONS: SeedTx[] = [
@@ -300,7 +356,10 @@ export const runSeedForUser = async (
   log(`✓ Created portfolio "My Portfolio" (${portfolioId.slice(0, 8)}…)`);
 
   if (plan.includeTransactions) {
-    const txRows = SEED_TRANSACTIONS.map((tx) => ({
+    const txs = plan.rebalance?.includeCashTx
+      ? [...SEED_TRANSACTIONS, SEED_CASH_TX]
+      : SEED_TRANSACTIONS;
+    const txRows = txs.map((tx) => ({
       portfolio_id: portfolioId,
       ...tx,
     }));
@@ -309,10 +368,14 @@ export const runSeedForUser = async (
     log(`✓ Inserted ${txRows.length} transactions`);
 
     const asOf = new Date().toISOString();
+    const nvdaPrice = plan.rebalance?.nvdaPrice ?? "875.00";
     const priceRows = [
       { asset_id: "US:AAPL", as_of: asOf, price: "189.50", currency: "USD", source: "seed-dev" },
       { asset_id: "US:MSFT", as_of: asOf, price: "420.30", currency: "USD", source: "seed-dev" },
-      { asset_id: "US:NVDA", as_of: asOf, price: "875.00", currency: "USD", source: "seed-dev" },
+      { asset_id: "US:NVDA", as_of: asOf, price: nvdaPrice, currency: "USD", source: "seed-dev" },
+      ...(plan.rebalance?.includeCashTx
+        ? [{ asset_id: "CASH:USD", as_of: asOf, price: "1", currency: "USD", source: "seed-dev" }]
+        : []),
     ];
     const { error: priceErr } = await supabase
       .from("price_snapshots")
@@ -384,6 +447,47 @@ export const runSeedForUser = async (
     log(`✓ Seeded yesterday's snapshot — ${plan.baseline.expectedDeltaSummary}`);
   } else {
     log(`↷ Skipped yesterday's snapshot`);
+  }
+
+  if (plan.rebalance) {
+    const cashAssets = [
+      { id: "CASH:USD", market: "CASH", symbol: "USD", name: "美元现金", currency: "USD" },
+      { id: "CASH:CNY", market: "CASH", symbol: "CNY", name: "人民币现金", currency: "CNY" },
+      { id: "CASH:HKD", market: "CASH", symbol: "HKD", name: "港元现金", currency: "HKD" },
+      { id: "CASH:JPY", market: "CASH", symbol: "JPY", name: "日元现金", currency: "JPY" },
+    ];
+    const { error: cashAssetErr } = await supabase
+      .from("assets")
+      .upsert(cashAssets as never, { onConflict: "id" });
+    if (cashAssetErr) throw new SeedError(`CASH asset upsert failed: ${cashAssetErr.message}`);
+
+    const { error: delTgtErr } = await supabase
+      .from("target_allocations")
+      .delete()
+      .eq("portfolio_id", portfolioId);
+    if (delTgtErr) {
+      const msg = delTgtErr.message ?? "";
+      if (/target_allocations/i.test(msg) && /does not exist|schema cache/i.test(msg)) {
+        throw new SeedError(
+          "target_allocations table missing — run packages/db/drizzle/migrations/0007_target_allocations.sql"
+        );
+      }
+      throw new SeedError(`target_allocations delete failed: ${msg}`);
+    }
+
+    const entries = Object.entries(plan.rebalance.targets);
+    if (entries.length > 0) {
+      const targetRows = entries.map(([asset_id, target_percent]) => ({
+        portfolio_id: portfolioId,
+        asset_id,
+        target_percent,
+      }));
+      const { error: tgtInsErr } = await supabase.from("target_allocations").insert(targetRows);
+      if (tgtInsErr) throw new SeedError(`target_allocations insert failed: ${tgtInsErr.message}`);
+      log(`✓ Seeded ${targetRows.length} target_allocations`);
+    } else {
+      log(`✓ Left target_allocations empty`);
+    }
   }
 
   if (plan.watchlist) {
@@ -516,5 +620,13 @@ export const describeExpectedUi = (scenario: Scenario): string[] => {
         "Watchlist rows show stale dot (·) next to price",
         "Pull-to-refresh fetches fresh quotes (bypasses 5-min cache)",
       ];
+    case "rebalance:empty-target":
+      return ["Insights Tab — empty target CTA + cash in holdings"];
+    case "rebalance:aligned":
+      return ["Insights Tab — donut + bars mostly neutral (<1% deviation)"];
+    case "rebalance:mild-drift":
+      return ["Insights Tab — at least one yellow warning bar (~7% deviation)"];
+    case "rebalance:heavy-drift":
+      return ["Insights Tab — at least one red critical bar (~15% deviation)"];
   }
 };

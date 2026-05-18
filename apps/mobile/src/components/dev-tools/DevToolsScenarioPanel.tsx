@@ -56,10 +56,18 @@ export function DevToolsScenarioPanel({
 
         const goHref = goHrefForScenario(scenarioId);
         const goLabel =
-          selectedFeatureId === "watchlist" ? t("devTools.goMarkets") : t("devTools.goPortfolio");
+          selectedFeatureId === "watchlist"
+            ? t("devTools.goMarkets")
+            : selectedFeatureId === "rebalance"
+              ? t("devTools.goInsights")
+              : t("devTools.goPortfolio");
 
         const viaNote =
-          result.via === "client-watchlist" ? `\n\n${t("devTools.viaClientWatchlist")}` : "";
+          result.via === "client-watchlist"
+            ? `\n\n${t("devTools.viaClientWatchlist")}`
+            : result.via === "client-rebalance"
+              ? `\n\n${t("devTools.viaClientRebalance")}`
+              : "";
 
         Alert.alert(t("devTools.successTitle"), `${t("devTools.successBody")}${viaNote}`, [
           {

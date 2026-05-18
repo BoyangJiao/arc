@@ -31,6 +31,17 @@ export const DEV_SEED_FEATURES = [
       { id: "watchlist:stale-quotes", labelKey: "wlStale" },
     ],
   },
+  {
+    id: "rebalance",
+    labelKey: "rebalance",
+    goHref: "/(tabs)/insights" as Href,
+    scenarios: [
+      { id: "rebalance:empty-target", labelKey: "rbEmpty" },
+      { id: "rebalance:aligned", labelKey: "rbAligned" },
+      { id: "rebalance:mild-drift", labelKey: "rbMild" },
+      { id: "rebalance:heavy-drift", labelKey: "rbHeavy" },
+    ],
+  },
 ] as const;
 
 export type DevSeedFeatureId = (typeof DEV_SEED_FEATURES)[number]["id"];
@@ -66,6 +77,18 @@ export type WatchlistScenarioId = (typeof WATCHLIST_SCENARIO_IDS)[number];
 
 export const isWatchlistScenario = (id: DevSeedScenarioId): id is WatchlistScenarioId =>
   (WATCHLIST_SCENARIO_IDS as readonly string[]).includes(id);
+
+export const REBALANCE_SCENARIO_IDS = [
+  "rebalance:empty-target",
+  "rebalance:aligned",
+  "rebalance:mild-drift",
+  "rebalance:heavy-drift",
+] as const satisfies readonly DevSeedScenarioId[];
+
+export type RebalanceScenarioId = (typeof REBALANCE_SCENARIO_IDS)[number];
+
+export const isRebalanceScenario = (id: DevSeedScenarioId): id is RebalanceScenarioId =>
+  (REBALANCE_SCENARIO_IDS as readonly string[]).includes(id);
 
 export const findFeatureForScenario = (scenarioId: DevSeedScenarioId): DevSeedFeatureGroup =>
   DEV_SEED_FEATURES.find((f) => f.scenarios.some((s) => s.id === scenarioId)) ??
