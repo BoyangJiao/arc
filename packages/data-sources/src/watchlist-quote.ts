@@ -47,7 +47,7 @@ export const fetchWatchlistQuoteWithCache = async (
       return {
         price: hit.price,
         currency: hit.currency,
-        changePercent: null,
+        changePercent: hit.changePercent ?? null,
         asOf: hit.asOf,
         stale: isStale(hit.asOf, WATCHLIST_QUOTE_FRESHNESS_MS),
       };
@@ -62,7 +62,7 @@ export const fetchWatchlistQuoteWithCache = async (
     return {
       price: quote.price,
       currency: quote.currency,
-      changePercent,
+      changePercent: changePercent ?? quote.changePercent ?? null,
       asOf: quote.asOf,
       stale: isStale(quote.asOf, WATCHLIST_QUOTE_FRESHNESS_MS),
     };
@@ -78,7 +78,7 @@ export const fetchWatchlistQuoteWithCache = async (
   return {
     price: quote.price,
     currency: quote.currency,
-    changePercent: null,
+    changePercent: quote.changePercent ?? null,
     asOf: quote.asOf,
     stale: isStale(quote.asOf, WATCHLIST_QUOTE_FRESHNESS_MS),
   };

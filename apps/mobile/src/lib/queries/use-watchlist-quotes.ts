@@ -7,15 +7,18 @@ import { useQueries, useQueryClient } from "@tanstack/react-query";
 import Decimal from "decimal.js";
 import { parseAssetId, type WatchlistRow } from "@arc/core";
 import {
+  AdapterError,
   fetchAlphaVantageQuoteWithChange,
   fetchWatchlistQuoteWithCache,
   WATCHLIST_QUOTE_FRESHNESS_MS,
+  RateLimitError,
   type WatchlistQuoteFields,
 } from "@arc/data-sources";
 
 import fixtureData from "../dev-fixtures/quotes.json";
 import type { FixtureData } from "@arc/data-sources";
 import { getRegistry, priceCache } from "../market-data";
+import { throwIfWatchlistRateLimitSimArmed } from "../dev-tools/watchlist-rate-limit-sim";
 import {
   CACHE_FIRST_READ_FRESHNESS_MS,
   isCacheFirstMarketData,
@@ -74,32 +77,48 @@ export const useWatchlistQuotes = (
       queryKey: ["watchlist-quote", assetId, forceNetwork ? 0 : freshnessMs],
       enabled: assetIds.length > 0,
       staleTime: forceNetwork ? 0 : freshnessMs,
-      queryFn: async (): Promise<WatchlistRow["quote"]> => {
+      retry: false,
+      queryFn: async (): Promise<WatchlistRow["quote"] | null> => {
         const adapter = getRegistry().resolvePriceAdapterByAssetId(assetId);
         const { symbol } = parseAssetId(assetId);
 
-        if (!forceNetwork && isCacheFirstMarketData() && !isFixtureMarketData()) {
-          const cached = await priceCache.get(assetId, CACHE_FIRST_READ_FRESHNESS_MS);
-          if (cached) {
-            return toQuote(assetId, {
-              price: cached.price,
-              currency: cached.currency,
-              changePercent: null,
-              asOf: cached.asOf,
-              stale: Date.now() - Date.parse(cached.asOf) > WATCHLIST_QUOTE_FRESHNESS_MS,
-            });
+        try {
+          throwIfWatchlistRateLimitSimArmed();
+
+          if (!forceNetwork && isCacheFirstMarketData() && !isFixtureMarketData()) {
+            const cached = await priceCache.get(assetId, CACHE_FIRST_READ_FRESHNESS_MS);
+            if (cached) {
+              return toQuote(assetId, {
+                price: cached.price,
+                currency: cached.currency,
+                changePercent: cached.changePercent ?? null,
+                asOf: cached.asOf,
+                stale: Date.now() - Date.parse(cached.asOf) > WATCHLIST_QUOTE_FRESHNESS_MS,
+              });
+            }
           }
+
+          const fields = await fetchWatchlistQuoteWithCache({
+            adapter,
+            symbol,
+            cache: priceCache,
+            freshnessMs: forceNetwork ? 0 : freshnessMs,
+            fetchWithChange,
+          });
+
+          return toQuote(assetId, fields);
+        } catch (err) {
+          if (err instanceof AdapterError) {
+            throw err;
+          }
+          if (__DEV__) {
+            console.warn(
+              `[watchlist-quote] skipped quote for ${assetId}:`,
+              err instanceof Error ? err.message : err
+            );
+          }
+          return null;
         }
-
-        const fields = await fetchWatchlistQuoteWithCache({
-          adapter,
-          symbol,
-          cache: priceCache,
-          freshnessMs: forceNetwork ? 0 : freshnessMs,
-          fetchWithChange,
-        });
-
-        return toQuote(assetId, fields);
       },
     })),
   });
@@ -113,6 +132,21 @@ export const useWatchlistQuotes = (
     return map;
   }, [assetIds, results]);
 
+  const quoteRefreshFailureSummary = useMemo(() => {
+    let rateLimit = 0;
+    let other = 0;
+    for (const r of results) {
+      if (!r.isError) continue;
+      if (r.error instanceof RateLimitError) rateLimit++;
+      else other++;
+    }
+    return {
+      failedCount: rateLimit + other,
+      rateLimitCount: rateLimit,
+      otherCount: other,
+    };
+  }, [results]);
+
   const refresh = useCallback(() => {
     assetIds.forEach((assetId) => {
       void queryClient.invalidateQueries({
@@ -123,7 +157,12 @@ export const useWatchlistQuotes = (
 
   const isPending = results.some((r) => r.isPending);
   const isFetching = results.some((r) => r.isFetching);
-  const error = results.find((r) => r.error)?.error ?? null;
 
-  return { quoteByAssetId, isPending, isFetching, error, refresh };
+  return {
+    quoteByAssetId,
+    isPending,
+    isFetching,
+    refresh,
+    quoteRefreshFailureSummary,
+  };
 };

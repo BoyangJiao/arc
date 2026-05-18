@@ -85,6 +85,12 @@ export interface UseWatchlistResult {
   refreshQuotes: () => void;
   remove: UseMutationResult<void, Error, string>["mutate"];
   isRemoving: boolean;
+  /** Populated when ≥1 per-row quote query is in error (e.g. after pull-to-refresh). */
+  quoteRefreshFailureSummary: {
+    failedCount: number;
+    rateLimitCount: number;
+    otherCount: number;
+  };
 }
 
 export const useWatchlist = (quoteOpts: UseWatchlistQuotesOptions = {}): UseWatchlistResult => {
@@ -102,10 +108,11 @@ export const useWatchlist = (quoteOpts: UseWatchlistQuotesOptions = {}): UseWatc
     rows,
     isPending: listQuery.isPending || quotes.isPending,
     isFetching: listQuery.isFetching || quotes.isFetching,
-    error: listQuery.error ?? quotes.error,
+    error: listQuery.error,
     refreshQuotes: quotes.refresh,
     remove: removeMutation.mutate,
     isRemoving: removeMutation.isPending,
+    quoteRefreshFailureSummary: quotes.quoteRefreshFailureSummary,
   };
 };
 
@@ -117,6 +124,8 @@ export interface AddWatchlistInput {
 }
 
 const ensureAsset = async (asset: Asset): Promise<void> => {
+  // ignoreDuplicates: assets RLS allows INSERT only (0001); upsert UPDATE would fail
+  // when the row already exists (e.g. seed data US:NVDA).
   const { error } = await supabase.from("assets").upsert(
     {
       id: asset.id,
@@ -125,14 +134,19 @@ const ensureAsset = async (asset: Asset): Promise<void> => {
       name: asset.name,
       currency: asset.currency,
     },
-    { onConflict: "id" }
+    { onConflict: "id", ignoreDuplicates: true }
   );
   if (error) {
     throw new Error(`Could not register asset ${asset.id}: ${error.message}`);
   }
 };
 
-export const useAddWatchlistItem = () => {
+export interface UseAddWatchlistItemOptions {
+  /** Runs after DB write + cache invalidation (e.g. close search modal). */
+  onSuccess?: () => void;
+}
+
+export const useAddWatchlistItem = (options: UseAddWatchlistItemOptions = {}) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -164,8 +178,9 @@ export const useAddWatchlistItem = () => {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: watchlistQueryKey(user?.id) });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: watchlistQueryKey(user?.id) });
+      options.onSuccess?.();
     },
   });
 };

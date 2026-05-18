@@ -134,6 +134,11 @@ export interface PriceQuote {
   readonly asOf: string;
   /** 数据源标识，如 "alphavantage" / "tushare" */
   readonly source: string;
+  /**
+   * 相对前收的涨跌幅（部分 adapter / 缓存提供）。
+   * 未设置或 `null` 表示未知（UI 可显示占位符）。
+   */
+  readonly changePercent?: Decimal | null;
 }
 
 /**

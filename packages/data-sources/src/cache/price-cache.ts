@@ -38,13 +38,14 @@ interface PriceSnapshotRow {
   price: string;
   currency: Currency;
   source: string;
+  change_percent: string | null;
 }
 
 export const createSupabasePriceCache = (client: SupabaseClient): PriceCache => ({
   async get(assetId, freshnessMs) {
     const { data, error } = await client
       .from("price_snapshots")
-      .select("asset_id, as_of, price, currency, source")
+      .select("asset_id, as_of, price, currency, source, change_percent")
       .eq("asset_id", assetId)
       .order("as_of", { ascending: false })
       .limit(1)
@@ -63,13 +64,23 @@ export const createSupabasePriceCache = (client: SupabaseClient): PriceCache => 
       return null;
     }
 
-    return {
+    const base: PriceQuote = {
       assetId: row.asset_id,
       price,
       currency: row.currency,
       asOf: row.as_of,
       source: row.source,
     };
+
+    if (row.change_percent != null && row.change_percent !== "") {
+      try {
+        return { ...base, changePercent: new Decimal(row.change_percent) };
+      } catch {
+        return base;
+      }
+    }
+
+    return base;
   },
 
   async set(quote) {
@@ -81,6 +92,10 @@ export const createSupabasePriceCache = (client: SupabaseClient): PriceCache => 
         price: quote.price.toString(), // Decimal → string for numeric column
         currency: quote.currency,
         source: quote.source,
+        change_percent:
+          quote.changePercent != null && quote.changePercent !== undefined
+            ? quote.changePercent.toString()
+            : null,
       },
       { onConflict: "asset_id,as_of" }
     );

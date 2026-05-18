@@ -2,8 +2,8 @@
  * (tabs)/markets.tsx — Markets Tab / Watchlist (Stage 2 J8)
  */
 
-import { useCallback, useState } from "react";
-import { View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
 import {
@@ -30,19 +30,42 @@ export default function MarketsTab() {
   const { t } = useTranslation();
   const router = useRouter();
   const [forceRefresh, setForceRefresh] = useState(false);
+  const quotePullIntentRef = useRef(false);
+  const [quoteBanner, setQuoteBanner] = useState<{ message: string } | null>(null);
 
-  const { rows, isPending, isFetching, refreshQuotes, remove } = useWatchlist({
-    freshnessMs: forceRefresh ? 0 : undefined,
-  });
+  const { rows, isPending, isFetching, refreshQuotes, remove, quoteRefreshFailureSummary } =
+    useWatchlist({
+      freshnessMs: forceRefresh ? 0 : undefined,
+    });
+
+  const { failedCount, rateLimitCount } = quoteRefreshFailureSummary;
+
+  useEffect(() => {
+    if (!isFetching && quotePullIntentRef.current) {
+      quotePullIntentRef.current = false;
+      setForceRefresh(false);
+      if (failedCount > 0) {
+        if (rateLimitCount > 0 && failedCount === rateLimitCount) {
+          setQuoteBanner({ message: t("markets.quotesRefreshRateLimited") });
+        } else {
+          setQuoteBanner({
+            message: t("markets.quotesRefreshPartialFail", { count: failedCount }),
+          });
+        }
+      } else {
+        setQuoteBanner(null);
+      }
+    }
+  }, [isFetching, failedCount, rateLimitCount, t]);
 
   const openSearch = () => {
     router.push("/markets/search" as Href);
   };
 
   const handleRefresh = useCallback(() => {
+    quotePullIntentRef.current = true;
     setForceRefresh(true);
     refreshQuotes();
-    setTimeout(() => setForceRefresh(false), 500);
   }, [refreshQuotes]);
 
   const isEmpty = !isPending && rows.length === 0;
@@ -56,6 +79,16 @@ export default function MarketsTab() {
     >
       <View className="px-4 pt-4 gap-3 flex-1">
         <Text className="text-foreground text-xl font-semibold">{t("markets.title")}</Text>
+
+        {!isEmpty && quoteBanner ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setQuoteBanner(null)}
+            className="rounded-lg border border-danger/40 px-3 py-2 active:opacity-80"
+          >
+            <Text className="text-danger text-sm">{quoteBanner.message}</Text>
+          </Pressable>
+        ) : null}
 
         {isEmpty ? (
           <WatchlistEmptyState

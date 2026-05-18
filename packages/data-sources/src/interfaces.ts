@@ -92,6 +92,7 @@ export interface FxAdapter {
 export interface PriceCache {
   /**
    * @returns 命中且未过期的 PriceQuote；否则 null（调用方 fallback 到 adapter）
+   * `PriceQuote.changePercent` 若存在则来自缓存（自选涨跌幅展示）。
    */
   get(assetId: string, freshnessMs: number): Promise<PriceQuote | null>;
   set(quote: PriceQuote): Promise<void>;

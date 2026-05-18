@@ -53,6 +53,15 @@ export interface FixtureData {
 const FIXTURE_AS_OF_DEFAULT = "2026-05-17T00:00:00.000Z";
 const FIXTURE_SOURCE = "fixture";
 
+const parseFixtureChangePercent = (q: FixtureQuote): Decimal | undefined => {
+  if (!q.changePercent || q.changePercent.trim() === "") return undefined;
+  try {
+    return new Decimal(q.changePercent.replace(/%/g, "").trim());
+  } catch {
+    return undefined;
+  }
+};
+
 /** All Arc markets — keep in sync with packages/core's `Market` union. */
 const ALL_MARKETS = ["US", "CN", "HK", "CRYPTO", "FUND"] as const satisfies readonly Market[];
 
@@ -73,12 +82,14 @@ export const createFixturePriceAdapter = (market: Market, data: FixtureData): Pr
         `no fixture quote for ${assetId}; add it to dev-fixtures/quotes.json or switch toggle ON`
       );
     }
+    const changePercent = parseFixtureChangePercent(q);
     return {
       assetId,
       price: new Decimal(q.price),
       currency: q.currency,
       asOf: q.asOf ?? FIXTURE_AS_OF_DEFAULT,
       source: FIXTURE_SOURCE,
+      ...(changePercent !== undefined ? { changePercent } : {}),
     };
   },
   async fetchHistorical(symbol) {

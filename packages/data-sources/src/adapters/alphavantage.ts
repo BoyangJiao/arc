@@ -76,10 +76,7 @@ export interface AlphaVantageAdapterConfig {
 }
 
 /** Parsed GLOBAL_QUOTE fields used by fetchLatest and watchlist quote enrichment. */
-export const parseGlobalQuote = (
-  quote: Record<string, string>,
-  symbol: string
-): { quote: PriceQuote; changePercent: Decimal | null } => {
+export const parseGlobalQuote = (quote: Record<string, string>, symbol: string): PriceQuote => {
   const priceStr = quote["05. price"];
   const tradingDay = quote["07. latest trading day"];
 
@@ -97,13 +94,11 @@ export const parseGlobalQuote = (
   const asOf = `${tradingDay}T20:00:00Z`;
 
   return {
-    quote: {
-      assetId: `US:${symbol.toUpperCase()}`,
-      price,
-      currency: "USD",
-      asOf,
-      source: SOURCE,
-    },
+    assetId: `US:${symbol.toUpperCase()}`,
+    price,
+    currency: "USD",
+    asOf,
+    source: SOURCE,
     changePercent: parseChangePercent(quote["10. change percent"]),
   };
 };
@@ -163,7 +158,7 @@ export const createAlphaVantageAdapter = (config: AlphaVantageAdapterConfig): Pr
         throw new NotFoundError(SOURCE, symbol);
       }
 
-      return parseGlobalQuote(quote, symbol).quote;
+      return parseGlobalQuote(quote, symbol);
     },
 
     async searchSymbols(query) {
@@ -216,7 +211,6 @@ export const fetchAlphaVantageQuoteWithChange = async (
   config: AlphaVantageAdapterConfig,
   symbol: string
 ): Promise<{ quote: PriceQuote; changePercent: Decimal | null }> => {
-  const adapter = createAlphaVantageAdapter(config);
   const url = new URL(ENDPOINT);
   url.searchParams.set("function", "GLOBAL_QUOTE");
   url.searchParams.set("symbol", symbol);
@@ -251,5 +245,6 @@ export const fetchAlphaVantageQuoteWithChange = async (
     throw new NotFoundError(SOURCE, symbol);
   }
 
-  return parseGlobalQuote(quote, symbol);
+  const q = parseGlobalQuote(quote, symbol);
+  return { quote: q, changePercent: q.changePercent ?? null };
 };

@@ -20,6 +20,8 @@ interface StoredQuote {
   asOf: string;
   source: string;
   storedAt: number;
+  /** Serialized Decimal; absent on legacy cache rows */
+  changePercent?: string | null;
 }
 
 interface StoredFx {
@@ -34,13 +36,23 @@ interface StoredFx {
 const priceKey = (assetId: string): string => `@arc/market-cache/v1/price/${assetId}`;
 const fxKey = (from: Currency, to: Currency): string => `@arc/market-cache/v1/fx/${from}->${to}`;
 
-const reviveQuote = (row: StoredQuote): PriceQuote => ({
-  assetId: row.assetId,
-  price: new Decimal(row.price),
-  currency: row.currency,
-  asOf: row.asOf,
-  source: row.source,
-});
+const reviveQuote = (row: StoredQuote): PriceQuote => {
+  const base: PriceQuote = {
+    assetId: row.assetId,
+    price: new Decimal(row.price),
+    currency: row.currency,
+    asOf: row.asOf,
+    source: row.source,
+  };
+  if (row.changePercent != null && row.changePercent !== "") {
+    try {
+      return { ...base, changePercent: new Decimal(row.changePercent) };
+    } catch {
+      return base;
+    }
+  }
+  return base;
+};
 
 const reviveFx = (row: StoredFx): FxRate => ({
   from: row.from,
@@ -76,6 +88,8 @@ export const createPersistentPriceCache = (
         asOf: fromBackend.asOf,
         source: fromBackend.source,
         storedAt: Date.now(),
+        changePercent:
+          fromBackend.changePercent != null ? fromBackend.changePercent.toString() : undefined,
       };
       try {
         await storage.setItem(priceKey(assetId), JSON.stringify(row));
@@ -94,6 +108,7 @@ export const createPersistentPriceCache = (
       asOf: quote.asOf,
       source: quote.source,
       storedAt: Date.now(),
+      changePercent: quote.changePercent != null ? quote.changePercent.toString() : undefined,
     };
     try {
       await storage.setItem(priceKey(quote.assetId), JSON.stringify(row));
