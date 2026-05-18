@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-18 by Claude Opus 4.7 (P1 Deno tests for dev-seed landed; Stage 2 priority confirmed: Daily Snapshot → Watchlist → Rebalance; CSV downgraded to Stage 3 末)
+> **Last updated**: 2026-05-18 by Claude Opus 4.7 (P1 Deno tests + Watchlist spec + watchlist_items schema/migration 0004 all committed; cron secrets rotated 3× → final value live on both sides; cron go-live decision = wait for Stage 2 → main merge; **Watchlist commit plan #2-#8 handing off to Sonnet (Cursor)**; CLAUDE.md §十二 "模型自我路由" rule added)
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                                                                   |
-| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Active stage**      | **Stage 2 — in progress**                                                                                                                               |
-| **Step**              | J7 Daily Snapshot done; dev-harness 5-commit batch landed; **P1 Deno tests for dev-seed handler added**; cron production go-live pending user CLI steps |
-| **Branch**            | `dev/stage-2` (tracks `origin/dev/stage-2`) — uncommitted: dev-seed handler refactor + Deno tests + docs                                                |
-| **Last commit**       | `12b106d` — chore(design): regenerate Pencil Stage 1 design file via deterministic script                                                               |
-| **PR**                | Stage 2 work on `dev/stage-2`; Stage 1 PR #5 already merged                                                                                             |
-| **CI status**         | Local monorepo typecheck ✅ / lint ✅ / test ✅ (all FULL TURBO cached this session)                                                                    |
-| **Mobile dev server** | User local Metro; after overlay changes use **⌘D → Reload** (not ⌘R on iOS Simulator)                                                                   |
+| Field                 | Value                                                                                                                                       |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Active stage**      | **Stage 2 — J8 Watchlist 启动**                                                                                                             |
+| **Step**              | J7 ✅; J8 spec Accepted; commit plan #1 (db schema + migration 0004) landed; **#2-#8 handing off to Sonnet (Cursor)** per CLAUDE.md §十二   |
+| **Branch**            | `dev/stage-2` (tracks `origin/dev/stage-2`) — 3 commits ahead this session; uncommitted: CLAUDE.md §十二 + AGENTS.md route rule + this file |
+| **Last commit**       | `0b2c1fd` — feat(db): watchlist_items schema + migration 0004 + RLS                                                                         |
+| **PR**                | Stage 2 work on `dev/stage-2`; Stage 1 PR #5 already merged                                                                                 |
+| **CI status**         | Local monorepo typecheck ✅ / lint ✅ / test ✅ (all FULL TURBO cached this session)                                                        |
+| **Mobile dev server** | User local Metro; after overlay changes use **⌘D → Reload** (not ⌘R on iOS Simulator)                                                       |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -35,15 +35,25 @@
 | S2-AC-1.6 / 1.7 (cron idempotent, no external API)                    | ⏳ not formally signed off                                       |
 | S1-AC-5 (red-up/green-down via card)                                  | ✅ verified with `daily-snapshot:mixed-movers` + Settings toggle |
 
-### Uncommitted work (this session — commit before next feature)
+## Stage 2 — J8 Watchlist progress (started 2026-05-18)
 
-- **`supabase/functions/dev-seed/handler.ts`** — pure HTTP handler extracted from `index.ts` (DI for createClient / runSeedForUser / env)
-- **`supabase/functions/dev-seed/index.ts`** — now thin shell that wires real deps into `makeHandler`
-- **`supabase/functions/dev-seed/handler.test.ts`** — Deno unit tests, 18 cases covering all 5 security layers + happy path + JWT user-id smuggling defense
-- **`supabase/functions/dev-seed/README.md`** — appended unit-test instructions (`brew install deno && pnpm test:functions`)
-- **`supabase/functions/deno.json`** — Deno config + `@supabase/supabase-js` import map
-- **`package.json`** — added `test:functions` + `functions:deploy:daily-snapshot` scripts
-- **`docs/development-plan.md`** — Stage 2 priority reordered; CSV moved to Stage 3 末
+| Item                                                                           | Status                                   |
+| :----------------------------------------------------------------------------- | :--------------------------------------- |
+| Feature spec (`watchlist-stage-2.md`) Accepted; 6 open questions locked        | ✅ committed (`70bd38e`)                 |
+| **Commit plan #1** db schema + migration 0004 + RLS (3 policies)               | ✅ committed (`0b2c1fd`)                 |
+| Apply 0004 to dev Supabase (SQL Editor)                                        | ⏳ **user task** — anytime before #5     |
+| **Commit plan #2** `WatchlistRow` type in `@arc/core`                          | ⏳ → Sonnet                              |
+| **Commit plan #3** AV `searchSymbols` + static-symbols fallback + test         | ⏳ → Sonnet                              |
+| **Commit plan #4** `WatchlistRow` + `WatchlistEmptyState` in `@arc/ui/finance` | ⏳ → Sonnet                              |
+| **Commit plan #5** `use-watchlist` + `use-watchlist-quotes` + Markets Tab      | ⏳ → Sonnet                              |
+| **Commit plan #6** `/markets/search` modal + `use-symbol-search`               | ⏳ → Sonnet                              |
+| **Commit plan #7** 3 watchlist seed scenarios + CLI shortcuts                  | ⏳ → Haiku (镜像 daily-snapshot:\* 模式) |
+| **Commit plan #8** Update `user-journeys.md` J8 (drop "5s" claim)              | ⏳ → Haiku                               |
+
+### Uncommitted work (this session — checkpoint commit)
+
+- **`CLAUDE.md`** — added §十二 "模型自我路由（半自动）" rule (durable preference per 2026-05-18 conversation)
+- **`AGENTS.md`** — added cross-tool pointer to §十二
 - **`.specify/session-state.md`** — this file
 
 ## Testing harness (canonical docs)
@@ -60,66 +70,52 @@
 
 ## Active blockers / waiting on user
 
-- **Daily-snapshot cron production go-live**: user runs interactive Supabase CLI + GitHub secrets setup (steps in "Immediate next actions B" below). Cannot be automated from this side.
-- **`brew install deno`** before running `pnpm test:functions` (Deno binary not yet on PATH; tests written + ready).
-- **Optional**: formal sign-off S2-AC-1.6/1.7 (will be naturally satisfied once cron runs and `portfolio_value_snapshots` rows accumulate).
+- **Migration 0004 SQL apply** — paste `packages/db/drizzle/migrations/0004_watchlist_items.sql` into Supabase SQL Editor (dev project) and run. Verify: `SELECT count(*) FROM pg_policies WHERE tablename='watchlist_items'` → 3; `SELECT relrowsecurity FROM pg_class WHERE relname='watchlist_items'` → t. Non-blocking until commit plan #5 lands queries.
+- **`brew install deno`** before `pnpm test:functions` runs (Deno not on PATH; tests landed + ready).
+- **Daily-snapshot cron production go-live** — DEFERRED to Stage 2 → main merge (decision 2026-05-18). Supabase + GitHub secrets are configured and idle until then. `pnpm typecheck` / `lint` / `test` still green.
 
 ## Immediate next actions (next session, 按顺序)
 
-**A. Commit the P1-tests batch (this session)**
+**A. Commit the checkpoint files (this session — small)**
 
-Single commit recommended: `test(dev-seed): Deno unit tests for 5-layer security via injected deps`. Touches:
+Single commit `docs(claude-md): add §十二 模型自我路由 + checkpoint session-state`. Touches:
 
-- `supabase/functions/dev-seed/handler.ts` (new — extracted handler)
-- `supabase/functions/dev-seed/index.ts` (now wires deps into makeHandler)
-- `supabase/functions/dev-seed/handler.test.ts` (new — 18 Deno tests)
-- `supabase/functions/dev-seed/README.md` (test instructions appended)
-- `supabase/functions/deno.json` (new — Deno config + import map)
-- `package.json` (`test:functions` + `functions:deploy:daily-snapshot`)
-- `docs/development-plan.md` (CSV → Stage 3 末)
+- `CLAUDE.md` (§十二 new section)
+- `AGENTS.md` (cross-tool pointer)
 - `.specify/session-state.md` (this file)
 
-Optionally split docs (CSV reprioritization) into its own commit if you prefer clean atomic history.
+**B. Hand-off to Sonnet (Cursor) — Watchlist commit plan #2-#8**
 
-**B. Production cron go-live (USER — interactive CLI; do this next)**
+Per CLAUDE.md §七 + §十二, #2-#6 are RN/CRUD/adapter territory → Sonnet. #7-#8 are doc/seed mechanical → Haiku. Routing rationale:
 
-```bash
-# 1) Supabase CLI auth (one-time)
-pnpm supabase login                                  # browser OAuth flow
-pnpm supabase link --project-ref jdvlzkictwinkgcvgwew
+| #   | Task                                                                                                                                                                                                                                                          | Model  |
+| :-- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----- |
+| #2  | `packages/core/src/domain/watchlist.ts` — `WatchlistRow` type (Decimal-typed quote sub-record, nullable, stale flag)                                                                                                                                          | Sonnet |
+| #3  | `packages/data-sources/src/adapters/alphavantage.ts` — add `searchSymbols(query)` calling AV `SYMBOL_SEARCH`; `static-symbols.ts` top-200 US tickers JSON; new `searchSymbols` wraps static first, falls back to AV on zero matches; vitest for fallback path | Sonnet |
+| #4  | `packages/ui/src/finance/WatchlistRow.tsx` + `WatchlistEmptyState.tsx` — presentational only, takes props; uses `useBusinessClasses().gain/loss/pnlNeutral`; mirror `DailySnapshotCard` structure                                                             | Sonnet |
+| #5  | `apps/mobile/src/lib/queries/use-watchlist.ts` (list/add/remove TanStack hooks) + `use-watchlist-quotes.ts` (per-row quote, 5-min cache TTL, pull-to-refresh bypass) + replace `apps/mobile/app/(tabs)/markets.tsx` stub                                      | Sonnet |
+| #6  | `apps/mobile/app/markets/search.tsx` modal route + `use-symbol-search.ts` (debounced 350ms) — already-in-watchlist results show ✓ + toast; AV 429 inline error                                                                                                | Sonnet |
+| #7  | `supabase/functions/_shared/seed-core.ts` add 3 scenarios `watchlist:empty` / `watchlist:3-items` / `watchlist:stale-quotes`; `tools/seed-dev-data.ts` + `package.json` shortcuts                                                                             | Haiku  |
+| #8  | `docs/user-journeys.md` J8 — replace "实时价 5s 内刷新" with cache-TTL semantics                                                                                                                                                                              | Haiku  |
 
-# 2) Generate + store the shared secret on Supabase
-SECRET=$(openssl rand -hex 32)
-echo "Copy this to GitHub secrets in step 4: $SECRET"
-pnpm supabase secrets set DAILY_SNAPSHOT_SECRET=$SECRET
+**Switch-back-to-Opus triggers** (Sonnet/Haiku → 找 Opus 回来):
 
-# 3) Deploy the Edge Function
-pnpm functions:deploy:daily-snapshot
+- #3 fallback edge case: 静态表非空但 AV 429 处理 / 大小写归一 反复改不对
+- 任何 `packages/core/` 算法 (Stage 2 没 — Stage 3 TWR 才会触发)
+- 用户改 J8 验收条款 (回到 spec 重谈)
+- 安全审查 (Stage 2 末)
 
-# 4) Configure GitHub Actions secrets
-#    Repo Settings → Secrets and variables → Actions → New repository secret:
-#      SUPABASE_DAILY_SNAPSHOT_URL = https://jdvlzkictwinkgcvgwew.supabase.co/functions/v1/daily-snapshot
-#      DAILY_SNAPSHOT_SECRET       = <the SECRET printed in step 2>
-
-# 5) Smoke test
-#    GitHub → Actions → "Daily Snapshot" → Run workflow → "Run workflow"
-#    Verify: workflow goes green; "Edge Function response" shows portfoliosProcessed >= 1
-#    Then SELECT portfolio_id, as_of, total_value FROM portfolio_value_snapshots ORDER BY as_of DESC LIMIT 5;
-```
-
-**C. Stage 2 next module (priority confirmed 2026-05-18)**
-
-**Daily Snapshot ✅ → Watchlist (next) → Rebalance → Welcome**. CSV moved to Stage 3 末 (see `docs/development-plan.md`).
-
-Watchlist plan: create `.specify/feature-specs/watchlist-stage-2.md` (`/(tabs)/markets` list + `/markets/search` AV modal + `watchlist_item` table + Drizzle migration 0004).
+**C. After #2-#8 done** — manual UAT against S2-AC-2.1-2.8 (per spec §test plan), then either continue to Rebalance (J9) or open Stage 2 → main PR if Watchlist + Rebalance + Welcome all 绿.
 
 **D. Pattern for future features**
 
-Extend `seed-core` scenarios + cheatsheet + FAB panel using `feature:state` naming + `pnpm seed:<abbr>:*` aliases. New Edge Functions should follow the dev-seed `handler.ts` + `index.ts` split so they're unit-testable.
+Spec → schema/migration → core type → adapter → UI components → app hooks/pages → seed scenarios → doc收尾. New Edge Functions follow dev-seed `handler.ts` + `index.ts` split for testability. Model routing always evaluated at task boundary per §十二.
 
 ## Open decisions / questions
 
 - **Resolved 2026-05-18**: Stage 2 order = Daily Snapshot ✅ → Watchlist → Rebalance → Welcome; CSV → Stage 3 末.
+- **Resolved 2026-05-18**: cron go-live deferred to Stage 2 → main merge (no production users yet; secrets idle but configured).
+- **Resolved 2026-05-18**: model routing = semi-automatic per CLAUDE.md §十二 (evaluate at task boundary; suggest don't switch unilaterally).
 - Whether to ADR the Dev Tools overlay + `dev-seed` Edge Function pattern (optional; cheatsheet + README exist).
 - Whether to add Deno test coverage to the daily-snapshot Edge Function as well (currently no unit tests; high-leverage if we refactor it through the same `handler.ts` split pattern — defer until first bug).
 
