@@ -9,6 +9,7 @@
 
 import { parseAssetId, type Market } from "@arc/core";
 
+import { createCashPriceAdapter } from "./adapters/cash-adapter";
 import { NotFoundError } from "./errors";
 import type { FxAdapter, PriceAdapter } from "./interfaces";
 
@@ -23,6 +24,19 @@ export interface RegistryConfig {
   priceAdapters: Partial<Record<Market, PriceAdapter>>;
   fxAdapter: FxAdapter;
 }
+
+/**
+ * Builds a registry with the CASH constant adapter always registered.
+ * Caller-supplied `priceAdapters` override CASH if the same key is provided.
+ */
+export const createDefaultRegistry = (config: RegistryConfig): AdapterRegistry =>
+  createRegistry({
+    ...config,
+    priceAdapters: {
+      CASH: createCashPriceAdapter(),
+      ...config.priceAdapters,
+    },
+  });
 
 export const createRegistry = (config: RegistryConfig): AdapterRegistry => {
   const { priceAdapters, fxAdapter } = config;

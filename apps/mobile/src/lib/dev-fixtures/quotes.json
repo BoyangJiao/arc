@@ -27,7 +27,11 @@
       "currency": "USD",
       "asOf": "2026-05-17T00:00:00.000Z",
       "changePercent": "0.55"
-    }
+    },
+    "CASH:USD": { "price": "1", "currency": "USD", "asOf": "2026-05-17T00:00:00.000Z" },
+    "CASH:CNY": { "price": "1", "currency": "CNY", "asOf": "2026-05-17T00:00:00.000Z" },
+    "CASH:HKD": { "price": "1", "currency": "HKD", "asOf": "2026-05-17T00:00:00.000Z" },
+    "CASH:JPY": { "price": "1", "currency": "JPY", "asOf": "2026-05-17T00:00:00.000Z" }
   },
   "fx": {
     "USD->CNY": { "rate": "7.20", "asOf": "2026-05-17T00:00:00.000Z" },

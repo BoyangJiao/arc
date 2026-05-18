@@ -63,7 +63,14 @@ const parseFixtureChangePercent = (q: FixtureQuote): Decimal | undefined => {
 };
 
 /** All Arc markets — keep in sync with packages/core's `Market` union. */
-const ALL_MARKETS = ["US", "CN", "HK", "CRYPTO", "FUND"] as const satisfies readonly Market[];
+const ALL_MARKETS = [
+  "US",
+  "CN",
+  "HK",
+  "CRYPTO",
+  "FUND",
+  "CASH",
+] as const satisfies readonly Market[];
 
 /**
  * One PriceAdapter for a specific market, reading from the shared fixture data.

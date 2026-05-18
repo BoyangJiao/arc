@@ -14,6 +14,10 @@ const FIXTURE: FixtureData = {
     "US:AAPL": { price: "189.50", currency: "USD", asOf: "2026-05-17T00:00:00.000Z" },
     "US:MSFT": { price: "420.30", currency: "USD" },
     "CN:600519": { price: "1680.00", currency: "CNY" },
+    "CASH:USD": { price: "1", currency: "USD" },
+    "CASH:CNY": { price: "1", currency: "CNY" },
+    "CASH:HKD": { price: "1", currency: "HKD" },
+    "CASH:JPY": { price: "1", currency: "JPY" },
   },
   fx: {
     "USD->CNY": { rate: "7.20" },
@@ -94,8 +98,7 @@ describe("createFixtureFxAdapter", () => {
 describe("createFixtureRegistry", () => {
   it("registers a price adapter for every Arc market", () => {
     const registry = createFixtureRegistry(FIXTURE);
-    // The Arc Market union: US/CN/HK/CRYPTO/FUND
-    for (const market of ["US", "CN", "HK", "CRYPTO", "FUND"] as const) {
+    for (const market of ["US", "CN", "HK", "CRYPTO", "FUND", "CASH"] as const) {
       expect(() => registry.resolvePriceAdapter(market)).not.toThrow();
     }
   });

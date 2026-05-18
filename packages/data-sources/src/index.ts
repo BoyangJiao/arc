@@ -17,6 +17,7 @@
 export * from "./interfaces";
 export * from "./errors";
 export * from "./registry";
+export { createCashPriceAdapter } from "./adapters/cash-adapter";
 export * from "./fetch-with-cache";
 
 export {
