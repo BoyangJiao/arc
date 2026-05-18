@@ -8,7 +8,7 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
 /** 市场代码（CLAUDE.md §3.2.3 资产 ID 前缀严格对应）*/
-export const marketEnum = pgEnum("market", ["CN", "HK", "US", "CRYPTO", "FUND"]);
+export const marketEnum = pgEnum("market", ["CN", "HK", "US", "CRYPTO", "FUND", "CASH"]);
 
 /** 货币代码 — Stage 1 仅 CNY/USD；Stage 3 扩展 */
 export const currencyEnum = pgEnum("currency", ["CNY", "HKD", "USD", "JPY", "BTC", "ETH"]);

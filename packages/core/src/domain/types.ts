@@ -15,7 +15,7 @@ import Decimal from "decimal.js";
 // ─── 基础枚举 ──────────────────────────────────────────────────────────────
 
 /** 市场代码 — 与资产 ID 前缀严格对应 */
-export type Market = "CN" | "HK" | "US" | "CRYPTO" | "FUND";
+export type Market = "CN" | "HK" | "US" | "CRYPTO" | "FUND" | "CASH";
 
 /** 货币代码 — Stage 1 仅使用 CNY/USD；Stage 2 扩展 HKD/BTC/ETH 等 */
 export type Currency = "CNY" | "HKD" | "USD" | "JPY" | "BTC" | "ETH";
