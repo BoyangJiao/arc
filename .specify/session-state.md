@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-18 by Claude Opus 4.7 (J9 commit plan #1–#4 landed by Cursor; **#2–#3 algorithm + property tests committed by Opus**; #5–#10 UI/hooks/seed/docs handing off to Cursor)
+> **Last updated**: 2026-05-18 by Cursor Auto (J9 #5–#10 landed; rebalance DEV scenario bugfixes **uncommitted** in working tree)
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                                                             |
-| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Active stage**      | **Stage 2 — J9 Rebalance (in progress)**                                                                                                          |
-| **Step**              | J8 ✅; J9 spec Accepted (`b5e662e`); commit plan **#1, #2, #3, #4** done; **#5–#10 (UI + hooks + cash form + seed + docs) handing off to Cursor** |
-| **Branch**            | `dev/stage-2` — HEAD `3752491`; working tree clean                                                                                                |
-| **Last commit**       | `3752491` — feat(core): fill in computeRebalance + validateTargetAllocations + rounding (J9)                                                      |
-| **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                                                                    |
-| **CI status**         | Local `pnpm typecheck` 6/6 ✅ (this checkpoint)                                                                                                   |
-| **Mobile dev server** | User Metro; UI changes → **⌘D → Reload**                                                                                                          |
+| Field                 | Value                                                                                                                                |
+| :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 2 — J9 Rebalance (in progress)**                                                                                             |
+| **Step**              | J8 ✅; J9 spec Accepted; commit plan **#1–#10** ✅; **UAT in progress** — rebalance DEV 场景差异化 + DeviationBar 修复 **待 commit** |
+| **Branch**            | `dev/stage-2` — HEAD `dbe4807`; **7 modified + 2 untracked** (see §Immediate next)                                                   |
+| **Last commit**       | `dbe4807` — feat(infra): lint:copy compliance gate + user-journeys J9 sync                                                           |
+| **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                                                       |
+| **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅                                       |
+| **Mobile dev server** | User Metro; UI changes → **⌘D → Reload**                                                                                             |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -58,20 +58,23 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Stage 2 — J9 Rebalance progress (started 2026-05-18)
 
-| Item                                                                                                                       | Status                                                      |
-| :------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
-| Feature spec (`rebalance-stage-2.md`) Accepted — 4 structural + 6 tactical decisions locked                                | ✅ `b5e662e`                                                |
-| **Commit plan #1** migration 0006/0007/0008 + `target_allocations` Drizzle schema + CASH market                            | ✅ `e1caaf7` + `10d656d` (split for PG `ALTER TYPE` gotcha) |
-| Migration 0006 / 0007 / 0008 applied on dev Supabase                                                                       | ✅ **user confirmed**                                       |
-| **Commit plan #4** CASH price adapter (`createCashPriceAdapter`) + registry + tests                                        | ✅ `85301fe`                                                |
-| **Commit plan #2** `rebalance/rounding.ts` (per-market step-size + truncate toward zero)                                   | ✅ `3752491`                                                |
-| **Commit plan #3** `rebalance/index.ts` fill in + property tests (26 tests, all green)                                     | ✅ `3752491`                                                |
-| **Commit plan #5** `TargetAllocationForm` + `DeviationDonut` + `DeviationBar` + `RebalanceActionList` in `@arc/ui/finance` | ⏳ next batch (Cursor)                                      |
-| **Commit plan #6** `use-target-allocations` + `use-rebalance` hooks + Insights Tab integration                             | ⏳ next batch (Cursor)                                      |
-| **Commit plan #7** `/insights/rebalance/setup` modal + `/insights/rebalance/actions` screen                                | ⏳ next batch (Cursor)                                      |
-| **Commit plan #8** `/me/cash-balances` form (writes BUY/SELL on CASH:\* assets)                                            | ⏳ next batch (Cursor)                                      |
-| **Commit plan #9** 4 seed scenarios + Dev panel feature group registration                                                 | ⏳ next batch (Cursor)                                      |
-| **Commit plan #10** `pnpm lint:copy` script + `user-journeys.md` J9 sync                                                   | ⏳ next batch (Cursor)                                      |
+| Item                                                                                                                       | Status                                                                   |
+| :------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| Feature spec (`rebalance-stage-2.md`) Accepted — 4 structural + 6 tactical decisions locked                                | ✅ `b5e662e`                                                             |
+| **Commit plan #1** migration 0006/0007/0008 + `target_allocations` Drizzle schema + CASH market                            | ✅ `e1caaf7` + `10d656d` (split for PG `ALTER TYPE` gotcha)              |
+| Migration 0006 / 0007 / 0008 applied on dev Supabase                                                                       | ✅ **user confirmed**                                                    |
+| **Commit plan #4** CASH price adapter (`createCashPriceAdapter`) + registry + tests                                        | ✅ `85301fe`                                                             |
+| **Commit plan #2** `rebalance/rounding.ts` (per-market step-size + truncate toward zero)                                   | ✅ `3752491`                                                             |
+| **Commit plan #3** `rebalance/index.ts` fill in + property tests (26 tests, all green)                                     | ✅ `3752491`                                                             |
+| **Commit plan #5** `TargetAllocationForm` + `DeviationDonut` + `DeviationBar` + `RebalanceActionList` in `@arc/ui/finance` | ✅ `23b2eb7`                                                             |
+| **Commit plan #6** `use-target-allocations` + `use-rebalance` hooks + Insights Tab integration                             | ✅ `8c0936f`                                                             |
+| **Commit plan #7** `/insights/rebalance/setup` modal + `/insights/rebalance/actions` screen                                | ✅ `5cf545a`                                                             |
+| **Commit plan #8** `/me/cash-balances` form (writes BUY/SELL on CASH:\* assets)                                            | ✅ `fa9caab`                                                             |
+| **Commit plan #9** 4 seed scenarios + Dev panel feature group registration                                                 | ✅ `57b4380`                                                             |
+| **Commit plan #10** `pnpm lint:copy` script + `user-journeys.md` J9 sync                                                   | ✅ `dbe4807`                                                             |
+| **UAT bugfix** DeviationBar RN 高度撑满屏（`h-2` 失效 → 固定 8px + 按 \|deviation\| 画条）                                 | ✅ 代码已改，**未 commit**                                               |
+| **UAT bugfix** rebalance DEV 三场景 targets 相同 + fixture 忽略 DB 报价 → 场景无差异                                       | ✅ `rebalance-seed-plans.ts` + `warmRebalanceMarketCache`，**未 commit** |
+| **Migration 0009** `assets` RLS 允许 authenticated INSERT `CASH`（DEV seed 写 CASH 资产）                                  | ⏳ SQL 文件已写，**用户需在 Supabase 执行**                              |
 
 **Core algorithm contract** (locked):
 
@@ -92,29 +95,34 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Active blockers / waiting on user
 
-- **No active blockers.** Migrations 0001–0008 all applied on dev Supabase; working tree clean; `pnpm typecheck` / `lint` / `test` (73 tests) all green.
+- **Migration 0009** — run `packages/db/drizzle/migrations/0009_assets_authenticated_insert_cash.sql` on dev Supabase before rebalance DEV seed (否则 CASH 资产 INSERT 可能 RLS 失败；客户端 seed 已改为只 upsert 美股，但 0009 仍建议执行）。
+- **Rebalance UAT** — 切换 DEV 场景后 Insights **下拉刷新**；验证 aligned（全灰 <5%）/ mild（AAPL+MSFT 黄）/ heavy（NVDA+MSFT 红）。
 - **`brew install deno`** — before `pnpm test:functions` locally (J8 dev-seed handler tests).
 - **Daily-snapshot cron go-live** — deferred to Stage 2 → main merge (2026-05-18).
 
 ## Immediate next actions (next session)
 
-**1. Cursor — J9 commit plan #5–#10** (UI + hooks + cash form + seed + docs). 见下方 §"J9 hand-off prompt for Cursor"。`@arc/core` 算法层已固定，下游只读 `DeviationItem` / `TargetAllocationError` 契约。
+**1. Commit UAT bugfix bundle** (when user asks):
 
-**2. After #5–#10 done** — manual UAT against S2-AC-3.1 / 3.2 / 3.4 / 3.5 / 3.6 / 3.7 / 3.8（3.3 已由 26 property/example tests 覆盖）。
+- `packages/ui/src/finance/DeviationBar.tsx`
+- `apps/mobile/src/lib/dev-tools/rebalance-seed-plans.ts` + `run-rebalance-seed-client.ts`
+- `supabase/functions/_shared/seed-core.ts` + `packages/i18n` rb\* hints
+- `packages/db/drizzle/migrations/0009_assets_authenticated_insert_cash.sql`
 
-**3. Stage 2 → `main` PR** — Daily Snapshot ✅ + Watchlist ✅ + Rebalance ✅ + Welcome 后即可开 PR；Welcome 仍按 development-plan.md 排期。
+**2. User** — apply migration **0009** on dev Supabase; DEV → 再平衡 → 依次 seed aligned / mild / heavy → Insights 下拉刷新 → sign off S2-AC-3.x.
 
-**4. Switch-back-to-Opus triggers** for J9 implementation:
+**3. Stage 2 → `main` PR** — after J9 UAT ✅; Welcome 仍按 development-plan.md 排期。
 
-- UI 组件库要重新设计抽象（compound components / render props）
-- DeviationDonut 在 Web 上渲染失败需要拆 Recharts/Victory（spec §4 风险）
-- Sonnet 在 sum-to-100 form validation 上反复改不对
-- `pnpm lint:copy` 实现思路有歧义
+**4. Switch-back-to-Opus triggers** (if still needed):
+
+- DeviationDonut Web 渲染失败需拆 Recharts/Victory（spec §4 风险）
+- sum-to-100 表单校验反复失败
 
 ## Open decisions / questions
 
 - **Resolved 2026-05-18**: Watchlist DEV seed in App uses **client JWT path** for `watchlist:*` only; portfolio reset scenarios still need Edge Function.
 - **Resolved 2026-05-18**: Dev tools UI = **two-level** (feature picker → scenarios), not flat list.
+- **Resolved 2026-05-18 (J9 UAT)**: Rebalance DEV 场景漂移应靠 **不同 `target_allocations`**（在 fixture 固定价下算出 ±7% / ±15%），不能只改 DB NVDA 价；seed 后须 **`warmRebalanceMarketCache()`**（fixture 模式不读 Supabase `price_snapshots`）。
 - Whether to ADR Dev Tools overlay + dual seed paths (optional).
 - `daily-snapshot:happy` dead alias in `seed-core.ts` — delete when touching seed next.
 
@@ -129,17 +137,19 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **Migration 0005** optional until client deploys `change_percent` read/write; apply before shipping watchlist quote cache to shared dev DB.
 - **`use-watchlist-quotes`**: `catch` + `return null` = TanStack **success** → no `isError` → **no pull banner**. **`AdapterError` 子类必须 rethrow**（限流/网络/404 等）才能统计失败 + 显示横幅。
 - **Markets 下拉**: `forceRefresh` 在 **`isFetching` 结束** 后关闭，勿用短 `setTimeout`，否则 `queryKey` 切回会只吃缓存并丢涨跌展示路径。
+- **Rebalance DEV seed**: `rebalance:aligned|mild-drift|heavy-drift` 共用同一组 holdings；fixture 当前配置 ≈ **11.85 / 13.14 / 43.76 / 31.25**（见 `rebalance-seed-plans.ts`）。切换场景后 invalidate queries + 预热 `priceCache`/`fxCache`。
+- **`DeviationBar` (RN)**: 勿用 `h-2` + `h-full` 撑条高 — 用固定 `8px`；条宽按 `|deviationPercent|` 而非 `currentPercent`。
 - All prior Stage 1 gotchas still apply (FixtureAdapter, @arc/ui imports, OTP 8-digit, etc.).
 
 ## Active env / config snapshot
 
-| File               | Status                                                           |
-| :----------------- | :--------------------------------------------------------------- |
-| `apps/mobile/.env` | Supabase + AV key                                                |
-| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                               |
-| Migrations         | `0001`–`0005` on dev (**0004–0005 user-applied** via SQL Editor) |
-| Supabase project   | `jdvlzkictwinkgcvgwew`                                           |
-| Git branch         | `dev/stage-2`                                                    |
+| File               | Status                                                             |
+| :----------------- | :----------------------------------------------------------------- |
+| `apps/mobile/.env` | Supabase + AV key                                                  |
+| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                                 |
+| Migrations         | `0001`–`0008` applied; **`0009` pending** (CASH assets INSERT RLS) |
+| Supabase project   | `jdvlzkictwinkgcvgwew`                                             |
+| Git branch         | `dev/stage-2`                                                      |
 
 ## Recent ADRs (most relevant first)
 
