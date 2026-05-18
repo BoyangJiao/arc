@@ -17,3 +17,12 @@ export { usePortfolioHoldings } from "./use-portfolio-holdings";
 export { usePortfolioValuation } from "./use-portfolio-valuation";
 export { useDailySnapshot } from "./use-daily-snapshot";
 export { useDailyDelta, type DailyDeltaResult } from "./use-daily-delta";
+export {
+  useWatchlist,
+  useWatchlistBase,
+  useAddWatchlistItem,
+  useRemoveWatchlistItem,
+  type AddWatchlistInput,
+} from "./use-watchlist";
+export { useWatchlistQuotes, type UseWatchlistQuotesOptions } from "./use-watchlist-quotes";
+export { useSymbolSearch, type UseSymbolSearchResult } from "./use-symbol-search";
