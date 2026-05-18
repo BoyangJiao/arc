@@ -239,8 +239,11 @@ export const zh = {
     sumShort: "还差 {{delta}}%",
     sumOver: "超出 {{delta}}%",
     actionsTitle: "再平衡行动单",
-    sharesChangeLabel: "份额变化",
     amountEstimateLabel: "约",
+    units: {
+      share: "股",
+      fund: "份",
+    },
     atTarget: "已达目标",
     actionPriceHint: "按今日价 {{price}} 估算",
     cashBalancesTitle: "现金余额",

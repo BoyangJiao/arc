@@ -22,15 +22,21 @@ export interface DeviationBarRow {
   readonly tier: DeviationTier;
 }
 
+/** Mirrors @arc/core Market — local so @arc/ui stays domain-free. */
+export type RebalanceMarket = "CN" | "HK" | "US" | "CRYPTO" | "FUND" | "CASH";
+
+/** Mirrors @arc/core Currency — local so @arc/ui stays domain-free. */
+export type RebalanceCurrency = "CNY" | "HKD" | "USD" | "JPY" | "BTC" | "ETH";
+
 export interface RebalanceActionRow {
   readonly assetId: string;
   readonly label: string;
   readonly sharesNeeded: Decimal;
   readonly amountNeeded: Decimal;
+  readonly market: RebalanceMarket;
+  readonly nativeCurrency: RebalanceCurrency;
   /** Pre-formatted price hint for disclaimer line */
   readonly priceHint: string;
-  /** Decimal places for shares display */
-  readonly shareDecimals: number;
 }
 
 /** |deviationPercent| → tier per rebalance-stage-2 spec (5% / 10%). */

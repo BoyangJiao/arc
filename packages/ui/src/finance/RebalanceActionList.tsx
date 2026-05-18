@@ -9,13 +9,16 @@ import type Decimal from "decimal.js";
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
 
-import type { RebalanceActionRow } from "./rebalance-types";
+import type { RebalanceActionRow, RebalanceCurrency, RebalanceMarket } from "./rebalance-types";
 
 export interface RebalanceActionListProps {
   readonly rows: ReadonlyArray<RebalanceActionRow>;
-  readonly formatShares: (shares: Decimal, decimals: number) => string;
+  readonly formatShares: (
+    shares: Decimal,
+    market: RebalanceMarket,
+    nativeCurrency: RebalanceCurrency
+  ) => string;
   readonly formatAmount: (amount: Decimal) => string;
-  readonly sharesChangeLabel: string;
   readonly amountEstimateLabel: string;
   readonly atTargetLabel: string;
   readonly disclaimer: string;
@@ -25,7 +28,6 @@ export function RebalanceActionList({
   rows,
   formatShares,
   formatAmount,
-  sharesChangeLabel,
   amountEstimateLabel,
   atTargetLabel,
   disclaimer,
@@ -59,14 +61,15 @@ export function RebalanceActionList({
               <Text className="text-muted text-sm">{atTargetLabel}</Text>
             ) : (
               <>
-                <Text className="text-muted text-sm">{sharesChangeLabel}</Text>
                 <Text className={`text-lg font-bold ${colorClass}`}>
-                  {formatShares(row.sharesNeeded, row.shareDecimals)}
+                  {formatShares(row.sharesNeeded, row.market, row.nativeCurrency)}
                 </Text>
                 <Text className="text-muted text-sm">
                   {amountEstimateLabel} {formatAmount(row.amountNeeded)}
                 </Text>
-                <Text className="text-muted text-xs">{row.priceHint}</Text>
+                {row.market !== "CASH" && row.priceHint ? (
+                  <Text className="text-muted text-xs">{row.priceHint}</Text>
+                ) : null}
               </>
             )}
           </View>

@@ -10,6 +10,8 @@ type DeviationItem = rebalance.DeviationItem;
 import type { DeviationBarRow, DeviationTier, RebalanceDonutSegment } from "@arc/ui";
 import { deviationTierFromPercent } from "@arc/ui";
 
+import { currencySymbol } from "./format-money";
+
 export const shareDecimalsForMarket = (market: Market, currency: Currency): number => {
   if (market === "CRYPTO") return 8;
   if (market === "CASH") return currency === "JPY" ? 0 : 2;
@@ -21,6 +23,33 @@ export const formatSharesDelta = (shares: Decimal, decimals: number): string => 
   if (rounded.isZero()) return "0";
   const sign = rounded.isPositive() ? "+" : "";
   return `${sign}${rounded.toFixed(decimals)}`;
+};
+
+export type RebalanceShareUnitLabels = {
+  readonly share: string;
+  readonly fund: string;
+};
+
+export const formatSharesWithUnit = (
+  value: Decimal,
+  market: Market,
+  nativeCurrency: Currency,
+  units: RebalanceShareUnitLabels
+): string => {
+  const sign = value.gte(0) ? "+" : "-";
+  const abs = value.abs();
+
+  if (market === "CASH") {
+    const decimals = nativeCurrency === "JPY" ? 0 : 2;
+    return `${sign}${currencySymbol(nativeCurrency)}${abs.toFixed(decimals)}`;
+  }
+  if (market === "CRYPTO") {
+    return `${sign}${abs.toFixed(8)} ${nativeCurrency}`;
+  }
+  if (market === "FUND") {
+    return `${sign}${abs.toFixed(0)} ${units.fund}`;
+  }
+  return `${sign}${abs.toFixed(0)} ${units.share}`;
 };
 
 export const formatSignedPercent = (value: Decimal): string => {

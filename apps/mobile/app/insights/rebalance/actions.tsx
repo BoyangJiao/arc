@@ -5,15 +5,11 @@
 import { useMemo } from "react";
 import { Stack } from "expo-router";
 import Decimal from "decimal.js";
-import { parseAssetId } from "@arc/core";
+import { parseAssetId, type Currency, type Market } from "@arc/core";
 import { RebalanceActionList, Screen, useStackScreenOptions } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
-import {
-  assetLabel,
-  formatSharesDelta,
-  shareDecimalsForMarket,
-} from "../../../src/lib/rebalance-format";
+import { assetLabel, formatSharesWithUnit } from "../../../src/lib/rebalance-format";
 import { currencySymbol, formatMoney } from "../../../src/lib/format-money";
 import { usePortfolios, useRebalance } from "../../../src/lib/queries";
 import { useUserPreferences } from "../../../src/lib/user-preferences";
@@ -33,14 +29,14 @@ export default function RebalanceActionsScreen() {
     return deviations.map((d) => {
       const val = valByAsset.get(d.assetId);
       const { market } = parseAssetId(d.assetId);
-      const nativeCurrency = val?.nativeCurrency ?? "USD";
-      const priceNative = val?.priceNative ?? new Decimal(0);
+      const nativeCurrency = (val?.nativeCurrency ?? "USD") as Currency;
 
-      const priceHint = val
-        ? t("rebalance.actionPriceHint", {
-            price: `${currencySymbol(nativeCurrency)}${priceNative.toFixed(2)}`,
-          })
-        : "";
+      const priceHint =
+        market !== "CASH" && val
+          ? t("rebalance.actionPriceHint", {
+              price: `${currencySymbol(nativeCurrency)}${(val.priceNative ?? new Decimal(0)).toFixed(2)}`,
+            })
+          : "";
 
       return {
         assetId: d.assetId,
@@ -50,8 +46,9 @@ export default function RebalanceActionsScreen() {
         ),
         sharesNeeded: d.sharesNeeded,
         amountNeeded: d.amountNeeded,
+        market: market as Market,
+        nativeCurrency,
         priceHint,
-        shareDecimals: shareDecimalsForMarket(market, nativeCurrency),
       };
     });
   }, [deviations, valuation, t]);
@@ -61,15 +58,21 @@ export default function RebalanceActionsScreen() {
     backType: "chevron",
   });
 
+  const shareUnits = useMemo(
+    () => ({ share: t("rebalance.units.share"), fund: t("rebalance.units.fund") }),
+    [t]
+  );
+
   return (
     <>
       <Stack.Screen options={screenOptions} />
       <Screen>
         <RebalanceActionList
           rows={rows}
-          formatShares={formatSharesDelta}
+          formatShares={(value, market, nativeCurrency) =>
+            formatSharesWithUnit(value, market as Market, nativeCurrency as Currency, shareUnits)
+          }
           formatAmount={(amount) => formatMoney(amount, reportingCurrency)}
-          sharesChangeLabel={t("rebalance.sharesChangeLabel")}
           amountEstimateLabel={t("rebalance.amountEstimateLabel")}
           atTargetLabel={t("rebalance.atTarget")}
           disclaimer={t("rebalance.disclaimer")}

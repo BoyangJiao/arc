@@ -247,8 +247,11 @@ export const en = {
     sumShort: "{{delta}}% below 100",
     sumOver: "{{delta}}% above 100",
     actionsTitle: "Rebalance action list",
-    sharesChangeLabel: "Share change needed",
     amountEstimateLabel: "Approx.",
+    units: {
+      share: "shares",
+      fund: "units",
+    },
     atTarget: "Already at target",
     actionPriceHint: "Estimated at today's price {{price}}",
     cashBalancesTitle: "Cash balances",
