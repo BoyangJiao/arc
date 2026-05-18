@@ -2,15 +2,20 @@
  * Client-side rebalance seed — JWT path for DEV panel (no Edge deploy).
  */
 
-import type { RebalanceScenarioId } from "./scenarios";
-import { supabase } from "../supabase";
+import Decimal from "decimal.js";
+import type { PriceQuote } from "@arc/core";
 
-const CASH_ASSETS = [
-  { id: "CASH:USD", market: "CASH", symbol: "USD", name: "美元现金", currency: "USD" },
-  { id: "CASH:CNY", market: "CASH", symbol: "CNY", name: "人民币现金", currency: "CNY" },
-  { id: "CASH:HKD", market: "CASH", symbol: "HKD", name: "港元现金", currency: "HKD" },
-  { id: "CASH:JPY", market: "CASH", symbol: "JPY", name: "日元现金", currency: "JPY" },
-] as const;
+import { fxCache, priceCache } from "../market-data";
+import { supabase } from "../supabase";
+import {
+  REBALANCE_FIXTURE_NVDA,
+  REBALANCE_NVDA_HEAVY,
+  REBALANCE_NVDA_MILD,
+  REBALANCE_TARGETS_ALIGNED,
+  REBALANCE_TARGETS_HEAVY,
+  REBALANCE_TARGETS_MILD,
+} from "./rebalance-seed-plans";
+import type { RebalanceScenarioId } from "./scenarios";
 
 const EQUITY_ASSETS = [
   { id: "US:AAPL", market: "US", symbol: "AAPL", name: "Apple Inc.", currency: "USD" },
@@ -18,7 +23,7 @@ const EQUITY_ASSETS = [
   { id: "US:NVDA", market: "US", symbol: "NVDA", name: "NVIDIA Corporation", currency: "USD" },
 ] as const;
 
-const BASE_PRICES = { AAPL: "189.50", MSFT: "420.30", NVDA: "875.00" } as const;
+const BASE_PRICES = { AAPL: "189.50", MSFT: "420.30", NVDA: REBALANCE_FIXTURE_NVDA } as const;
 
 const BASE_TX = [
   {
@@ -41,7 +46,7 @@ const BASE_TX = [
     asset_id: "US:NVDA",
     type: "BUY" as const,
     shares: "8",
-    price_per_share: "875.00",
+    price_per_share: REBALANCE_FIXTURE_NVDA,
     currency: "USD" as const,
     fee: "2",
   },
@@ -57,22 +62,63 @@ const BASE_TX = [
 
 type RebalancePlan = {
   readonly targets: Readonly<Record<string, string>>;
-  readonly nvdaPrice?: string;
+  readonly nvdaPrice: string;
 };
 
 const PLANS: Record<RebalanceScenarioId, RebalancePlan> = {
-  "rebalance:empty-target": { targets: {} },
-  "rebalance:aligned": {
-    targets: { "US:AAPL": "12", "US:MSFT": "13", "US:NVDA": "44", "CASH:USD": "31" },
-  },
-  "rebalance:mild-drift": {
-    targets: { "US:AAPL": "12", "US:MSFT": "13", "US:NVDA": "44", "CASH:USD": "31" },
-    nvdaPrice: "962.50",
-  },
-  "rebalance:heavy-drift": {
-    targets: { "US:AAPL": "12", "US:MSFT": "13", "US:NVDA": "44", "CASH:USD": "31" },
-    nvdaPrice: "1181.25",
-  },
+  "rebalance:empty-target": { targets: {}, nvdaPrice: BASE_PRICES.NVDA },
+  "rebalance:aligned": { targets: REBALANCE_TARGETS_ALIGNED, nvdaPrice: BASE_PRICES.NVDA },
+  "rebalance:mild-drift": { targets: REBALANCE_TARGETS_MILD, nvdaPrice: REBALANCE_NVDA_MILD },
+  "rebalance:heavy-drift": { targets: REBALANCE_TARGETS_HEAVY, nvdaPrice: REBALANCE_NVDA_HEAVY },
+};
+
+const SEED_SOURCE = "seed-dev";
+
+/** Overwrite layered price/fx cache so valuation matches seed (fixture + cache-first). */
+export const warmRebalanceMarketCache = async (nvdaPrice: string): Promise<void> => {
+  const asOf = new Date().toISOString();
+  const quotes: PriceQuote[] = [
+    {
+      assetId: "US:AAPL",
+      price: new Decimal(BASE_PRICES.AAPL),
+      currency: "USD",
+      asOf,
+      source: SEED_SOURCE,
+    },
+    {
+      assetId: "US:MSFT",
+      price: new Decimal(BASE_PRICES.MSFT),
+      currency: "USD",
+      asOf,
+      source: SEED_SOURCE,
+    },
+    {
+      assetId: "US:NVDA",
+      price: new Decimal(nvdaPrice),
+      currency: "USD",
+      asOf,
+      source: SEED_SOURCE,
+    },
+    {
+      assetId: "CASH:USD",
+      price: new Decimal(1),
+      currency: "USD" as const,
+      asOf,
+      source: SEED_SOURCE,
+    },
+  ];
+
+  for (const quote of quotes) {
+    await priceCache.set(quote);
+  }
+
+  await fxCache.set({
+    from: "USD",
+    to: "CNY",
+    rate: new Decimal("7.20"),
+    asOf,
+    source: SEED_SOURCE,
+  });
 };
 
 export class RebalanceSeedError extends Error {
@@ -92,10 +138,9 @@ export const runRebalanceSeedClient = async (
   const { error: delPortErr } = await supabase.from("portfolios").delete().eq("user_id", userId);
   if (delPortErr) throw new RebalanceSeedError(`清空组合失败: ${delPortErr.message}`);
 
-  const allAssets = [...EQUITY_ASSETS, ...CASH_ASSETS];
   const { error: assetErr } = await supabase
     .from("assets")
-    .upsert(allAssets as never, { onConflict: "id", ignoreDuplicates: true });
+    .upsert(EQUITY_ASSETS as never, { onConflict: "id", ignoreDuplicates: true });
   if (assetErr) throw new RebalanceSeedError(`写入 assets 失败: ${assetErr.message}`);
 
   const { data: port, error: portErr } = await supabase
@@ -115,7 +160,15 @@ export const runRebalanceSeedClient = async (
     notes: "rebalance-seed",
   }));
   const { error: txErr } = await supabase.from("transactions").insert(txRows);
-  if (txErr) throw new RebalanceSeedError(`写入 transactions 失败: ${txErr.message}`);
+  if (txErr) {
+    const msg = txErr.message ?? "";
+    if (/CASH:USD|assets/i.test(msg) && /foreign key|violates/i.test(msg)) {
+      throw new RebalanceSeedError(
+        "CASH:USD 资产不存在 — 请在 Supabase 执行 migration 0008_cash_assets_seed.sql"
+      );
+    }
+    throw new RebalanceSeedError(`写入 transactions 失败: ${msg}`);
+  }
 
   const targetEntries = Object.entries(plan.targets);
   if (targetEntries.length > 0) {
@@ -133,24 +186,29 @@ export const runRebalanceSeedClient = async (
   }
 
   const asOf = new Date().toISOString();
-  const nvdaPrice = plan.nvdaPrice ?? BASE_PRICES.NVDA;
   const priceRows = [
     {
       asset_id: "US:AAPL",
       as_of: asOf,
       price: BASE_PRICES.AAPL,
       currency: "USD",
-      source: "seed-dev",
+      source: SEED_SOURCE,
     },
     {
       asset_id: "US:MSFT",
       as_of: asOf,
       price: BASE_PRICES.MSFT,
       currency: "USD",
-      source: "seed-dev",
+      source: SEED_SOURCE,
     },
-    { asset_id: "US:NVDA", as_of: asOf, price: nvdaPrice, currency: "USD", source: "seed-dev" },
-    { asset_id: "CASH:USD", as_of: asOf, price: "1", currency: "USD", source: "seed-dev" },
+    {
+      asset_id: "US:NVDA",
+      as_of: asOf,
+      price: plan.nvdaPrice,
+      currency: "USD",
+      source: SEED_SOURCE,
+    },
+    { asset_id: "CASH:USD", as_of: asOf, price: "1", currency: "USD", source: SEED_SOURCE },
   ];
   const { error: priceErr } = await supabase
     .from("price_snapshots")
@@ -163,10 +221,12 @@ export const runRebalanceSeedClient = async (
       to_currency: "CNY",
       as_of: asOf,
       rate: "7.20",
-      source: "seed-dev",
+      source: SEED_SOURCE,
     } as never,
     { onConflict: "from_currency,to_currency,as_of" }
   );
+
+  await warmRebalanceMarketCache(plan.nvdaPrice);
 
   return portfolioId;
 };
