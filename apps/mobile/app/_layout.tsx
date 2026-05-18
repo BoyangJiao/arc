@@ -159,6 +159,14 @@ function AppShell() {
               headerShown: true,
             }}
           />
+          <Stack.Screen name="insights" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="me/cash-balances"
+            options={{
+              headerShown: false,
+              animation: "slide_from_left",
+            }}
+          />
         </Stack>
         <DevToolsFloatingOverlay />
       </View>
