@@ -79,27 +79,39 @@ export default function RootLayout() {
  * on auth state changes.
  */
 function AppShell() {
-  const { session, loading } = useAuth();
-  const { prefs } = useUserPreferences();
+  const { session, loading: authLoading } = useAuth();
+  const { prefs, loading: prefsLoading } = useUserPreferences();
   const { colorMode } = useColorMode();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return;
+    if (authLoading) return;
 
-    // Determine if we're on a public route
     const seg0 = segments[0] as string | undefined;
     const inAuthFlow = seg0 === "sign-in" || seg0 === "auth";
+    const onWelcome = seg0 === "welcome";
 
     if (!session && !inAuthFlow) {
-      // Logged-out user on a protected screen → bounce to sign-in.
       router.replace("/sign-in" as Href);
-    } else if (session && inAuthFlow) {
-      // Already signed in but somehow on the auth screen → go to tabs.
-      router.replace("/(tabs)" as Href);
+      return;
     }
-  }, [session, loading, segments, router]);
+
+    if (!session) return;
+
+    if (prefsLoading) return;
+
+    const needsWelcome = !prefs?.hasSeenWelcome;
+
+    if (inAuthFlow) {
+      router.replace((needsWelcome ? "/welcome" : "/(tabs)") as Href);
+      return;
+    }
+
+    if (needsWelcome && !onWelcome) {
+      router.replace("/welcome" as Href);
+    }
+  }, [session, authLoading, prefs, prefsLoading, segments, router]);
 
   const colors = NAV_COLORS[colorMode];
 
@@ -120,6 +132,7 @@ function AppShell() {
         <Stack screenOptions={screenOptions}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+          <Stack.Screen name="welcome" options={{ headerShown: false }} />
           <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
           <Stack.Screen name="portfolio/[id]/index" options={{ headerShown: false }} />
           <Stack.Screen

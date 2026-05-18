@@ -5,23 +5,30 @@
  * CTA / Skip mark welcome seen then land on Portfolio Tab (no FAB pre-open).
  */
 
+import { useEffect } from "react";
 import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 
 import { Button, Screen, Sparkles, Text } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
-/** Commit #1 stub — replaced by useMarkWelcomeSeen() in commit #2. */
-const markWelcomeSeen = async (): Promise<void> => {
-  // no-op until mutation wires DB
-};
+import { useMarkWelcomeSeen, useUserPreferences } from "../src/lib/user-preferences";
 
 export default function WelcomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { prefs, loading } = useUserPreferences();
+  const markWelcomeSeen = useMarkWelcomeSeen();
+
+  useEffect(() => {
+    if (loading) return;
+    if (prefs?.hasSeenWelcome) {
+      router.replace("/(tabs)" as Href);
+    }
+  }, [loading, prefs?.hasSeenWelcome, router]);
 
   const finish = () => {
-    void markWelcomeSeen();
+    markWelcomeSeen.mutate();
     router.replace("/(tabs)" as Href);
   };
 
