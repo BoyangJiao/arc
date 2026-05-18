@@ -2,7 +2,7 @@
  * (tabs)/insights.tsx — Rebalance / Insights Tab (Stage 2 J9)
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,6 +24,11 @@ import {
   toDeviationBarRows,
   toDonutSegments,
 } from "../../src/lib/rebalance-format";
+import {
+  claimInsightsSessionLiveFetch,
+  insightsSessionValuationKey,
+} from "../../src/lib/insights-session-valuation";
+import { isCacheFirstMarketData } from "../../src/lib/market-data-policy";
 import { usePortfolios, useRebalance } from "../../src/lib/queries";
 import { useUserPreferences } from "../../src/lib/user-preferences";
 
@@ -39,27 +44,32 @@ export default function InsightsTab() {
   const queryClient = useQueryClient();
   const [isPulling, setIsPulling] = useState(false);
 
-  const { deviations, targets, holdings, isLoading, refreshValuation } = useRebalance(
-    portfolioId,
-    reportingCurrency
-  );
+  const { deviations, targets, holdings, isLoading, refreshValuation, refetchValuationFromCache } =
+    useRebalance(portfolioId, reportingCurrency);
+
+  const hasHoldings = holdings.length > 0;
+  const hasTargets = targets.length > 0;
+
+  useEffect(() => {
+    if (!portfolioId || !hasHoldings || !hasTargets || !isCacheFirstMarketData()) return;
+    const key = insightsSessionValuationKey(portfolioId, reportingCurrency);
+    if (!claimInsightsSessionLiveFetch(key)) return;
+    void refreshValuation();
+  }, [portfolioId, reportingCurrency, hasHoldings, hasTargets, refreshValuation]);
 
   const handleRefresh = useCallback(async () => {
     if (!portfolioId) return;
     setIsPulling(true);
     try {
       await Promise.all([
-        refreshValuation(),
+        refetchValuationFromCache(),
         queryClient.refetchQueries({ queryKey: ["targetAllocations", portfolioId] }),
         queryClient.refetchQueries({ queryKey: ["transactions", portfolioId] }),
       ]);
     } finally {
       setIsPulling(false);
     }
-  }, [portfolioId, queryClient, refreshValuation]);
-
-  const hasHoldings = holdings.length > 0;
-  const hasTargets = targets.length > 0;
+  }, [portfolioId, queryClient, refetchValuationFromCache]);
 
   const labelFor = (assetId: string) =>
     assetLabel(assetId, t(`rebalance.cashNames.${parseCashKey(assetId)}` as const));

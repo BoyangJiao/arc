@@ -41,5 +41,6 @@ export const useRebalance = (portfolioId: string | undefined, reportingCurrency:
     isFetching,
     error,
     refreshValuation: valuationQuery.refreshValuation,
+    refetchValuationFromCache: valuationQuery.refetchValuationFromCache,
   };
 };
