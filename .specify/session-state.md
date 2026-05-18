@@ -42,13 +42,15 @@
 | Feature spec (`watchlist-stage-2.md`) Accepted; 6 open questions locked        | ✅ committed (`70bd38e`)                 |
 | **Commit plan #1** db schema + migration 0004 + RLS (3 policies)               | ✅ committed (`0b2c1fd`)                 |
 | Apply 0004 to dev Supabase (SQL Editor)                                        | ⏳ **user task** — anytime before #5     |
-| **Commit plan #2** `WatchlistRow` type in `@arc/core`                          | ⏳ → Sonnet                              |
-| **Commit plan #3** AV `searchSymbols` + static-symbols fallback + test         | ⏳ → Sonnet                              |
-| **Commit plan #4** `WatchlistRow` + `WatchlistEmptyState` in `@arc/ui/finance` | ⏳ → Sonnet                              |
-| **Commit plan #5** `use-watchlist` + `use-watchlist-quotes` + Markets Tab      | ⏳ → Sonnet                              |
-| **Commit plan #6** `/markets/search` modal + `use-symbol-search`               | ⏳ → Sonnet                              |
-| **Commit plan #7** 3 watchlist seed scenarios + CLI shortcuts                  | ⏳ → Haiku (镜像 daily-snapshot:\* 模式) |
-| **Commit plan #8** Update `user-journeys.md` J8 (drop "5s" claim)              | ⏳ → Haiku                               |
+| **Commit plan #2** `WatchlistRow` type in `@arc/core`                          | ⏳ (§七 提示：CRUD/型定义类，小模型主场) |
+| **Commit plan #3** AV `searchSymbols` + static-symbols fallback + test         | ⏳ (§七 提示：adapter CRUD)              |
+| **Commit plan #4** `WatchlistRow` + `WatchlistEmptyState` in `@arc/ui/finance` | ⏳ (§七 提示：RN 组件)                   |
+| **Commit plan #5** `use-watchlist` + `use-watchlist-quotes` + Markets Tab      | ⏳ (§七 提示：RN page + TanStack)        |
+| **Commit plan #6** `/markets/search` modal + `use-symbol-search`               | ⏳ (§七 提示：RN form + debounce)        |
+| **Commit plan #7** 3 watchlist seed scenarios + CLI shortcuts                  | ⏳ (§七 提示：种子复制粘贴)              |
+| **Commit plan #8** Update `user-journeys.md` J8 (drop "5s" claim)              | ⏳ (§七 提示：文档微调)                  |
+
+> **路由说明**：#2-#8 是**任务提示**，不是模型指派。Cursor auto / Composer 接收时按 CLAUDE.md §十二 自评估；卡壳 / hairy edge case 自行升 Opus，无需回到这边批准。
 
 ### Uncommitted work (this session — checkpoint commit)
 
