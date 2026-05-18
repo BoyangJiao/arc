@@ -11,6 +11,9 @@ import { useBusinessClasses } from "../tokens/business-context";
 
 import type { DeviationBarRow } from "./rebalance-types";
 
+/** RN needs explicit px height — Tailwind h-2 + h-full often fails on native. */
+const TRACK_HEIGHT = 8;
+
 export interface DeviationBarProps {
   readonly rows: ReadonlyArray<DeviationBarRow>;
   readonly formatPercent: (value: Decimal) => string;
@@ -41,7 +44,8 @@ export function DeviationBar({
               ? classes.deviationWarning.textOnSoft
               : classes.pnlNeutral.text;
 
-        const barWidth = Decimal.min(Decimal.max(row.currentPercent, 0), 100).toNumber();
+        /** Bar fill = |deviation| magnitude (capped at 100), not current allocation %. */
+        const barFill = Decimal.min(row.deviationPercent.abs(), 100).toNumber();
 
         return (
           <View key={row.assetId} className="gap-1">
@@ -51,10 +55,16 @@ export function DeviationBar({
                 {formatDeviation(row.deviationPercent)}
               </Text>
             </View>
-            <View className={`h-2 rounded-full overflow-hidden ${tierClass}`}>
+            <View
+              className={`rounded-full overflow-hidden ${tierClass}`}
+              style={{ height: TRACK_HEIGHT }}
+            >
               <View
-                className="h-full bg-foreground/20 rounded-full"
-                style={{ width: `${barWidth}%` }}
+                className="bg-foreground/20 rounded-full"
+                style={{
+                  height: TRACK_HEIGHT,
+                  width: `${barFill}%`,
+                }}
               />
             </View>
             <Text className="text-muted text-xs">
