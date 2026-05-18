@@ -92,12 +92,18 @@ export const en = {
     searchPlaceholder: "Search symbols (e.g. NVDA / AAPL)…",
     scopeHint: "Stage 2 supports US equities only; more markets coming soon",
     alreadyInWatchlist: "Already in watchlist",
+    addFailed: "Could not add to watchlist. Please try again.",
+    adding: "Adding…",
     searchUnavailable: "Search is temporarily unavailable — try again later",
     remove: "Remove",
     quoteLoading: "Loading…",
     priceUnavailable: "—",
     disclaimer: "For reference only; may be delayed",
     cancel: "Cancel",
+    quotesRefreshPartialFail:
+      "{{count}} symbol(s) could not refresh — showing last cached prices where available.",
+    quotesRefreshRateLimited:
+      "Quotes are rate-limited — try again shortly. Cached prices may still be shown.",
   },
   insights: {
     title: "Insights",
@@ -131,13 +137,31 @@ export const en = {
   devTools: {
     title: "Dev tools",
     subtitle: "Reset and seed data for the signed-in account. Same scenarios as pnpm seed:dev.",
+    pickFeature: "Choose a feature to test",
+    backToFeatures: "← All features",
+    scenarioCount: "{{count}} scenarios",
     successTitle: "Scenario applied",
     successBody:
-      "Data written. If the UI looks stale, use ⌘D → Reload, or pull to refresh on Portfolio.",
+      "Data written. If the UI looks stale, use ⌘D → Reload, or pull to refresh on the target tab.",
+    viaClientWatchlist: "Watchlist seeded on-device (no Edge Function).",
     errorTitle: "Could not apply scenario",
     goPortfolio: "Open Portfolio",
+    goMarkets: "Open Markets",
     applied: "Applied",
     reloadHint: "If numbers look wrong: ⌘D → Dev Menu → Reload.",
+    watchlistRateLimitSimLabel: "Simulate watchlist quote rate limit",
+    watchlistRateLimitSimHint:
+      "When ON, Markets pull-to-refresh fails per-row quotes like throttling (banner). Turn OFF to restore.",
+    features: {
+      dailySnapshot: {
+        label: "Daily Snapshot",
+        description: "Portfolio tab — today’s change card, movers, baseline states",
+      },
+      watchlist: {
+        label: "Watchlist",
+        description: "Markets tab — empty state, quotes, stale refresh (on-device seed)",
+      },
+    },
     fabOpen: "Open dev tools",
     fabDock: "Dock to screen edge",
     closePanel: "Close",

@@ -1,37 +1,46 @@
 /**
- * DevToolsScenarioPanel — seed scenario picker (shared by FAB sheet + /me/dev-tools).
+ * DevToolsScenarioPanel — two-level picker: feature → scenario.
  */
 
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, View } from "react-native";
-import { useRouter, type Href } from "expo-router";
-import { Button, Card, Text } from "@arc/ui";
+import { useRouter } from "expo-router";
+import { Button, Card, Switch, Text } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
-import { invokeDevSeed } from "../../lib/dev-tools/invoke-dev-seed";
+import { goHrefForScenario, invokeDevSeed } from "../../lib/dev-tools/invoke-dev-seed";
 import { useDevToolsFabStore } from "../../lib/dev-tools/dev-tools-fab-store";
+import { useWatchlistRateLimitSimStore } from "../../lib/dev-tools/watchlist-rate-limit-sim";
 import {
-  DEV_SEED_SCENARIOS,
+  DEV_SEED_FEATURES,
+  type DevSeedFeatureId,
   type DevSeedScenarioId,
   type DevSeedScenarioLabelKey,
 } from "../../lib/dev-tools/scenarios";
 
 export interface DevToolsScenarioPanelProps {
-  /** Called after a scenario is applied successfully (e.g. close FAB sheet). */
   onApplied?: () => void;
-  /** Show navigation CTA to Portfolio tab. */
-  showGoPortfolio?: boolean;
+  showGoTab?: boolean;
 }
 
 export function DevToolsScenarioPanel({
   onApplied,
-  showGoPortfolio = true,
+  showGoTab = true,
 }: DevToolsScenarioPanelProps): React.ReactNode {
   const { t } = useTranslation();
   const router = useRouter();
   const setPanelOpen = useDevToolsFabStore((s) => s.setPanelOpen);
-  const [activeId, setActiveId] = useState<DevSeedScenarioId | null>(null);
-  const [lastSuccess, setLastSuccess] = useState<DevSeedScenarioId | null>(null);
+
+  const [selectedFeatureId, setSelectedFeatureId] = useState<DevSeedFeatureId | null>(null);
+  const [activeScenarioId, setActiveScenarioId] = useState<DevSeedScenarioId | null>(null);
+  const [lastSuccessId, setLastSuccessId] = useState<DevSeedScenarioId | null>(null);
+
+  const rateLimitSimArmed = useWatchlistRateLimitSimStore((s) => s.armed);
+  const setRateLimitSimArmed = useWatchlistRateLimitSimStore((s) => s.setArmed);
+
+  const selectedFeature = selectedFeatureId
+    ? DEV_SEED_FEATURES.find((f) => f.id === selectedFeatureId)
+    : null;
 
   const labelFor = (key: DevSeedScenarioLabelKey) => t(`devTools.scenarios.${key}.label` as const);
 
@@ -39,17 +48,25 @@ export function DevToolsScenarioPanel({
 
   const runScenario = useCallback(
     async (scenarioId: DevSeedScenarioId) => {
-      setActiveId(scenarioId);
+      setActiveScenarioId(scenarioId);
       try {
-        await invokeDevSeed(scenarioId);
-        setLastSuccess(scenarioId);
+        const result = await invokeDevSeed(scenarioId);
+        setLastSuccessId(scenarioId);
         onApplied?.();
-        Alert.alert(t("devTools.successTitle"), t("devTools.successBody"), [
+
+        const goHref = goHrefForScenario(scenarioId);
+        const goLabel =
+          selectedFeatureId === "watchlist" ? t("devTools.goMarkets") : t("devTools.goPortfolio");
+
+        const viaNote =
+          result.via === "client-watchlist" ? `\n\n${t("devTools.viaClientWatchlist")}` : "";
+
+        Alert.alert(t("devTools.successTitle"), `${t("devTools.successBody")}${viaNote}`, [
           {
-            text: t("devTools.goPortfolio"),
+            text: goLabel,
             onPress: () => {
               setPanelOpen(false);
-              router.replace("/(tabs)" as Href);
+              router.replace(goHref);
             },
           },
           { text: t("common.close") },
@@ -58,22 +75,89 @@ export function DevToolsScenarioPanel({
         const message = err instanceof Error ? err.message : String(err);
         Alert.alert(t("devTools.errorTitle"), message);
       } finally {
-        setActiveId(null);
+        setActiveScenarioId(null);
       }
     },
-    [onApplied, router, setPanelOpen, t]
+    [onApplied, router, selectedFeatureId, setPanelOpen, t]
   );
+
+  if (!selectedFeature) {
+    return (
+      <View className="gap-4">
+        <Text className="text-muted text-sm">{t("devTools.pickFeature")}</Text>
+
+        <Card>
+          <View className="p-4 flex-row items-center justify-between gap-3">
+            <View className="flex-1 gap-1 pr-2">
+              <Text className="text-foreground text-base font-semibold">
+                {t("devTools.watchlistRateLimitSimLabel")}
+              </Text>
+              <Text className="text-muted text-xs">{t("devTools.watchlistRateLimitSimHint")}</Text>
+            </View>
+            <Switch
+              isSelected={rateLimitSimArmed}
+              onSelectedChange={setRateLimitSimArmed}
+              accessibilityLabel={t("devTools.watchlistRateLimitSimLabel")}
+            />
+          </View>
+        </Card>
+
+        {DEV_SEED_FEATURES.map((feature) => (
+          <Pressable
+            key={feature.id}
+            disabled={activeScenarioId !== null}
+            onPress={() => setSelectedFeatureId(feature.id)}
+            className="active:opacity-70"
+          >
+            <Card>
+              <View className="p-4 gap-1">
+                <Text className="text-foreground text-base font-semibold">
+                  {t(`devTools.features.${feature.labelKey}.label` as const)}
+                </Text>
+                <Text className="text-muted text-xs">
+                  {t(`devTools.features.${feature.labelKey}.description` as const)}
+                </Text>
+                <Text className="text-accent text-xs mt-1">
+                  {t("devTools.scenarioCount", { count: feature.scenarios.length })}
+                </Text>
+              </View>
+            </Card>
+          </Pressable>
+        ))}
+
+        <Text className="text-muted text-xs text-center">{t("devTools.reloadHint")}</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="gap-4">
-      <Text className="text-muted text-sm">{t("devTools.subtitle")}</Text>
+      <Pressable
+        onPress={() => {
+          setSelectedFeatureId(null);
+          setLastSuccessId(null);
+        }}
+        hitSlop={8}
+        className="self-start"
+      >
+        <Text className="text-accent text-sm">{t("devTools.backToFeatures")}</Text>
+      </Pressable>
 
-      {DEV_SEED_SCENARIOS.map(({ id, labelKey }) => {
-        const loading = activeId === id;
+      <View className="gap-1">
+        <Text className="text-foreground text-base font-semibold">
+          {t(`devTools.features.${selectedFeature.labelKey}.label` as const)}
+        </Text>
+        <Text className="text-muted text-xs">
+          {t(`devTools.features.${selectedFeature.labelKey}.description` as const)}
+        </Text>
+      </View>
+
+      {selectedFeature.scenarios.map(({ id, labelKey }) => {
+        const loading = activeScenarioId === id;
         return (
           <Pressable
             key={id}
-            disabled={activeId !== null}
+            disabled={activeScenarioId !== null}
             onPress={() => void runScenario(id)}
             className="active:opacity-70"
           >
@@ -87,7 +171,7 @@ export function DevToolsScenarioPanel({
                 </View>
                 {loading ? (
                   <ActivityIndicator />
-                ) : lastSuccess === id ? (
+                ) : lastSuccessId === id ? (
                   <Text className="text-accent text-xs">{t("devTools.applied")}</Text>
                 ) : null}
               </View>
@@ -98,17 +182,21 @@ export function DevToolsScenarioPanel({
 
       <Text className="text-muted text-xs text-center">{t("devTools.reloadHint")}</Text>
 
-      {showGoPortfolio && (
+      {showGoTab ? (
         <Button
           variant="ghost"
           onPress={() => {
             setPanelOpen(false);
-            router.replace("/(tabs)" as Href);
+            router.replace(selectedFeature.goHref);
           }}
         >
-          <Button.Label>{t("devTools.goPortfolio")}</Button.Label>
+          <Button.Label>
+            {selectedFeature.id === "watchlist"
+              ? t("devTools.goMarkets")
+              : t("devTools.goPortfolio")}
+          </Button.Label>
         </Button>
-      )}
+      ) : null}
     </View>
   );
 }

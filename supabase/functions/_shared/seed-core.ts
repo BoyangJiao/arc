@@ -268,7 +268,15 @@ export const runSeedForUser = async (
       .from("watchlist_items")
       .delete()
       .eq("user_id", userId);
-    if (delWlErr) throw new SeedError(`Watchlist delete failed: ${delWlErr.message}`);
+    if (delWlErr) {
+      const msg = delWlErr.message ?? "";
+      if (/watchlist_items/i.test(msg) && /does not exist|schema cache/i.test(msg)) {
+        throw new SeedError(
+          "watchlist_items table missing — run packages/db/drizzle/migrations/0004_watchlist_items.sql on dev Supabase"
+        );
+      }
+      throw new SeedError(`Watchlist delete failed: ${msg}`);
+    }
     log(`✓ Cleared watchlist_items for this user`);
 
     const { error: delErr } = await supabase.from("portfolios").delete().eq("user_id", userId);
@@ -386,7 +394,15 @@ export const runSeedForUser = async (
         .from("watchlist_items")
         .delete()
         .eq("user_id", userId);
-      if (delWlErr) throw new SeedError(`Watchlist delete failed: ${delWlErr.message}`);
+      if (delWlErr) {
+        const msg = delWlErr.message ?? "";
+        if (/watchlist_items/i.test(msg) && /does not exist|schema cache/i.test(msg)) {
+          throw new SeedError(
+            "watchlist_items table missing — run packages/db/drizzle/migrations/0004_watchlist_items.sql on dev Supabase"
+          );
+        }
+        throw new SeedError(`Watchlist delete failed: ${msg}`);
+      }
     }
 
     const watchAssets = plan.watchlist.assetIds.map((id) => {
@@ -421,12 +437,19 @@ export const runSeedForUser = async (
         "US:NVDA": "875.00",
       };
 
+      const wlChangePercent: Record<string, string> = {
+        "US:AAPL": "-0.42",
+        "US:MSFT": "1.05",
+        "US:NVDA": "3.21",
+      };
+
       const priceRows = watchAssets.map((a) => ({
         asset_id: a.id,
         as_of: quoteAsOf,
         price: wlPrices[a.id] ?? "100.00",
         currency: "USD",
         source: "seed-dev",
+        change_percent: wlChangePercent[a.id] ?? null,
       }));
 
       const { error: wlPriceErr } = await supabase

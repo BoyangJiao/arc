@@ -1,54 +1,125 @@
 /**
- * invokeDevSeed — calls the dev-seed Edge Function for the signed-in user.
+ * invokeDevSeed — apply dev seed for the signed-in user.
  *
- * Requires DEV_TOOLS_ENABLED=true on the dev Supabase project and a deployed
- * `dev-seed` function. See supabase/functions/dev-seed/README.md.
+ * - Watchlist scenarios: client-side JWT (no Edge deploy required).
+ * - Daily Snapshot / default: dev-seed Edge Function.
  */
 
 import { queryClient } from "../query-client";
 import { supabase } from "../supabase";
-import type { DevSeedScenarioId } from "./scenarios";
+import { findFeatureForScenario, isWatchlistScenario, type DevSeedScenarioId } from "./scenarios";
+import { runWatchlistSeedClient, WatchlistSeedError } from "./run-watchlist-seed-client";
 
 export interface DevSeedInvokeResult {
   ok: true;
   scenario: string;
   portfolioId: string;
   expectedUi: string[];
+  via: "client-watchlist" | "edge";
 }
 
 interface DevSeedErrorBody {
   error?: string;
 }
 
-export const invokeDevSeed = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
+export const invalidateDevSeedQueries = async (): Promise<void> => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ["portfolios"] }),
+    queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+    queryClient.invalidateQueries({ queryKey: ["dailySnapshot"] }),
+    queryClient.invalidateQueries({ queryKey: ["portfolioValuation"] }),
+    queryClient.invalidateQueries({ queryKey: ["watchlist"] }),
+    queryClient.invalidateQueries({ queryKey: ["watchlist-quote"] }),
+    queryClient.invalidateQueries({ queryKey: ["symbol-search"] }),
+  ]);
+};
+
+const parseEdgeError = async (
+  scenario: DevSeedScenarioId,
+  data: (DevSeedInvokeResult & DevSeedErrorBody) | null,
+  error: { message: string; context?: Response } | null
+): Promise<string> => {
+  if (data?.error) return data.error;
+
+  const ctx = error && "context" in error ? (error as { context?: Response }).context : undefined;
+  if (ctx) {
+    try {
+      const body = (await ctx.json()) as DevSeedErrorBody;
+      if (body?.error) return body.error;
+    } catch {
+      // ignore
+    }
+  }
+
+  if (error?.message.includes("non-2xx")) {
+    return [
+      `dev-seed 云端返回错误（场景: ${scenario}）。`,
+      "请确认：",
+      "1. pnpm functions:deploy:dev-seed",
+      "2. pnpm functions:secrets:dev-tools（DEV_TOOLS_ENABLED=true）",
+    ].join("\n");
+  }
+
+  return error?.message ?? "dev-seed failed with no error message";
+};
+
+const invokeEdgeDevSeed = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
   const { data, error } = await supabase.functions.invoke<DevSeedInvokeResult & DevSeedErrorBody>(
     "dev-seed",
     { body: { scenario } }
   );
 
-  if (error) {
+  if (error?.message.includes("FunctionsFetchError")) {
     throw new Error(
-      error.message.includes("FunctionsFetchError")
-        ? "dev-seed function unreachable — deploy it and set DEV_TOOLS_ENABLED=true (see supabase/functions/dev-seed/README.md)"
-        : error.message
+      "dev-seed 无法连接 — 请部署并设置 DEV_TOOLS_ENABLED（见 supabase/functions/dev-seed/README.md）"
     );
   }
 
-  if (!data || data.error) {
-    throw new Error(data?.error ?? "dev-seed failed with no error message");
+  if (error || !data?.ok) {
+    throw new Error(await parseEdgeError(scenario, data, error));
   }
 
   if (!data.ok) {
     throw new Error("dev-seed returned unexpected response");
   }
 
-  // Portfolio id changes on reset — invalidate all portfolio-related caches.
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: ["portfolios"] }),
-    queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-    queryClient.invalidateQueries({ queryKey: ["dailySnapshot"] }),
-    queryClient.invalidateQueries({ queryKey: ["portfolioValuation"] }),
-  ]);
-
-  return data;
+  return { ...data, via: "edge" };
 };
+
+const invokeWatchlistClient = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
+  if (!isWatchlistScenario(scenario)) {
+    throw new WatchlistSeedError(`Not a watchlist scenario: ${scenario}`);
+  }
+
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    throw new WatchlistSeedError("未登录 — 请先 OTP 登录");
+  }
+
+  await runWatchlistSeedClient(scenario, user.id);
+  await invalidateDevSeedQueries();
+
+  return {
+    ok: true,
+    scenario,
+    portfolioId: "",
+    expectedUi: [],
+    via: "client-watchlist",
+  };
+};
+
+export const invokeDevSeed = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
+  if (isWatchlistScenario(scenario)) {
+    return invokeWatchlistClient(scenario);
+  }
+
+  const result = await invokeEdgeDevSeed(scenario);
+  await invalidateDevSeedQueries();
+  return result;
+};
+
+export const goHrefForScenario = (scenarioId: DevSeedScenarioId) =>
+  findFeatureForScenario(scenarioId).goHref;
