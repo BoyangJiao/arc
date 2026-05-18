@@ -2,8 +2,10 @@
  * (tabs)/insights.tsx — Rebalance / Insights Tab (Stage 2 J9)
  */
 
+import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Button,
   DeviationBar,
@@ -34,10 +36,27 @@ export default function InsightsTab() {
   const { data: portfolios, isPending: portfoliosLoading } = usePortfolios();
   const portfolioId = portfolios?.[0]?.id;
 
-  const { deviations, targets, holdings, isLoading, isFetching, refreshValuation } = useRebalance(
+  const queryClient = useQueryClient();
+  const [isPulling, setIsPulling] = useState(false);
+
+  const { deviations, targets, holdings, isLoading, refreshValuation } = useRebalance(
     portfolioId,
     reportingCurrency
   );
+
+  const handleRefresh = useCallback(async () => {
+    if (!portfolioId) return;
+    setIsPulling(true);
+    try {
+      await Promise.all([
+        refreshValuation(),
+        queryClient.refetchQueries({ queryKey: ["targetAllocations", portfolioId] }),
+        queryClient.refetchQueries({ queryKey: ["transactions", portfolioId] }),
+      ]);
+    } finally {
+      setIsPulling(false);
+    }
+  }, [portfolioId, queryClient, refreshValuation]);
 
   const hasHoldings = holdings.length > 0;
   const hasTargets = targets.length > 0;
@@ -129,8 +148,8 @@ export default function InsightsTab() {
         gap: 20,
         paddingBottom: FLOATING_TAB_BAR_BOTTOM_INSET,
       }}
-      refreshing={isFetching}
-      onRefresh={() => void refreshValuation()}
+      refreshing={isPulling}
+      onRefresh={() => void handleRefresh()}
     >
       <Text className="text-foreground text-xl font-bold">{t("rebalance.title")}</Text>
 

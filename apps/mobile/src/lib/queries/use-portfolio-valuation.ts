@@ -123,8 +123,11 @@ const fetchAllQuotes = async (
   }
 
   for (let i = 0; i < needsNetwork.length; i++) {
-    if (i > 0) await sleep(AV_INTER_SYMBOL_GAP_MS);
-    const quote = await fetchQuoteForHolding(needsNetwork[i], 0);
+    if (i > 0) {
+      const prevMarket = parseAssetId(needsNetwork[i - 1]!.assetId).market;
+      if (prevMarket !== "CASH") await sleep(AV_INTER_SYMBOL_GAP_MS);
+    }
+    const quote = await fetchQuoteForHolding(needsNetwork[i]!, 0);
     if (quote) quotes.push(quote);
   }
 
