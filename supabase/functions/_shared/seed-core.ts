@@ -18,6 +18,9 @@ export const SCENARIOS = [
   "daily-snapshot:mixed-movers",
   "daily-snapshot:first-day",
   "daily-snapshot:empty",
+  "watchlist:empty",
+  "watchlist:3-items",
+  "watchlist:stale-quotes",
 ] as const;
 
 export type Scenario = (typeof SCENARIOS)[number];
@@ -30,6 +33,11 @@ export interface ScenarioPlan {
   baseline: null | {
     prices: Record<"AAPL" | "MSFT" | "NVDA", string>;
     expectedDeltaSummary: string;
+  };
+  /** When set, (re)seeds watchlist_items for the user. */
+  watchlist?: {
+    assetIds: ReadonlyArray<string>;
+    staleQuotes?: boolean;
   };
   description: string;
 }
@@ -87,12 +95,43 @@ export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = {
     baseline: null,
     description: "Empty portfolio: 0 transactions → Daily Snapshot card not rendered.",
   },
+  "watchlist:empty": {
+    includeTransactions: false,
+    baseline: null,
+    watchlist: { assetIds: [] },
+    description: "Empty watchlist — Markets Tab empty state + search CTA.",
+  },
+  "watchlist:3-items": {
+    includeTransactions: false,
+    baseline: null,
+    watchlist: { assetIds: ["US:AAPL", "US:MSFT", "US:NVDA"] },
+    description: "Watchlist with 3 US symbols + fresh fixture quotes.",
+  },
+  "watchlist:stale-quotes": {
+    includeTransactions: false,
+    baseline: null,
+    watchlist: {
+      assetIds: ["US:AAPL", "US:MSFT", "US:NVDA"],
+      staleQuotes: true,
+    },
+    description: "Watchlist quotes older than 5 min — pull-to-refresh should fetch fresh.",
+  },
 };
 
 /** UI-facing scenario buttons (subset with stable ids for i18n keys). */
 export const DEV_SEED_UI_SCENARIOS: ReadonlyArray<{
   id: Scenario;
-  i18nKey: "default" | "happy" | "bigGain" | "bigLoss" | "mixedMovers" | "firstDay" | "empty";
+  i18nKey:
+    | "default"
+    | "happy"
+    | "bigGain"
+    | "bigLoss"
+    | "mixedMovers"
+    | "firstDay"
+    | "empty"
+    | "wlEmpty"
+    | "wl3Items"
+    | "wlStale";
 }> = [
   { id: "default", i18nKey: "default" },
   { id: "daily-snapshot:big-gain", i18nKey: "bigGain" },
@@ -100,6 +139,9 @@ export const DEV_SEED_UI_SCENARIOS: ReadonlyArray<{
   { id: "daily-snapshot:mixed-movers", i18nKey: "mixedMovers" },
   { id: "daily-snapshot:first-day", i18nKey: "firstDay" },
   { id: "daily-snapshot:empty", i18nKey: "empty" },
+  { id: "watchlist:empty", i18nKey: "wlEmpty" },
+  { id: "watchlist:3-items", i18nKey: "wl3Items" },
+  { id: "watchlist:stale-quotes", i18nKey: "wlStale" },
 ] as const;
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -222,6 +264,13 @@ export const runSeedForUser = async (
   log(`✓ Assets ensured (${SEED_ASSETS.length})`);
 
   if (mode === "reset") {
+    const { error: delWlErr } = await supabase
+      .from("watchlist_items")
+      .delete()
+      .eq("user_id", userId);
+    if (delWlErr) throw new SeedError(`Watchlist delete failed: ${delWlErr.message}`);
+    log(`✓ Cleared watchlist_items for this user`);
+
     const { error: delErr } = await supabase.from("portfolios").delete().eq("user_id", userId);
     if (delErr) throw new SeedError(`Portfolio delete failed: ${delErr.message}`);
     log(`✓ Cleared existing portfolios for this user`);
@@ -329,6 +378,73 @@ export const runSeedForUser = async (
     log(`↷ Skipped yesterday's snapshot`);
   }
 
+  if (plan.watchlist) {
+    if (mode === "reset") {
+      // already cleared above
+    } else {
+      const { error: delWlErr } = await supabase
+        .from("watchlist_items")
+        .delete()
+        .eq("user_id", userId);
+      if (delWlErr) throw new SeedError(`Watchlist delete failed: ${delWlErr.message}`);
+    }
+
+    const watchAssets = plan.watchlist.assetIds.map((id) => {
+      const found = SEED_ASSETS.find((a) => a.id === id);
+      if (!found) {
+        throw new SeedError(`Unknown watchlist asset id: ${id}`);
+      }
+      return found;
+    });
+
+    if (watchAssets.length > 0) {
+      const { error: wlAssetErr } = await supabase
+        .from("assets")
+        .upsert(watchAssets as never, { onConflict: "id" });
+      if (wlAssetErr) throw new SeedError(`Watchlist asset upsert failed: ${wlAssetErr.message}`);
+
+      const wlRows = watchAssets.map((a) => ({
+        user_id: userId,
+        asset_id: a.id,
+      }));
+      const { error: wlInsErr } = await supabase.from("watchlist_items").insert(wlRows);
+      if (wlInsErr) throw new SeedError(`watchlist_items insert failed: ${wlInsErr.message}`);
+      log(`✓ Seeded watchlist (${wlRows.length} items)`);
+
+      const quoteAsOf = plan.watchlist.staleQuotes
+        ? new Date(Date.now() - 10 * 60 * 1000).toISOString()
+        : new Date().toISOString();
+
+      const wlPrices: Record<string, string> = {
+        "US:AAPL": "189.50",
+        "US:MSFT": "420.30",
+        "US:NVDA": "875.00",
+      };
+
+      const priceRows = watchAssets.map((a) => ({
+        asset_id: a.id,
+        as_of: quoteAsOf,
+        price: wlPrices[a.id] ?? "100.00",
+        currency: "USD",
+        source: "seed-dev",
+      }));
+
+      const { error: wlPriceErr } = await supabase
+        .from("price_snapshots")
+        .upsert(priceRows as never, { onConflict: "asset_id,as_of" });
+      if (wlPriceErr) {
+        throw new SeedError(`watchlist price_snapshots upsert failed: ${wlPriceErr.message}`);
+      }
+      log(
+        plan.watchlist.staleQuotes
+          ? `✓ Seeded stale watchlist quotes (as_of ~10 min ago)`
+          : `✓ Seeded fresh watchlist quotes`
+      );
+    } else {
+      log(`✓ Watchlist left empty`);
+    }
+  }
+
   const expectedUi = describeExpectedUi(scenario);
   return { scenario, portfolioId, expectedUi };
 };
@@ -364,6 +480,18 @@ export const describeExpectedUi = (scenario: Scenario): string[] => {
       return [
         "Daily Snapshot card NOT rendered (no holdings to compare)",
         "Empty-state CTA shown instead",
+      ];
+    case "watchlist:empty":
+      return ["Markets Tab empty state + primary search CTA"];
+    case "watchlist:3-items":
+      return [
+        "Markets Tab shows AAPL / MSFT / NVDA with price + change% chips",
+        "Toggle finance color mode in Settings to verify S2-AC-2.7",
+      ];
+    case "watchlist:stale-quotes":
+      return [
+        "Watchlist rows show stale dot (·) next to price",
+        "Pull-to-refresh fetches fresh quotes (bypasses 5-min cache)",
       ];
   }
 };

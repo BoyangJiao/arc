@@ -164,6 +164,18 @@ export const zh = {
         label: "空仓",
         hint: "不显示今日变动卡",
       },
+      wlEmpty: {
+        label: "自选为空",
+        hint: "行情 Tab 空态 + 搜索 CTA",
+      },
+      wl3Items: {
+        label: "自选 3 只",
+        hint: "AAPL / MSFT / NVDA 带报价",
+      },
+      wlStale: {
+        label: "自选过期报价",
+        hint: "陈旧标记 + 下拉刷新绕过缓存",
+      },
     },
   },
   rebalance: {

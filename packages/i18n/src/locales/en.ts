@@ -168,6 +168,18 @@ export const en = {
         label: "Empty portfolio",
         hint: "Daily Snapshot card hidden",
       },
+      wlEmpty: {
+        label: "Watchlist empty",
+        hint: "Markets Tab empty state + search CTA",
+      },
+      wl3Items: {
+        label: "Watchlist 3 items",
+        hint: "AAPL / MSFT / NVDA with quotes",
+      },
+      wlStale: {
+        label: "Watchlist stale quotes",
+        hint: "Stale dot + pull-to-refresh bypasses cache",
+      },
     },
   },
   rebalance: {

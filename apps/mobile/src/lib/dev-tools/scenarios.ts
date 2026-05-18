@@ -12,6 +12,9 @@ export const DEV_SEED_SCENARIOS = [
   { id: "daily-snapshot:mixed-movers", labelKey: "mixedMovers" },
   { id: "daily-snapshot:first-day", labelKey: "firstDay" },
   { id: "daily-snapshot:empty", labelKey: "empty" },
+  { id: "watchlist:empty", labelKey: "wlEmpty" },
+  { id: "watchlist:3-items", labelKey: "wl3Items" },
+  { id: "watchlist:stale-quotes", labelKey: "wlStale" },
 ] as const;
 
 export type DevSeedScenarioId = (typeof DEV_SEED_SCENARIOS)[number]["id"];
