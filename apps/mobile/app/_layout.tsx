@@ -152,6 +152,13 @@ function AppShell() {
               animation: "slide_from_left",
             }}
           />
+          <Stack.Screen
+            name="markets/search"
+            options={{
+              presentation: "modal",
+              headerShown: true,
+            }}
+          />
         </Stack>
         <DevToolsFloatingOverlay />
       </View>
