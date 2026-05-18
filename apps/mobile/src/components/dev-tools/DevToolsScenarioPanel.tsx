@@ -60,14 +60,18 @@ export function DevToolsScenarioPanel({
             ? t("devTools.goMarkets")
             : selectedFeatureId === "rebalance"
               ? t("devTools.goInsights")
-              : t("devTools.goPortfolio");
+              : selectedFeatureId === "welcome"
+                ? t("devTools.goWelcome")
+                : t("devTools.goPortfolio");
 
         const viaNote =
           result.via === "client-watchlist"
             ? `\n\n${t("devTools.viaClientWatchlist")}`
             : result.via === "client-rebalance"
               ? `\n\n${t("devTools.viaClientRebalance")}`
-              : "";
+              : result.via === "client-welcome"
+                ? `\n\n${t("devTools.viaClientWelcome")}`
+                : "";
 
         Alert.alert(t("devTools.successTitle"), `${t("devTools.successBody")}${viaNote}`, [
           {
@@ -201,7 +205,11 @@ export function DevToolsScenarioPanel({
           <Button.Label>
             {selectedFeature.id === "watchlist"
               ? t("devTools.goMarkets")
-              : t("devTools.goPortfolio")}
+              : selectedFeature.id === "rebalance"
+                ? t("devTools.goInsights")
+                : selectedFeature.id === "welcome"
+                  ? t("devTools.goWelcome")
+                  : t("devTools.goPortfolio")}
           </Button.Label>
         </Button>
       ) : null}

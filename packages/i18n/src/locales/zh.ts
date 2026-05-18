@@ -139,6 +139,8 @@ export const zh = {
     successBody: "数据已写入。若界面未更新，请 ⌘D → Reload，或在对应 Tab 下拉刷新。",
     viaClientWatchlist: "自选数据已在 App 内直接写入（无需 Edge Function）。",
     viaClientRebalance: "再平衡组合数据已在 App 内直接写入（无需 Edge Function）。",
+    viaClientWelcome: "欢迎屏标记已在 App 内直接写入（无需 Edge Function）。",
+    goWelcome: "打开欢迎屏",
     goInsights: "打开洞察",
     errorTitle: "场景应用失败",
     goPortfolio: "打开组合页",
@@ -160,6 +162,10 @@ export const zh = {
       rebalance: {
         label: "再平衡",
         description: "洞察 Tab — 目标配置、偏离色阶、行动单（App 内直接种子）",
+      },
+      welcome: {
+        label: "欢迎屏",
+        description: "首登引导 — 切换 has_seen_welcome 未看过/已看过（App 内直接种子）",
       },
     },
     fabOpen: "打开开发工具",
@@ -219,6 +225,14 @@ export const zh = {
       rbHeavy: {
         label: "重度偏离",
         hint: "NVDA 约 +15%、MSFT 约 -15%（红条）；切换后请下拉 Insights 刷新",
+      },
+      welFresh: {
+        label: "未看过欢迎屏",
+        hint: "has_seen_welcome=false — 重启 App 应进入 /welcome",
+      },
+      welSeen: {
+        label: "已看过欢迎屏",
+        hint: "has_seen_welcome=true — 重启 App 跳过欢迎屏",
       },
     },
   },

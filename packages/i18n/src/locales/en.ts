@@ -145,6 +145,8 @@ export const en = {
       "Data written. If the UI looks stale, use ⌘D → Reload, or pull to refresh on the target tab.",
     viaClientWatchlist: "Watchlist seeded on-device (no Edge Function).",
     viaClientRebalance: "Rebalance portfolio seeded on-device (no Edge Function).",
+    viaClientWelcome: "Welcome flag toggled on-device (no Edge Function).",
+    goWelcome: "Open Welcome",
     goInsights: "Open Insights",
     errorTitle: "Could not apply scenario",
     goPortfolio: "Open Portfolio",
@@ -166,6 +168,10 @@ export const en = {
       rebalance: {
         label: "Rebalance",
         description: "Insights tab — targets, deviation tiers, action list (on-device seed)",
+      },
+      welcome: {
+        label: "Welcome",
+        description: "First-launch screen — has_seen_welcome fresh vs seen (on-device seed)",
       },
     },
     fabOpen: "Open dev tools",
@@ -225,6 +231,14 @@ export const en = {
       rbHeavy: {
         label: "Heavy drift",
         hint: "NVDA ~+15%, MSFT ~-15% (critical bars); pull Insights to refresh after seed",
+      },
+      welFresh: {
+        label: "Welcome not seen",
+        hint: "has_seen_welcome=false — relaunch app to land on /welcome",
+      },
+      welSeen: {
+        label: "Welcome already seen",
+        hint: "has_seen_welcome=true — relaunch app skips Welcome",
       },
     },
   },

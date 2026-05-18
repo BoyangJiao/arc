@@ -8,20 +8,22 @@
 import { queryClient } from "../query-client";
 import { supabase } from "../supabase";
 import {
-  findFeatureForScenario,
+  goHrefForScenario,
   isRebalanceScenario,
   isWatchlistScenario,
+  isWelcomeScenario,
   type DevSeedScenarioId,
 } from "./scenarios";
 import { runRebalanceSeedClient, RebalanceSeedError } from "./run-rebalance-seed-client";
 import { runWatchlistSeedClient, WatchlistSeedError } from "./run-watchlist-seed-client";
+import { runWelcomeSeedClient, WelcomeSeedError } from "./run-welcome-seed-client";
 
 export interface DevSeedInvokeResult {
   ok: true;
   scenario: string;
   portfolioId: string;
   expectedUi: string[];
-  via: "client-watchlist" | "client-rebalance" | "edge";
+  via: "client-watchlist" | "client-rebalance" | "client-welcome" | "edge";
 }
 
 interface DevSeedErrorBody {
@@ -39,6 +41,7 @@ export const invalidateDevSeedQueries = async (): Promise<void> => {
     queryClient.invalidateQueries({ queryKey: ["symbol-search"] }),
     queryClient.invalidateQueries({ queryKey: ["targetAllocations"] }),
     queryClient.invalidateQueries({ queryKey: ["rebalance"] }),
+    queryClient.invalidateQueries({ queryKey: ["userPreferences"] }),
   ]);
 };
 
@@ -119,6 +122,31 @@ const invokeWatchlistClient = async (scenario: DevSeedScenarioId): Promise<DevSe
   };
 };
 
+const invokeWelcomeClient = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
+  if (!isWelcomeScenario(scenario)) {
+    throw new WelcomeSeedError(`Not a welcome scenario: ${scenario}`);
+  }
+
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    throw new WelcomeSeedError("未登录 — 请先 OTP 登录");
+  }
+
+  await runWelcomeSeedClient(scenario, user.id);
+  await invalidateDevSeedQueries();
+
+  return {
+    ok: true,
+    scenario,
+    portfolioId: "",
+    expectedUi: [],
+    via: "client-welcome",
+  };
+};
+
 const invokeRebalanceClient = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
   if (!isRebalanceScenario(scenario)) {
     throw new RebalanceSeedError(`Not a rebalance scenario: ${scenario}`);
@@ -153,10 +181,13 @@ export const invokeDevSeed = async (scenario: DevSeedScenarioId): Promise<DevSee
     return invokeRebalanceClient(scenario);
   }
 
+  if (isWelcomeScenario(scenario)) {
+    return invokeWelcomeClient(scenario);
+  }
+
   const result = await invokeEdgeDevSeed(scenario);
   await invalidateDevSeedQueries();
   return result;
 };
 
-export const goHrefForScenario = (scenarioId: DevSeedScenarioId) =>
-  findFeatureForScenario(scenarioId).goHref;
+export { goHrefForScenario };

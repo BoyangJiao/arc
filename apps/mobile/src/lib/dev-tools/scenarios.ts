@@ -42,6 +42,15 @@ export const DEV_SEED_FEATURES = [
       { id: "rebalance:heavy-drift", labelKey: "rbHeavy" },
     ],
   },
+  {
+    id: "welcome",
+    labelKey: "welcome",
+    goHref: "/welcome" as Href,
+    scenarios: [
+      { id: "welcome:fresh", labelKey: "welFresh", goHref: "/welcome" as Href },
+      { id: "welcome:seen", labelKey: "welSeen", goHref: "/(tabs)" as Href },
+    ],
+  },
 ] as const;
 
 export type DevSeedFeatureId = (typeof DEV_SEED_FEATURES)[number]["id"];
@@ -90,6 +99,26 @@ export type RebalanceScenarioId = (typeof REBALANCE_SCENARIO_IDS)[number];
 export const isRebalanceScenario = (id: DevSeedScenarioId): id is RebalanceScenarioId =>
   (REBALANCE_SCENARIO_IDS as readonly string[]).includes(id);
 
+export const WELCOME_SCENARIO_IDS = [
+  "welcome:fresh",
+  "welcome:seen",
+] as const satisfies readonly DevSeedScenarioId[];
+
+export type WelcomeScenarioId = (typeof WELCOME_SCENARIO_IDS)[number];
+
+export const isWelcomeScenario = (id: DevSeedScenarioId): id is WelcomeScenarioId =>
+  (WELCOME_SCENARIO_IDS as readonly string[]).includes(id);
+
 export const findFeatureForScenario = (scenarioId: DevSeedScenarioId): DevSeedFeatureGroup =>
   DEV_SEED_FEATURES.find((f) => f.scenarios.some((s) => s.id === scenarioId)) ??
   DEV_SEED_FEATURES[0];
+
+export const goHrefForScenario = (scenarioId: DevSeedScenarioId): Href => {
+  for (const feature of DEV_SEED_FEATURES) {
+    const scenario = feature.scenarios.find((s) => s.id === scenarioId);
+    if (scenario) {
+      return "goHref" in scenario && scenario.goHref ? scenario.goHref : feature.goHref;
+    }
+  }
+  return DEV_SEED_FEATURES[0].goHref;
+};
