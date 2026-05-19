@@ -7,8 +7,10 @@ import { View } from "react-native";
 import type Decimal from "decimal.js";
 
 import { Text } from "../primitives/Text";
-import { useBusinessClasses } from "../tokens/business-context";
+import { TrendChip } from "../primitives-pro";
+import { useFinanceColorMode } from "../tokens/business-context";
 
+import { pnlSignFromDecimal, trendDirectionForPnL } from "./trend-for-business";
 import type { RebalanceActionRow, RebalanceCurrency, RebalanceMarket } from "./rebalance-types";
 
 export interface RebalanceActionListProps {
@@ -32,7 +34,7 @@ export function RebalanceActionList({
   atTargetLabel,
   disclaimer,
 }: RebalanceActionListProps): ReactNode {
-  const classes = useBusinessClasses();
+  const { financeColorMode } = useFinanceColorMode();
 
   const sorted = [...rows].sort((a, b) =>
     b.amountNeeded.abs().minus(a.amountNeeded.abs()).toNumber()
@@ -42,17 +44,9 @@ export function RebalanceActionList({
     <View className="gap-4">
       {sorted.map((row) => {
         const atTarget = row.sharesNeeded.isZero();
-        const sign = row.sharesNeeded.isPositive()
-          ? "positive"
-          : row.sharesNeeded.isNegative()
-            ? "negative"
-            : "zero";
-        const colorClass =
-          sign === "positive"
-            ? classes.gain.text
-            : sign === "negative"
-              ? classes.loss.text
-              : classes.pnlNeutral.text;
+        const businessSign = pnlSignFromDecimal(row.sharesNeeded);
+        const trend = trendDirectionForPnL(businessSign, financeColorMode);
+        const sharesLabel = formatShares(row.sharesNeeded, row.market, row.nativeCurrency);
 
         return (
           <View key={row.assetId} className="gap-2 py-3 border-b border-divider">
@@ -61,9 +55,9 @@ export function RebalanceActionList({
               <Text className="text-muted text-sm">{atTargetLabel}</Text>
             ) : (
               <>
-                <Text className={`text-lg font-bold ${colorClass}`}>
-                  {formatShares(row.sharesNeeded, row.market, row.nativeCurrency)}
-                </Text>
+                <TrendChip trend={trend} size="md" variant="soft">
+                  {sharesLabel}
+                </TrendChip>
                 <Text className="text-muted text-sm">
                   {amountEstimateLabel} {formatAmount(row.amountNeeded)}
                 </Text>

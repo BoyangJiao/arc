@@ -1,6 +1,8 @@
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 
+import arcTokenDiscipline from "./packages/eslint-plugin-token-discipline/index.js";
+
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
   {
@@ -126,7 +128,12 @@ export default [
             {
               name: "lucide-react-native",
               message:
-                "Import icons from `@arc/ui` (wrappers/icons hub). ADR 006 §决策一.",
+                "Lucide removed (Stage 2). Import icons from `@arc/ui` (Phosphor hub). ADR 006 §决策一.",
+            },
+            {
+              name: "phosphor-react-native",
+              message:
+                "Import icons from `@arc/ui` (Phosphor hub). ADR 006 §决策一.",
             },
             {
               name: "@expo/vector-icons",
@@ -171,6 +178,25 @@ export default [
     files: ["apps/mobile/app/_layout.tsx"],
     rules: {
       "no-restricted-imports": "off",
+    },
+  },
+
+  // ────────────────────────────────────────────────────────────────────────
+  // ADR 008 §决策六: token discipline (accent allowlist + feedback soft fills)
+  // ────────────────────────────────────────────────────────────────────────
+  {
+    files: ["apps/**/*.{ts,tsx}", "packages/ui/src/**/*.{ts,tsx}"],
+    ignores: [
+      "**/__tests__/**",
+      "**/*.test.{ts,tsx}",
+      "**/*.spec.{ts,tsx}",
+    ],
+    plugins: {
+      "arc-token": arcTokenDiscipline,
+    },
+    rules: {
+      "arc-token/no-accent-outside-allowlist": "error",
+      "arc-token/no-hard-fill-in-feedback-components": "error",
     },
   },
 ];

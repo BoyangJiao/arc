@@ -138,7 +138,7 @@ export function DevToolsFloatingOverlay(): ReactNode {
             <Pressable
               onPress={handleFabPress}
               accessibilityLabel={t("devTools.fabOpen")}
-              className="bg-accent items-center justify-center shadow-lg"
+              className="bg-surface-tertiary border border-border items-center justify-center shadow-md"
               style={[
                 styles.fabExpanded,
                 dockedVisual && styles.fabDocked,
@@ -146,7 +146,7 @@ export function DevToolsFloatingOverlay(): ReactNode {
                 docked === "right" && styles.fabDockedRight,
               ]}
             >
-              <Text className="text-white text-xs font-bold tracking-wide">
+              <Text className="text-foreground text-xs font-bold tracking-wide">
                 {dockedVisual ? expandChevron : "DEV"}
               </Text>
             </Pressable>
@@ -182,7 +182,7 @@ export function DevToolsFloatingOverlay(): ReactNode {
             <View className="flex-row items-center justify-between mb-4 px-1">
               <Text className="text-foreground text-lg font-semibold">{t("devTools.title")}</Text>
               <Pressable onPress={() => setPanelOpen(false)} hitSlop={12}>
-                <Text className="text-accent text-base">{t("devTools.closePanel")}</Text>
+                <Text className="text-muted text-base">{t("devTools.closePanel")}</Text>
               </Pressable>
             </View>
             <ScrollView

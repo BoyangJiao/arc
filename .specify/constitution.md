@@ -64,6 +64,13 @@
 - **禁止业务代码直接消费 Primitive 色阶**（如 `bg-brand-300`）—— 这违反 ADR 003 v3.1 跳级规则
 - 涨跌色必须经过 `useBusinessTokens()` hook，支持「红涨绿跌」切换
 
+### Accessibility (a11y)
+
+- 颜色 contrast 必须 ≥ WCAG AA（normal text 4.5:1，large text 3:1）
+- 触控目标 ≥ 44×44 pt
+- 所有交互元素必须有 `accessibilityLabel`（或等价的可见文本）
+- `Button` / `Pressable` 必须有 `accessibilityRole`
+
 ### Accent discipline (ADR 008)
 
 **实色 accent**（`text-accent` / `bg-accent` / `border-accent`，**不**含 `*-soft` 变体）**仅允许**用于：

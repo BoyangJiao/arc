@@ -7,7 +7,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
-import type { Currency, Portfolio } from "@arc/core";
+import { DEFAULT_PORTFOLIO_CANONICAL_NAME, type Currency, type Portfolio } from "@arc/core";
 
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
@@ -80,7 +80,7 @@ export const useEnsureDefaultPortfolio = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (name: string = "My Portfolio"): Promise<string> => {
+    mutationFn: async (name: string = DEFAULT_PORTFOLIO_CANONICAL_NAME): Promise<string> => {
       if (!user) throw new Error("Not signed in");
 
       // Check if one already exists

@@ -32,6 +32,9 @@ export const en = {
     noPortfoliosHint: "Create your first portfolio to start tracking",
     partialQuotes: "Quotes loaded for {{loaded}}/{{total}} holdings",
     partialQuotesMissing: "{{missing}} without a quote — pull to refresh",
+    expandHoldings: "Show holdings",
+    collapseHoldings: "Hide holdings",
+    expandableEmptyHoldings: "No holdings in this portfolio yet",
   },
   dailySnapshot: {
     title: "Today's change",
@@ -86,7 +89,8 @@ export const en = {
   markets: {
     title: "Watchlist",
     emptyTitle: "No watchlist items yet",
-    emptyDescription: "Search for a symbol to start tracking its quotes",
+    emptyDescription: "Tap the search icon to add a symbol",
+    searchAccessibility: "Search to add watchlist symbol",
     searchCta: "Search to add",
     searchTitle: "Add symbol",
     searchPlaceholder: "Search symbols (e.g. NVDA / AAPL)…",

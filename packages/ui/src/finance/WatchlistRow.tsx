@@ -2,7 +2,7 @@
  * WatchlistRow — Stage 2 J8 presentational list row.
  *
  * Pure presentational: symbol / name / price / change% chip + optional stale dot.
- * Color via useBusinessClasses (S1-AC-5 / S2-AC-2.7).
+ * Change % uses Pro TrendChip with finance color mode (S1-AC-5 / S2-AC-2.7).
  */
 
 import { type ReactNode } from "react";
@@ -11,7 +11,10 @@ import type Decimal from "decimal.js";
 
 import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
-import { useBusinessClasses } from "../tokens/business-context";
+import { TrendChip } from "../primitives-pro";
+import { useFinanceColorMode } from "../tokens/business-context";
+
+import { pnlSignFromDecimal, trendDirectionForPnL } from "./trend-for-business";
 
 export interface WatchlistRowProps {
   readonly symbol: string;
@@ -25,11 +28,6 @@ export interface WatchlistRowProps {
   readonly accessibilityLabel?: string;
 }
 
-const signOf = (value: Decimal): "positive" | "negative" | "zero" => {
-  if (value.isZero()) return "zero";
-  return value.isNegative() ? "negative" : "positive";
-};
-
 export function WatchlistRow(props: WatchlistRowProps): ReactNode {
   const {
     symbol,
@@ -42,17 +40,13 @@ export function WatchlistRow(props: WatchlistRowProps): ReactNode {
     accessibilityLabel,
   } = props;
 
-  const businessClasses = useBusinessClasses();
-
-  const changeSign = changePercent ? signOf(changePercent) : "zero";
-  const changeClass =
-    changeSign === "positive"
-      ? businessClasses.gain.text
-      : changeSign === "negative"
-        ? businessClasses.loss.text
-        : businessClasses.pnlNeutral.text;
+  const { financeColorMode } = useFinanceColorMode();
 
   const changeLabel = changePercent !== null ? formatPercent(changePercent) : "—";
+  const trend =
+    changePercent !== null
+      ? trendDirectionForPnL(pnlSignFromDecimal(changePercent), financeColorMode)
+      : "neutral";
 
   const content = (
     <Card>
@@ -75,7 +69,13 @@ export function WatchlistRow(props: WatchlistRowProps): ReactNode {
               </Text>
             ) : null}
           </View>
-          <Text className={`text-sm font-medium ${changeClass}`}>{changeLabel}</Text>
+          {changePercent !== null ? (
+            <TrendChip trend={trend} size="sm" variant="soft">
+              {changeLabel}
+            </TrendChip>
+          ) : (
+            <Text className="text-muted text-sm font-medium">{changeLabel}</Text>
+          )}
         </View>
       </View>
     </Card>

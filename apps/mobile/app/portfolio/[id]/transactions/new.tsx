@@ -28,12 +28,12 @@ import {
   Button,
   Description,
   FieldError,
+  InScreenHeader,
   Input,
   Label,
   Screen,
   Text,
   TextField,
-  useStackScreenOptions,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import { composeAssetId, type Currency, type Market } from "@arc/core";
@@ -159,15 +159,11 @@ export default function AddTransactionScreen() {
   const isSubmitting = createTransaction.isPending;
   const todayLabel = new Date().toLocaleDateString();
 
-  const screenOptions = useStackScreenOptions({
-    title: t("transaction.addTitle"),
-    backType: "close",
-  });
-
   return (
     <>
-      <Stack.Screen options={screenOptions} />
+      <Stack.Screen options={{ headerShown: false, presentation: "formSheet" }} />
       <Screen edges={["bottom"]}>
+        <InScreenHeader title={t("transaction.addTitle")} leftType="close" />
         <View className="gap-4">
           {/* Asset symbol — required, locked to US market in Stage 1 */}
           <TextField isRequired isInvalid={!!errors.symbol}>

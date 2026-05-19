@@ -6,7 +6,12 @@ import { useMemo } from "react";
 import { Stack } from "expo-router";
 import Decimal from "decimal.js";
 import { parseAssetId, type Currency, type Market } from "@arc/core";
-import { RebalanceActionList, Screen, useStackScreenOptions } from "@arc/ui";
+import {
+  InScreenHeader,
+  RebalanceActionList,
+  Screen,
+  scrollContentBelowInScreenHeader,
+} from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
 import { assetLabel, formatSharesWithUnit } from "../../../src/lib/rebalance-format";
@@ -53,11 +58,6 @@ export default function RebalanceActionsScreen() {
     });
   }, [deviations, valuation, t]);
 
-  const screenOptions = useStackScreenOptions({
-    title: t("rebalance.actionsTitle"),
-    backType: "chevron",
-  });
-
   const shareUnits = useMemo(
     () => ({ share: t("rebalance.units.share"), fund: t("rebalance.units.fund") }),
     [t]
@@ -65,8 +65,9 @@ export default function RebalanceActionsScreen() {
 
   return (
     <>
-      <Stack.Screen options={screenOptions} />
-      <Screen>
+      <Stack.Screen options={{ headerShown: false }} />
+      <Screen contentContainerStyle={scrollContentBelowInScreenHeader}>
+        <InScreenHeader title={t("rebalance.actionsTitle")} leftType="back" />
         <RebalanceActionList
           rows={rows}
           formatShares={(value, market, nativeCurrency) =>

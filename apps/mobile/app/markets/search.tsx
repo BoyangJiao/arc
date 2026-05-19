@@ -5,7 +5,15 @@
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { Stack, useRouter } from "expo-router";
-import { Button, Input, Screen, Text, TextField, useStackScreenOptions } from "@arc/ui";
+import {
+  Button,
+  InScreenHeader,
+  Input,
+  Screen,
+  Text,
+  TextField,
+  scrollContentBelowInScreenHeader,
+} from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
 import { useAddWatchlistItem, useWatchlistBase } from "../../src/lib/queries/use-watchlist";
@@ -16,8 +24,6 @@ type BannerKind = "info" | "error";
 export default function WatchlistSearchScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const stackOptions = useStackScreenOptions({ title: t("markets.searchTitle") });
-
   const [query, setQuery] = useState("");
   const [banner, setBanner] = useState<{ kind: BannerKind; message: string } | null>(null);
   const [addingSymbol, setAddingSymbol] = useState<string | null>(null);
@@ -67,12 +73,18 @@ export default function WatchlistSearchScreen() {
 
   return (
     <>
-      <Stack.Screen options={stackOptions} />
+      <Stack.Screen options={{ headerShown: false, presentation: "modal" }} />
       <Screen
         scroll
         keyboardShouldPersistTaps="always"
-        contentContainerStyle={{ padding: 16, gap: 12 }}
+        contentContainerStyle={{
+          paddingTop: 0,
+          paddingHorizontal: 16,
+          paddingBottom: 16,
+          gap: 12,
+        }}
       >
+        <InScreenHeader title={t("markets.searchTitle")} leftType="close" density="comfortable" />
         <TextField>
           <Input
             value={query}
@@ -147,8 +159,8 @@ export default function WatchlistSearchScreen() {
           </View>
         ) : null}
 
-        <Button variant="secondary" onPress={() => router.back()} isDisabled={addItem.isPending}>
-          <Text>{t("markets.cancel")}</Text>
+        <Button variant="ghost" onPress={() => router.back()} isDisabled={addItem.isPending}>
+          {t("markets.cancel")}
         </Button>
       </Screen>
     </>

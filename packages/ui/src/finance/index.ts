@@ -19,6 +19,13 @@ export {
 
 export { WatchlistRow, type WatchlistRowProps } from "./WatchlistRow";
 export { WatchlistEmptyState, type WatchlistEmptyStateProps } from "./WatchlistEmptyState";
+export { WatchlistSearchField, type WatchlistSearchFieldProps } from "./WatchlistSearchField";
+export {
+  PortfolioExpandablePanel,
+  type PortfolioExpandablePanelProps,
+  type PortfolioExpandableHoldingRow,
+  type PortfolioExpandablePortfolioRow,
+} from "./PortfolioExpandablePanel";
 
 export {
   TargetAllocationForm,

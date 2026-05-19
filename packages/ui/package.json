@@ -13,15 +13,16 @@
     "@dicebear/collection": "^9.4.2",
     "@dicebear/core": "^9.4.2",
     "expo-haptics": "~55.0.14",
+    "expo-linear-gradient": "~55.0.14",
     "heroui-native": "^1.0.3",
     "heroui-native-pro": "1.0.0-beta.3",
     "phosphor-react-native": "^3.0.6"
   },
   "devDependencies": {
-    "expo": "^55.0.24",
     "@expo/vector-icons": "^15.0.3",
     "@types/react": "~19.2.14",
     "decimal.js": "^10.5.0",
+    "expo": "^55.0.24",
     "expo-router": "~55.0.14",
     "fast-check": "^4.8.0",
     "react": "19.2.0",
@@ -37,6 +38,7 @@
   "peerDependencies": {
     "@expo/vector-icons": "*",
     "decimal.js": "*",
+    "expo-linear-gradient": "~55.0.14",
     "expo-router": "~55.0.14",
     "phosphor-react-native": "*",
     "react": "*",

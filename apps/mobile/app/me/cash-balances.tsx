@@ -4,9 +4,16 @@
 
 import { useState } from "react";
 import { Alert, View } from "react-native";
-import { Stack } from "expo-router";
 import Decimal from "decimal.js";
-import { Button, Input, Screen, Text, TextField, useStackScreenOptions } from "@arc/ui";
+import {
+  Button,
+  InScreenHeader,
+  Input,
+  Screen,
+  Text,
+  TextField,
+  scrollContentBelowInScreenHeader,
+} from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
 import { currencySymbol } from "../../src/lib/format-money";
@@ -40,11 +47,6 @@ export default function CashBalancesScreen() {
   const getInput = (assetId: CashAssetId, balance: Decimal) =>
     inputs[assetId] ?? balance.toString();
 
-  const screenOptions = useStackScreenOptions({
-    title: t("rebalance.cashBalancesTitle"),
-    backType: "chevron",
-  });
-
   const handleSave = async () => {
     if (!portfolioId) return;
 
@@ -65,41 +67,39 @@ export default function CashBalancesScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen options={screenOptions} />
-      <Screen>
-        <Text className="text-muted text-sm mb-4">{t("rebalance.cashBalancesIntro")}</Text>
-        <Text className="text-muted text-xs mb-6">{t("rebalance.cashBalancesStageNote")}</Text>
+    <Screen contentContainerStyle={scrollContentBelowInScreenHeader}>
+      <InScreenHeader title={t("rebalance.cashBalancesTitle")} leftType="back" />
+      <Text className="text-muted text-sm mb-4">{t("rebalance.cashBalancesIntro")}</Text>
+      <Text className="text-muted text-xs mb-6">{t("rebalance.cashBalancesStageNote")}</Text>
 
-        <View className="gap-4">
-          {rows.map((row) => (
-            <View key={row.assetId} className="flex-row items-center gap-3">
-              <View className="flex-1">
-                <Text className="text-foreground font-medium">
-                  {t(`rebalance.cashNames.${row.currency}` as "rebalance.cashNames.USD")}
-                </Text>
-                <Text className="text-muted text-xs">
-                  {t("rebalance.cashCurrent", {
-                    amount: `${currencySymbol(row.currency)}${row.balance.toFixed(2)}`,
-                  })}
-                </Text>
-              </View>
-              <TextField className="w-32">
-                <Input
-                  value={getInput(row.assetId, row.balance)}
-                  onChangeText={(v) => setInputs((prev) => ({ ...prev, [row.assetId]: v }))}
-                  keyboardType="decimal-pad"
-                  className="text-right"
-                />
-              </TextField>
+      <View className="gap-4">
+        {rows.map((row) => (
+          <View key={row.assetId} className="flex-row items-center gap-3">
+            <View className="flex-1">
+              <Text className="text-foreground font-medium">
+                {t(`rebalance.cashNames.${row.currency}` as "rebalance.cashNames.USD")}
+              </Text>
+              <Text className="text-muted text-xs">
+                {t("rebalance.cashCurrent", {
+                  amount: `${currencySymbol(row.currency)}${row.balance.toFixed(2)}`,
+                })}
+              </Text>
             </View>
-          ))}
-        </View>
+            <TextField className="w-32">
+              <Input
+                value={getInput(row.assetId, row.balance)}
+                onChangeText={(v) => setInputs((prev) => ({ ...prev, [row.assetId]: v }))}
+                keyboardType="decimal-pad"
+                className="text-right"
+              />
+            </TextField>
+          </View>
+        ))}
+      </View>
 
-        <Button className="mt-8" isDisabled={save.isPending} onPress={() => void handleSave()}>
-          {t("common.save")}
-        </Button>
-      </Screen>
-    </>
+      <Button className="mt-8" isDisabled={save.isPending} onPress={() => void handleSave()}>
+        {t("common.save")}
+      </Button>
+    </Screen>
   );
 }

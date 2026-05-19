@@ -32,6 +32,9 @@ export const zh = {
     noPortfoliosHint: "创建你的第一个组合开始追踪",
     partialQuotes: "行情已加载 {{loaded}}/{{total}} 只",
     partialQuotesMissing: "{{missing}} 只暂无行情，可下拉刷新",
+    expandHoldings: "展开持仓",
+    collapseHoldings: "收起持仓",
+    expandableEmptyHoldings: "该组合暂无持仓",
   },
   dailySnapshot: {
     title: "今日变动",
@@ -84,7 +87,8 @@ export const zh = {
   markets: {
     title: "自选",
     emptyTitle: "还没有自选",
-    emptyDescription: "搜索一个标的，开始追踪它的行情",
+    emptyDescription: "点击右上角搜索图标添加标的",
+    searchAccessibility: "搜索添加自选",
     searchCta: "搜索添加自选",
     searchTitle: "添加自选",
     searchPlaceholder: "搜索标的（如 NVDA / AAPL）…",

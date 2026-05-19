@@ -9,7 +9,7 @@ import { useEffect } from "react";
 import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 
-import { Button, Screen, Sparkles, Text } from "@arc/ui";
+import { Button, Screen, SparkleIcon, Text, ThemedIcon } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
 import { useMarkWelcomeSeen, useUserPreferences } from "../src/lib/user-preferences";
@@ -36,7 +36,7 @@ export default function WelcomeScreen() {
     <Screen scroll={false}>
       <View className="flex-1 justify-center px-6 gap-8">
         <View className="items-center gap-4">
-          <Sparkles size={56} className="text-accent" accessibilityLabel="" />
+          <ThemedIcon icon={SparkleIcon} size={56} colorToken="accent" weight="fill" />
           <Text className="text-foreground text-2xl font-bold text-center">
             {t("welcome.title")}
           </Text>
@@ -60,7 +60,7 @@ export default function WelcomeScreen() {
             <Button.Label>{t("welcome.primaryCta")}</Button.Label>
           </Button>
           <Pressable onPress={finish} className="self-center active:opacity-70" hitSlop={8}>
-            <Text className="text-accent text-sm">{t("welcome.skip")}</Text>
+            <Text className="text-muted text-sm">{t("welcome.skip")}</Text>
           </Pressable>
         </View>
       </View>

@@ -6,7 +6,8 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import type Decimal from "decimal.js";
 
-import { Input, Text, TextField } from "../primitives";
+import { Label, Text } from "../primitives";
+import { NumberField } from "../primitives-pro";
 import { useBusinessClasses } from "../tokens/business-context";
 
 export interface TargetAllocationFormRow {
@@ -29,6 +30,13 @@ export interface TargetAllocationFormProps {
   readonly percentSuffix: string;
 }
 
+const parsePercentInput = (raw: string): number => {
+  const trimmed = raw.trim().replace(/,/g, "");
+  if (!trimmed) return Number.NaN;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : Number.NaN;
+};
+
 export function TargetAllocationForm({
   rows,
   sumLabel,
@@ -46,30 +54,44 @@ export function TargetAllocationForm({
 
   return (
     <View className="gap-4">
-      {rows.map((row) => (
-        <View
-          key={row.assetId}
-          className="flex-row items-center gap-3 py-2 border-b border-divider"
-        >
-          <View className="flex-1 min-w-0">
-            <Text className="text-foreground text-base font-medium">{row.label}</Text>
-            {row.subtitle ? (
-              <Text className="text-muted text-xs" numberOfLines={1}>
-                {row.subtitle}
-              </Text>
-            ) : null}
+      {rows.map((row) => {
+        const numericValue = parsePercentInput(row.percentInput);
+        return (
+          <View
+            key={row.assetId}
+            className="flex-row items-center gap-3 py-2 border-b border-divider"
+          >
+            <View className="flex-1 min-w-0">
+              <Text className="text-foreground text-base font-medium">{row.label}</Text>
+              {row.subtitle ? (
+                <Text className="text-muted text-xs" numberOfLines={1}>
+                  {row.subtitle}
+                </Text>
+              ) : null}
+            </View>
+            <NumberField
+              className="w-28"
+              minValue={0}
+              maxValue={100}
+              step={0.1}
+              value={numericValue}
+              onChange={(v) => {
+                if (Number.isNaN(v)) {
+                  row.onPercentChange("");
+                } else {
+                  row.onPercentChange(String(v));
+                }
+              }}
+            >
+              <Label className="absolute w-px h-px opacity-0 overflow-hidden">{row.label}</Label>
+              <NumberField.Group>
+                <NumberField.Input className="text-right" />
+              </NumberField.Group>
+            </NumberField>
+            <Text className="text-muted text-sm w-6">{percentSuffix}</Text>
           </View>
-          <TextField className="w-24" aria-label={row.label}>
-            <Input
-              value={row.percentInput}
-              onChangeText={row.onPercentChange}
-              keyboardType="decimal-pad"
-              className="text-right"
-            />
-          </TextField>
-          <Text className="text-muted text-sm w-6">{percentSuffix}</Text>
-        </View>
-      ))}
+        );
+      })}
 
       <View className="gap-1 pt-2">
         <Text className={`text-base font-semibold ${sumColorClass}`}>{sumLabel}</Text>

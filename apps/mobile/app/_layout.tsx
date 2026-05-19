@@ -30,6 +30,7 @@ import "@arc/i18n";
 
 import { useEffect, useMemo } from "react";
 import { View } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Stack, useRouter, useSegments, type Href } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -128,6 +129,7 @@ function AppShell() {
 
   return (
     <BusinessTokensProvider mode={prefs?.financeColorMode ?? DEFAULT_FINANCE_COLOR_MODE}>
+      <StatusBar style={colorMode === "dark" ? "light" : "dark"} />
       <View style={{ flex: 1 }}>
         <Stack screenOptions={screenOptions}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -141,45 +143,28 @@ function AppShell() {
               // ADR 006 §决策六: iOS native form sheet (card-stack effect, parent edge visible).
               // Web/Android fall back to a full-screen modal automatically.
               presentation: "formSheet",
-              headerShown: true,
+              headerShown: false,
             }}
           />
           <Stack.Screen
-            name="me/index"
+            name="me"
             options={{
               headerShown: false,
               animation: "slide_from_left",
-            }}
-          />
-          <Stack.Screen
-            name="me/settings"
-            options={{
-              headerShown: false,
-              animation: "slide_from_left",
-            }}
-          />
-          <Stack.Screen
-            name="me/dev-tools"
-            options={{
-              headerShown: false,
-              animation: "slide_from_left",
+              // 与 slide_from_left 配套的交互式关闭：右缘向左滑（LTR）关闭整个 me 分组；
+              // 见 react-native-screens RNSScreenStack.mm（isSlideFromLeft + UIRectEdgeRight）。
+              animationMatchesGesture: true,
+              fullScreenGestureEnabled: true,
             }}
           />
           <Stack.Screen
             name="markets/search"
             options={{
               presentation: "modal",
-              headerShown: true,
+              headerShown: false,
             }}
           />
           <Stack.Screen name="insights" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="me/cash-balances"
-            options={{
-              headerShown: false,
-              animation: "slide_from_left",
-            }}
-          />
         </Stack>
         <DevToolsFloatingOverlay />
       </View>

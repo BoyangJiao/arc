@@ -8,12 +8,13 @@ import { Stack, useRouter } from "expo-router";
 import Decimal from "decimal.js";
 import { rebalance, type TargetAllocation } from "@arc/core";
 import {
-  Button,
+  HeaderSaveButton,
+  InScreenHeader,
   Screen,
   TargetAllocationForm,
   type TargetSumStatus,
   Text,
-  useStackScreenOptions,
+  scrollContentBelowInScreenHeader,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
@@ -129,25 +130,22 @@ export default function RebalanceSetupScreen() {
     }
   };
 
-  const screenOptions = useStackScreenOptions({
-    title: t("rebalance.setupTitle"),
-    backType: "close",
-    headerRight: (
-      <Button
-        size="sm"
-        variant="ghost"
-        isDisabled={!canSave || upsert.isPending}
-        onPress={() => void handleSave()}
-      >
-        {t("common.save")}
-      </Button>
-    ),
-  });
-
   return (
     <>
-      <Stack.Screen options={screenOptions} />
-      <Screen>
+      <Stack.Screen options={{ headerShown: false, presentation: "modal" }} />
+      <Screen contentContainerStyle={scrollContentBelowInScreenHeader}>
+        <InScreenHeader
+          title={t("rebalance.setupTitle")}
+          leftType="close"
+          rightSlot={
+            <HeaderSaveButton
+              label={t("common.save")}
+              isDisabled={!canSave}
+              isPending={upsert.isPending}
+              onPress={() => void handleSave()}
+            />
+          }
+        />
         <Text className="text-muted text-sm mb-4">{t("rebalance.setupIntro")}</Text>
 
         <TargetAllocationForm

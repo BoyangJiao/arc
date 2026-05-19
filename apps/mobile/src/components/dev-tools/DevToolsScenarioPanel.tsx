@@ -129,7 +129,7 @@ export function DevToolsScenarioPanel({
                 <Text className="text-muted text-xs">
                   {t(`devTools.features.${feature.labelKey}.description` as const)}
                 </Text>
-                <Text className="text-accent text-xs mt-1">
+                <Text className="text-muted text-xs mt-1">
                   {t("devTools.scenarioCount", { count: feature.scenarios.length })}
                 </Text>
               </View>
@@ -152,7 +152,7 @@ export function DevToolsScenarioPanel({
         hitSlop={8}
         className="self-start"
       >
-        <Text className="text-accent text-sm">{t("devTools.backToFeatures")}</Text>
+        <Text className="text-muted text-sm">{t("devTools.backToFeatures")}</Text>
       </Pressable>
 
       <View className="gap-1">
@@ -184,7 +184,7 @@ export function DevToolsScenarioPanel({
                 {loading ? (
                   <ActivityIndicator />
                 ) : lastSuccessId === id ? (
-                  <Text className="text-accent text-xs">{t("devTools.applied")}</Text>
+                  <Text className="text-success text-xs">{t("devTools.applied")}</Text>
                 ) : null}
               </View>
             </Card>

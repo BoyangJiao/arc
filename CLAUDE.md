@@ -15,6 +15,7 @@
 > - `docs/preflight-checklist.md` — Stage 0 准备清单
 > - `docs/legal-risk-map.md` — 法律风险与文案合规
 > - `docs/adr/` — 关键架构决策记录
+> - `docs/ux/README.md` — UX 交互模式库索引（Sheet/Overlay、导航语义等；做模态/流程时必读）
 > - `.specify/feature-specs/<name>.md` — 当前 feature 的契约（如手头工作涉及）
 >
 > **会话结束 / 上下文将满时**：更新 `session-state.md`（Cursor：`/checkpoint`；Claude Code：`.claude/skills/checkpoint/`），下一会话才能无缝接续。多工具入口见 `AGENTS.md`。

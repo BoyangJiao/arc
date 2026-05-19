@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-19 by Cursor Auto (Expo SDK 55 upgrade committed; UI polish still uncommitted on branch)
+> **Last updated**: 2026-05-19 by Cursor Auto — UI polish sprint committed（TabBar / headers / Me 子栈 / modal header 呼吸感 / token 基建）
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                          |
-| :-------------------- | :--------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 2 — wrap-up → `main` PR**                                                              |
-| **Step**              | J6–J9 ✅; **Stage 2 four-feature DoD** ✅ — open **`dev/stage-2` → `main` PR**                 |
-| **Branch**            | `dev/stage-2` — HEAD `4621931` (+ any prior uncommitted J9 UAT fixes in tree)                  |
-| **Last commit**       | `4621931` — docs(spec): sync user-journeys J6 + Stage 2 DoD                                    |
-| **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                 |
-| **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅ |
-| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**; UI polish still uncommitted              |
+| Field                 | Value                                                                                              |
+| :-------------------- | :------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 2 — wrap-up → `main` PR**                                                                  |
+| **Step**              | J6–J9 ✅; **Stage 2 four-feature DoD** ✅ — open **`dev/stage-2` → `main` PR**                     |
+| **Branch**            | `dev/stage-2` — UI polish + Me 导航子栈已入同一 commit（见 `git log -1`）                          |
+| **Last commit**       | feat(mobile+ui): UI polish（Me 子栈、headers、TabBar、token 基建）— 以 `git log -1 --oneline` 为准 |
+| **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                     |
+| **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅     |
+| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                               |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -37,16 +37,16 @@
 
 ## Stage 2 — J8 Watchlist progress (started 2026-05-18)
 
-| Item                                                                       | Status                                                    |
-| :------------------------------------------------------------------------- | :-------------------------------------------------------- |
-| Feature spec (`watchlist-stage-2.md`) Accepted                             | ✅ `70bd38e`                                              |
-| Commit plan **#1–#8** (schema → core → adapter → UI → hooks → seed → docs) | ✅ `0b2c1fd` … `082ab0e`                                  |
-| Migration **0004** applied on dev Supabase                                 | ✅ **user confirmed** (SQL Editor)                        |
-| **UAT S2-AC-2.1–2.3, 2.6, 2.7**                                            | ✅ user verified 2026-05-18                               |
-| **UAT** quote error banner + **DEV「模拟自选限流」**                       | ✅ sim + real `RateLimitError` path                       |
-| **UAT S2-AC-2.4 / 2.5 / 2.8**                                              | ⏳ optional before merge (AV + logs / tests)              |
-| **Migration `0005`** (`change_percent` on `price_snapshots`)               | ✅ **user confirmed applied** (SQL Editor, 2026-05-18)    |
-| **J8 polish + cache correctness**                                          | ⏳ **commit slices #1–#3** this session (was uncommitted) |
+| Item                                                                       | Status                                                 |
+| :------------------------------------------------------------------------- | :----------------------------------------------------- |
+| Feature spec (`watchlist-stage-2.md`) Accepted                             | ✅ `70bd38e`                                           |
+| Commit plan **#1–#8** (schema → core → adapter → UI → hooks → seed → docs) | ✅ `0b2c1fd` … `082ab0e`                               |
+| Migration **0004** applied on dev Supabase                                 | ✅ **user confirmed** (SQL Editor)                     |
+| **UAT S2-AC-2.1–2.3, 2.6, 2.7**                                            | ✅ user verified 2026-05-18                            |
+| **UAT** quote error banner + **DEV「模拟自选限流」**                       | ✅ sim + real `RateLimitError` path                    |
+| **UAT S2-AC-2.4 / 2.5 / 2.8**                                              | ⏳ optional before merge (AV + logs / tests)           |
+| **Migration `0005`** (`change_percent` on `price_snapshots`)               | ✅ **user confirmed applied** (SQL Editor, 2026-05-18) |
+| **J8 polish + cache correctness**                                          | ✅ 与本 session UI polish 一并入库（见最新 commit）    |
 
 ### J8 wrap-up commits (2026-05-18 — three slices)
 
@@ -115,16 +115,11 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Immediate next actions (next session)
 
-**1. Commit UAT bugfix bundle** (when user asks):
+**1. User** — apply migration **0009** on dev Supabase; DEV → 再平衡 → 依次 seed aligned / mild / heavy → Insights 下拉刷新 → sign off S2-AC-3.x。
 
-- `packages/ui/src/finance/DeviationBar.tsx`
-- `apps/mobile/src/lib/dev-tools/rebalance-seed-plans.ts` + `run-rebalance-seed-client.ts`
-- `supabase/functions/_shared/seed-core.ts` + `packages/i18n` rb\* hints
-- `packages/db/drizzle/migrations/0009_assets_authenticated_insert_cash.sql`
+**2. Commit UAT bugfix bundle**（若仍有未入库的 J9 修复）— `DeviationBar.tsx`、`rebalance-seed-plans.ts`、`run-rebalance-seed-client.ts`、`seed-core.ts`、`0009` SQL 等。
 
-**2. User** — apply migration **0009** on dev Supabase; DEV → 再平衡 → 依次 seed aligned / mild / heavy → Insights 下拉刷新 → sign off S2-AC-3.x.
-
-**3. Stage 2 → `main` PR** — J6 UAT ✅；整理分支（含未 commit 的 J9 bugfix 若有）→ `gh pr create`。
+**3. Stage 2 → `main` PR** — J6 UAT ✅；整理分支 → `gh pr create`。
 
 **4. Switch-back-to-Opus triggers** (if still needed):
 
@@ -136,7 +131,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **Resolved 2026-05-18**: Watchlist DEV seed in App uses **client JWT path** for `watchlist:*` only; portfolio reset scenarios still need Edge Function.
 - **Resolved 2026-05-18**: Dev tools UI = **two-level** (feature picker → scenarios), not flat list.
 - **Resolved 2026-05-18 (J9 UAT)**: Rebalance DEV 场景漂移应靠 **不同 `target_allocations`**（在 fixture 固定价下算出 ±7% / ±15%），不能只改 DB NVDA 价；seed 后须 **`warmRebalanceMarketCache()`**（fixture 模式不读 Supabase `price_snapshots`）。
-- Whether to ADR Dev Tools overlay + dual seed paths (optional).
+- **Resolved 2026-05-19 (UI polish)**: `/me` 拆 **嵌套 Stack**（`app/me/_layout.tsx`）— 根仅 `slide_from_left` + `animationMatchesGesture` + `fullScreenGestureEnabled`；子页自右 push。`InScreenHeader` 增加 `density: comfortable` 用于 modal（如自选搜索）。Tab 滚动底缘 `TabScrollShadow`（`ScrollShadow` + `LinearGradient`）。`@arc/eslint-plugin-token-discipline` + ADR 008 / DESIGN-TOKENS 同步。
 - `daily-snapshot:happy` dead alias in `seed-core.ts` — delete when touching seed next.
 
 ## Critical mental model (gotchas easy to forget)
@@ -148,6 +143,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **iOS Simulator refresh**: **⌘D → Reload** (⌘R = screenshot).
 - **Migration 0004** required for watchlist table + DEV watchlist seed.
 - **Migration 0005** optional until client deploys `change_percent` read/write; apply before shipping watchlist quote cache to shared dev DB.
+- **`/me` 导航**：根栈 `name="me"` + `animation: slide_from_left` + `animationMatchesGesture: true` + `fullScreenGestureEnabled: true` → LTR 下**右缘向左滑**关闭整个 Me；`app/me/_layout.tsx` 子栈内子页（设置等）默认 **自右 push**，左缘右滑返回上一层。
 - **`use-watchlist-quotes`**: `catch` + `return null` = TanStack **success** → no `isError` → **no pull banner**. **`AdapterError` 子类必须 rethrow**（限流/网络/404 等）才能统计失败 + 显示横幅。
 - **Markets 下拉**: `forceRefresh` 在 **`isFetching` 结束** 后关闭，勿用短 `setTimeout`，否则 `queryKey` 切回会只吃缓存并丢涨跌展示路径。
 - **Rebalance DEV seed**: `rebalance:aligned|mild-drift|heavy-drift` 共用同一组 holdings；fixture 当前配置 ≈ **11.85 / 13.14 / 43.76 / 31.25**（见 `rebalance-seed-plans.ts`）。切换场景后 invalidate queries + 预热 `priceCache`/`fxCache`。

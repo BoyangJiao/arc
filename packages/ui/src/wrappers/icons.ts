@@ -1,31 +1,61 @@
 /**
- * wrappers/icons.ts — Lucide icon re-export hub (ADR 006 §决策二 T1 layer).
+ * wrappers/icons.ts — Phosphor icon re-export hub (ADR 006 §决策二 T1 layer).
  *
- * Business code only imports icons from `@arc/ui`; never from `lucide-react-native`.
- * Why a wrapper: lets us swap out the icon source (e.g. heroicons, custom set,
- * SVG asset bundle) later by changing one file. Business code zero churn.
+ * Stage 2: Lucide → phosphor-react-native（运行时 `color` prop + 主题切换可靠）。
+ * Business code only imports icons from `@arc/ui`; never from `phosphor-react-native`.
  *
- * Curated subset — add new icons here when first used. Keeping the list explicit
- * prevents accidental "every Lucide icon ships in our bundle" bloat.
+ * Curated subset — add icons here when first used.
  */
 
+import type { Icon } from "phosphor-react-native";
+import {
+  CaretLeftIcon,
+  CaretRightIcon,
+  ChartPieIcon,
+  LightbulbIcon,
+  MagnifyingGlassIcon,
+  SparkleIcon,
+  TrashIcon,
+  TrendDownIcon,
+  TrendUpIcon,
+  XIcon,
+} from "phosphor-react-native";
+
+export type { Icon as PhosphorIcon };
+
+/** @deprecated Use PhosphorIcon */
+export type LucideIcon = Icon;
+
+// ── Canonical Phosphor exports ──────────────────────────────────────────────
 export {
-  // Bottom tab bar
-  BarChart3,
-  TrendingUp,
-  Lightbulb,
-  // Header / list nav
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Trash2,
-  // Empty state / placeholders
-  TrendingDown,
-  Sparkles,
-  // Future (Stage 2+) — uncomment when actually used:
-  // Bell,        // notifications
-  // Search,      // global search
-  // Plus,        // FAB
-  // Settings,    // gear
-  type LucideIcon,
-} from "lucide-react-native";
+  CaretLeftIcon,
+  CaretRightIcon,
+  ChartPieIcon,
+  LightbulbIcon,
+  MagnifyingGlassIcon,
+  SparkleIcon,
+  TrashIcon,
+  TrendDownIcon,
+  TrendUpIcon,
+  XIcon,
+};
+
+// ── Legacy Lucide names (aliases — migrate call sites to *Icon over time) ───
+/** @deprecated Use CaretLeftIcon */
+export const ChevronLeft = CaretLeftIcon;
+/** @deprecated Use CaretRightIcon */
+export const ChevronRight = CaretRightIcon;
+/** @deprecated Use ChartPieIcon */
+export const BarChart3 = ChartPieIcon;
+/** @deprecated Use TrendUpIcon */
+export const TrendingUp = TrendUpIcon;
+/** @deprecated Use LightbulbIcon */
+export const Lightbulb = LightbulbIcon;
+/** @deprecated Use XIcon */
+export const X = XIcon;
+/** @deprecated Use TrashIcon */
+export const Trash2 = TrashIcon;
+/** @deprecated Use TrendDownIcon */
+export const TrendingDown = TrendDownIcon;
+/** @deprecated Use SparkleIcon */
+export const Sparkles = SparkleIcon;

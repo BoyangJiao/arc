@@ -10,9 +10,10 @@
 
 ## 修订记录
 
-| 版本 | 日期       | 变更                                       |
-| :--- | :--------- | :----------------------------------------- |
-| v1   | 2026-05-19 | 初稿：6 条决策，无新增 token，纯规则与迁移 |
+| 版本 | 日期       | 变更                                                                                                                                                                                                                                                                                                |
+| :--- | :--------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v1   | 2026-05-19 | 初稿：6 条决策，无新增 token，纯规则与迁移                                                                                                                                                                                                                                                          |
+| v1.1 | 2026-05-19 | §决策一/三 修订：Tab bar active pill 从 `bg-accent-soft` **改回** `bg-accent` 实色 + icon 用 `accent-foreground` 反差色（crypto-wallet/Wise/Robinhood 同流派——品牌色面积小所以 solid 不溢出，深色 icon 压住亮色）。理由：真机验证 `bg-accent-soft` light 模式对比度过低，"安静整洁"反而需要 solid。 |
 
 ---
 
@@ -56,17 +57,18 @@ ADR 003 v3.1 定义的 token 架构 + ADR 005 的 OKLCH 色阶 + archive `design
 1. **Button variant="primary"** 主行动按钮填充（每屏最多 1 个 dominant 实色）
 2. **Focus ring**（键盘/聚焦边框 — 即 `--focus` token 本身 = accent）
 3. **Brand 标识**（logo / splash / 品牌图形）
+4. **Tab bar active 指示器 pill**（v1.1 修订）— 小面积 pill 容器 + icon 必须用 `accent-foreground` 反差色（不是 `accent-soft-foreground`）
 
 **禁止**应用于：
 
-| 场景                               | 替换方案                                                 |
-| :--------------------------------- | :------------------------------------------------------- |
-| 设置项 / 列表项 RHS 值文本         | `text-foreground`（如需强调用 `font-medium`）            |
-| Header / nav icon                  | `text-foreground` 或 `text-muted`                        |
-| Tab bar active 指示器              | `bg-accent-soft` + `text-accent-soft-foreground`（软底） |
-| Toast / Banner / Badge / Chip 背景 | `bg-{semantic}-soft`（强制软底，见决策三）               |
-| DEV-only 工具                      | `bg-surface-tertiary` + `text-muted`                     |
-| 装饰性"想跳一点"                   | 用层级（surface 抬升）+ 字号字重，不用色                 |
+| 场景                               | 替换方案                                                   |
+| :--------------------------------- | :--------------------------------------------------------- |
+| 设置项 / 列表项 RHS 值文本         | `text-foreground`（如需强调用 `font-medium`）              |
+| Header / nav icon                  | `text-foreground` 或 `text-muted`                          |
+| Toast / Banner / Badge / Chip 背景 | `bg-{semantic}-soft`（强制软底，见决策三）                 |
+| DEV-only 工具                      | `bg-surface-tertiary` + `text-muted`                       |
+| 装饰性"想跳一点"                   | 用层级（surface 抬升）+ 字号字重，不用色                   |
+| 大面积按钮 / 容器                  | 仅允许 Button primary（小到中等尺寸）；满屏 CTA 视为反模式 |
 
 **判断公式**：「这是用户必须立即识别并优先操作的行动？或表达当前激活状态？」是 → accent；否 → 中性 token 或 soft tint。
 
@@ -91,13 +93,13 @@ ADR 003 v3.1 定义的 token 架构 + ADR 005 的 OKLCH 色阶 + archive `design
 
 `*-soft` 软底（15% 透明）+ `*-soft-hover`（20%）+ `*-soft-foreground`（mode 自适配）在以下场景**必须**使用：
 
-| 场景                               | Token 组合                                                            |
-| :--------------------------------- | :-------------------------------------------------------------------- |
-| 选中/激活态指示（非主 CTA）        | `bg-accent-soft` + `text-accent-soft-foreground`                      |
-| Tab bar 当前 tab pill              | `bg-accent-soft` 替代当前实色                                         |
-| Gain/loss 徽章（数字外的彩色包裹） | `bg-success-soft` + `text-success` / `bg-danger-soft` + `text-danger` |
-| 成功 toast                         | `bg-success-soft` + `text-success`                                    |
-| 错误/警告 inline 提示              | `bg-danger-soft` / `bg-warning-soft` + 同色 text                      |
+| 场景                                                         | Token 组合                                                                                |
+| :----------------------------------------------------------- | :---------------------------------------------------------------------------------------- |
+| 选中/激活态指示（**非 tab bar**，如 segment 切换、列表多选） | `bg-accent-soft` + `text-accent-soft-foreground`                                          |
+| **Tab bar 当前 tab pill** (v1.1)                             | `bg-accent` **实色** + icon `accent-foreground` 反差色 + `shadow-sm`（详见决策一第 4 项） |
+| Gain/loss 徽章（数字外的彩色包裹）                           | `bg-success-soft` + `text-success` / `bg-danger-soft` + `text-danger`                     |
+| 成功 toast                                                   | `bg-success-soft` + `text-success`                                                        |
+| 错误/警告 inline 提示                                        | `bg-danger-soft` / `bg-warning-soft` + 同色 text                                          |
 
 **禁止**：toast / banner / badge / chip 类组件用实色背景（`bg-{semantic}`），除非组件是"全屏 CTA"或"破坏性确认对话框"（如删除确认）。
 
@@ -156,6 +158,40 @@ archive `design.md.original` 搬至 [packages/ui/DESIGN-TOKENS.md](../../package
 | `arc/no-hardcoded-color`                  | 业务代码中 `#xxx` / `rgb()` / `oklch()` / `bg-{tailwind-builtin}`                            | constitution.md §"UI styling" 已规定，本规则正式落地                                                                                                                           |
 
 **开启时机**：迁移**完成后**（Week 3 末）立即开。**不**与迁移同步开（避免 Week 1-2 大量 lint error 干扰工作）。开启时同步加 husky pre-commit。
+
+### 决策七：Button 使用一致性约定
+
+避免同类 CTA 在 header / 空态 / 表单底部出现字号、字重、字色不一致（真机走查：Watchlist CTA 与 Save 按钮视觉漂移）。
+
+#### Size 场景
+
+| 场景                                          | size         | 举例                                  |
+| :-------------------------------------------- | :----------- | :------------------------------------ |
+| In-screen header right slot（Save / Done）    | `size="sm"`  | rebalance/setup `保存`                |
+| Body 内主 CTA（卡片、空状态、表单底部）       | 默认（`md`） | WatchlistEmptyState、welcome、sign-in |
+| Hero / 全屏 CTA（landing、onboarding 大按钮） | `size="lg"`  | 暂无场景                              |
+
+#### Variant 场景
+
+| 用途                     | variant         | 备注                |
+| :----------------------- | :-------------- | :------------------ |
+| 主行动 / 唯一 CTA        | `"primary"`     | 每屏最多 1 个       |
+| 次要行动（与主行动平级） | `"secondary"`   | bg-default 中性灰   |
+| 第三优先级（链接式）     | `"tertiary"`    | 弱化文字            |
+| 仅文字（链接）           | `LinkButton`    | ghost variant 强制  |
+| 危险操作                 | `"danger"`      | bg-danger 红        |
+| 危险操作（不立即触发）   | `"danger-soft"` | bg-danger-soft 软底 |
+| 表单 Cancel / 关闭       | `"ghost"`       | 透明背景            |
+
+#### 内容写法（铁律）
+
+`<Button>` 子内容**仅允许**以下三种之一：
+
+1. **string children** — `<Button>Save</Button>`（推荐）
+2. **`<Button.Label>` compound** — 需要额外 className 时
+3. **icon + `<Button.Label>`** — 带图标的主行动
+
+**禁止**：`<Button><Text>...</Text></Button>` — `Text` 自带 `text-foreground` 会压过 Button 的 variant-aware color（primary 上表现为白字而非 `accent-foreground`）。
 
 ---
 

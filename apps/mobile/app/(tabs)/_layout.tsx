@@ -3,7 +3,7 @@
  *
  * 3 tabs: Portfolio, Markets, Insights
  * Per IA v2.2 §三: stable 3-tab navigation as anchor points.
- * Icons rendered by FloatingTabBar via Lucide (lucide-react-native).
+ * Tab icons: Ionicons via FloatingTabBar; UI icons: Phosphor via @arc/ui.
  *
  * Custom iOS 26-style floating capsule tab bar via FloatingTabBar component.
  */
