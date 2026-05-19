@@ -1,8 +1,13 @@
 # ADR 003 Token 架构优化
 
+> **⚠️ SUPERSEDED** by [ADR 008 — Token 使用纪律与 UI Polish Sprint](../adr/008-token-discipline-and-polish.md)（2026-05-19）。
+>
+> 本文档保留为历史决策记录。其中提出的 `bg-page` / `bg-card` 命名方案**已被 ADR 008 决策二回滚**，恢复 `surface` / `surface-secondary` / `surface-tertiary` 命名（HeroUI 业内事实标准，详见 [packages/ui/DESIGN-TOKENS.md](../../packages/ui/DESIGN-TOKENS.md)）。
+
 ## 目标
 
 回应 review 中发现的两个问题：
+
 1. Semantic 层职责混乱（UI 角色与业务语义混杂）
 2. 通用 Semantic 到 Foundation 的映射缺失，只有 finance 部分给了示例
 
@@ -31,19 +36,19 @@ Primitive -> Foundation -> Semantic (UI 角色) -> Component
 
 用一张表列出所有通用 UI 角色 token 在 light/dark 下的 Foundation 映射。示例结构：
 
-| Semantic token | 用途 | Light 映射 | Dark 映射 |
-|---|---|---|---|
-| `bg-page` | 页面根背景 | `background` | `background` |
-| `bg-card` | 卡片/列表项背景 | `surface` | `surface` |
-| `bg-card-secondary` | 层叠卡片第二级 | `surface-secondary` | `surface-secondary` |
-| `bg-overlay` | Modal/Popover 背景 | `overlay` | `overlay` |
-| `bg-skeleton` | 骨架屏占位 | `skeleton` | `skeleton` |
-| `fg-primary` | 主文字/图标 | `foreground` | `foreground` |
-| `fg-secondary` | 次要文字/图标 | `muted` | `muted` |
-| `fg-on-accent` | accent 背景上的文字 | `accent-foreground` | `accent-foreground` |
-| `border-default` | 通用边框 | `border` | `border` |
-| `border-focus` | 聚焦边框 | `focus` | `focus` |
-| `divider` | 分隔线 | `separator` | `separator` |
+| Semantic token      | 用途                | Light 映射          | Dark 映射           |
+| ------------------- | ------------------- | ------------------- | ------------------- |
+| `bg-page`           | 页面根背景          | `background`        | `background`        |
+| `bg-card`           | 卡片/列表项背景     | `surface`           | `surface`           |
+| `bg-card-secondary` | 层叠卡片第二级      | `surface-secondary` | `surface-secondary` |
+| `bg-overlay`        | Modal/Popover 背景  | `overlay`           | `overlay`           |
+| `bg-skeleton`       | 骨架屏占位          | `skeleton`          | `skeleton`          |
+| `fg-primary`        | 主文字/图标         | `foreground`        | `foreground`        |
+| `fg-secondary`      | 次要文字/图标       | `muted`             | `muted`             |
+| `fg-on-accent`      | accent 背景上的文字 | `accent-foreground` | `accent-foreground` |
+| `border-default`    | 通用边框            | `border`            | `border`            |
+| `border-focus`      | 聚焦边框            | `focus`             | `focus`             |
+| `divider`           | 分隔线              | `separator`         | `separator`         |
 
 （具体条目在实施时按 HeroUI Native v1.0.2 实际 foundation token 对齐，上表为示意）
 

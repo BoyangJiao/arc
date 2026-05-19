@@ -168,6 +168,29 @@ const gainColor = semanticTokens[theme].gain[colorScheme]; // 'red' | 'green'
 const gainColor = "#00A86B";
 ```
 
+### 6.1 Accent 使用纪律（ADR 008）
+
+**铁律**：`text-accent` / `bg-accent` / `border-accent`（**实色** accent，**不**含 `*-soft` 变体）**仅允许**用于：
+
+1. **Button variant="primary"** 主行动按钮填充（每屏 ≤1 个 dominant）
+2. **Focus ring**（键盘聚焦边框，即 `--focus` token）
+3. **Brand 标识**（logo / splash / 品牌图形）
+
+**禁用场景及替换**：
+
+| 误用                               | 替换方案                                                              |
+| :--------------------------------- | :-------------------------------------------------------------------- |
+| 列表项 / 设置项 RHS 值文本         | `text-foreground` + 选择性 `font-medium`                              |
+| Header / nav icon                  | `text-foreground` 或 `text-muted`                                     |
+| Tab bar active 指示器              | `bg-accent-soft` + `text-accent-soft-foreground`                      |
+| Toast / Banner / Badge / Chip 背景 | `bg-{semantic}-soft`（强制软底）                                      |
+| Gain/loss 数字徽章包裹             | `bg-success-soft` + `text-success` / `bg-danger-soft` + `text-danger` |
+| DEV / debug 工具                   | `bg-surface-tertiary` + `text-muted`                                  |
+
+**判断公式**：「用户必须立即识别并优先操作的行动 / 当前激活状态？」是 → accent；否 → 中性 token 或 soft tint。
+
+详见 [ADR 008](docs/adr/008-token-discipline-and-polish.md) 决策一至三 + [packages/ui/DESIGN-TOKENS.md](packages/ui/DESIGN-TOKENS.md) Do/Don't 章节。
+
 ---
 
 ## 七、模型分工指南
