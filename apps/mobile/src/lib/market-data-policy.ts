@@ -1,12 +1,19 @@
 /**
  * Market data fetch policy — dev vs production freshness.
  *
- * Dev and prod both use Finnhub + Frankfurter (no fixture toggle; ADR 008
- * fixture path retired 2026-05-19 — free tier 60/min is enough for daily dev).
+ * Dev and prod both use Finnhub + Frankfurter (fixture path retired 2026-05-19;
+ * Finnhub free tier 60/min is enough for daily dev). See ADR 010.
  *
- *   prod: "live" — 15min price / 4h FX freshness; cache miss → adapter.
- *   dev:  "cache-first" — memory → AsyncStorage → Supabase; network on
- *         pull-to-refresh or cache miss / new ticker.
+ *   prod: "live" — 15 min price / 4 h FX freshness; cache miss → adapter.
+ *   dev:  "cache-first" — memory → AsyncStorage → Supabase; cached rows are
+ *         reused indefinitely so dev stays offline-friendly. Network is only
+ *         triggered by pull-to-refresh, an insights-session first-fetch, or a
+ *         cache *miss* (new ticker).
+ *
+ * Quote-source trust is enforced separately by `isStaleQuoteSource` (see
+ * ./stale-quote.ts): rows from retired sources (seed-dev / fixture /
+ * alphavantage) or without changePercent are filtered before this freshness
+ * check, so a fake $77 HOOD snapshot cannot block a real Finnhub refresh.
  */
 
 import { DEFAULT_FX_FRESHNESS_MS, DEFAULT_PRICE_FRESHNESS_MS } from "@arc/data-sources";

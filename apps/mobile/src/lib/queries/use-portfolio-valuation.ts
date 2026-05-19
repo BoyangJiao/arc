@@ -1,10 +1,12 @@
 /**
  * usePortfolioValuation — full real-data valuation of a portfolio.
  *
- * cache-first (default in __DEV__): only reads layered cache unless the user
- * pull-to-refreshes. Survives app restarts via AsyncStorage.
+ * cache-first (default in __DEV__): reads layered cache unless the user
+ * pull-to-refreshes. Cached rows from retired sources (seed-dev / fixture /
+ * alphavantage) or without changePercent are skipped so the next read falls
+ * back to Finnhub. Survives app restarts via AsyncStorage.
  *
- * live: 15 min freshness; cache miss hits Alpha Vantage (rate-limit aware).
+ * live: 15 min freshness; cache miss hits Finnhub (rate-limit aware).
  */
 
 import { useCallback, useMemo, useRef } from "react";
@@ -28,13 +30,14 @@ import {
   valuationQueryStaleTimeMs,
 } from "../market-data-policy";
 import { fxCache, getRegistry, priceCache } from "../market-data";
+import { isStaleQuoteSource } from "../stale-quote";
 import { usePortfolioHoldings } from "./use-portfolio-holdings";
 
-/** Alpha Vantage free tier: 5 req/min — wait between retries when throttled. */
-const AV_RATE_LIMIT_BACKOFF_MS = 12_500;
+/** Finnhub free tier: 60 req/min — wait between retries when throttled. */
+const PRICE_RATE_LIMIT_BACKOFF_MS = 12_500;
 
-/** Small gap between symbols to avoid bursting the per-minute cap on pull-to-refresh. */
-const AV_INTER_SYMBOL_GAP_MS = 350;
+/** Small gap between symbols to keep per-minute load smooth on pull-to-refresh. */
+const PRICE_INTER_SYMBOL_GAP_MS = 350;
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -56,7 +59,7 @@ const fetchQuoteForHolding = async (
       });
     } catch (err) {
       if (err instanceof RateLimitError && attempt < maxAttempts - 1) {
-        await sleep(err.retryAfterMs ?? AV_RATE_LIMIT_BACKOFF_MS);
+        await sleep(err.retryAfterMs ?? PRICE_RATE_LIMIT_BACKOFF_MS);
         continue;
       }
       console.warn(
@@ -69,11 +72,16 @@ const fetchQuoteForHolding = async (
   return null;
 };
 
+/**
+ * cache-first read used on quiet renders. Stale rows (seed-dev / fixture /
+ * alphavantage / missing change%) are dropped so the next pull-to-refresh
+ * triggers a real Finnhub fetch instead of silently using a fake price.
+ */
 const readCachedQuotesOnly = async (holdings: readonly Holding[]): Promise<PriceQuote[]> => {
   const quotes: PriceQuote[] = [];
   for (const holding of holdings) {
     const cached = await priceCache.get(holding.assetId, CACHE_FIRST_READ_FRESHNESS_MS);
-    if (cached) quotes.push(cached);
+    if (cached && !isStaleQuoteSource(cached)) quotes.push(cached);
   }
   return quotes;
 };
@@ -114,7 +122,7 @@ const fetchAllQuotes = async (
   for (const holding of holdings) {
     if (freshnessMs > 0) {
       const cached = await priceCache.get(holding.assetId, freshnessMs);
-      if (cached) {
+      if (cached && !isStaleQuoteSource(cached)) {
         quotes.push(cached);
         continue;
       }
@@ -125,7 +133,7 @@ const fetchAllQuotes = async (
   for (let i = 0; i < needsNetwork.length; i++) {
     if (i > 0) {
       const prevMarket = parseAssetId(needsNetwork[i - 1]!.assetId).market;
-      if (prevMarket !== "CASH") await sleep(AV_INTER_SYMBOL_GAP_MS);
+      if (prevMarket !== "CASH") await sleep(PRICE_INTER_SYMBOL_GAP_MS);
     }
     const quote = await fetchQuoteForHolding(needsNetwork[i]!, 0);
     if (quote) quotes.push(quote);

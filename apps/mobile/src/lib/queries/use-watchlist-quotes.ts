@@ -16,6 +16,7 @@ import {
 import { getRegistry, priceCache } from "../market-data";
 import { throwIfWatchlistRateLimitSimArmed } from "../dev-tools/watchlist-rate-limit-sim";
 import { CACHE_FIRST_READ_FRESHNESS_MS, isCacheFirstMarketData } from "../market-data-policy";
+import { isStaleQuoteSource } from "../stale-quote";
 
 const toQuote = (_assetId: string, fields: WatchlistQuoteFields): WatchlistRow["quote"] => {
   return {
@@ -57,7 +58,7 @@ export const useWatchlistQuotes = (
 
           if (!forceNetwork && isCacheFirstMarketData()) {
             const cached = await priceCache.get(assetId, CACHE_FIRST_READ_FRESHNESS_MS);
-            if (cached) {
+            if (cached && !isStaleQuoteSource(cached)) {
               return toQuote(assetId, {
                 price: cached.price,
                 currency: cached.currency,
@@ -72,7 +73,7 @@ export const useWatchlistQuotes = (
             adapter,
             symbol,
             cache: priceCache,
-            freshnessMs: forceNetwork ? 0 : freshnessMs,
+            freshnessMs: forceNetwork || isCacheFirstMarketData() ? 0 : freshnessMs,
           });
 
           return toQuote(assetId, fields);

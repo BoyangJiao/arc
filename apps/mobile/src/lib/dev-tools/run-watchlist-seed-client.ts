@@ -2,6 +2,14 @@
  * Client-side watchlist seed — signed-in user JWT only (no Edge Function).
  *
  * Touches watchlist_items + assets + price_snapshots only; portfolio data unchanged.
+ *
+ * INTENTIONAL FAKE DATA — Do NOT replace WL_PRICES / WL_CHANGE_PERCENT with
+ * Finnhub calls. These DEV scenarios (`watchlist:stale-quotes`, etc.) exist
+ * precisely to verify how the UI handles stale / seeded quotes. The runtime
+ * `isStaleQuoteSource` helper (apps/mobile/src/lib/stale-quote.ts) will
+ * recognise `source: "seed-dev"` and trigger a real Finnhub fetch as soon as
+ * the user opens the watchlist tab — so these fixed prices only persist until
+ * the first real read.
  */
 
 import type { WatchlistScenarioId } from "./scenarios";

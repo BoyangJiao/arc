@@ -7,7 +7,7 @@
 
 import Decimal from "decimal.js";
 
-import type { Currency, FxRate } from "@arc/core";
+import type { Currency } from "@arc/core";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { FxCache } from "../interfaces";

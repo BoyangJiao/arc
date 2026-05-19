@@ -5,15 +5,7 @@
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { Stack, useRouter } from "expo-router";
-import {
-  Button,
-  InScreenHeader,
-  Input,
-  Screen,
-  Text,
-  TextField,
-  scrollContentBelowInScreenHeader,
-} from "@arc/ui";
+import { Button, InScreenHeader, Input, Screen, Text, TextField } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
 import { useAddWatchlistItem, useWatchlistBase } from "../../src/lib/queries/use-watchlist";
