@@ -1,7 +1,7 @@
 /**
  * Symbol search — static list first, adapter SYMBOL_SEARCH fallback.
  *
- * Path B per watchlist-stage-2.md: protect AV free-tier quota for quote refresh.
+ * Path B per watchlist-stage-2.md: static list first to reduce live search API calls.
  */
 
 import type { PriceAdapter, SymbolSearchResult } from "./interfaces";

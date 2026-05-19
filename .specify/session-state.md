@@ -108,7 +108,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Active blockers / waiting on user
 
-- **`EXPO_PUBLIC_FINNHUB_API_KEY`** — 在 [finnhub.io](https://finnhub.io/register) 注册 free tier，填入 repo-root `.env`（或 `apps/mobile` 使用的 Expo env 文件）；未配置时 live 模式 US 报价不可用。
+- **`EXPO_PUBLIC_FINNHUB_API_KEY`** — 用户已配置 ✅；`EXPO_PUBLIC_ALPHAVANTAGE_API_KEY` 应注释掉，自选/行情统一走 Finnhub。
 - **Daily Snapshot cron — HTTP 401**（2026-05-19 smoke）：`gh workflow run "Daily Snapshot"` → run `26091830809` failed；`curl` 401。核对 GitHub Actions secrets：`SUPABASE_DAILY_SNAPSHOT_URL`、`DAILY_SNAPSHOT_SECRET` 与 Supabase Edge `DAILY_SNAPSHOT_SECRET` 一致。
 - **`brew install deno`** — optional, before `pnpm test:functions` locally (J8 dev-seed handler tests).
 
