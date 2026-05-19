@@ -1,0 +1,6 @@
+# Supabase project config (CLI deploy).
+# daily-snapshot uses a shared hex secret in Authorization, not a user JWT.
+# Without verify_jwt = false the gateway returns UNAUTHORIZED_INVALID_JWT_FORMAT.
+
+[functions.daily-snapshot]
+verify_jwt = false

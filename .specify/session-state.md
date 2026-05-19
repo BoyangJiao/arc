@@ -109,12 +109,12 @@ _(Prior “uncommitted work” table superseded by the above.)_
 ## Active blockers / waiting on user
 
 - **`EXPO_PUBLIC_FINNHUB_API_KEY`** — 用户已配置 ✅；`EXPO_PUBLIC_ALPHAVANTAGE_API_KEY` 应注释掉，自选/行情统一走 Finnhub。
-- **Daily Snapshot cron — HTTP 401**（2026-05-19 smoke）：`gh workflow run "Daily Snapshot"` → run `26091830809` failed；`curl` 401。核对 GitHub Actions secrets：`SUPABASE_DAILY_SNAPSHOT_URL`、`DAILY_SNAPSHOT_SECRET` 与 Supabase Edge `DAILY_SNAPSHOT_SECRET` 一致。
+- ~~Daily Snapshot cron 401~~ **✅ 已修复 2026-05-19**：根因 Supabase 网关 `verify_jwt` 把 hex secret 当 JWT；`supabase/config.toml` + redeploy + GitHub secrets 与 `.env.dev.local` 对齐。GH run `26095476933` success，`written` totalValue 79174.8。
 - **`brew install deno`** — optional, before `pnpm test:functions` locally (J8 dev-seed handler tests).
 
 ## Immediate next actions (next session)
 
-**1. Fix Daily Snapshot 401** — 对齐 `DAILY_SNAPSHOT_SECRET`（GitHub ↔ Supabase Edge）；重跑 `gh workflow run "Daily Snapshot"`；SQL 验 `portfolio_value_snapshots` `source='edge-function'`。
+**1. ~~Fix Daily Snapshot cron~~** ✅ cron 冒烟通过（见上）；`supabase/config.toml` 需 merge 到 `main` 以免他人 redeploy 丢 `verify_jwt`。
 
 **2. Merge `feat/finnhub-adapter`** — UAT：自选 NVDA/AAPL 价格 + 涨跌幅；Markets 下拉见 `finnhub.io` 请求。
 
