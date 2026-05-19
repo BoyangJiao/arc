@@ -6,7 +6,7 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-19 by Cursor Auto — UI polish sprint committed（TabBar / headers / Me 子栈 / modal header 呼吸感 / token 基建）
+> **Last updated**: 2026-05-19 by Claude Opus 4.7 — post-polish review；0009 ✅ confirmed applied；mobile-app-design skill vendored；Stage 2 → `main` PR ready
 
 ---
 
@@ -108,23 +108,23 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Active blockers / waiting on user
 
-- **Migration 0009** — run `packages/db/drizzle/migrations/0009_assets_authenticated_insert_cash.sql` on dev Supabase before rebalance DEV seed (否则 CASH 资产 INSERT 可能 RLS 失败；客户端 seed 已改为只 upsert 美股，但 0009 仍建议执行）。
-- **Rebalance UAT** — 切换 DEV 场景后 Insights **下拉刷新**；验证 aligned（全灰 <5%）/ mild（AAPL+MSFT 黄）/ heavy（NVDA+MSFT 红）。
-- **`brew install deno`** — before `pnpm test:functions` locally (J8 dev-seed handler tests).
-- **Daily-snapshot cron go-live** — deferred to Stage 2 → main merge (2026-05-18).
+- **No active blockers** — Stage 2 four-feature DoD ✅; migrations 0001–0009 all applied on dev Supabase; UI Polish Phase 2 committed (`9dc64be`); SDK 55 upgrade clean (`0fe14ee`); all gates green (typecheck/lint/test/lint:copy 6/6, 127 tests).
+- **`brew install deno`** — optional, before `pnpm test:functions` locally (J8 dev-seed handler tests).
+- **Daily-snapshot cron go-live** — deferred to **post-merge**; secrets configured on Supabase + GitHub Actions, workflow file needs to be on `main` to register.
 
 ## Immediate next actions (next session)
 
-**1. User** — apply migration **0009** on dev Supabase; DEV → 再平衡 → 依次 seed aligned / mild / heavy → Insights 下拉刷新 → sign off S2-AC-3.x。
+**1. Stage 2 → `main` PR** — DoD ✅；起 PR description（DS / Watchlist / Rebalance / Welcome 四 feature + Polish Phase 2 + SDK 55 + ESLint plugin），`gh pr create`。
 
-**2. Commit UAT bugfix bundle**（若仍有未入库的 J9 修复）— `DeviationBar.tsx`、`rebalance-seed-plans.ts`、`run-rebalance-seed-client.ts`、`seed-core.ts`、`0009` SQL 等。
+**2. Post-merge — Daily Snapshot cron go-live** — Supabase + GitHub secrets 之前已就绪；merge 后 `gh workflow run "Daily Snapshot"` 做一次冒烟测试，确认拓扑通。
 
-**3. Stage 2 → `main` PR** — J6 UAT ✅；整理分支 → `gh pr create`。
+**3. Stage 3 启动** — 见 `docs/development-plan.md` Stage 3 优先级；Performance Attribution / TWR / 多组合管理 / A 股 + 港股 + 加密接入。
 
-**4. Switch-back-to-Opus triggers** (if still needed):
+**4. Switch-back-to-Opus triggers** (Stage 3):
 
-- DeviationDonut Web 渲染失败需拆 Recharts/Victory（spec §4 风险）
-- sum-to-100 表单校验反复失败
+- TWR / MWR 算法（property tests 强需求）
+- Performance Attribution 算法
+- 任何动到 @arc/core 的迁移或不变性条款
 
 ## Open decisions / questions
 
@@ -132,7 +132,6 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **Resolved 2026-05-18**: Dev tools UI = **two-level** (feature picker → scenarios), not flat list.
 - **Resolved 2026-05-18 (J9 UAT)**: Rebalance DEV 场景漂移应靠 **不同 `target_allocations`**（在 fixture 固定价下算出 ±7% / ±15%），不能只改 DB NVDA 价；seed 后须 **`warmRebalanceMarketCache()`**（fixture 模式不读 Supabase `price_snapshots`）。
 - **Resolved 2026-05-19 (UI polish)**: `/me` 拆 **嵌套 Stack**（`app/me/_layout.tsx`）— 根仅 `slide_from_left` + `animationMatchesGesture` + `fullScreenGestureEnabled`；子页自右 push。`InScreenHeader` 增加 `density: comfortable` 用于 modal（如自选搜索）。Tab 滚动底缘 `TabScrollShadow`（`ScrollShadow` + `LinearGradient`）。`@arc/eslint-plugin-token-discipline` + ADR 008 / DESIGN-TOKENS 同步。
-- `daily-snapshot:happy` dead alias in `seed-core.ts` — delete when touching seed next.
 
 ## Critical mental model (gotchas easy to forget)
 
@@ -153,13 +152,13 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Active env / config snapshot
 
-| File               | Status                                                             |
-| :----------------- | :----------------------------------------------------------------- |
-| `apps/mobile/.env` | Supabase + AV key                                                  |
-| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                                 |
-| Migrations         | `0001`–`0008` applied; **`0009` pending** (CASH assets INSERT RLS) |
-| Supabase project   | `jdvlzkictwinkgcvgwew`                                             |
-| Git branch         | `dev/stage-2`                                                      |
+| File               | Status                                               |
+| :----------------- | :--------------------------------------------------- |
+| `apps/mobile/.env` | Supabase + AV key                                    |
+| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                   |
+| Migrations         | `0001`–`0009` applied ✅ (user confirmed 2026-05-19) |
+| Supabase project   | `jdvlzkictwinkgcvgwew`                               |
+| Git branch         | `dev/stage-2`                                        |
 
 ## Recent ADRs (most relevant first)
 
