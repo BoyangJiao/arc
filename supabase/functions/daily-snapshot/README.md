@@ -12,6 +12,10 @@ Reads cached `price_snapshots` + `fx_rates`, computes each portfolio's current v
 
 ## Deploy (one-time)
 
+`supabase/config.toml` sets **`verify_jwt = false`** for this function. The cron sends a
+shared hex secret in `Authorization: Bearer …`, not a Supabase user JWT. Without this
+flag the gateway returns `UNAUTHORIZED_INVALID_JWT_FORMAT` before your handler runs.
+
 ```bash
 # Install Supabase CLI if you don't have it
 brew install supabase/tap/supabase

@@ -4,7 +4,7 @@
  * 业务代码统一从这里 import；绝不直接 fetch 厂商 API（CLAUDE.md §3.4）。
  *
  * Stage 1 提供：
- *   - PriceAdapter: Alpha Vantage（美股，free tier 25/day）
+ *   - PriceAdapter: Finnhub（美股，free tier 60/min）；Alpha Vantage 保留回滚
  *   - FxAdapter: Frankfurter（ECB，免费无 key）
  *   - SupabasePriceCache + SupabaseFxCache: read-first DB 缓存
  *   - fetchPriceWithCache + fetchFxWithCache: 业务首选 facade
@@ -25,6 +25,9 @@ export {
   fetchAlphaVantageQuoteWithChange,
 } from "./adapters/alphavantage";
 export type { AlphaVantageAdapterConfig } from "./adapters/alphavantage";
+
+export { createFinnhubAdapter } from "./adapters/finnhub";
+export type { FinnhubAdapterConfig } from "./adapters/finnhub";
 
 export { searchStaticSymbols, US_STATIC_SYMBOLS } from "./static-symbols";
 export type { StaticUsSymbol } from "./static-symbols";

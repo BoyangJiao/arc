@@ -8,7 +8,6 @@ import Decimal from "decimal.js";
 import { parseAssetId, type WatchlistRow } from "@arc/core";
 import {
   AdapterError,
-  fetchAlphaVantageQuoteWithChange,
   fetchWatchlistQuoteWithCache,
   WATCHLIST_QUOTE_FRESHNESS_MS,
   RateLimitError,
@@ -24,8 +23,6 @@ import {
   isCacheFirstMarketData,
   isFixtureMarketData,
 } from "../market-data-policy";
-
-const ALPHAVANTAGE_KEY = process.env.EXPO_PUBLIC_ALPHAVANTAGE_API_KEY;
 
 const fixtureChangePercent = (assetId: string): Decimal | null => {
   const q = (fixtureData as FixtureData).quotes[assetId];
@@ -67,11 +64,6 @@ export const useWatchlistQuotes = (
 
   const assetIds = useMemo(() => rows.map((r) => r.asset.id), [rows]);
 
-  const fetchWithChange =
-    !isFixtureMarketData() && ALPHAVANTAGE_KEY
-      ? (symbol: string) => fetchAlphaVantageQuoteWithChange({ apiKey: ALPHAVANTAGE_KEY }, symbol)
-      : undefined;
-
   const results = useQueries({
     queries: assetIds.map((assetId) => ({
       queryKey: ["watchlist-quote", assetId, forceNetwork ? 0 : freshnessMs],
@@ -103,7 +95,6 @@ export const useWatchlistQuotes = (
             symbol,
             cache: priceCache,
             freshnessMs: forceNetwork ? 0 : freshnessMs,
-            fetchWithChange,
           });
 
           return toQuote(assetId, fields);

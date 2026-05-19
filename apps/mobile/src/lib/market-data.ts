@@ -3,7 +3,7 @@
  *
  * Two registries, picked per call by current policy:
  *   - dev + Settings toggle OFF (default) → fixture registry (zero network)
- *   - dev + Settings toggle ON              → live registry (Alpha Vantage + Frankfurter)
+ *   - dev + Settings toggle ON              → live registry (Finnhub + Frankfurter)
  *   - prod                                   → live registry (always)
  *
  * Toggling the Settings switch flips which registry the NEXT fetch uses; no
@@ -23,12 +23,12 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  createAlphaVantageAdapter,
   createFixtureRegistry,
   createFrankfurterAdapter,
   createMemoryFxCache,
   createMemoryPriceCache,
   createDefaultRegistry,
+  createDefaultPriceAdapters,
   createSupabaseFxCache,
   createSupabasePriceCache,
   type AdapterRegistry,
@@ -53,17 +53,17 @@ export {
 // ──────────────────────────────────────────────────────────────────────────
 // Live (real network) registry
 
-const ALPHAVANTAGE_KEY = process.env.EXPO_PUBLIC_ALPHAVANTAGE_API_KEY;
+const FINNHUB_KEY = process.env.EXPO_PUBLIC_FINNHUB_API_KEY ?? "";
 
-if (!ALPHAVANTAGE_KEY && !__DEV__) {
-  // In dev, fixture mode is the default — missing AV key is fine.
+if (!FINNHUB_KEY && !__DEV__) {
+  // In dev, fixture mode is the default — missing Finnhub key is fine.
   // In prod, it's a real misconfig; warn loudly.
-  console.warn("[market-data] EXPO_PUBLIC_ALPHAVANTAGE_API_KEY missing — price queries will fail");
+  console.warn("[market-data] EXPO_PUBLIC_FINNHUB_API_KEY missing — price queries will fail");
 }
 
 const liveFxAdapter = createFrankfurterAdapter();
-const livePriceAdapters = ALPHAVANTAGE_KEY
-  ? { US: createAlphaVantageAdapter({ apiKey: ALPHAVANTAGE_KEY }) }
+const livePriceAdapters = FINNHUB_KEY
+  ? createDefaultPriceAdapters({ finnhubApiKey: FINNHUB_KEY })
   : {};
 
 const liveRegistry: AdapterRegistry = createDefaultRegistry({

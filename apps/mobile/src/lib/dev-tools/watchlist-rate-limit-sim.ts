@@ -23,6 +23,6 @@ export const isWatchlistRateLimitSimArmed = (): boolean =>
 
 export const throwIfWatchlistRateLimitSimArmed = (): void => {
   if (isWatchlistRateLimitSimArmed()) {
-    throw new RateLimitError("alphavantage", null, "dev sim");
+    throw new RateLimitError("finnhub", null, "dev sim");
   }
 };

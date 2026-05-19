@@ -23,7 +23,7 @@ export interface FetchWatchlistQuoteParams {
   readonly symbol: string;
   readonly cache?: PriceCache;
   readonly freshnessMs?: number;
-  /** Optional — when adapter is Alpha Vantage enriched fetch. */
+  /** Optional — legacy enriched fetch; Finnhub uses fetchLatest changePercent instead. */
   readonly fetchWithChange?: (symbol: string) => Promise<{
     quote: PriceQuote;
     changePercent: Decimal | null;
