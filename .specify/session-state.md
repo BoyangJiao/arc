@@ -6,7 +6,7 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-19 by Claude Opus 4.7 — Stage 2 → main merged；PR #6/#7/#8/#9 all merged；ADR 008 命名冲突修复（旧 fixture ADR 重命名为 008a-retired）；准备开 dev/stage-3
+> **Last updated**: 2026-05-19 by Claude Opus 4.7 — **Stage 3 roadmap Accepted**（14 个决策锁定 + Block C 改走 HeroUI Pro chart 组件 + 天天基金放弃 + 多组合现金模型确定）；**下一个 Opus 会话从 Block A spec 起步**
 
 ---
 
@@ -14,11 +14,11 @@
 
 | Field                 | Value                                                                                                                         |
 | :-------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 entry** — dev/stage-3 branch 待开；Finnhub + dev 全真实行情 + 缓存信任策略 (ADR 010) 已就绪                         |
-| **Step**              | Stage 2 → main 全部 merged (PR #6/#7/#8/#9)；ADR 008 命名冲突已修；准备 dev/stage-3 + 路线图草稿                              |
-| **Branch**            | `main` — clean working tree (post-ADR-008-rename cleanup pending commit)                                                      |
-| **Last commit**       | `975ed72` — Merge PR #9 (ADR 010 dev cache trust)                                                                             |
-| **PR**                | #6/#7/#8/#9 all merged ✅ on main                                                                                             |
+| **Active stage**      | **Stage 3 — roadmap Accepted (2026-05-19), Block A spec drafting next**                                                       |
+| **Step**              | 14 个 Stage 3 决策锁定；下一步 = 新 Opus 会话起 `tushare-adapter-stage-3.md` (Block A 第一个 spec)                            |
+| **Branch**            | `dev/stage-3` —— 从 `main` 分出 + 含 Stage 2 全部成果 + Stage 3 roadmap commit                                                |
+| **Last commit**       | `3b46b21` — docs(stage-3): roadmap draft（本次会话后还会补 Accepted 状态更新 commit）                                         |
+| **PR**                | Stage 2 PR #6/#7/#8/#9 all merged ✅ on main；Stage 3 暂无 open PR                                                            |
 | **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm lint` 6/6 ✅ / `pnpm test` 141/141 ✅ (73 core + 68 data-sources) / `pnpm lint:copy` ✅ |
 | **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                                                          |
 
@@ -106,12 +106,46 @@ _(Prior “uncommitted work” table superseded by the above.)_
 | **App DEV FAB** | **功能 → 场景** — 自选场景走 App 内种子；每日快照仍要 Edge `dev-seed` deploy                               |
 | Edge deploy     | `pnpm functions:deploy:dev-seed` + `pnpm functions:secrets:dev-tools` (Daily Snapshot scenarios only)      |
 
+## Stage 3 — roadmap Accepted (2026-05-19)
+
+完整路线图见 `.specify/feature-specs/stage-3-roadmap.md`。6 个 Block 依赖排序 + 14 个决策锁定。
+
+**Block 顺序**：A（多市场 adapters）→ B（多组合管理）→ C（详情页+图表）→ D（算法 Opus 主场）→ E（polish）→ F（CSV+P2）
+
+**14 个决策摘要**（路线图 §七）：
+
+| #      | 决策                                         | 影响                                                                                                                        |
+| :----- | :------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------- |
+| 1      | Block D 在 C 之后                            | property test 基于真实 UI 形态                                                                                              |
+| 2      | 订阅 Stage 3 仅占位                          | Stage 4 接 IAP/Stripe                                                                                                       |
+| 3      | AI 图标 chip preset                          | LLM 接入 V1.0+                                                                                                              |
+| 4      | Inbox 空态先做                               | 价格异动后续填数据                                                                                                          |
+| 5      | Offline 仅 MMKV 本地缓存读                   | 完整双向同步 → Stage 4                                                                                                      |
+| **6**  | **Block C 全部走 HeroUI Pro chart 组件**     | line-chart / area-chart / bar-chart / chart-crosshair / chart-indicator —— 去掉双实现负担；donut 保留 react-native-svg 自绘 |
+| **7**  | **CN/HK/FUND 主源 Tushare Pro 免费版**       | 付费版评估推后                                                                                                              |
+| **8**  | **AKShare 作为候补**，推迟到 ADR 011         | 需自建 HTTP wrapper service / serverless + 法务地图复审                                                                     |
+| **9**  | **天天基金 NAV adapter 放弃**                | Tushare Pro FUND 主供，AKShare 候补                                                                                         |
+| **10** | **每 portfolio 独立现金 + 跨组合转账动作**   | J9 数据模型零改动；转账 = 两笔 transaction (SELL + BUY)                                                                     |
+| **11** | **币种保持不自动换汇**                       | $5000 USD 转过去还是 USD 5000；换汇分两步用户主动                                                                           |
+| **12** | **不允许做空现金**                           | 表单 inline validation：转出 ≤ 源 portfolio 余额                                                                            |
+| **13** | **`notes` 字段标记 transfer**                | `transfer-out-to-{id}` / `transfer-in-from-{id}`                                                                            |
+| **14** | **UI 落点 `/me/cash-balances` 加"转账"按钮** | 不开新路由                                                                                                                  |
+
+**给下一个 Opus 会话的 hand-off**：
+
+- 你已经知道 14 个决策 → 直接起 `tushare-adapter-stage-3.md`，参照 Finnhub adapter 模板（`packages/data-sources/src/adapters/finnhub.ts` + tests）
+- ADR 011 在 Block A 末尾起草，覆盖：多源 fallback 优先级表 + AKShare 候补集成方案 + 法务地图复审
+- TWR/PA/Drawdown property tests 是 Block D Opus 主场，至少 20 个 property test 覆盖（vs J9 rebalance 26 个）
+- 用户 Tushare 账号需在 Block A 启动前注册（积分门槛参考 spec）
+
 ## Active blockers / waiting on user
 
-- **`EXPO_PUBLIC_FINNHUB_API_KEY`** — 用户已配置于 `apps/mobile/.env` ✅。
-- **Daily Snapshot cron** ✅（`verify_jwt=false` + secrets 对齐；GH `26095476933`）。
-- **Dev 行情** — Settings「拉取真实行情」开关已移除；dev/prod 均 Finnhub + Frankfurter（dev = cache-first）。
-- **`brew install deno`** — optional, before `pnpm test:functions` locally (J8 dev-seed handler tests).
+- **Tushare Pro 账号注册**（Block A 启动前需要）—— 免费版 100 积分起步；可选付费版（¥200/年扩积分）由用户自己决定
+- **`docs/legal-risk-map.md` 复读** —— AKShare 候补集成涉及合规复审，ADR 011 起草前用户先扫一遍
+- **`EXPO_PUBLIC_FINNHUB_API_KEY`** — 用户已配置于 `apps/mobile/.env` ✅
+- **Daily Snapshot cron** ✅（`verify_jwt=false` + secrets 对齐；GH `26095476933`）
+- **Dev 行情** — Settings「拉取真实行情」开关已移除；dev/prod 均 Finnhub + Frankfurter（dev = cache-first）
+- **`brew install deno`** — optional, before `pnpm test:functions` locally (J8 dev-seed handler tests)
 
 ## Immediate next actions (next session)
 

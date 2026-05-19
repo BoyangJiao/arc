@@ -1,7 +1,7 @@
 # Stage 3 路线图 — MVP-1 自用版
 
-- **Status**: Draft — awaiting BoyangJiao review
-- **Author**: Claude Opus 4.7 (draft 2026-05-19)
+- **Status**: Accepted — 3 modifications + 5 tactical decisions locked (BoyangJiao approved 2026-05-19)
+- **Author**: Claude Opus 4.7 (draft) + BoyangJiao (review)
 - **Scope**: 不是一个 feature spec —— 是 Stage 3 全部 P0/P1/P2 工作项的**依赖排序 + 模型路由 + 风险登记**。每个具体 feature 自己再写 `.specify/feature-specs/<name>-stage-3.md`。
 - **目标**: 在 Stage 2 已交付的"骨架 + Daily Snapshot + Watchlist + Rebalance + Welcome"基础上，完成 MVP-1 —— **你自己每天能用、能管理真实持仓**。
 - **预算**: 60-100h，8-10 周（兼职 6-12h/周）。
@@ -60,17 +60,21 @@
 
 **包含**：
 
-| 任务                                                                   | 路由     | spec 落点                              |
-| :--------------------------------------------------------------------- | :------- | :------------------------------------- |
-| Tushare Pro adapter (CN + HK)                                          | Sonnet   | `tushare-adapter-stage-3.md`           |
-| 天天基金 NAV adapter (FUND)                                            | Sonnet   | `tt-fund-adapter-stage-3.md`           |
-| CoinGecko adapter (CRYPTO)                                             | Sonnet   | `coingecko-adapter-stage-3.md`         |
-| Registry 多市场路由（按 `Asset.market`）                               | Sonnet   | `tushare-adapter-stage-3.md` §registry |
-| ADR 011 — 多数据源 fallback / 故障转移策略（**仅当**主源 down 时启用） | **Opus** | ADR direct                             |
+| 任务                                                                                                                           | 路由     | spec 落点                              |
+| :----------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------- |
+| **Tushare Pro adapter (CN + HK + FUND)** — 免费版打通；付费版评估推到后续                                                      | Sonnet   | `tushare-adapter-stage-3.md`           |
+| CoinGecko adapter (CRYPTO)                                                                                                     | Sonnet   | `coingecko-adapter-stage-3.md`         |
+| Registry 多市场路由（按 `Asset.market`）                                                                                       | Sonnet   | `tushare-adapter-stage-3.md` §registry |
+| ADR 011 — 多数据源 fallback / 故障转移策略 + **AKShare 候补集成方案**（自建 HTTP wrapper service 或 serverless）+ 法务地图复审 | **Opus** | ADR direct                             |
 
 **Stage 2 锚点**：Finnhub adapter 是参照模板（`fetcher` 注入、`RateLimitError` / `NotFoundError` 错误类、`searchSymbols` optional）。
 
-**估时**: ~15-20h（3 adapter × 3-5h + 路由整合）
+**放弃项**（2026-05-19 决定）：
+
+- ~~天天基金 NAV adapter~~ —— 反爬 + 字段不稳，由 Tushare Pro FUND 接口替代；AKShare 作为基金 NAV 补全候补
+- AKShare 推迟到 ADR 011 一并讨论 —— Python 库无 TS 直连，需自建 HTTP wrapper service / serverless function，附法务地图（`docs/legal-risk-map.md`）复审
+
+**估时**: ~12-15h（2 adapter × 3-5h + 路由整合 + ADR 011 起草；天天基金路径砍掉省 3-5h）
 
 ---
 
@@ -95,22 +99,28 @@
 
 ### Block C — 详情页 + 图表（视图层）
 
-**为什么并行**：A/B 完成后这块就是"接 adapter + 出 UI"，路径成熟。但需要图表组件双实现（Web Recharts + RN Victory Native）—— 这是 Stage 2 唯一遗留的技术不一致点。
+**为什么并行**：A/B 完成后这块就是"接 adapter + 出 UI"，路径成熟。**2026-05-19 决定**：全部图表走 **HeroUI Native Pro chart 组件**（已经核实 Pro 提供 `line-chart` / `area-chart` / `bar-chart` / `chart-crosshair` / `chart-indicator`，覆盖 Stage 3 全部时段图表需求）—— 去掉之前规划的 "Web Recharts + RN Victory Native 双实现"负担。
 
 **包含**：
 
-| 任务                                                         | 路由   | spec 落点                              |
-| :----------------------------------------------------------- | :----- | :------------------------------------- |
-| 持仓表（原始 + 报告币种双列；按市场分组；tap 进详情）        | Sonnet | `holdings-table-stage-3.md`            |
-| `/asset/[id]` 资产详情页                                     | Sonnet | `asset-detail-stage-3.md`              |
-| 多时间段图表（1H / 1D / 1W / 1M / YTD / 1Y / ALL）           | Sonnet | `time-range-chart-stage-3.md`          |
-| 资产配置环形图（双实现 + 内部统一 props）                    | Sonnet | `allocation-donut-stage-3.md`          |
-| 今日变动指标（持仓行级别，Daily Snapshot 的 per-asset 视图） | Sonnet | `holdings-table-stage-3.md` §daily-row |
-| Markets Tab 分类浏览 segmented control (P1)                  | Sonnet | optional                               |
+| 任务                                                         | 路由   | spec 落点                              | 图表底层                                                                           |
+| :----------------------------------------------------------- | :----- | :------------------------------------- | :--------------------------------------------------------------------------------- |
+| 持仓表（原始 + 报告币种双列；按市场分组；tap 进详情）        | Sonnet | `holdings-table-stage-3.md`            | —                                                                                  |
+| `/asset/[id]` 资产详情页                                     | Sonnet | `asset-detail-stage-3.md`              | Pro `line-chart` + `chart-crosshair` + `chart-indicator`                           |
+| 多时间段图表（1H / 1D / 1W / 1M / YTD / 1Y / ALL）           | Sonnet | `time-range-chart-stage-3.md`          | Pro `line-chart`                                                                   |
+| Portfolio value-over-time（累计净值）                        | Sonnet | `portfolio-value-chart-stage-3.md`     | Pro `area-chart`（渐变填充）                                                       |
+| 资产配置环形图                                               | Sonnet | `allocation-donut-stage-3.md`          | **保留 react-native-svg 自绘**（Pro 无 donut；参照 Stage 2 `DeviationDonut` 实现） |
+| 今日变动指标（持仓行级别，Daily Snapshot 的 per-asset 视图） | Sonnet | `holdings-table-stage-3.md` §daily-row | —                                                                                  |
+| Markets Tab 分类浏览 segmented control (P1)                  | Sonnet | optional                               | —                                                                                  |
 
-**Stage 2 锚点**: `DeviationDonut` 用了 react-native-svg 自绘；图表组件可参照同思路或上 Victory Native（需评估）。
+**纪律提示**：HeroUI Pro chart 组件必须走 **subpath import**（`heroui-native-pro/line-chart` 等），不能从顶层包导（chart-indicator 依赖 skia，顶层 import 会被 Metro 贪婪解析失败）。`@arc/ui/charts/` 重新封装一层，业务侧依然只 `import { LineChart } from '@arc/ui'`。
 
-**估时**: ~15-20h（含图表抽象 + 详情页静态版本）
+**Stage 2 锚点**:
+
+- `DeviationDonut`（react-native-svg 自绘）→ `AllocationDonut` 可直接参照
+- 已有 Pro 组件 subpath import 模式（EmptyState / NumberStepper）— 加 chart 是同款
+
+**估时**: ~12-15h（含图表 wrapper 封装 + 详情页静态版本；省下双实现成本 3-5h）
 
 ---
 
@@ -205,31 +215,49 @@ Week 9-10: Block F (CSV + P2 + buffer)
 
 ## 六、关键风险登记（Stage 3 开局必须心里有数）
 
-| 风险                            | 表现                                                     | 缓解                                                                                                        |
-| :------------------------------ | :------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- |
-| Tushare Pro 积分门槛            | 部分接口需要 2000+ 积分，免费账号 100 积分               | 注册付费版（¥200/年）或回退到东方财富 / 同花顺非官方接口（合规风险）                                        |
-| 天天基金无官方 API              | 反爬 + 字段不稳定                                        | 接 Tushare 基金 NAV 作主 + 天天基金 fallback；任何爬虫前评估法律风险（参考 `docs/legal-risk-map.md`）       |
-| TWR 与雪球抽样误差 > 1%         | DoD 不达标                                               | property tests 必须覆盖 dividend / split / 跨货币；ADR 提前讨论 IRR (MWR) 还是 TWR 优先                     |
-| CoinGecko 限流（30/分钟，免费） | 加密多币种 polling 不够                                  | 价格走 CoinGecko，FX (USDT 等) 走 Finnhub；BTC/ETH/USDC 限于这几个先                                        |
-| 数据源混用引入估值偏差          | 同一时点不同源拿到不同 USD 报价                          | ADR 011 锁定**优先级**：股票 → Finnhub/Tushare，加密 → CoinGecko，基金 NAV → Tushare/天天，FX → Frankfurter |
-| 多 portfolio 后 cash 现金分摊   | `CASH:USD` 在哪个 portfolio？跨组合移动现金算 SELL+BUY？ | ADR 012（多组合现金模型）—— Block B 起步时讨论                                                              |
-| 上架前 Stage 4 时间紧           | 订阅 / 法务文案 / 苹果审核                               | Stage 3 末预留 1 周给 Block E polish + 法务初审                                                             |
+| 风险                                                   | 表现                                                                                                                            | 缓解                                                                                                                     |
+| :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------- |
+| Tushare Pro 积分门槛                                   | 部分接口需要 2000+ 积分，免费账号 100 积分                                                                                      | 注册付费版（¥200/年）或回退到东方财富 / 同花顺非官方接口（合规风险）                                                     |
+| 天天基金无官方 API                                     | 反爬 + 字段不稳定                                                                                                               | 接 Tushare 基金 NAV 作主 + 天天基金 fallback；任何爬虫前评估法律风险（参考 `docs/legal-risk-map.md`）                    |
+| TWR 与雪球抽样误差 > 1%                                | DoD 不达标                                                                                                                      | property tests 必须覆盖 dividend / split / 跨货币；ADR 提前讨论 IRR (MWR) 还是 TWR 优先                                  |
+| CoinGecko 限流（30/分钟，免费）                        | 加密多币种 polling 不够                                                                                                         | 价格走 CoinGecko，FX (USDT 等) 走 Finnhub；BTC/ETH/USDC 限于这几个先                                                     |
+| 数据源混用引入估值偏差                                 | 同一时点不同源拿到不同 USD 报价                                                                                                 | ADR 011 锁定**优先级**：股票 → Finnhub/Tushare，加密 → CoinGecko，基金 NAV → Tushare（+ AKShare 候补），FX → Frankfurter |
+| 多 portfolio 后 cash 现金分摊（**已决定 2026-05-19**） | 每 portfolio 独立 CASH:USD/CNY/HKD/JPY（J9 数据模型零改动）+ 跨组合"转账"动作生成两笔 transaction（SELL + BUY，币种保持不换汇） | 在 `multi-portfolio-stage-3.md` 里展开实施细节；**不需要新 ADR**；UI 落点 `/me/cash-balances` 加"转账到其他组合"按钮     |
+| 上架前 Stage 4 时间紧                                  | 订阅 / 法务文案 / 苹果审核                                                                                                      | Stage 3 末预留 1 周给 Block E polish + 法务初审                                                                          |
 
 ---
 
-## 七、与发展计划的差异 / 待你拍板
+## 七、Resolved tactical decisions (locked 2026-05-19)
 
-1. **Block D 放在 C 之后**：原计划没明说顺序，我提议算法在 UI 静态版本完成后做，因为算法的展示载体（图表 / 详情页）需要先在；UI 可以先用占位假数据。**Alternative**：D 提前到 A/B 之后、C 之前——算法 spec 先锁，UI 出来时数字直接对接。两条路都行。**我投 D 在 C 之后**：先看见 UI 形态，property test 设计起来更踏实。
-2. **订阅体系深度**：development-plan 列了 Free / Pro / Pro+。Stage 3 只做**占位 + 文案 + 价格**还是**接 Apple IAP / Stripe**？我建议**仅占位**（Stage 4 接 IAP）。
-3. **AI 图标**：development-plan 说"占位 + 预设 Q&A，不接 LLM"。我同意——LLM 接入是 V1.0+ 议题，spec 里就锁"按 chip 出预设回答"。
-4. **Me / Inbox** 数据源：价格异动提醒（Block E）的存储 → Inbox 渲染。如果价格异动晚于 Inbox，Inbox 早期 Empty State 就行——别等价格异动做完才做 Inbox。
-5. **离线同步**（Block F P1）：与"Stage 4 内测前 fork prod Supabase"是矛盾的——离线同步设计在 dev project 上做 vs prod project 上做差异挺大。**我提议**：Block F 只做 MMKV 本地缓存读，"上线时同步"推到 Stage 4。
+1. **Block D 在 C 之后** — UI 静态版本先 ready，property test 设计基于真实数据形态，验证更踏实
+2. **订阅体系 Stage 3 仅占位** — Free/Pro/Pro+ 三档文案 + 价格展示；Apple IAP / Stripe 接入推到 Stage 4
+3. **AI 图标 chip preset 路线** — 占位 + 预设 Q&A 按 chip 触发；LLM 接入是 V1.0+ 议题
+4. **Inbox 先做空态，价格异动后续填** — Inbox 不阻塞价格异动；价格异动落地后数据自动出现在 Inbox 里
+5. **Offline 只做 MMKV 本地缓存读** — 完整双向同步推 Stage 4（与 prod Supabase fork 一起设计）
+
+**Block C 图表底层（新增 2026-05-19 决定）**：
+
+6. **所有图表走 HeroUI Native Pro chart 组件**（`line-chart` / `area-chart` / `bar-chart` / `chart-crosshair` / `chart-indicator`）—— 替换之前规划的 Recharts + Victory Native 双实现。Pro 已经在 react-native-web 兼容；donut 保留 react-native-svg 自绘（Pro 无）。subpath import 纪律照旧。
+
+**Block A 数据源（新增 2026-05-19 决定）**：
+
+7. **CN/HK/FUND 主源 Tushare Pro 免费版** —— 打通流程优先；付费版评估推到后续
+8. **AKShare 作为候补 / fallback**，推迟到 ADR 011 一并讨论：自建 HTTP wrapper service 还是 serverless；附法务地图复审
+9. **天天基金 NAV adapter 放弃** —— 基金 NAV 由 Tushare Pro FUND 接口主供，AKShare 候补
+
+**Block B 多组合 Cash 现金模型（新增 2026-05-19 决定）**：
+
+10. **每 portfolio 独立现金（J9 数据模型零改动）+ 跨组合"转账"动作** = 两笔 transaction（SELL on source + BUY on dest）
+11. **币种保持，不自动换汇** — Portfolio A 转 $5000 USD 到 B，B 收到 USD 5000；换汇是分两步用户主动操作
+12. **不允许做空现金** — 表单 inline validation：转出金额 ≤ 源 portfolio 当前 CASH:\* 余额
+13. **`notes` 字段标记 transfer** —— `transfer-out-to-{portfolioId}` / `transfer-in-from-{portfolioId}`，方便交易历史识别；Stage 3 P2 可选加 `transfer_group_id` 外键
+14. **UI 落点 `/me/cash-balances` 加"转账到其他组合"按钮**，而不是新增独立路由
 
 ---
 
-## 八、下一步（拍板后）
+## 八、下一步
 
-1. 你 review 本路线图 + 拍板 §七 5 个待定项 → 锁定执行顺序
-2. 起 **Block A 第一个 spec**: `.specify/feature-specs/tushare-adapter-stage-3.md` —— 路由 Sonnet 起草，Opus review
-3. 应用 Tushare API key 注册 + 法律风险地图 (`docs/legal-risk-map.md`) 复读
+1. ✅ 路线图 Status = Accepted（本次会话完成）
+2. **新 Opus 会话接力**起 **Block A 第一个 spec**: `.specify/feature-specs/tushare-adapter-stage-3.md` —— Sonnet/Cursor 起草，Opus review
+3. **用户**：注册 Tushare Pro 账号 + 复读 `docs/legal-risk-map.md`（AKShare 是潜在的法务复审点）
 4. Block A 期间持续 commit 到 `dev/stage-3`，每个 adapter 一个 PR
