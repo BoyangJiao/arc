@@ -155,3 +155,36 @@ export function useUserPreferences(): UseUserPreferencesResult {
     update,
   };
 }
+
+/**
+ * Mark welcome screen as seen — optimistic flip without rollback on error (J6 AC-4.6).
+ * Navigation should not await this mutation; DB sync retries in background.
+ */
+export function useMarkWelcomeSeen() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const queryKey = prefsQueryKey(user?.id);
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Not signed in");
+      const { error } = await supabase
+        .from("user_preferences")
+        .update({ has_seen_welcome: true })
+        .eq("user_id", user.id);
+      if (error) throw error;
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<UserPreferences | null>(queryKey);
+      queryClient.setQueryData<UserPreferences | null>(queryKey, (current) =>
+        current ? { ...current, hasSeenWelcome: true } : current
+      );
+      return { previous };
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    retry: 2,
+  });
+}

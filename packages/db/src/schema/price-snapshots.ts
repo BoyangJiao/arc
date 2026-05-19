@@ -34,6 +34,8 @@ export const priceSnapshots = pgTable(
     currency: currencyEnum("currency").notNull(),
     /** 数据源标识，如 "alphavantage" / "tushare" / "coingecko" */
     source: text("source").notNull(),
+    /** 日涨跌幅（相对前收），与 adapter 一致；可空（历史行 / 旧种子未写） */
+    changePercent: numeric("change_percent", DECIMAL_PRECISION),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),

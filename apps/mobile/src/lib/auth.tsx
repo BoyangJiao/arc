@@ -21,6 +21,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
+import { resetInsightsSessionValuation } from "./insights-session-valuation";
 import { supabase } from "./supabase";
 
 interface AuthContextValue {
@@ -106,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signOut: async () => {
         const { error } = await supabase.auth.signOut();
+        if (!error) resetInsightsSessionValuation();
         return { error: error ?? null };
       },
     }),

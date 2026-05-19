@@ -12,9 +12,19 @@
  * financeColorMode drives BusinessTokensProvider in root _layout.
  */
 
-import { Pressable, View } from "react-native";
-import { Stack } from "expo-router";
-import { Switch, Screen, Text, useFinanceColorMode, useStackScreenOptions } from "@arc/ui";
+import { View } from "react-native";
+import { useRouter, type Href } from "expo-router";
+import {
+  InScreenHeader,
+  ListGroup,
+  PressableFeedback,
+  Screen,
+  Separator,
+  Switch,
+  Text,
+  scrollContentBelowInScreenHeader,
+  useFinanceColorMode,
+} from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import i18n from "@arc/i18n";
 import type { FinanceColorMode, Currency, Locale } from "@arc/core";
@@ -25,6 +35,7 @@ import { useColorMode } from "../../src/lib/theme";
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { prefs, update } = useUserPreferences();
   const { colorMode, toggleColorMode } = useColorMode();
   const { financeColorMode, setFinanceColorMode } = useFinanceColorMode();
@@ -55,74 +66,129 @@ export default function SettingsScreen() {
     i18n.changeLanguage(locale);
   };
 
-  const screenOptions = useStackScreenOptions({
-    title: t("settings.title"),
-    backType: "chevron",
-  });
-
   return (
-    <>
-      <Stack.Screen options={screenOptions} />
-      <Screen>
-        <View className="gap-4">
-          {/* Reporting Currency */}
-          <Pressable onPress={handleCurrencyToggle}>
-            <View className="flex-row items-center justify-between bg-surface px-4 py-4 rounded-xl">
-              <Text className="text-foreground text-base">{t("settings.reportingCurrency")}</Text>
-              <Text className="text-accent font-semibold">{isCNY ? "CNY ¥" : "USD $"}</Text>
-            </View>
-          </Pressable>
+    <Screen contentContainerStyle={scrollContentBelowInScreenHeader}>
+      <InScreenHeader title={t("settings.title")} leftType="back" />
+      <View className="gap-4">
+        <ListGroup>
+          <PressableFeedback animation={false} onPress={handleCurrencyToggle}>
+            <PressableFeedback.Scale>
+              <ListGroup.Item disabled>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>{t("settings.reportingCurrency")}</ListGroup.ItemTitle>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix>
+                  <Text className="text-foreground font-semibold">{isCNY ? "CNY ¥" : "USD $"}</Text>
+                </ListGroup.ItemSuffix>
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+            <PressableFeedback.Ripple />
+          </PressableFeedback>
 
-          {/* Language */}
-          <Pressable onPress={handleLanguageToggle}>
-            <View className="flex-row items-center justify-between bg-surface px-4 py-4 rounded-xl">
-              <Text className="text-foreground text-base">{t("settings.language")}</Text>
-              <Text className="text-accent font-semibold">
-                {isZh ? t("settings.languageZh") : t("settings.languageEn")}
-              </Text>
-            </View>
-          </Pressable>
+          <Separator className="mx-4" />
 
-          {/* Finance Color Mode — Red up / Green up */}
-          <View className="flex-row items-center justify-between bg-surface px-4 py-4 rounded-xl">
-            <View className="flex-1 mr-4">
-              <Text className="text-foreground text-base">{t("settings.financeColorMode")}</Text>
-              <Text className="text-muted text-xs mt-1">
-                {isRedUp ? t("settings.redUpGreenDown") : t("settings.greenUpRedDown")}
-              </Text>
-            </View>
-            <Switch isSelected={isRedUp} onSelectedChange={handleColorModeToggle} />
-          </View>
-
-          {/* Dark mode — functional toggle */}
-          <View className="flex-row items-center justify-between bg-surface px-4 py-4 rounded-xl">
-            <Text className="text-foreground text-base">{t("settings.darkMode")}</Text>
-            <Switch isSelected={isDark} onSelectedChange={toggleColorMode} />
-          </View>
-
-          {/* Dev-only: market data policy toggle (ADR 008) */}
-          {__DEV__ && (
-            <View className="mt-6 gap-2">
-              <Text className="text-muted text-xs uppercase tracking-wide px-1">
-                {t("settings.devOnlyHeader")}
-              </Text>
-              <View className="flex-row items-center justify-between bg-surface px-4 py-4 rounded-xl">
-                <View className="flex-1 mr-4">
-                  <Text className="text-foreground text-base">
-                    {t("settings.useRealMarketData")}
+          <PressableFeedback animation={false} onPress={handleLanguageToggle}>
+            <PressableFeedback.Scale>
+              <ListGroup.Item disabled>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>{t("settings.language")}</ListGroup.ItemTitle>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix>
+                  <Text className="text-foreground font-semibold">
+                    {isZh ? t("settings.languageZh") : t("settings.languageEn")}
                   </Text>
-                  <Text className="text-muted text-xs mt-1">
+                </ListGroup.ItemSuffix>
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+            <PressableFeedback.Ripple />
+          </PressableFeedback>
+
+          <Separator className="mx-4" />
+
+          <ListGroup.Item>
+            <ListGroup.ItemContent>
+              <ListGroup.ItemTitle>{t("settings.financeColorMode")}</ListGroup.ItemTitle>
+              <ListGroup.ItemDescription>
+                {isRedUp ? t("settings.redUpGreenDown") : t("settings.greenUpRedDown")}
+              </ListGroup.ItemDescription>
+            </ListGroup.ItemContent>
+            <ListGroup.ItemSuffix>
+              <Switch isSelected={isRedUp} onSelectedChange={handleColorModeToggle} />
+            </ListGroup.ItemSuffix>
+          </ListGroup.Item>
+
+          <Separator className="mx-4" />
+
+          <ListGroup.Item>
+            <ListGroup.ItemContent>
+              <ListGroup.ItemTitle>{t("settings.darkMode")}</ListGroup.ItemTitle>
+            </ListGroup.ItemContent>
+            <ListGroup.ItemSuffix>
+              <Switch isSelected={isDark} onSelectedChange={toggleColorMode} />
+            </ListGroup.ItemSuffix>
+          </ListGroup.Item>
+
+          <Separator className="mx-4" />
+
+          <PressableFeedback
+            animation={false}
+            onPress={() => router.push("/me/cash-balances" as Href)}
+          >
+            <PressableFeedback.Scale>
+              <ListGroup.Item disabled>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>{t("rebalance.cashBalancesTitle")}</ListGroup.ItemTitle>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix />
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+            <PressableFeedback.Ripple />
+          </PressableFeedback>
+        </ListGroup>
+
+        {__DEV__ && (
+          <View className="mt-6 gap-2">
+            <Text className="text-muted text-xs uppercase tracking-wide px-1">
+              {t("settings.devOnlyHeader")}
+            </Text>
+            <ListGroup>
+              <ListGroup.Item>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>{t("settings.useRealMarketData")}</ListGroup.ItemTitle>
+                  <ListGroup.ItemDescription>
                     {useRealMarketData
                       ? t("settings.useRealMarketDataOnHint")
                       : t("settings.useRealMarketDataOffHint")}
-                  </Text>
-                </View>
-                <Switch isSelected={useRealMarketData} onSelectedChange={setUseRealMarketData} />
-              </View>
-            </View>
-          )}
-        </View>
-      </Screen>
-    </>
+                  </ListGroup.ItemDescription>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix>
+                  <Switch isSelected={useRealMarketData} onSelectedChange={setUseRealMarketData} />
+                </ListGroup.ItemSuffix>
+              </ListGroup.Item>
+
+              <Separator className="mx-4" />
+
+              <PressableFeedback
+                animation={false}
+                onPress={() => router.push("/me/dev-tools" as Href)}
+              >
+                <PressableFeedback.Scale>
+                  <ListGroup.Item disabled>
+                    <ListGroup.ItemContent>
+                      <ListGroup.ItemTitle>{t("settings.openDevTools")}</ListGroup.ItemTitle>
+                      <ListGroup.ItemDescription>
+                        {t("settings.openDevToolsHint")}
+                      </ListGroup.ItemDescription>
+                    </ListGroup.ItemContent>
+                    <ListGroup.ItemSuffix />
+                  </ListGroup.Item>
+                </PressableFeedback.Scale>
+                <PressableFeedback.Ripple />
+              </PressableFeedback>
+            </ListGroup>
+          </View>
+        )}
+      </View>
+    </Screen>
   );
 }

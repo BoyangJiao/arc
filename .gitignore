@@ -18,14 +18,14 @@ android/
 # build
 build/
 
-# local env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-# generic .env.<flavor>.local pattern (ADR 007 — covers apps/mobile/.env.dev.local etc.)
-.env.*.local
+# env — ignore all variants except committed templates (ADR 007)
+.env*
+!.env.example
+!.env*.example
+
+# supabase local dev (supabase start) + CLI tmp output (login / functions deploy)
+.supabase/
+supabase/.temp/
 
 # debug
 npm-debug.log*

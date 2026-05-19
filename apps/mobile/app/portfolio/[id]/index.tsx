@@ -14,10 +14,24 @@
  */
 
 import { Alert, View } from "react-native";
-import { useLocalSearchParams, useRouter, Stack, type Href } from "expo-router";
-import { Button, Card, Screen, SwipeableActionsRow, Text, useStackScreenOptions } from "@arc/ui";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import {
+  Button,
+  Card,
+  InScreenHeader,
+  Screen,
+  SwipeableActionsRow,
+  Text,
+  scrollContentBelowInScreenHeader,
+} from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
-import { parseAssetId, type Currency, type Holding, type MarketValuation } from "@arc/core";
+import {
+  parseAssetId,
+  resolvePortfolioDisplayName,
+  type Currency,
+  type Holding,
+  type MarketValuation,
+} from "@arc/core";
 import Decimal from "decimal.js";
 
 import { formatMoney } from "../../../src/lib/format-money";
@@ -51,7 +65,7 @@ export default function PortfolioDetailScreen() {
     isFetching: valuationFetching,
     isError: valuationError,
     error: valuationErrorObj,
-    refreshValuation,
+    refreshFromLive,
   } = usePortfolioValuation(id, reportingCurrency);
 
   const valuationByAsset = new Map(
@@ -90,104 +104,104 @@ export default function PortfolioDetailScreen() {
     );
   };
 
-  const screenOptions = useStackScreenOptions({
-    title: portfolio?.name ?? t("portfolio.title"),
-    backType: "chevron",
-  });
-
   return (
-    <>
-      <Stack.Screen options={screenOptions} />
-      <Screen refreshing={valuationFetching && !!valuation} onRefresh={() => refreshValuation()}>
-        {/* Total market value section */}
-        <View className="mb-6">
-          <Text className="text-muted text-sm mb-1">{t("portfolioDetail.totalMarketValue")}</Text>
-          <Text className="text-foreground text-3xl font-bold">
-            {formatMoney(valuation?.totalValue ?? ZERO, reportingCurrency)}
-          </Text>
-          <Text className="text-muted text-xs mt-1">{t("common.disclaimer")}</Text>
-          {hasPartialQuotes && (
-            <Text className="text-muted text-xs mt-1">
-              {t("portfolioDetail.partialQuotes", { loaded: pricedCount, total: holdingsCount })}{" "}
-              {t("portfolioDetail.partialQuotesMissing", {
-                missing: holdingsCount - pricedCount,
-              })}
-            </Text>
-          )}
-          {valuationError && (
-            <Text className="text-danger text-xs mt-1">
-              {valuationErrorObj?.message ?? t("common.error")}
-            </Text>
-          )}
-        </View>
-
-        {/* Holdings table — list all holdings from transactions; merge priced rows when ready */}
-        {holdingsPending ? (
-          <Text className="text-muted">{t("common.loading")}</Text>
-        ) : isEmpty ? (
-          <Card>
-            <View className="p-6 items-center">
-              <Text className="text-muted text-center mb-2">
-                {t("portfolioDetail.emptyHoldings")}
-              </Text>
-              <Text className="text-muted text-xs text-center mb-4">
-                {t("portfolioDetail.emptyHoldingsHint")}
-              </Text>
-              <Button onPress={handleAddTransaction}>
-                <Button.Label>{t("portfolio.addTransaction")}</Button.Label>
-              </Button>
-            </View>
-          </Card>
-        ) : showHoldingsTable ? (
-          <View className="gap-3">
-            {/* Table header — 4 columns: asset / shares / native price / reporting value */}
-            <View className="flex-row px-2 pb-2">
-              <Text className="text-muted text-xs flex-1">{t("portfolioDetail.asset")}</Text>
-              <Text className="text-muted text-xs w-16 text-right">
-                {t("portfolioDetail.shares")}
-              </Text>
-              <Text className="text-muted text-xs w-20 text-right">
-                {t("portfolioDetail.price")}
-              </Text>
-              <Text className="text-muted text-xs w-24 text-right">
-                {t("portfolioDetail.value")}
-              </Text>
-            </View>
-
-            {holdings.map((holding) => {
-              const row = valuationByAsset.get(holding.assetId);
-              return (
-                <HoldingRow
-                  key={holding.assetId}
-                  holding={holding}
-                  valuation={row}
-                  quoteLoading={!row && (valuationPending || valuationFetching)}
-                  reportingCurrency={reportingCurrency}
-                  onRemove={() =>
-                    handleRemoveHolding(holding.assetId, parseAssetId(holding.assetId).symbol)
-                  }
-                  t={t}
-                />
-              );
+    <Screen
+      contentContainerStyle={scrollContentBelowInScreenHeader}
+      refreshing={valuationFetching && !!valuation}
+      onRefresh={() => refreshFromLive()}
+    >
+      <InScreenHeader
+        title={
+          portfolio
+            ? resolvePortfolioDisplayName(portfolio.name, t("portfolio.myPortfolio"))
+            : t("portfolio.title")
+        }
+        leftType="back"
+      />
+      {/* Total market value section */}
+      <View className="mb-6">
+        <Text className="text-muted text-sm mb-1">{t("portfolioDetail.totalMarketValue")}</Text>
+        <Text className="text-foreground text-3xl font-bold">
+          {formatMoney(valuation?.totalValue ?? ZERO, reportingCurrency)}
+        </Text>
+        <Text className="text-muted text-xs mt-1">{t("common.disclaimer")}</Text>
+        {hasPartialQuotes && (
+          <Text className="text-muted text-xs mt-1">
+            {t("portfolioDetail.partialQuotes", { loaded: pricedCount, total: holdingsCount })}{" "}
+            {t("portfolioDetail.partialQuotesMissing", {
+              missing: holdingsCount - pricedCount,
             })}
-          </View>
-        ) : null}
+          </Text>
+        )}
+        {valuationError && (
+          <Text className="text-danger text-xs mt-1">
+            {valuationErrorObj?.message ?? t("common.error")}
+          </Text>
+        )}
+      </View>
 
-        {/* Add transaction CTA (inline button — Stage 1 no real FAB) */}
-        {holdings.length > 0 && (
-          <View className="mt-6">
+      {/* Holdings table — list all holdings from transactions; merge priced rows when ready */}
+      {holdingsPending ? (
+        <Text className="text-muted">{t("common.loading")}</Text>
+      ) : isEmpty ? (
+        <Card>
+          <View className="p-6 items-center">
+            <Text className="text-muted text-center mb-2">
+              {t("portfolioDetail.emptyHoldings")}
+            </Text>
+            <Text className="text-muted text-xs text-center mb-4">
+              {t("portfolioDetail.emptyHoldingsHint")}
+            </Text>
             <Button onPress={handleAddTransaction}>
               <Button.Label>{t("portfolio.addTransaction")}</Button.Label>
             </Button>
           </View>
-        )}
+        </Card>
+      ) : showHoldingsTable ? (
+        <View className="gap-3">
+          {/* Table header — 4 columns: asset / shares / native price / reporting value */}
+          <View className="flex-row px-2 pb-2">
+            <Text className="text-muted text-xs flex-1">{t("portfolioDetail.asset")}</Text>
+            <Text className="text-muted text-xs w-16 text-right">
+              {t("portfolioDetail.shares")}
+            </Text>
+            <Text className="text-muted text-xs w-20 text-right">{t("portfolioDetail.price")}</Text>
+            <Text className="text-muted text-xs w-24 text-right">{t("portfolioDetail.value")}</Text>
+          </View>
 
-        {/* Disclaimer */}
-        <View className="mt-4">
-          <Text className="text-muted text-xs text-center">{t("common.notInvestmentAdvice")}</Text>
+          {holdings.map((holding) => {
+            const row = valuationByAsset.get(holding.assetId);
+            return (
+              <HoldingRow
+                key={holding.assetId}
+                holding={holding}
+                valuation={row}
+                quoteLoading={!row && (valuationPending || valuationFetching)}
+                reportingCurrency={reportingCurrency}
+                onRemove={() =>
+                  handleRemoveHolding(holding.assetId, parseAssetId(holding.assetId).symbol)
+                }
+                t={t}
+              />
+            );
+          })}
         </View>
-      </Screen>
-    </>
+      ) : null}
+
+      {/* Add transaction CTA (inline button — Stage 1 no real FAB) */}
+      {holdings.length > 0 && (
+        <View className="mt-6">
+          <Button onPress={handleAddTransaction}>
+            <Button.Label>{t("portfolio.addTransaction")}</Button.Label>
+          </Button>
+        </View>
+      )}
+
+      {/* Disclaimer */}
+      <View className="mt-4">
+        <Text className="text-muted text-xs text-center">{t("common.notInvestmentAdvice")}</Text>
+      </View>
+    </Screen>
   );
 }
 

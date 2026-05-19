@@ -5,14 +5,22 @@
  *
  * Visual (HeroUI Native + Ionicons outline/filled via TabBarIcon):
  * - Surface pill, icon-only tabs (no text labels; a11y labels from i18n)
- * - Active tab: bg-accent capsule + filled icon (accent-foreground)
- * - Inactive: outline icon (muted)
+ * - Active tab: bg-accent solid + shadow-sm + filled icon in accent-foreground
+ *               (反差色 — 品牌色面积小所以 solid 不溢出, 暗色 icon 压住亮色,
+ *                与 crypto-wallet / Wise / Robinhood 同流派)
+ * - Inactive: bg-transparent + outline icon (muted)
  *
  * Layout offset matches HeroUI Crypto Wallet template (12px above safe area).
+ *
+ * Note: crypto-wallet `components/navigation/floating-tab-bar.tsx` does **not** add a
+ * separate blur/gradient layer under the pill — only this floating Surface. Arc matches
+ * that (no TabBarGradientBackdrop).
+ *
  */
 
 import { useCallback } from "react";
 import { View } from "react-native";
+import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { cn, PressableFeedback, Surface } from "../primitives";
@@ -80,7 +88,13 @@ export interface FloatingTabBarProps extends BottomTabBarProps {
   t: (key: string) => string;
 }
 
-export function FloatingTabBar({ state, descriptors, navigation, t }: FloatingTabBarProps) {
+export function FloatingTabBar({
+  state,
+  descriptors,
+  navigation,
+  t,
+  colorMode: _colorMode,
+}: FloatingTabBarProps) {
   const insets = useSafeAreaInsets();
 
   const handleTabPress = useCallback(
@@ -95,6 +109,7 @@ export function FloatingTabBar({ state, descriptors, navigation, t }: FloatingTa
       });
 
       if (!isFocused && !event.defaultPrevented) {
+        void Haptics.selectionAsync();
         navigation.navigate(route.name);
       }
     },

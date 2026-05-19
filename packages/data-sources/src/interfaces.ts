@@ -17,6 +17,15 @@
 
 import type { Currency, FxRate, Market, PriceQuote } from "@arc/core";
 
+/** SYMBOL_SEARCH / static list row — Stage 2 US watchlist search. */
+export interface SymbolSearchResult {
+  readonly assetId: string;
+  readonly symbol: string;
+  readonly name: string;
+  readonly market: Market;
+  readonly currency: Currency;
+}
+
 /**
  * PriceAdapter — 单一市场的实时/历史价格数据源
  *
@@ -43,6 +52,12 @@ export interface PriceAdapter {
    * Stage 1 adapter 可以不实现（接口侧变 optional），抛 NotImplementedError。
    */
   fetchHistorical?(symbol: string, from: Date, to: Date): Promise<ReadonlyArray<PriceQuote>>;
+
+  /**
+   * Symbol search (Stage 2 J8 US watchlist). Optional — registry may omit for markets
+   * without search support. Prefer `searchSymbolsWithFallback` for static-first routing.
+   */
+  searchSymbols?(query: string): Promise<ReadonlyArray<SymbolSearchResult>>;
 }
 
 /**
@@ -77,6 +92,7 @@ export interface FxAdapter {
 export interface PriceCache {
   /**
    * @returns 命中且未过期的 PriceQuote；否则 null（调用方 fallback 到 adapter）
+   * `PriceQuote.changePercent` 若存在则来自缓存（自选涨跌幅展示）。
    */
   get(assetId: string, freshnessMs: number): Promise<PriceQuote | null>;
   set(quote: PriceQuote): Promise<void>;

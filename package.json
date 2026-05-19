@@ -15,6 +15,26 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "sync:skills": "bash tools/sync-skills.sh",
     "seed:dev": "tsx tools/seed-dev-data.ts",
+    "seed:default": "tsx tools/seed-dev-data.ts",
+    "seed:ds:gain": "tsx tools/seed-dev-data.ts --scenario daily-snapshot:big-gain",
+    "seed:ds:loss": "tsx tools/seed-dev-data.ts --scenario daily-snapshot:big-loss",
+    "seed:ds:mixed": "tsx tools/seed-dev-data.ts --scenario daily-snapshot:mixed-movers",
+    "seed:ds:first-day": "tsx tools/seed-dev-data.ts --scenario daily-snapshot:first-day",
+    "seed:ds:empty": "tsx tools/seed-dev-data.ts --scenario daily-snapshot:empty",
+    "seed:wl:empty": "tsx tools/seed-dev-data.ts --scenario watchlist:empty",
+    "seed:wl:3": "tsx tools/seed-dev-data.ts --scenario watchlist:3-items",
+    "seed:wl:stale": "tsx tools/seed-dev-data.ts --scenario watchlist:stale-quotes",
+    "seed:rb:empty": "tsx tools/seed-dev-data.ts --scenario rebalance:empty-target",
+    "seed:rb:aligned": "tsx tools/seed-dev-data.ts --scenario rebalance:aligned",
+    "seed:rb:mild": "tsx tools/seed-dev-data.ts --scenario rebalance:mild-drift",
+    "seed:rb:heavy": "tsx tools/seed-dev-data.ts --scenario rebalance:heavy-drift",
+    "lint:copy": "node tools/lint-copy.mjs",
+    "postinstall:supabase-cli": "node node_modules/supabase/scripts/postinstall.js",
+    "supabase": "node_modules/supabase/bin/supabase",
+    "functions:deploy:dev-seed": "node_modules/supabase/bin/supabase functions deploy dev-seed",
+    "functions:deploy:daily-snapshot": "node_modules/supabase/bin/supabase functions deploy daily-snapshot",
+    "functions:secrets:dev-tools": "node_modules/supabase/bin/supabase secrets set DEV_TOOLS_ENABLED=true",
+    "test:functions": "cd supabase/functions && deno test --allow-env --no-check",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -26,6 +46,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.4",
     "prettier": "^3.5.3",
+    "supabase": "^2.98.2",
     "tsx": "^4.19.2",
     "turbo": "^2.5.4"
   },
@@ -42,6 +63,10 @@
     "onlyBuiltDependencies": [
       "heroui-pro",
       "heroui-native-pro"
-    ]
+    ],
+    "overrides": {
+      "react": "19.2.0",
+      "react-dom": "19.2.0"
+    }
   }
 }

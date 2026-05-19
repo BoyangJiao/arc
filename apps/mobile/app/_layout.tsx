@@ -29,6 +29,8 @@ import "../global.css";
 import "@arc/i18n";
 
 import { useEffect, useMemo } from "react";
+import { View } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Stack, useRouter, useSegments, type Href } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -41,6 +43,7 @@ import {
   NAVIGATION_COLORS,
 } from "@arc/ui";
 
+import { DevToolsFloatingOverlay } from "../src/components/dev-tools/DevToolsFloatingOverlay";
 import { AuthProvider, useAuth } from "../src/lib/auth";
 import { queryClient } from "../src/lib/query-client";
 import { ThemeProvider, useColorMode } from "../src/lib/theme";
@@ -77,27 +80,39 @@ export default function RootLayout() {
  * on auth state changes.
  */
 function AppShell() {
-  const { session, loading } = useAuth();
-  const { prefs } = useUserPreferences();
+  const { session, loading: authLoading } = useAuth();
+  const { prefs, loading: prefsLoading } = useUserPreferences();
   const { colorMode } = useColorMode();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return;
+    if (authLoading) return;
 
-    // Determine if we're on a public route
     const seg0 = segments[0] as string | undefined;
     const inAuthFlow = seg0 === "sign-in" || seg0 === "auth";
+    const onWelcome = seg0 === "welcome";
 
     if (!session && !inAuthFlow) {
-      // Logged-out user on a protected screen → bounce to sign-in.
       router.replace("/sign-in" as Href);
-    } else if (session && inAuthFlow) {
-      // Already signed in but somehow on the auth screen → go to tabs.
-      router.replace("/(tabs)" as Href);
+      return;
     }
-  }, [session, loading, segments, router]);
+
+    if (!session) return;
+
+    if (prefsLoading) return;
+
+    const needsWelcome = !prefs?.hasSeenWelcome;
+
+    if (inAuthFlow) {
+      router.replace((needsWelcome ? "/welcome" : "/(tabs)") as Href);
+      return;
+    }
+
+    if (needsWelcome && !onWelcome) {
+      router.replace("/welcome" as Href);
+    }
+  }, [session, authLoading, prefs, prefsLoading, segments, router]);
 
   const colors = NAV_COLORS[colorMode];
 
@@ -114,35 +129,45 @@ function AppShell() {
 
   return (
     <BusinessTokensProvider mode={prefs?.financeColorMode ?? DEFAULT_FINANCE_COLOR_MODE}>
-      <Stack screenOptions={screenOptions}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-        <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
-        <Stack.Screen name="portfolio/[id]/index" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="portfolio/[id]/transactions/new"
-          options={{
-            // ADR 006 §决策六: iOS native form sheet (card-stack effect, parent edge visible).
-            // Web/Android fall back to a full-screen modal automatically.
-            presentation: "formSheet",
-            headerShown: true,
-          }}
-        />
-        <Stack.Screen
-          name="me/index"
-          options={{
-            headerShown: false,
-            animation: "slide_from_left",
-          }}
-        />
-        <Stack.Screen
-          name="me/settings"
-          options={{
-            headerShown: false,
-            animation: "slide_from_left",
-          }}
-        />
-      </Stack>
+      <StatusBar style={colorMode === "dark" ? "light" : "dark"} />
+      <View style={{ flex: 1 }}>
+        <Stack screenOptions={screenOptions}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+          <Stack.Screen name="welcome" options={{ headerShown: false }} />
+          <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+          <Stack.Screen name="portfolio/[id]/index" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="portfolio/[id]/transactions/new"
+            options={{
+              // ADR 006 §决策六: iOS native form sheet (card-stack effect, parent edge visible).
+              // Web/Android fall back to a full-screen modal automatically.
+              presentation: "formSheet",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="me"
+            options={{
+              headerShown: false,
+              animation: "slide_from_left",
+              // 与 slide_from_left 配套的交互式关闭：右缘向左滑（LTR）关闭整个 me 分组；
+              // 见 react-native-screens RNSScreenStack.mm（isSlideFromLeft + UIRectEdgeRight）。
+              animationMatchesGesture: true,
+              fullScreenGestureEnabled: true,
+            }}
+          />
+          <Stack.Screen
+            name="markets/search"
+            options={{
+              presentation: "modal",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen name="insights" options={{ headerShown: false }} />
+        </Stack>
+        <DevToolsFloatingOverlay />
+      </View>
     </BusinessTokensProvider>
   );
 }

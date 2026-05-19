@@ -8,25 +8,49 @@
  */
 
 // ── HeroUI Native (OSS) re-exports ──────────────────────────────────────────
+// Phase 2 batch 1（2026-05-19, audit 后扩展）：
+//   按 .specify/feature-specs/component-audit.md §1.1 P0 列表开放。
+//   未启用项（accordion / alert / checkbox / control-field / input-group /
+//   input-otp / menu / popover / radio-group / select / slider /
+//   spinner / tag-group / text-area）推迟到实际场景出现再加。
 export {
-  Button,
-  Card,
-  Switch,
+  // Foundation
   HeroUINativeProvider,
   cn,
   Surface,
   PressableFeedback,
+  // Buttons
+  Button,
+  CloseButton,
+  LinkButton,
+  // Containers
+  Card,
+  BottomSheet,
+  Dialog,
+  ListGroup,
   // Form fields (compound — Label/Input/Description/FieldError used together)
   TextField,
   Label,
   Input,
   Description,
   FieldError,
+  SearchField,
+  Switch,
+  // Display
+  Avatar,
+  Chip,
+  Separator,
+  Skeleton,
+  SkeletonGroup,
+  // Feedback
+  Toast,
+  // Navigation
+  Tabs,
+  // Scroll utilities (crypto-wallet home pattern — ScrollShadow + LinearGradient)
+  ScrollShadow,
 } from "heroui-native";
 
-// ── HeroUI Native Pro re-exports ────────────────────────────────────────────
-// 待业务实际使用时按需打开（避免不必要的打包体积/peer 警告）：
-// export { NumberField, DatePicker, DateRangePicker, Stepper } from "heroui-native-pro";
+// HeroUI Pro re-exports live in primitives-pro/ (subpath import 强制纪律).
 
 // ── 受主题感知的基础原语 ─────────────────────────────────────────────────────
 export { Text } from "./Text";

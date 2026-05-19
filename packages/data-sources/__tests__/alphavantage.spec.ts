@@ -60,6 +60,8 @@ describe("Alpha Vantage adapter", () => {
     expect(quote.currency).toBe("USD");
     expect(quote.source).toBe("alphavantage");
     expect(quote.asOf).toMatch(/^2026-05-13T/);
+    expect(quote.changePercent).not.toBeNull();
+    expect(quote.changePercent!.equals(new Decimal("0.166"))).toBe(true);
   });
 
   test("uppercases symbol in assetId regardless of input case", async () => {

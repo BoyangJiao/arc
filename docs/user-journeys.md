@@ -9,16 +9,19 @@
 ## 一、阅读说明
 
 **Journey vs Flow**：
+
 - **Journey**（本文件）= 用户一个完整意图的端到端经历
 - **Flow** = Journey 中的具体页面跳转
 
 **优先级标记**：
+
 - 🟢 P0 = 该 Stage 必须跑通（DoD 依赖）
 - 🟡 P1 = 强烈建议
 - 🔵 P2 = 看时间
 - ⚫ P3 = 推迟
 
 **约束（来自 CLAUDE.md）**：
+
 - 涉及金额展示的步骤默认带"仅供参考，可能延迟"角标
 - 任何 journey 都不得出现"建议买入/卖出/应该 ..."等字样
 - 处理金额时底层用 `Decimal`，不得 `number`
@@ -32,6 +35,7 @@
 **触发**：用户第一次打开 Arc
 
 **步骤**：
+
 1. 启动 → 自动重定向到 `/sign-in`
 2. 输入邮箱 → tap "发送登录链接"
 3. 看到提示："请检查邮箱"
@@ -53,6 +57,7 @@
 **前置**：已登录，处于 `/(tabs)/index`
 
 **步骤**：
+
 1. tap 默认 portfolio → 进入 `/portfolio/[id]`
 2. 看到"暂无持仓，添加你的第一笔资产"
 3. tap 右下 FAB → 弹出 Sheet（Stage 1 仅 `手动添加交易` 一项）
@@ -69,6 +74,7 @@
 14. 顶部总市值：`¥12,960.00`（带"仅供参考，可能延迟"角标）
 
 **成功标准**：
+
 - ✅ 总市值数字与实时 Alpha Vantage + exchangerate.host 数据一致
 - ✅ 任何环节使用 Decimal，禁止 number（ESLint 拦）
 - ✅ 关闭 Modal 后列表立即刷新（TanStack Query invalidate）
@@ -82,6 +88,7 @@
 **前置**：处于 `/portfolio/[id]`，看到 `¥12,960.00`
 
 **步骤**：
+
 1. 顶栏左上 tap 头像 → 进入 `/me` 全屏页（左滑入）
 2. tap "设置" → `/me/settings`
 3. 找到"报告货币"，当前 CNY
@@ -92,6 +99,7 @@
 8. 持仓表"市值"列从 `¥` 变为 `$`
 
 **成功标准**：
+
 - ✅ 切换瞬时生效
 - ✅ 数字精确，无浮点误差累积
 - ✅ "单价"列保持 USD 不变（始终显示交易币种），只"市值"列受报告货币影响
@@ -103,12 +111,14 @@
 **触发**：J3 完成后，验证 i18n 全覆盖
 
 **步骤**：
+
 1. `/me/settings` → 语言 → 选英文
 2. 立即应用
 3. 遍历所有 5 个页面 + 1 Modal + Me 全屏页
 4. 验证所有可见文案都是英文，无中文残留，无 `t('xxx.yyy')` 占位
 
 **成功标准**：
+
 - ✅ 全部页面翻译覆盖率 100%
 - ✅ 没有硬编码字符串残留（ESLint 拦）
 
@@ -121,11 +131,13 @@
 **前置**：portfolio detail 已有持仓 + 今日有正/负变动（可手动改 transaction 时间制造）
 
 **步骤**：
+
 1. `/me/settings` → 涨跌色 → 选"红涨绿跌"
 2. 返回 `/portfolio/[id]`
 3. 涨幅数字从绿变红，跌幅从红变绿
 
 **成功标准**：
+
 - ✅ Foundation 层颜色不动（`success` 永远绿、`danger` 永远红）
 - ✅ Business 层映射切换（`gain` → `danger`，`loss` → `success`）
 - ✅ 详见 `docs/adr/003-design-tokens.md` §决策六
@@ -136,19 +148,26 @@
 
 ### J6🟢 — 首登欢迎屏
 
-**触发**：Stage 2 起，新用户首次完成 J1 后
+**触发**：Stage 2 起，新用户首次完成 J1 后（`user_preferences.has_seen_welcome = false`）
 
 **步骤**：
-1. J1 步骤 6 跳转 `/(tabs)/index` 之前 → 优先跳 `/welcome`
-2. 1 屏：30 秒视觉介绍（Arc 是什么 + 3 个核心能力）
-3. 底部一个按钮："添加第一笔资产" → 直接到 `/portfolio/[id]/transactions/new` Modal
-4. 用户也可以 tap 顶部 X 跳过 → 回 `/(tabs)/index`
-5. 无论哪条路径，下次启动**不再展示**（用户 preference `hasSeenWelcome: true`）
+
+1. J1 OTP 验证后 → `_layout` 路由门控：prefs settled 且 `hasSeenWelcome === false` → `/welcome`（非 `/(tabs)`）
+2. 单屏：Hero + 定位文案 + 免责声明「本工具不构成投资建议」
+3. 主 CTA「添加第一笔资产」→ `has_seen_welcome` optimistic 置 true + `router.replace("/(tabs)")`（不预开 FAB / 交易 Modal；用户自行发现 FAB）
+4. 页脚「跳过」→ 同上 flip + 进 `/(tabs)`（无额外引导）
+5. 冷启动：已看过 → 直接 `/(tabs)`；手敲 `/welcome` 且已看过 → 自动 redirect `/(tabs)`（防御）
+6. DB 写入失败（如飞行模式）：仍进 `/(tabs)`；本地 cache optimistic；后台重试；下次启动可能再展示 Welcome（可接受，见 spec AC-4.6）
+
+**DEV**：`welcome:fresh` / `welcome:seen`（App DEV 面板 → Welcome）切换 `has_seen_welcome`；`fresh` 后 **Reload** 验首登路径。
+
+**Stage 5 hook**：`app/welcome.tsx` 保持单文件；多步 carousel 届时可能迁到 `app/(onboarding)/`；`has_seen_welcome` 列与 `_layout` 门控不变。
 
 **成功标准**：
+
 - ✅ 30 秒内能完成
-- ✅ "跳过"和"添加第一笔资产"都不阻塞核心流程
-- ✅ 已看过的用户再也不见
+- ✅「跳过」与「添加第一笔资产」均不阻塞核心流程
+- ✅ 已看过的用户不再见 Welcome
 
 ---
 
@@ -159,6 +178,7 @@
 **前置**：已有持仓、24h 前已写入估值快照
 
 **步骤**：
+
 1. 进入 `/(tabs)/index`
 2. 顶部 Daily Snapshot 卡片显示：
    - 今日总变动金额（如 `¥+352.20`）
@@ -167,6 +187,7 @@
 3. tap 任意资产小卡 → 跳详情（Stage 3 才有，Stage 2 暂时 no-op）
 
 **成功标准**：
+
 - ✅ 数字与"昨日总市值 → 今日总市值"差值一致
 - ✅ 跨午夜后正确滚动（用户时区）
 - ✅ 涨跌色受用户红涨绿跌偏好影响
@@ -178,17 +199,19 @@
 **触发**：用户想关注几个非持仓的标的
 
 **步骤**：
+
 1. tap Markets Tab → `/(tabs)/markets`
 2. 列表为空：引导文案 + "搜索添加自选"按钮
 3. tap → `/markets/search` Modal
 4. 输入 `NVDA` → 列表展示候选
 5. tap NVDA → 加入 Watchlist
-6. Modal 关闭 → Markets Tab 列表多一行：`NVDA — Nvidia — 实时价 + 涨跌幅`
+6. Modal 关闭 → Markets Tab 列表多一行：`NVDA — Nvidia — 最新价 + 涨跌幅`（旁注：仅供参考，可能延迟）
 
 **成功标准**：
+
 - ✅ Watchlist 持久化（关闭 app 再开仍在）
 - ✅ 同一资产不重复添加
-- ✅ 实时价 5s 内刷新
+- ✅ 报价缓存 TTL 5 分钟：Tab 获焦时若缓存未过期则不发起新请求；下拉刷新强制拉新
 
 ---
 
@@ -196,24 +219,29 @@
 
 **触发**：用户想给 portfolio 设置目标配置
 
-**前置**：已有持仓
+**前置**：已有持仓（含可选现金槽 `CASH:USD` / `CASH:CNY` / `CASH:HKD` / `CASH:JPY`，通过 Settings → 现金余额 或 BUY `CASH:*` @ 单价 1.0 登记）
 
 **步骤**：
+
 1. tap Insights Tab → `/(tabs)/insights`
 2. 未设置态：引导 → tap "设置首次目标配置" → `/insights/rebalance/setup` Modal
-3. 列出所有当前持仓资产
-4. 给每个分配目标百分比（拖拽 / 输入）
-5. 必须总和 = 100%（否则不让保存）
+3. 列出所有当前持仓资产（含已持有的 `CASH:*`）
+4. 给每个分配目标百分比（Stage 2 = 数字输入；非拖拽）
+5. 必须总和 = 100% ± 0.01（否则保存按钮 disabled）
 6. 保存 → 回 `/(tabs)/insights`
-7. 看到对比视图：双环图 + 每个资产 +/- 偏差
-8. 偏离 5-10% → `deviation-warning` 色（黄）；>10% → `deviation-critical` 色（红）
-9. tap "生成行动单" → `/insights/rebalance/actions`
-10. 看到 "达到目标配置需要的份额变化为 +5 股 AAPL / -3 股 NVDA"
+7. 看到对比视图：双环图（目标外环 / 当前内环）+ 每资产偏离条
+8. 偏离色阶（固定阈值）：|偏离| ≤ 5% → 中性；5% < |偏离| ≤ 10% → `deviation-warning`（黄）；|偏离| > 10% → `deviation-critical`（红）
+9. tap "查看再平衡行动单" → `/insights/rebalance/actions`
+10. 看到 "份额变化 +5 股 AAPL / -3 股 NVDA" 等（按 |金额| 降序扁平列表，不按买卖分组）
+
+**份额取整（脚注）**：US/CN/HK/FUND → 向下取整至整数股；CRYPTO → 8 位小数；CASH → 2 位小数（JPY 现金 0 位）。
 
 **成功标准**：
-- ✅ 文案铁律：永不出现"建议买入"，只说"达到目标需要"
-- ✅ 行动单数字精确（Decimal）
+
+- ✅ 文案铁律：永不出现"建议买入"，只说"份额变化 / 偏离目标 / 目标配置"
+- ✅ 行动单数字精确（Decimal + 按市场取整）
 - ✅ 偏离度颜色正确（Business token）
+- ✅ 页脚含「仅供参考，不构成投资建议」
 
 ---
 
@@ -222,6 +250,7 @@
 **触发**：用户已经在 Excel 里维护多年记录，想一次导入
 
 **步骤**：
+
 1. Portfolio Tab → tap FAB → Sheet 第 2 项 `导入 CSV`
 2. 进入 `/portfolio/[id]/csv-import`
 3. 下载提供的模板（含字段说明）
@@ -239,11 +268,13 @@
 **意图**：用户想把 A股/港股/美股/基金/crypto 真实持仓全部录入
 
 **关键节点**：
+
 - 资产搜索能识别市场前缀（`CN:600519` / `HK:00700` / `US:AAPL` / `FUND:000001` / `CRYPTO:btc`）
 - 每个市场的 adapter 都已接入（Tushare / Alpha Vantage / 天天基金 / CoinGecko）
 - 多币种汇率链路在所有方向都通
 
 **P0 体验门槛**：
+
 - 同时录入 ≥10 笔交易（覆盖所有 5 个市场）后，portfolio detail 加载 ≤ 2s
 - 任何一个 adapter 失败时，单 row 显示 fallback（"价格暂不可用"），不阻塞其他 row
 
@@ -254,6 +285,7 @@
 **意图**：用户有不同账户（如 401k / 普通券商 / 加密钱包）想分组管理
 
 **步骤**：
+
 1. Portfolio Tab → 滚到列表底部 → tap "+ 新建组合"
 2. 输入组合名（如 `401k`）+ 报告货币
 3. 进入新组合，添加资产
@@ -267,6 +299,7 @@
 **意图**：用户想看不同时间维度的总市值走势
 
 **步骤**：
+
 1. 进入 `/portfolio/[id]`
 2. 顶部图表区域 → 时间段切换：1H / 1D / 1W / 1M / YTD / 1Y / ALL
 3. 持仓表每行显示"今日变动"（金额 + 百分比，gain/loss 色）
@@ -278,6 +311,7 @@
 **意图**：用户想知道自己投资表现，以及哪些资产贡献了大部分收益
 
 **步骤**：
+
 1. 进入 Insights Tab → 收益分析卡片
 2. TWR 总收益率 + 时间区间切换
 3. Performance Attribution 子卡片："AAPL 贡献了你今年 60% 的涨幅；NVDA 贡献了 -15%"
@@ -291,6 +325,7 @@
 **意图**：用户想被提醒"AAPL 跌破 $170"
 
 **步骤**：
+
 1. Markets Tab → tap NVDA → 资产详情 → "添加价格提醒"
 2. 设置 "$170 以下"
 3. Stage 3 触发后：推送通知 + Me / Inbox 子页留一条
@@ -303,6 +338,7 @@
 **意图**：用户在公共场合或截图分享时，一键隐藏所有金额数字
 
 **步骤**：
+
 1. `/me/settings` → 顶部"演示模式"开关
 2. 开启后：所有 `<RedactedNumber>` 渲染 `••••`
 3. 颜色不变（仍 fg-primary / fg-secondary）
@@ -318,6 +354,7 @@
 **意图**：用户从支付宝/同花顺/盈透截图直接生成交易记录
 
 **步骤**：
+
 1. Portfolio Tab → FAB → Sheet "🎯 AI 截图识别导入"
 2. 选择截图（相册或拍照）
 3. AI 解析 → 预览生成的交易列表
@@ -348,6 +385,7 @@
 **意图**：用户在资产详情页问 AI："为什么今天 AAPL 跌了？"
 
 **步骤**：
+
 1. 资产详情顶部"✨ Why is it moving?"卡片
 2. tap → 顶栏 AI 抽屉打开（已携带资产上下文）
 3. AI 流式回答（基于今日新闻 + 财报数据）
@@ -380,20 +418,21 @@
 
 ## 七、Journey 与 Stage DoD 的对应
 
-| Stage | DoD 核心要求 | 对应 Journey |
-|:---|:---|:---|
-| Stage 1 | "录入一笔 AAPL → 看到 CNY 计价" | J1 + J2 + J3 |
-| Stage 1 | "切换语言无未翻译" | J4 |
-| Stage 1 | "切换红涨绿跌" | J5 |
-| Stage 2 | "Daily Snapshot 真实反映今日变动" | J7 |
-| Stage 2 | "Watchlist 持久化" | J8 |
-| Stage 2 | "首次 Rebalance 跑通行动单" | J9 |
-| Stage 2 | "CSV 100 行 <10s" | J10 |
-| Stage 3 | "所有真实持仓录入 + TWR 误差 <1%" | J11 + J14 |
-| Stage 3 | "多组合 + 配置环形图" | J12 + J13 |
-| Stage 4 | "AI 截图识别 ≥90%" | J17 |
-| Stage 4 | "AI 接入 LLM" | J20 |
-| Stage 5 | "App Store 上架 + Pro 首单 + AI 报告稳定" | J21 + J22 + J23 |
+| Stage   | DoD 核心要求                              | 对应 Journey           |
+| :------ | :---------------------------------------- | :--------------------- |
+| Stage 1 | "录入一笔 AAPL → 看到 CNY 计价"           | J1 + J2 + J3           |
+| Stage 1 | "切换语言无未翻译"                        | J4                     |
+| Stage 1 | "切换红涨绿跌"                            | J5                     |
+| Stage 2 | "Daily Snapshot 真实反映今日变动"         | J7 ✅                  |
+| Stage 2 | "Watchlist 持久化"                        | J8 ✅                  |
+| Stage 2 | "首次 Rebalance 跑通行动单"               | J9 ✅                  |
+| Stage 2 | "首登欢迎屏一次性展示"                    | J6 ✅                  |
+| Stage 3 | "CSV 100 行 <10s"                         | J10（自 Stage 2 下放） |
+| Stage 3 | "所有真实持仓录入 + TWR 误差 <1%"         | J11 + J14              |
+| Stage 3 | "多组合 + 配置环形图"                     | J12 + J13              |
+| Stage 4 | "AI 截图识别 ≥90%"                        | J17                    |
+| Stage 4 | "AI 接入 LLM"                             | J20                    |
+| Stage 5 | "App Store 上架 + Pro 首单 + AI 报告稳定" | J21 + J22 + J23        |
 
 ---
 

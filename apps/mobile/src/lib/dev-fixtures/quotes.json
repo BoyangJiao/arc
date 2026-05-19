@@ -4,10 +4,34 @@
     "asOfNote": "All asOf timestamps default to 2026-05-17 if omitted; that's the snapshot date these prices represent."
   },
   "quotes": {
-    "US:AAPL": { "price": "189.50", "currency": "USD", "asOf": "2026-05-17T00:00:00.000Z" },
-    "US:MSFT": { "price": "420.30", "currency": "USD", "asOf": "2026-05-17T00:00:00.000Z" },
-    "US:NVDA": { "price": "875.00", "currency": "USD", "asOf": "2026-05-17T00:00:00.000Z" },
-    "US:HOOD": { "price": "77.00", "currency": "USD", "asOf": "2026-05-17T00:00:00.000Z" }
+    "US:AAPL": {
+      "price": "189.50",
+      "currency": "USD",
+      "asOf": "2026-05-17T00:00:00.000Z",
+      "changePercent": "-0.42"
+    },
+    "US:MSFT": {
+      "price": "420.30",
+      "currency": "USD",
+      "asOf": "2026-05-17T00:00:00.000Z",
+      "changePercent": "1.05"
+    },
+    "US:NVDA": {
+      "price": "875.00",
+      "currency": "USD",
+      "asOf": "2026-05-17T00:00:00.000Z",
+      "changePercent": "3.21"
+    },
+    "US:HOOD": {
+      "price": "77.00",
+      "currency": "USD",
+      "asOf": "2026-05-17T00:00:00.000Z",
+      "changePercent": "0.55"
+    },
+    "CASH:USD": { "price": "1", "currency": "USD", "asOf": "2026-05-17T00:00:00.000Z" },
+    "CASH:CNY": { "price": "1", "currency": "CNY", "asOf": "2026-05-17T00:00:00.000Z" },
+    "CASH:HKD": { "price": "1", "currency": "HKD", "asOf": "2026-05-17T00:00:00.000Z" },
+    "CASH:JPY": { "price": "1", "currency": "JPY", "asOf": "2026-05-17T00:00:00.000Z" }
   },
   "fx": {
     "USD->CNY": { "rate": "7.20", "asOf": "2026-05-17T00:00:00.000Z" },

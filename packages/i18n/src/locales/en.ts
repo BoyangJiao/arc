@@ -32,6 +32,13 @@ export const en = {
     noPortfoliosHint: "Create your first portfolio to start tracking",
     partialQuotes: "Quotes loaded for {{loaded}}/{{total}} holdings",
     partialQuotesMissing: "{{missing}} without a quote — pull to refresh",
+    expandHoldings: "Show holdings",
+    collapseHoldings: "Hide holdings",
+    expandableEmptyHoldings: "No holdings in this portfolio yet",
+  },
+  dailySnapshot: {
+    title: "Today's change",
+    noBaseline: "First time here — daily change starts tracking tomorrow",
   },
   portfolioDetail: {
     totalMarketValue: "Total Market Value",
@@ -80,9 +87,27 @@ export const en = {
     validatingSymbol: "Validating symbol…",
   },
   markets: {
-    title: "Markets",
-    comingSoon: "Watchlist coming in Stage 2",
-    comingSoonHint: "Track your favorite assets and monitor market movements",
+    title: "Watchlist",
+    emptyTitle: "No watchlist items yet",
+    emptyDescription: "Tap the search icon to add a symbol",
+    searchAccessibility: "Search to add watchlist symbol",
+    searchCta: "Search to add",
+    searchTitle: "Add symbol",
+    searchPlaceholder: "Search symbols (e.g. NVDA / AAPL)…",
+    scopeHint: "Stage 2 supports US equities only; more markets coming soon",
+    alreadyInWatchlist: "Already in watchlist",
+    addFailed: "Could not add to watchlist. Please try again.",
+    adding: "Adding…",
+    searchUnavailable: "Search is temporarily unavailable — try again later",
+    remove: "Remove",
+    quoteLoading: "Loading…",
+    priceUnavailable: "—",
+    disclaimer: "For reference only; may be delayed",
+    cancel: "Cancel",
+    quotesRefreshPartialFail:
+      "{{count}} symbol(s) could not refresh — showing last cached prices where available.",
+    quotesRefreshRateLimited:
+      "Quotes are rate-limited — try again shortly. Cached prices may still be shown.",
   },
   insights: {
     title: "Insights",
@@ -110,11 +135,172 @@ export const en = {
       "ON. Pull-to-refresh and new tickers call Alpha Vantage (note: 25/day free quota)",
     useRealMarketDataOffHint:
       "OFF. All quotes come from local dev-fixtures/quotes.json — zero network calls",
+    openDevTools: "Dev tools",
+    openDevToolsHint: "Or use the purple DEV floating button (bottom-right)",
+  },
+  devTools: {
+    title: "Dev tools",
+    subtitle: "Reset and seed data for the signed-in account. Same scenarios as pnpm seed:dev.",
+    pickFeature: "Choose a feature to test",
+    backToFeatures: "← All features",
+    scenarioCount: "{{count}} scenarios",
+    successTitle: "Scenario applied",
+    successBody:
+      "Data written. If the UI looks stale, use ⌘D → Reload, or pull to refresh on the target tab.",
+    viaClientWatchlist: "Watchlist seeded on-device (no Edge Function).",
+    viaClientRebalance: "Rebalance portfolio seeded on-device (no Edge Function).",
+    viaClientWelcome: "Welcome flag toggled on-device (no Edge Function).",
+    goWelcome: "Open Welcome",
+    goInsights: "Open Insights",
+    errorTitle: "Could not apply scenario",
+    goPortfolio: "Open Portfolio",
+    goMarkets: "Open Markets",
+    applied: "Applied",
+    reloadHint: "If numbers look wrong: ⌘D → Dev Menu → Reload.",
+    watchlistRateLimitSimLabel: "Simulate watchlist quote rate limit",
+    watchlistRateLimitSimHint:
+      "When ON, Markets pull-to-refresh fails per-row quotes like throttling (banner). Turn OFF to restore.",
+    features: {
+      dailySnapshot: {
+        label: "Daily Snapshot",
+        description: "Portfolio tab — today’s change card, movers, baseline states",
+      },
+      watchlist: {
+        label: "Watchlist",
+        description: "Markets tab — empty state, quotes, stale refresh (on-device seed)",
+      },
+      rebalance: {
+        label: "Rebalance",
+        description: "Insights tab — targets, deviation tiers, action list (on-device seed)",
+      },
+      welcome: {
+        label: "Welcome",
+        description: "First-launch screen — has_seen_welcome fresh vs seen (on-device seed)",
+      },
+    },
+    fabOpen: "Open dev tools",
+    fabDock: "Dock to screen edge",
+    closePanel: "Close",
+    fabHint: "Tip: drag the purple DEV button on any screen; tap ◂ to dock to the edge.",
+    fabDragHint: "Drag the DEV button to reposition",
+    scenarios: {
+      default: {
+        label: "Daily default",
+        hint: "Full Daily Snapshot card, ~+2%",
+      },
+      bigGain: {
+        label: "Big gain +10%",
+        hint: "Large positive numbers and gain colors",
+      },
+      bigLoss: {
+        label: "Big loss -5%",
+        hint: "Loss colors and negative sign",
+      },
+      mixedMovers: {
+        label: "Mixed movers Top-3",
+        hint: "Sort order + red/green chips; try with color-mode toggle",
+      },
+      firstDay: {
+        label: "First day",
+        hint: "No baseline snapshot — placeholder copy",
+      },
+      empty: {
+        label: "Empty portfolio",
+        hint: "Daily Snapshot card hidden",
+      },
+      wlEmpty: {
+        label: "Watchlist empty",
+        hint: "Markets Tab empty state + search CTA",
+      },
+      wl3Items: {
+        label: "Watchlist 3 items",
+        hint: "AAPL / MSFT / NVDA with quotes",
+      },
+      wlStale: {
+        label: "Watchlist stale quotes",
+        hint: "Stale dot + pull-to-refresh bypasses cache",
+      },
+      rbEmpty: {
+        label: "No targets",
+        hint: "Holdings + cash, zero target_allocations — Insights empty CTA",
+      },
+      rbAligned: {
+        label: "Aligned",
+        hint: "Targets ≈ current mix — all four bars should be <5% (neutral)",
+      },
+      rbMild: {
+        label: "Mild drift",
+        hint: "AAPL ~+7%, MSFT ~-7% (warning bars); pull Insights to refresh after seed",
+      },
+      rbHeavy: {
+        label: "Heavy drift",
+        hint: "NVDA ~+15%, MSFT ~-15% (critical bars); pull Insights to refresh after seed",
+      },
+      welFresh: {
+        label: "Welcome not seen",
+        hint: "has_seen_welcome=false — relaunch app to land on /welcome",
+      },
+      welSeen: {
+        label: "Welcome already seen",
+        hint: "has_seen_welcome=true — relaunch app skips Welcome",
+      },
+    },
   },
   rebalance: {
     title: "Rebalance",
-    deviation: "Deviation from target",
-    sharesNeeded: "Shares needed to reach target allocation",
+    emptyNoHoldingsTitle: "Add holdings first",
+    emptyNoHoldingsHint:
+      "Record your first transaction from the Portfolio tab, then set target allocations here.",
+    emptyTargetsTitle: "Set target allocation to track drift",
+    emptyTargetsDescription:
+      "Define how you want each asset weighted. Totals must equal 100% before saving.",
+    setupFirstCta: "Set initial target allocation",
+    cashBalancesLink: "Record cash balances",
+    viewActionsCta: "View rebalance action list",
+    disclaimer: "For reference only; not investment advice.",
+    setupTitle: "Target allocation",
+    setupIntro: "Assign a target weight to each holding (must total 100%).",
+    sumOk: "Total: {{sum}}% ✓",
+    sumCurrent: "Current total: {{sum}}%",
+    sumShort: "{{delta}}% below 100",
+    sumOver: "{{delta}}% above 100",
+    actionsTitle: "Rebalance action list",
+    amountEstimateLabel: "Approx.",
+    units: {
+      share: "shares",
+      fund: "units",
+    },
+    atTarget: "Already at target",
+    actionPriceHint: "Estimated at today's price {{price}}",
+    cashBalancesTitle: "Cash balances",
+    cashBalancesIntro: "Set cash held in each currency. Amounts are stored as CASH asset holdings.",
+    cashBalancesStageNote:
+      "Stage 2 uses BUY/SELL on CASH:* at price 1.0. Stage 3 will add dedicated cash flow types.",
+    cashCurrent: "Current: {{amount}}",
+    cashInvalidAmount: "Enter a valid non-negative amount",
+    cashSavedTitle: "Cash balances updated",
+    cashSavedBody: "Holdings were adjusted to match your inputs.",
+    cashNames: {
+      USD: "USD cash",
+      CNY: "CNY cash",
+      HKD: "HKD cash",
+      JPY: "JPY cash",
+    },
+    errors: {
+      empty: "Add at least one target row",
+      duplicateAsset: "Duplicate asset: {{assetId}}",
+      percentOutOfRange: "{{assetId}}: percent must be between 0 and 100",
+      sumNot100: "Targets must sum to 100% (currently {{actual}}%)",
+    },
+  },
+  welcome: {
+    title: "Welcome to Arc",
+    body1:
+      "Global asset allocation tracker & rebalance assistant\nTrack assets across platforms and markets in one place",
+    body2: "Target allocation, drift, and rebalance — all with Decimal precision",
+    disclaimer: "Not investment advice",
+    primaryCta: "Add your first asset",
+    skip: "Skip",
   },
   auth: {
     welcomeTitle: "Sign in to Arc",

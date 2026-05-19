@@ -12,3 +12,5 @@ export * from "./user-preferences";
 export * from "./price-snapshots";
 export * from "./fx-rates";
 export * from "./portfolio-value-snapshots";
+export * from "./watchlist-items";
+export * from "./target-allocations";

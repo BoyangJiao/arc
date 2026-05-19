@@ -59,3 +59,6 @@ jobs:
       # add `test` script will be picked up automatically — no workflow edit.
       - name: Test (all workspaces)
         run: pnpm test
+
+      - name: Copy compliance (i18n)
+        run: pnpm lint:copy

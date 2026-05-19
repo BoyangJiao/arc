@@ -64,6 +64,23 @@
 - **禁止业务代码直接消费 Primitive 色阶**（如 `bg-brand-300`）—— 这违反 ADR 003 v3.1 跳级规则
 - 涨跌色必须经过 `useBusinessTokens()` hook，支持「红涨绿跌」切换
 
+### Accessibility (a11y)
+
+- 颜色 contrast 必须 ≥ WCAG AA（normal text 4.5:1，large text 3:1）
+- 触控目标 ≥ 44×44 pt
+- 所有交互元素必须有 `accessibilityLabel`（或等价的可见文本）
+- `Button` / `Pressable` 必须有 `accessibilityRole`
+
+### Accent discipline (ADR 008)
+
+**实色 accent**（`text-accent` / `bg-accent` / `border-accent`，**不**含 `*-soft` 变体）**仅允许**用于：
+
+1. `Button variant="primary"` 主行动按钮填充
+2. Focus ring（即 `--focus` token）
+3. Brand 标识（logo / splash / 品牌图形）
+
+**禁止**用于：列表/设置项值文本、Header/nav icon、Tab bar active 指示器、Toast/Banner/Badge/Chip 背景、Gain/loss 数字徽章、DEV/debug 工具。改用 `*-soft` 软底或中性 token。详见 CLAUDE.md §六、ADR 008、[packages/ui/DESIGN-TOKENS.md](../packages/ui/DESIGN-TOKENS.md)。
+
 ### i18n
 
 - **任何 UI 文案严禁硬编码在组件内**

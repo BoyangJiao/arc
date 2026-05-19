@@ -3,6 +3,7 @@
 > **文档定位**：作为 MVP 搭建的 high-level 指导方针。每个阶段标注推荐模型与 Skills，便于在不同模型间切换协作。
 >
 > **配套文档**：
+>
 > - `docs/project-background.md` — 项目背景与战略（Why）
 > - `docs/preflight-checklist.md` — 启动前要准备的账号/资源清单
 > - `docs/legal-risk-map.md` — 准律师初步法律风险地图
@@ -10,6 +11,7 @@
 ---
 
 ## 目录
+
 1. [全局原则](#一全局原则)
 2. [技术栈定稿](#二技术栈定稿)
 3. [Monorepo 结构](#三monorepo-结构)
@@ -55,28 +57,28 @@
 
 ## 二、技术栈定稿
 
-| 层 | 选型 | 理由 |
-|:---|:---|:---|
-| **跨端框架** | Expo SDK 53+ + Expo Router | 单代码库出 iOS/Android/Web，原生模块生态成熟 |
-| **语言** | TypeScript（strict） | 金融领域类型安全是底线 |
-| **样式** | NativeWind v4 + Tailwind | 与 HeroUI 同源，跨端一致 |
-| **UI 组件** | HeroUI Pro（已购）+ 自建 finance/charts | 见 §四 |
-| **状态管理** | Zustand + TanStack Query | 轻量；服务端状态走 TanStack Query 缓存 |
-| **表单** | React Hook Form + Zod | 与数据模型 schema 统一 |
-| **导航** | Expo Router（file-based） | 与 Next.js 心智一致 |
-| **后端** | Supabase（PostgreSQL + Auth + Storage） | BaaS，免运维；Row Level Security 适合个人金融数据 |
-| **ORM** | Drizzle ORM | Serverless 友好；schema 即 TS 类型 |
-| **API 风格** | Supabase RPC + 必要时 Edge Functions | MVP 不上 tRPC（Expo 生态对 tRPC 兼容仍有摩擦），V1.0 可评估 |
-| **图表** | Web: Recharts；RN: Victory Native（基于 Skia） | 一层 ChartProps 抽象统一 API |
-| **i18n** | i18next + react-i18next | 双语 day1，文案分离 |
-| **日期/时区** | date-fns + date-fns-tz | 多市场时区必需 |
-| **金额计算** | decimal.js（或 dinero.js） | **绝不能用 number**；浮点误差在金融场景不可接受 |
-| **本地存储** | MMKV（RN）/ IndexedDB（Web） | 离线优先 + 加密键值 |
-| **错误监控** | Sentry（免费层） | RN + Web 通用 |
-| **分析** | PostHog（免费层，self-hostable 备选） | 隐私友好，可自托管 |
-| **CI** | GitHub Actions | 免费额度足够 MVP |
-| **构建** | EAS Build（Mobile）+ Vercel（Web） | 零运维 |
-| **AI**（V1.0+） | Claude API（直接）+ 简单 RAG | `claude-api` skill 加速接入 |
+| 层              | 选型                                           | 理由                                                        |
+| :-------------- | :--------------------------------------------- | :---------------------------------------------------------- |
+| **跨端框架**    | Expo SDK 53+ + Expo Router                     | 单代码库出 iOS/Android/Web，原生模块生态成熟                |
+| **语言**        | TypeScript（strict）                           | 金融领域类型安全是底线                                      |
+| **样式**        | NativeWind v4 + Tailwind                       | 与 HeroUI 同源，跨端一致                                    |
+| **UI 组件**     | HeroUI Pro（已购）+ 自建 finance/charts        | 见 §四                                                      |
+| **状态管理**    | Zustand + TanStack Query                       | 轻量；服务端状态走 TanStack Query 缓存                      |
+| **表单**        | React Hook Form + Zod                          | 与数据模型 schema 统一                                      |
+| **导航**        | Expo Router（file-based）                      | 与 Next.js 心智一致                                         |
+| **后端**        | Supabase（PostgreSQL + Auth + Storage）        | BaaS，免运维；Row Level Security 适合个人金融数据           |
+| **ORM**         | Drizzle ORM                                    | Serverless 友好；schema 即 TS 类型                          |
+| **API 风格**    | Supabase RPC + 必要时 Edge Functions           | MVP 不上 tRPC（Expo 生态对 tRPC 兼容仍有摩擦），V1.0 可评估 |
+| **图表**        | Web: Recharts；RN: Victory Native（基于 Skia） | 一层 ChartProps 抽象统一 API                                |
+| **i18n**        | i18next + react-i18next                        | 双语 day1，文案分离                                         |
+| **日期/时区**   | date-fns + date-fns-tz                         | 多市场时区必需                                              |
+| **金额计算**    | decimal.js（或 dinero.js）                     | **绝不能用 number**；浮点误差在金融场景不可接受             |
+| **本地存储**    | MMKV（RN）/ IndexedDB（Web）                   | 离线优先 + 加密键值                                         |
+| **错误监控**    | Sentry（免费层）                               | RN + Web 通用                                               |
+| **分析**        | PostHog（免费层，self-hostable 备选）          | 隐私友好，可自托管                                          |
+| **CI**          | GitHub Actions                                 | 免费额度足够 MVP                                            |
+| **构建**        | EAS Build（Mobile）+ Vercel（Web）             | 零运维                                                      |
+| **AI**（V1.0+） | Claude API（直接）+ 简单 RAG                   | `claude-api` skill 加速接入                                 |
 
 > ⚠️ **明确不选**：Next.js（Expo Web 已够）、tRPC（MVP 不引入）、Redux（过度工程）、styled-components（与 NativeWind 重复）。
 
@@ -144,13 +146,13 @@ packages/ui/
 
 ### 4.2 各层职责
 
-| 层 | 内容举例 | 是否依赖 HeroUI |
-|:---|:---|:---:|
-| **primitives/** | Button, Input, Modal, Tabs, Select, Switch, Tooltip, Dropdown | ✅ 是（re-export） |
-| **blocks/** | DashboardLayout, AuthForm, SettingsPanel | ✅ 是（基于 Pro 源码） |
-| **finance/** | PriceCell, PnLBadge, AllocationDonut, MaskedNumber, AssetRow, GainLossArrow, CurrencyAmount | ❌ 否（纯自建） |
-| **charts/** | LineChart, AreaChart, DonutChart, TreeMap, CandlestickChart | ❌ 否（Recharts/Victory Native 直接用） |
-| **tokens/** | foundation 扩展 (info / skeleton / *-pressed)、business.ts（含红涨绿跌切换）、useBusinessTokens hook | ❌ 否（纯常量 + Context） |
+| 层              | 内容举例                                                                                              |             是否依赖 HeroUI             |
+| :-------------- | :---------------------------------------------------------------------------------------------------- | :-------------------------------------: |
+| **primitives/** | Button, Input, Modal, Tabs, Select, Switch, Tooltip, Dropdown                                         |           ✅ 是（re-export）            |
+| **blocks/**     | DashboardLayout, AuthForm, SettingsPanel                                                              |         ✅ 是（基于 Pro 源码）          |
+| **finance/**    | PriceCell, PnLBadge, AllocationDonut, MaskedNumber, AssetRow, GainLossArrow, CurrencyAmount           |             ❌ 否（纯自建）             |
+| **charts/**     | LineChart, AreaChart, DonutChart, TreeMap, CandlestickChart                                           | ❌ 否（Recharts/Victory Native 直接用） |
+| **tokens/**     | foundation 扩展 (info / skeleton / \*-pressed)、business.ts（含红涨绿跌切换）、useBusinessTokens hook |        ❌ 否（纯常量 + Context）        |
 
 ### 4.3 Token 系统设计
 
@@ -167,11 +169,11 @@ packages/ui/
 export const useBusinessTokens = () => {
   const { financeColorMode } = useUserPreferences();
   return {
-    gain: financeColorMode === 'redUpGreenDown' ? 'danger' : 'success',
-    loss: financeColorMode === 'redUpGreenDown' ? 'success' : 'danger',
-    pnlNeutral: 'muted',
-    deviationWarning: 'warning-soft',
-    deviationCritical: 'danger-soft',
+    gain: financeColorMode === "redUpGreenDown" ? "danger" : "success",
+    loss: financeColorMode === "redUpGreenDown" ? "success" : "danger",
+    pnlNeutral: "muted",
+    deviationWarning: "warning-soft",
+    deviationCritical: "danger-soft",
   };
 };
 ```
@@ -187,6 +189,7 @@ export const useBusinessTokens = () => {
 ### 4.5 切换 HeroUI 的退出成本
 
 如果未来想换库（极小概率，但要预案）：
+
 1. 保持 `primitives/` 接口不变
 2. 重写 `primitives/Button.tsx` 内部实现指向新库
 3. 业务代码零改动
@@ -323,15 +326,15 @@ fx_rate (
 
 ### 6.1 行情数据源对比
 
-| 资产 | 推荐方案 | 价格 | 限额 | 合规性 | MVP 优先级 |
-|:---|:---|:---|:---|:---|:---:|
-| **A 股 / 港股** | Tushare Pro | ¥200-2000/年（按等级） | 接口分钟级限制 | ✅ 合规付费 | P0 |
-| **A 股 / 港股**（备选） | 聚宽 JoinQuant 数据 | ¥几百/年 | 类似 | ✅ | 备选 |
-| **公募基金净值** | 天天基金公开 JSON 端点 | 免费 | 自律 | ⚠️ 灰色（爬取，但被广泛使用） | P0 |
-| **公募基金净值**（更稳） | Tushare Pro 基金接口 | 已含 | 同上 | ✅ | P1 升级 |
-| **美股 / ETF** | Alpha Vantage（免费层 25 calls/day）→ Polygon.io（$29/月） | 免费起步 | 充足 MVP | ✅ | P0 |
-| **加密货币** | CoinGecko 公共 API | 免费 | 30 calls/min | ✅ | P0 |
-| **汇率** | exchangerate.host（免费）/ OpenExchangeRates（$12/月） | 免费起步 | 当日 + 历史 | ✅ | P0 |
+| 资产                     | 推荐方案                                                   | 价格                   | 限额           | 合规性                        | MVP 优先级 |
+| :----------------------- | :--------------------------------------------------------- | :--------------------- | :------------- | :---------------------------- | :--------: |
+| **A 股 / 港股**          | Tushare Pro                                                | ¥200-2000/年（按等级） | 接口分钟级限制 | ✅ 合规付费                   |     P0     |
+| **A 股 / 港股**（备选）  | 聚宽 JoinQuant 数据                                        | ¥几百/年               | 类似           | ✅                            |    备选    |
+| **公募基金净值**         | 天天基金公开 JSON 端点                                     | 免费                   | 自律           | ⚠️ 灰色（爬取，但被广泛使用） |     P0     |
+| **公募基金净值**（更稳） | Tushare Pro 基金接口                                       | 已含                   | 同上           | ✅                            |  P1 升级   |
+| **美股 / ETF**           | Alpha Vantage（免费层 25 calls/day）→ Polygon.io（$29/月） | 免费起步               | 充足 MVP       | ✅                            |     P0     |
+| **加密货币**             | CoinGecko 公共 API                                         | 免费                   | 30 calls/min   | ✅                            |     P0     |
+| **汇率**                 | exchangerate.host（免费）/ OpenExchangeRates（$12/月）     | 免费起步               | 当日 + 历史    | ✅                            |     P0     |
 
 ### 6.2 Adapter 接口设计
 
@@ -365,17 +368,17 @@ export interface FxAdapter {
 
 ### 6.4 成本预估（MVP 阶段）
 
-| 项 | 月成本 | 备注 |
-|:---|:---|:---|
+| 项                 | 月成本                | 备注               |
+| :----------------- | :-------------------- | :----------------- |
 | Tushare Pro 入门档 | ≈ ¥17/月（年付 ¥200） | A 股 + 港股 + 基金 |
-| Alpha Vantage | $0 | 免费层 MVP 够用 |
-| CoinGecko | $0 | 免费 |
-| exchangerate.host | $0 | 免费 |
-| Supabase | $0 | 免费层 |
-| Vercel | $0 | 免费层 |
-| EAS Build | $0 | 免费 30 builds/月 |
-| Sentry / PostHog | $0 | 免费层 |
-| **合计** | **< ¥30/月** | |
+| Alpha Vantage      | $0                    | 免费层 MVP 够用    |
+| CoinGecko          | $0                    | 免费               |
+| exchangerate.host  | $0                    | 免费               |
+| Supabase           | $0                    | 免费层             |
+| Vercel             | $0                    | 免费层             |
+| EAS Build          | $0                    | 免费 30 builds/月  |
+| Sentry / PostHog   | $0                    | 免费层             |
+| **合计**           | **< ¥30/月**          |                    |
 
 > Apple Developer ($99/年) 和域名 (¥80/年) 是一次性开销，记入 preflight checklist。
 
@@ -388,6 +391,7 @@ export interface FxAdapter {
 **目标**：把所有「不写代码也能做」的事做完，让 Stage 1 真正只剩写代码。
 
 **任务清单**：
+
 - [ ] 完成 `docs/preflight-checklist.md` 所有 ☐ 项
 - [ ] 注册并配置：GitHub、Apple Developer、Supabase、Vercel、Tushare、Sentry、PostHog
 - [ ] 确定产品名（建议：3-5 候选 → 域名查询 → App Store 重名查询 → 国内商标初查）
@@ -399,10 +403,12 @@ export interface FxAdapter {
 **Definition of Done**：所有账号可登、Figma 关键页完成、产品名定下来、preflight checklist 100% 勾完。
 
 **推荐模型**：
+
 - 决策类问题（产品名、设计取舍）→ **Opus**（深度推理）
 - 调研工具与厂商 → **Sonnet**（快速 + 联网检索）
 
 **推荐 Skills**：
+
 - `init` —— 初始化 CLAUDE.md（标记产品边界文案铁律，让所有后续模型都遵守）
 - `update-config` —— 配 hook、配权限白名单
 - `fewer-permission-prompts` —— 减少日后的 permission 弹窗
@@ -414,6 +420,7 @@ export interface FxAdapter {
 **目标**：3 Tab 骨架 + 「创建组合 → 手动加一笔 AAPL → 看到 CNY 市值」端到端最小闭环。**Markets / Insights Tab 是空态**，把骨架立起来。
 
 **任务清单**：
+
 - [ ] Monorepo 初始化（已完成）+ HeroUI Pro / Native 集成（已完成）
 - [ ] `packages/ui/src/tokens/` 落地：Foundation 扩展（info / skeleton / pressed）+ Semantic 12 + Business 5 + `useBusinessTokens` hook（见 ADR 003）
 - [ ] Supabase 项目 + Drizzle schema 核心表（asset / portfolio / holding / transaction / fx_rate / price_snapshot / user_preferences）
@@ -433,6 +440,7 @@ export interface FxAdapter {
 - [ ] 部署：Vercel 上 web 版可访问；EAS preview build 可装
 
 **Definition of Done**（对应 user-journeys J1-J5）：
+
 - ✅ 用 Web 版录入一笔 AAPL → 看到 CNY 市值
 - ✅ 切换报告货币 CNY ↔ USD → 数字精确
 - ✅ 切换语言 zh ↔ en → 全 5 个页面 + 1 Modal 无残留
@@ -440,6 +448,7 @@ export interface FxAdapter {
 - ✅ TestFlight build 在手机上能开
 
 **推荐模型**：
+
 - **Opus**：架构搭建（tokens、adapter 接口）— 一次定型
 - **Sonnet**：页面、表单、组件实现 — 主力
 - **Haiku**：补丁、文档 typo、依赖升级
@@ -447,6 +456,7 @@ export interface FxAdapter {
 **推荐 Skills**：`simplify`（第三周末清一次）、`session-start-hook`、`design-snapshot`（按需 opt-in）
 
 **风险提示**：
+
 - ⚠️ 不要把 i18n 推迟到后期
 - ⚠️ 不要用 `number` 存金额
 - ⚠️ Markets / Insights 空态文案要克制（不承诺 ETA），只说"coming soon"
@@ -457,11 +467,13 @@ export interface FxAdapter {
 
 **目标**：消除 Stage 1 的空态；首登有欢迎；用户每天有打开 app 的理由（Daily Snapshot）；再平衡跑通。
 
+**优先级顺序（2026-05-18 调整）**：Daily Snapshot → Watchlist → Rebalance → Welcome。CSV 导入下放到 **Stage 3 末** —— 涉及外部 CSV 材料的导入/验收成本高，且自用前期投资标的少，没有强需求。
+
 **任务清单**：
-- [ ] **Daily Snapshot 卡片**（Portfolio Tab 顶部）：今日 ¥+352 / +1.2% + 涨跌前 3
-  - [ ] 24h 前估值快照表（`portfolio_value_snapshot`）
-  - [ ] 凌晨 cron 写快照（Supabase Edge Function）
-- [ ] **CSV 导入**（FAB Sheet 第 2 项）：固定模板，预览 → 字段映射 → 确认
+
+- [x] **Daily Snapshot 卡片**（Portfolio Tab 顶部）：今日 ¥+352 / +1.2% + 涨跌前 3
+  - [x] 24h 前估值快照表（`portfolio_value_snapshot`）
+  - [x] 凌晨 cron 写快照（Supabase Edge Function + GitHub Actions, 23:00 UTC, ADR 009）
 - [ ] **Markets Tab Watchlist**（轻量版）：
   - [ ] `/(tabs)/markets` 列表（自选 + 实时价 + 涨跌幅）
   - [ ] `/markets/search` 搜索 Modal（Alpha Vantage）
@@ -473,17 +485,19 @@ export interface FxAdapter {
   - [ ] `target_allocation` 表
   - [ ] `computeRebalance` 实现（含偏离度阈值、行动单生成）
 - [ ] **首登欢迎屏** `/welcome`：1 屏（30 秒视觉介绍 + "添加第一笔资产"按钮），首次登录后展示一次
+- ~~CSV 导入~~ → 移至 Stage 3 末（见 §Stage 3 P2 — 自用低优先级 + 外部材料验收成本高）
 
 **Definition of Done**：
+
 - ✅ Daily Snapshot 反映真实今日变动
-- ✅ CSV 导入 100 行 < 10s
 - ✅ 用 Watchlist 加 3 个自选 → 实时刷新涨跌
 - ✅ Rebalance 设置 60% AAPL / 40% 现金 → 实测偏离 → 行动单数字正确
 - ✅ 首登欢迎屏 30 秒内能完成 → 进入 Portfolio Tab
 
 **推荐模型**：
+
 - **Opus**：rebalance 引擎（偏离度算法 / 行动单生成）
-- **Sonnet**：Daily Snapshot UI、CSV 解析、Watchlist 列表
+- **Sonnet**：Daily Snapshot UI、Watchlist 列表
 - **Haiku**：文案打磨、空态升级、欢迎屏文案
 
 **推荐 Skills**：`simplify`、`review`（rebalance 模块必跑）、`design-snapshot`（每个 Tab 完成后 opt-in 出一次稿）
@@ -497,6 +511,7 @@ export interface FxAdapter {
 **功能清单（按优先级）**：
 
 **P0（必须有）**：
+
 - [ ] A 股 / 港股数据源接入（Tushare Pro）
 - [ ] 基金净值接入（天天基金 + Tushare 备份）
 - [ ] CoinGecko 加密货币
@@ -507,11 +522,13 @@ export interface FxAdapter {
 - [ ] 多时间段图表（1H/1D/1W/1M/YTD/1Y/ALL）
 - [ ] 今日变动指标（持仓行级别）
 - [ ] CSV 导出（备份；Me 入口）
+- [ ] **CSV 导入**（FAB Sheet 第 2 项；从 Stage 2 下放，2026-05-18 决定）：固定模板，预览 → 字段映射 → 确认；100 行 < 10s。**放在 Stage 3 末尾做**——外部材料导入/验收复杂，且自用阶段标的少不强需。
 - [ ] 顶栏右上 **AI 图标点亮**（占位 + 预设 Q&A，不接 LLM）
 - [ ] **Me / Inbox 子页**（价格提醒触发记录，Revolut 范式）
 - [ ] **订阅体系**（Free / Pro / Pro+ 三档）
 
 **P1（强烈建议有）**：
+
 - [ ] TWR 收益率计算 + 时间区间切换
 - [ ] 价格异动提醒（推送 + 邮件）→ 落到 Inbox
 - [ ] 数字脱敏开关（`<RedactedNumber>` 组件，见 ADR 003）
@@ -521,21 +538,25 @@ export interface FxAdapter {
 - [ ] 离线本地存储（MMKV）+ 上线时同步
 
 **P2（看时间）**：
+
 - [ ] 多账户标签（券商/钱包标签，仅展示，不接 API）
 - [ ] 历史净值导出 PDF
 - [ ] 全局搜索 affordance（顶栏左头像旁）
 
 **Definition of Done**：
+
 - ✅ 你的所有真实持仓全录入，组合视图准确反映你的实际净资产
 - ✅ 自用 ≥4 周，期间至少修复 3 个自己发现的 bug
 - ✅ TWR 数字与雪球/同花顺误差 < 1%（抽 3 个标的验证）
 
 **推荐模型**：
+
 - **Opus**：TWR / Performance Attribution / Drawdown 算法
 - **Sonnet**：页面、表单、CSV 解析、状态管理 — 主力（≈ 70% 时间）
 - **Haiku**：文案微调、a11y 修复、依赖升级
 
 **推荐 Skills**：
+
 - `simplify` — 每完成一个大功能跑一次
 - `security-review` — Stage 3 末期跑一次（金融数据敏感）
 - `claude-api` — 如果提前接入 AI，用这个 skill 保证 prompt caching 默认启用
@@ -550,6 +571,7 @@ export interface FxAdapter {
 **目标**：5-15 个种子用户使用，收集反馈，修最严重 bug，验证「自己用得爽 ≠ 别人也觉得爽」。同时完成"连接 + 协作"扩展。
 
 **任务清单**：
+
 - [ ] 招募 5-15 个种子用户（朋友、即刻、小红书私信）
 - [ ] 用户反馈渠道：飞书/Notion/简单 Typeform
 - [ ] 用户引导：种子用户用 Stage 2 的欢迎屏即可，**完整 onboarding 推到 Stage 5**
@@ -559,6 +581,7 @@ export interface FxAdapter {
 - [ ] 隐私协议 + 用户协议（generator 起初稿）
 
 **功能扩展（与 Stage 3 P0 平行可以做的）**：
+
 - [ ] 🎯 **AI 截图识别导入**（支付宝/同花顺/盈透截图）— Stage 4 P0 差异化亮点（IA v2.2 §六 Stage 4）
 - [ ] 连接管理 UI（券商/交易所/钱包，只读，进 FAB Sheet）
 - [ ] 家庭协作（共享组合 / 权限）
@@ -568,12 +591,14 @@ export interface FxAdapter {
 - [ ] 数据隐私（本地 / 云同步）+ 推送通知配置（Me 子页）
 
 **反馈分级**：
+
 - P0 数据错误 → 24h 内修
 - P1 严重体验问题 → 1 周内修
 - P2 nice-to-have → 进 backlog
 - P3 个别诉求 → 多数延期
 
 **Definition of Done**：
+
 - ✅ ≥10 个用户使用 ≥4 周
 - ✅ 留存：≥5 用户每周打开 ≥2 次
 - ✅ 净推荐意愿：明确 ≥3 用户说"会推荐给朋友"
@@ -581,11 +606,13 @@ export interface FxAdapter {
 - ✅ AI 截图识别导入对至少 3 种主流截图（支付宝 / 同花顺 / 盈透）准确率 ≥90%
 
 **推荐模型**：
+
 - **Sonnet**：bug 修复主力
 - **Haiku**：小修小补（文案、UI 偏移、单测补充）
 - **Opus**：判断题（"这个反馈是改架构还是改实现"）+ AI 截图识别 prompt 设计
 
 **推荐 Skills**：
+
 - `review` — 每个 PR 跑一次
 - `security-review` — 进入 Stage 5 前再跑一次
 - `claude-api` — AI 接入时强制使用，保证 prompt caching 默认启用
@@ -598,6 +625,7 @@ export interface FxAdapter {
 **目标**：App Store + 国内安卓上架、订阅系统上线、官网。
 
 **任务清单**：
+
 - [ ] **合规**：
   - [ ] 注册公司主体（如确认推进）
   - [ ] ICP 备案（30-60 天）
@@ -625,6 +653,7 @@ export interface FxAdapter {
 - [ ] **完整 onboarding**（多步引导）：3-5 屏首次教学
 
 **Definition of Done**：
+
 - ✅ App Store 上架成功
 - ✅ 至少 1 家国内安卓商店上架成功
 - ✅ Pro 订阅完成首单（自己买也算）
@@ -632,11 +661,13 @@ export interface FxAdapter {
 - ✅ AI 组合体检报告稳定运行 ≥1 周
 
 **推荐模型**：
+
 - **Opus**：合规审查、AI prompt 设计、订阅状态机
 - **Sonnet**：应用商店素材、订阅 UI、官网
 - **Haiku**：备案材料整理、文案润色
 
 **推荐 Skills**：
+
 - `claude-api` —— 接入 AI 时强制使用，确保 caching 默认开
 - `security-review` —— 上架前必跑
 - `review` —— 任何接入支付/订阅的 PR 必跑
@@ -649,26 +680,27 @@ export interface FxAdapter {
 
 ### 8.1 横向能力速查表
 
-| 任务类型 | 首选 | 备选 | 不推荐 |
-|:---|:---|:---|:---|
-| 架构决策 / ADR 起草 | **Opus** | Sonnet | Haiku |
-| 数据模型设计 | **Opus** | Sonnet | Haiku |
-| 算法实现（TWR / 再平衡 / FX 链） | **Opus** | Sonnet | — |
-| React Native 页面实现 | **Sonnet** | Opus | Haiku |
-| 表单 / 验证 / CRUD | **Sonnet** | Haiku | — |
-| CSV 解析 / 数据迁移脚本 | **Sonnet** | Haiku | — |
-| Bug 修复（已诊断） | **Sonnet** | Haiku | — |
-| Bug 诊断（复杂） | **Opus** | Sonnet | Haiku |
-| UI 微调 / 文案 / a11y | **Haiku** | Sonnet | — |
-| 依赖升级 / typo / lint 修复 | **Haiku** | Sonnet | — |
-| 文档编写 | Sonnet | Haiku | Opus（成本不值） |
-| Prompt engineering（AI 模块） | **Opus** | Sonnet | Haiku |
-| 合规 / 法律风险审查 | **Opus** | Sonnet | Haiku |
-| 安全 review | **Opus** | Sonnet | Haiku |
+| 任务类型                         | 首选       | 备选   | 不推荐           |
+| :------------------------------- | :--------- | :----- | :--------------- |
+| 架构决策 / ADR 起草              | **Opus**   | Sonnet | Haiku            |
+| 数据模型设计                     | **Opus**   | Sonnet | Haiku            |
+| 算法实现（TWR / 再平衡 / FX 链） | **Opus**   | Sonnet | —                |
+| React Native 页面实现            | **Sonnet** | Opus   | Haiku            |
+| 表单 / 验证 / CRUD               | **Sonnet** | Haiku  | —                |
+| CSV 解析 / 数据迁移脚本          | **Sonnet** | Haiku  | —                |
+| Bug 修复（已诊断）               | **Sonnet** | Haiku  | —                |
+| Bug 诊断（复杂）                 | **Opus**   | Sonnet | Haiku            |
+| UI 微调 / 文案 / a11y            | **Haiku**  | Sonnet | —                |
+| 依赖升级 / typo / lint 修复      | **Haiku**  | Sonnet | —                |
+| 文档编写                         | Sonnet     | Haiku  | Opus（成本不值） |
+| Prompt engineering（AI 模块）    | **Opus**   | Sonnet | Haiku            |
+| 合规 / 法律风险审查              | **Opus**   | Sonnet | Haiku            |
+| 安全 review                      | **Opus**   | Sonnet | Haiku            |
 
 ### 8.2 切换模型的交接物（务必准备）
 
 切到新模型时，让它读：
+
 1. `CLAUDE.md`（项目根，由 `init` skill 维护）
 2. `docs/project-background.md`
 3. `docs/development-plan.md`（本文件）
@@ -688,21 +720,22 @@ export interface FxAdapter {
 
 ## 九、Skill 应用时机
 
-| Skill | 何时用 | 用在哪个 Stage |
-|:---|:---|:---:|
-| `init` | 项目初始化第一次 + 每次重大架构变更后更新 | Stage 0 / Stage 1 |
-| `update-config` | 配置 hooks（如 SessionStart 自动 install）、permission 白名单 | Stage 0 |
-| `fewer-permission-prompts` | Stage 1 末期跑一次，减少日常摩擦 | Stage 1 |
-| `session-start-hook` | Web sessions 自动准备测试/lint 环境 | Stage 1 |
-| `simplify` | 每完成一个大功能模块（再平衡引擎、CSV 导入...） | Stage 2 / Stage 3 / Stage 4 |
-| `review` | 任何涉及金融计算或支付的代码 | Stage 2+ |
-| `security-review` | Stage 3 末、Stage 5 上架前 | Stage 3 / Stage 5 |
-| `claude-api` | 接入 LLM 的任意时刻；保证 prompt caching 默认开 | Stage 4 / Stage 5 |
-| `loop` | 监控 CI、轮询 App Store 审核状态 | Stage 5 |
-| `design-snapshot` | 完整 journey 闭环或较大布局调整后 opt-in 出稿 | 任意 Stage（用户主导触发）|
-| `keybindings-help` | 个人偏好；想自定义 Claude Code 快捷键时 | 任何阶段 |
+| Skill                      | 何时用                                                        |       用在哪个 Stage        |
+| :------------------------- | :------------------------------------------------------------ | :-------------------------: |
+| `init`                     | 项目初始化第一次 + 每次重大架构变更后更新                     |      Stage 0 / Stage 1      |
+| `update-config`            | 配置 hooks（如 SessionStart 自动 install）、permission 白名单 |           Stage 0           |
+| `fewer-permission-prompts` | Stage 1 末期跑一次，减少日常摩擦                              |           Stage 1           |
+| `session-start-hook`       | Web sessions 自动准备测试/lint 环境                           |           Stage 1           |
+| `simplify`                 | 每完成一个大功能模块（再平衡引擎、CSV 导入...）               | Stage 2 / Stage 3 / Stage 4 |
+| `review`                   | 任何涉及金融计算或支付的代码                                  |          Stage 2+           |
+| `security-review`          | Stage 3 末、Stage 5 上架前                                    |      Stage 3 / Stage 5      |
+| `claude-api`               | 接入 LLM 的任意时刻；保证 prompt caching 默认开               |      Stage 4 / Stage 5      |
+| `loop`                     | 监控 CI、轮询 App Store 审核状态                              |           Stage 5           |
+| `design-snapshot`          | 完整 journey 闭环或较大布局调整后 opt-in 出稿                 | 任意 Stage（用户主导触发）  |
+| `keybindings-help`         | 个人偏好；想自定义 Claude Code 快捷键时                       |          任何阶段           |
 
 ---
+
 | UI 微调 / 文案 / a11y | **Haiku** | Sonnet | — |
 | 依赖升级 / typo / lint 修复 | **Haiku** | Sonnet | — |
 | 文档编写 | Sonnet | Haiku | Opus（成本不值） |
@@ -710,28 +743,27 @@ export interface FxAdapter {
 | 合规 / 法律风险审查 | **Opus** | Sonnet | Haiku |
 | 安全 review | **Opus** | Sonnet | Haiku |
 
-
 ## 十、测试策略
 
 > 金融场景对正确性要求高，但兼职开发不可能 100% 覆盖。下面是**性价比最高**的测试投入。
 
 ### 10.1 必测（property-based 优先）
 
-| 模块 | 测试方式 | 工具 |
-|:---|:---|:---|
-| **金额计算（add/sub/mul/div）** | property-based：交换律、结合律、零元 | fast-check |
-| **TWR / 累计收益率** | 黄金样例：手算 5 个场景 + 雪球对账 | vitest |
-| **再平衡算法** | 边界：现金为 0、单一资产 100%、目标 = 当前 | vitest |
-| **汇率链** | A→B→C 应等于 A→C；历史汇率不能用今天 | vitest |
-| **CSV parser** | 各种异常格式的鲁棒性 | vitest |
+| 模块                            | 测试方式                                   | 工具       |
+| :------------------------------ | :----------------------------------------- | :--------- |
+| **金额计算（add/sub/mul/div）** | property-based：交换律、结合律、零元       | fast-check |
+| **TWR / 累计收益率**            | 黄金样例：手算 5 个场景 + 雪球对账         | vitest     |
+| **再平衡算法**                  | 边界：现金为 0、单一资产 100%、目标 = 当前 | vitest     |
+| **汇率链**                      | A→B→C 应等于 A→C；历史汇率不能用今天       | vitest     |
+| **CSV parser**                  | 各种异常格式的鲁棒性                       | vitest     |
 
 ### 10.2 该测但 MVP 可省
 
-| 模块 | 推迟到 |
-|:---|:---|
+| 模块                           | 推迟到     |
+| :----------------------------- | :--------- |
 | 端到端 E2E（Detox/Playwright） | Stage 4 末 |
-| 视觉回归 | Stage 5 |
-| 性能基准 | Stage 5 |
+| 视觉回归                       | Stage 5    |
+| 性能基准                       | Stage 5    |
 
 ### 10.3 不需要测
 
@@ -751,11 +783,11 @@ export interface FxAdapter {
 
 ### 11.1 环境
 
-| 环境 | 用途 | 数据 |
-|:---|:---|:---|
-| **dev** | 你本地 | 本地 Supabase / 测试数据 |
+| 环境        | 用途                         | 数据                       |
+| :---------- | :--------------------------- | :------------------------- |
+| **dev**     | 你本地                       | 本地 Supabase / 测试数据   |
 | **preview** | EAS preview + Vercel preview | 共享 staging Supabase 项目 |
-| **prod** | TestFlight + 生产 Web | 生产 Supabase |
+| **prod**    | TestFlight + 生产 Web        | 生产 Supabase              |
 
 > ⚠️ MVP 阶段可以只有 dev + prod 两环境，省事；Stage 4 招种子用户时再拆 staging。
 
@@ -797,6 +829,7 @@ git push → CI 跑测试 + lint
 ### 12.2 阶段门控
 
 每个 Stage 完成时回答 3 个问题：
+
 1. DoD 是否真的达到？
 2. 上一阶段的 P0/P1 风险是否已闭环？
 3. 下一阶段的前置依赖是否已就绪？
@@ -813,15 +846,15 @@ git push → CI 跑测试 + lint
 
 ## 附录 A：关键决策日历
 
-| 时点 | 决策 |
-|:---|:---|
-| Stage 0 末 | 产品名敲定、设计 token 锁定 |
-| Stage 1 末 | 数据模型定型（之后只增不改） |
-| Stage 2 末 | 是否进入 Stage 3（核心 Tab 全部跑通 + 自用 ≥2 周） |
+| 时点       | 决策                                                            |
+| :--------- | :-------------------------------------------------------------- |
+| Stage 0 末 | 产品名敲定、设计 token 锁定                                     |
+| Stage 1 末 | 数据模型定型（之后只增不改）                                    |
+| Stage 2 末 | 是否进入 Stage 3（核心 Tab 全部跑通 + 自用 ≥2 周）              |
 | Stage 3 中 | 是否提前引入 AI 模块（一般 Stage 4 才接，但可前置 prompt 设计） |
-| Stage 3 末 | 是否进入 Stage 4（自评满意 + 自用 ≥4 周） |
-| Stage 4 末 | 是否启动公司主体注册（看种子用户反馈） |
-| Stage 5 中 | 是否需要专项律师 review（看是否含支付/AI） |
+| Stage 3 末 | 是否进入 Stage 4（自评满意 + 自用 ≥4 周）                       |
+| Stage 4 末 | 是否启动公司主体注册（看种子用户反馈）                          |
+| Stage 5 中 | 是否需要专项律师 review（看是否含支付/AI）                      |
 
 ## 附录 B：紧急情况预案
 

@@ -34,6 +34,9 @@ export interface TabBarIconProps {
 
 export function TabBarIcon({ routeName, focused, size = 22 }: TabBarIconProps) {
   const pair = TAB_BAR_ICON_PAIRS[routeName];
+  // ADR 008 §决策三 (修订 2026-05-19): active tab uses solid bg-accent pill,
+  // so icon must use accent-foreground (eclipse near-black in both modes) for
+  // high contrast against the bright green fill. crypto-wallet / Wise pattern.
   const [accentForeground, muted] = useThemeColor(["accent-foreground", "muted"]);
 
   if (pair === undefined) {

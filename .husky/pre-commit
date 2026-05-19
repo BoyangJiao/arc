@@ -1,28 +1,46 @@
 #!/bin/sh
 # Arc pre-commit hook (managed by husky)
-# - Secret leak guard: refuse to commit any service_role JWT (ADR 007 §决策三)
+# - Secret leak guard (ADR 007 + common API key patterns)
 # - Run lint-staged on changed files only (fast, deterministic)
 # - Auto-sync .claude/skills → .qoder/skills, .cursor/skills when skills change
 # See package.json "lint-staged" config for per-file-pattern actions
 
-# ─── Secret leak guard (ADR 007) ────────────────────────────────────────────
-# Block commits that contain a Supabase service_role JWT literal.
-# Heuristic: an env-style assignment (= or :) followed by a long JWT-shaped value.
-# Excludes this hook itself, ADRs, env templates, and the seed script — those
-# all reference the *pattern* (not the secret) for documentation purposes.
+# ─── Secret leak guard ───────────────────────────────────────────────────────
+# Block commits that add literal secrets in staged diffs.
+# Excludes: this hook, ADRs, env templates, seed script (pattern docs only).
 SCAN_EXCLUDE=":!.husky/pre-commit :!docs/adr/** :!**/.env*.example :!tools/seed-dev-data.ts"
-# `|| true` on each grep prevents `sh -e` (husky runs hooks with -e) from aborting
-# the hook when grep finds no matches — that's the *success* case for a leak guard.
-LEAKS=$( (git diff --cached -U0 -- . $SCAN_EXCLUDE \
-  | grep -E '^\+' \
+
+STAGED_DIFF=$(git diff --cached -U0 -- . $SCAN_EXCLUDE 2>/dev/null || true)
+ADDED_LINES=$(printf '%s\n' "$STAGED_DIFF" | grep -E '^\+' | grep -vE '^\+\+\+' || true)
+
+LEAKS=""
+
+# Supabase service_role JWT (eyJ...)
+SR_LEAKS=$(printf '%s\n' "$ADDED_LINES" \
   | grep -E '(service_role|SERVICE_ROLE_KEY)' \
-  | grep -E '[=:][[:space:]]*"?eyJ[A-Za-z0-9_-]{20,}"?') || true )
+  | grep -E '[=:][[:space:]]*"?eyJ[A-Za-z0-9_]{20,}"?' || true)
+[ -n "$SR_LEAKS" ] && LEAKS="${LEAKS}
+${SR_LEAKS}"
+
+# Live API keys (sk_live_, etc.)
+KEY_LEAKS=$(printf '%s\n' "$ADDED_LINES" \
+  | grep -E '[=:][[:space:]]*"?sk_live_[A-Za-z0-9_]{10,}"?' || true)
+[ -n "$KEY_LEAKS" ] && LEAKS="${LEAKS}
+${KEY_LEAKS}"
+
+# Postgres URL with non-placeholder password (avoid / inside [] — breaks BSD grep)
+DB_LEAKS=$(printf '%s\n' "$ADDED_LINES" \
+  | grep -E 'postgresql://[^[:space:]]+:[^@]+@' \
+  | grep -viE 'YOUR_|PASSWORD|changeme|xxx' || true)
+[ -n "$DB_LEAKS" ] && LEAKS="${LEAKS}
+${DB_LEAKS}"
+
 if [ -n "$LEAKS" ]; then
-  echo "❌ Pre-commit blocked: looks like a Supabase service_role JWT is being committed."
+  echo "❌ Pre-commit blocked: staged diff looks like it contains secrets."
   echo "   Matched lines (truncated):"
-  echo "$LEAKS" | head -5 | sed 's/^/     /'
-  echo "   If this is a false positive, run \`git commit --no-verify\` and explain in the message."
-  echo "   See ADR 007 §决策三 — service role key must stay in apps/mobile/.env.dev.local."
+  printf '%s\n' "$LEAKS" | head -8 | sed 's/^/     /'
+  echo "   Put secrets in .env.dev.local or apps/mobile/.env (both gitignored)."
+  echo "   If this is a false positive, use \`git commit --no-verify\` and explain why."
   exit 1
 fi
 

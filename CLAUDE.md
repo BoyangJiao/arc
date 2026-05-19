@@ -15,6 +15,7 @@
 > - `docs/preflight-checklist.md` — Stage 0 准备清单
 > - `docs/legal-risk-map.md` — 法律风险与文案合规
 > - `docs/adr/` — 关键架构决策记录
+> - `docs/ux/README.md` — UX 交互模式库索引（Sheet/Overlay、导航语义等；做模态/流程时必读）
 > - `.specify/feature-specs/<name>.md` — 当前 feature 的契约（如手头工作涉及）
 >
 > **会话结束 / 上下文将满时**：更新 `session-state.md`（Cursor：`/checkpoint`；Claude Code：`.claude/skills/checkpoint/`），下一会话才能无缝接续。多工具入口见 `AGENTS.md`。
@@ -87,7 +88,7 @@
 
 | 层        | 选型                                                          |
 | :-------- | :------------------------------------------------------------ |
-| 跨端框架  | Expo SDK 54 + Expo Router（file-based）                       |
+| 跨端框架  | Expo SDK 55 + Expo Router（file-based）                       |
 | 语言      | TypeScript strict                                             |
 | 样式      | Uniwind + Tailwind CSS v4                                     |
 | UI 组件   | HeroUI Native (OSS) + HeroUI Native Pro + 自建 finance/charts |
@@ -168,6 +169,29 @@ const gainColor = semanticTokens[theme].gain[colorScheme]; // 'red' | 'green'
 const gainColor = "#00A86B";
 ```
 
+### 6.1 Accent 使用纪律（ADR 008）
+
+**铁律**：`text-accent` / `bg-accent` / `border-accent`（**实色** accent，**不**含 `*-soft` 变体）**仅允许**用于：
+
+1. **Button variant="primary"** 主行动按钮填充（每屏 ≤1 个 dominant）
+2. **Focus ring**（键盘聚焦边框，即 `--focus` token）
+3. **Brand 标识**（logo / splash / 品牌图形）
+
+**禁用场景及替换**：
+
+| 误用                               | 替换方案                                                              |
+| :--------------------------------- | :-------------------------------------------------------------------- |
+| 列表项 / 设置项 RHS 值文本         | `text-foreground` + 选择性 `font-medium`                              |
+| Header / nav icon                  | `text-foreground` 或 `text-muted`                                     |
+| Tab bar active 指示器              | `bg-accent-soft` + `text-accent-soft-foreground`                      |
+| Toast / Banner / Badge / Chip 背景 | `bg-{semantic}-soft`（强制软底）                                      |
+| Gain/loss 数字徽章包裹             | `bg-success-soft` + `text-success` / `bg-danger-soft` + `text-danger` |
+| DEV / debug 工具                   | `bg-surface-tertiary` + `text-muted`                                  |
+
+**判断公式**：「用户必须立即识别并优先操作的行动 / 当前激活状态？」是 → accent；否 → 中性 token 或 soft tint。
+
+详见 [ADR 008](docs/adr/008-token-discipline-and-polish.md) 决策一至三 + [packages/ui/DESIGN-TOKENS.md](packages/ui/DESIGN-TOKENS.md) Do/Don't 章节。
+
 ---
 
 ## 七、模型分工指南
@@ -243,6 +267,11 @@ pnpm sync:skills      # 手动同步 canonical → 本地镜像
 # packages/db 就绪后：
 pnpm --filter @arc/db generate   # 生成 Drizzle migration
 pnpm --filter @arc/db push       # 推送 schema 到 Supabase
+
+# Dev UAT 种子数据（Layer 4 — 见 docs/dev-seed-cheatsheet.md；DEV_SEED_EMAIL in .env.dev.local）：
+pnpm seed:default | pnpm seed:ds:happy | pnpm seed:ds:first-day | …  # 短命令
+# IDE: Cmd+Shift+P → Tasks: Run Task → Seed: …
+# Cursor chat: /seed-dev + 场景名
 ```
 
 > **注意**：Git hooks 由 husky 管理，`pnpm install` 时自动安装。`git commit`（skills 有变更时）、`git pull` 和 `git checkout` 均会自动触发 skill 同步，无需手动执行 `sync:skills`。
@@ -283,7 +312,52 @@ pnpm --filter @arc/db push       # 推送 schema 到 Supabase
 
 ---
 
-## 十二、设计稿协作（opt-in）
+## 十二、模型自我路由（半自动 — Opus/Sonnet/Haiku/Cursor 通用）
+
+> **触发**：每个 AI 会话**理解完用户意图后、动手前**评估一次。任务边界变化（用户给出新目标 / 当前块完成 / 反复改不对）再评估一次。**不要**每次 tool 调用都问。
+
+**规则**：
+
+1. **匹配即静默** — 当前模型 ∈ §七 该任务的"首选"或"备选"区 → 直接开干，不打断用户。
+2. **错配即建议** — 当前模型明显错配 → 暂停 + 向用户报告：
+   - "此任务看起来是 **X 类**（依据：[文件路径 / 任务关键词]）"
+   - "§七 推荐 **Y**（首选）/ **Z**（备选）"
+   - 给出 (a) 切换 / (b) 继续当前模型 的二选一
+   - 选 (a)：输出一段干净的交接 prompt（含 spec/commit 链接、当前进度、下一步），自己结束本会话
+   - 选 (b)：继续执行，**不再**就此问题打扰，直到任务边界再次变化
+
+**典型错配例**（应当触发建议）：
+
+- Opus 做 i18n typo / 文案微调 / 路径重命名 / 依赖小升 → 建议降 Haiku
+- Opus 做"已有套路的 RN 页面/CRUD/TanStack hook" → 建议降 Sonnet
+- Sonnet 做 TWR / 再平衡 / FX 链 / Performance Attribution 算法 → 建议升 Opus
+- Sonnet 同一个 bug 改 2 次不对（fast-check 反例 / 浮点边界 / 时区） → 建议升 Opus
+- Haiku 做架构决策 / 写 ADR / 数据模型变更 → 建议升 Sonnet 或 Opus
+
+**反例（应当静默，不要触发）**：
+
+- 用户已经显式点名当前模型/工具（"用 Cursor 跑"、"我要 Opus 做这个"、"continue"）→ 静默
+- 任务跨多层（架构 + 实现） → 按首选层判定一次即可，不要逐文件切
+- 当前模型在备选区且没有明显卡壳 → 静默
+- 同一 commit 内写完一个文件准备写下一个 → **不**算任务边界
+
+**任务边界**：
+
+- ✅ 用户说 "下一步" / "继续 commit #N" → 评估 #N 的任务类型
+- ✅ spec 锁定，准备进入实现 → 实现是新任务边界
+- ✅ Sonnet 连续两次同一 bug 没改对 → 触发升级建议
+- ❌ 同一连贯目标内的多步骤 → 不算边界
+
+**Handoff 子规则**（一个会话交给另一个工具 / 模型时）：
+
+- 交接 prompt **只描述任务**（目标、相关文件路径、验收条件、当前进度），**不要 pin 模型**
+- 接收端（Cursor auto / Composer / Claude Code 任何启动方式）在新会话边界按本节自评估
+- 如果原会话评估过任务类型，写"参考 §七 这看起来是 X 类"作为**提示**，而不是"你是 Sonnet"作为**指派**
+- 让接收端的智能路由（如 Cursor auto）有权根据实际情况升降模型，包括跑到一半因为卡壳自动升 Opus
+
+---
+
+## 十三、设计稿协作（opt-in）
 
 **默认行为**：日常开发不强制出 Pencil 设计稿 / 截图。
 

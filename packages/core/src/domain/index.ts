@@ -3,3 +3,5 @@
 export * from "./types";
 export * from "./holdings";
 export * from "./valuation";
+export * from "./watchlist";
+export * from "./portfolio-name";

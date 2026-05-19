@@ -1,0 +1,9 @@
+{
+  "lock": false,
+  "tasks": {
+    "test": "deno test --allow-env --no-check"
+  },
+  "imports": {
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.0"
+  }
+}

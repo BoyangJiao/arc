@@ -14,6 +14,8 @@ export {
   type FloatingTabBarProps,
 } from "./FloatingTabBar";
 
+export { TabScrollShadow, type TabScrollShadowProps } from "./TabScrollShadow";
+
 export {
   SwipeableActionsRow,
   type SwipeableActionsRowProps,

@@ -1,0 +1,48 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Seed: default (daily dev)",
+      "type": "shell",
+      "command": "pnpm seed:default",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "Seed: Daily Snapshot — big gain (+10%)",
+      "type": "shell",
+      "command": "pnpm seed:ds:gain",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "Seed: Daily Snapshot — big loss (-5%)",
+      "type": "shell",
+      "command": "pnpm seed:ds:loss",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "Seed: Daily Snapshot — mixed movers",
+      "type": "shell",
+      "command": "pnpm seed:ds:mixed",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "Seed: Daily Snapshot — first day",
+      "type": "shell",
+      "command": "pnpm seed:ds:first-day",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "Seed: Daily Snapshot — empty portfolio",
+      "type": "shell",
+      "command": "pnpm seed:ds:empty",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    }
+  ]
+}

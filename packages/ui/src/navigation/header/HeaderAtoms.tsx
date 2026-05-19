@@ -21,11 +21,14 @@
  */
 
 import { useMemo } from "react";
-import { Pressable, type PressableProps } from "react-native";
+import { type PressableProps } from "react-native";
 import { useRouter } from "expo-router";
 
-import { Text } from "../../primitives/Text";
-import { ChevronLeft, X, type LucideIcon } from "../../wrappers/icons";
+import { useThemeColor } from "heroui-native";
+
+import { CloseButton, LinkButton } from "../../primitives";
+import { CaretLeftIcon, type PhosphorIcon } from "../../wrappers/icons";
+import { ThemedIcon } from "../../wrappers/themed-icon";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Atom: HeaderBackButton — left-side chevron back
@@ -41,20 +44,16 @@ export function HeaderBackButton({ onPress, accessibilityLabel = "Back" }: Heade
   const router = useRouter();
   const handlePress = onPress ?? (() => router.back());
   return (
-    <Pressable
-      onPress={handlePress}
-      hitSlop={8}
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      style={pressableHitSlot}
-    >
-      <ChevronLeft size={26} className="text-accent" />
-    </Pressable>
+    <LinkButton isIconOnly onPress={handlePress} accessibilityLabel={accessibilityLabel}>
+      <ThemedIcon icon={CaretLeftIcon} size={22} weight="bold" />
+    </LinkButton>
   );
 }
 
 // ──────────────────────────────────────────────────────────────────────────
 // Atom: HeaderCloseButton — left-side X for modals / form sheets
+// 2026-05-19 Batch 2: 改用 OSS CloseButton（tertiary variant + size=sm + isIconOnly），
+// 自带 themed pill 背景，比原 raw Pressable 更醒目可触。
 
 export interface HeaderCloseButtonProps {
   onPress?: () => void;
@@ -67,16 +66,13 @@ export function HeaderCloseButton({
 }: HeaderCloseButtonProps) {
   const router = useRouter();
   const handlePress = onPress ?? (() => router.back());
+  const foreground = useThemeColor("foreground");
   return (
-    <Pressable
+    <CloseButton
       onPress={handlePress}
-      hitSlop={8}
       accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      style={pressableHitSlot}
-    >
-      <X size={22} className="text-accent" />
-    </Pressable>
+      iconProps={{ color: foreground, size: 22 }}
+    />
   );
 }
 
@@ -85,7 +81,7 @@ export function HeaderCloseButton({
 
 export interface HeaderActionButtonProps {
   /** Lucide icon (from @arc/ui wrappers/icons). */
-  icon: LucideIcon;
+  icon: PhosphorIcon;
   onPress: PressableProps["onPress"];
   accessibilityLabel: string;
   /** Icon size in px. Default 22. */
@@ -99,40 +95,30 @@ export function HeaderActionButton({
   size = 22,
 }: HeaderActionButtonProps) {
   return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={8}
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      style={pressableHitSlot}
-    >
-      <Icon size={size} className="text-foreground" />
-    </Pressable>
+    <LinkButton isIconOnly onPress={onPress} accessibilityLabel={accessibilityLabel}>
+      <ThemedIcon icon={Icon} size={size} weight="regular" />
+    </LinkButton>
   );
 }
 
 // ──────────────────────────────────────────────────────────────────────────
 // Atom: HeaderTextButton — left or right side text-only button (e.g. "Cancel")
+// 2026-05-19 Batch 2: 改用 OSS LinkButton（ghost variant 内部强制），
+// 颜色由 theme token 决定，主行动用 text-accent (allowed per ADR-008 §决策一第 1 项 — 主行动按钮)。
 
 export interface HeaderTextButtonProps {
   label: string;
   onPress: PressableProps["onPress"];
-  /** "accent" for primary (default), "muted" for secondary */
+  /** "accent" for primary action (default — e.g. Save / Done), "muted" for secondary (e.g. Cancel) */
   emphasis?: "accent" | "muted";
 }
 
 export function HeaderTextButton({ label, onPress, emphasis = "accent" }: HeaderTextButtonProps) {
-  const color = emphasis === "accent" ? "text-accent" : "text-muted";
+  const labelClass = emphasis === "accent" ? "text-accent" : "text-muted";
   return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={8}
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      style={pressableHitSlot}
-    >
-      <Text className={`${color} text-base`}>{label}</Text>
-    </Pressable>
+    <LinkButton onPress={onPress} accessibilityLabel={label}>
+      <LinkButton.Label className={`${labelClass} text-base`}>{label}</LinkButton.Label>
+    </LinkButton>
   );
 }
 
@@ -173,8 +159,3 @@ export function useStackScreenOptions(args: UseStackScreenOptionsArgs) {
     };
   }, [title, backType, headerRight, headerShown]);
 }
-
-// ──────────────────────────────────────────────────────────────────────────
-// Internal
-
-const pressableHitSlot = { paddingHorizontal: 8, paddingVertical: 6 };
