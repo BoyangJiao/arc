@@ -6,7 +6,7 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-19 by Claude Opus 4.7 — post-polish review；0009 ✅ confirmed applied；mobile-app-design skill vendored；Stage 2 → `main` PR ready
+> **Last updated**: 2026-05-19 by Cursor Composer — Stage 2 merged to `main`；Daily Snapshot cron smoke **401**；Finnhub adapter PR in flight
 
 ---
 
@@ -14,9 +14,9 @@
 
 | Field                 | Value                                                                                              |
 | :-------------------- | :------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 2 — wrap-up → `main` PR**                                                                  |
-| **Step**              | J6–J9 ✅; **Stage 2 four-feature DoD** ✅ — open **`dev/stage-2` → `main` PR**                     |
-| **Branch**            | `dev/stage-2` — UI polish + Me 导航子栈已入同一 commit（见 `git log -1`）                          |
+| **Active stage**      | **Stage 3 entry** — Finnhub US adapter + cron go-live fix                                          |
+| **Step**              | Stage 2 merged ✅；`feat/finnhub-adapter` PR；Daily Snapshot GH Actions **401** 待修 secrets       |
+| **Branch**            | `feat/finnhub-adapter`                                                                             |
 | **Last commit**       | feat(mobile+ui): UI polish（Me 子栈、headers、TabBar、token 基建）— 以 `git log -1 --oneline` 为准 |
 | **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                     |
 | **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅     |
@@ -108,17 +108,17 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Active blockers / waiting on user
 
-- **No active blockers** — Stage 2 four-feature DoD ✅; migrations 0001–0009 all applied on dev Supabase; UI Polish Phase 2 committed (`9dc64be`); SDK 55 upgrade clean (`0fe14ee`); all gates green (typecheck/lint/test/lint:copy 6/6, 127 tests).
+- **`EXPO_PUBLIC_FINNHUB_API_KEY`** — 在 [finnhub.io](https://finnhub.io/register) 注册 free tier，填入 repo-root `.env`（或 `apps/mobile` 使用的 Expo env 文件）；未配置时 live 模式 US 报价不可用。
+- **Daily Snapshot cron — HTTP 401**（2026-05-19 smoke）：`gh workflow run "Daily Snapshot"` → run `26091830809` failed；`curl` 401。核对 GitHub Actions secrets：`SUPABASE_DAILY_SNAPSHOT_URL`、`DAILY_SNAPSHOT_SECRET` 与 Supabase Edge `DAILY_SNAPSHOT_SECRET` 一致。
 - **`brew install deno`** — optional, before `pnpm test:functions` locally (J8 dev-seed handler tests).
-- **Daily-snapshot cron go-live** — deferred to **post-merge**; secrets configured on Supabase + GitHub Actions, workflow file needs to be on `main` to register.
 
 ## Immediate next actions (next session)
 
-**1. Stage 2 → `main` PR** — DoD ✅；起 PR description（DS / Watchlist / Rebalance / Welcome 四 feature + Polish Phase 2 + SDK 55 + ESLint plugin），`gh pr create`。
+**1. Fix Daily Snapshot 401** — 对齐 `DAILY_SNAPSHOT_SECRET`（GitHub ↔ Supabase Edge）；重跑 `gh workflow run "Daily Snapshot"`；SQL 验 `portfolio_value_snapshots` `source='edge-function'`。
 
-**2. Post-merge — Daily Snapshot cron go-live** — Supabase + GitHub secrets 之前已就绪；merge 后 `gh workflow run "Daily Snapshot"` 做一次冒烟测试，确认拓扑通。
+**2. Merge `feat/finnhub-adapter`** — UAT：自选 NVDA/AAPL 价格 + 涨跌幅；Markets 下拉见 `finnhub.io` 请求。
 
-**3. Stage 3 启动** — 见 `docs/development-plan.md` Stage 3 优先级；Performance Attribution / TWR / 多组合管理 / A 股 + 港股 + 加密接入。
+**3. Stage 3 P0** — Tushare CN/HK、CoinGecko、基金净值；Performance Attribution / TWR。
 
 **4. Switch-back-to-Opus triggers** (Stage 3):
 
@@ -154,11 +154,11 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 | File               | Status                                               |
 | :----------------- | :--------------------------------------------------- |
-| `apps/mobile/.env` | Supabase + AV key                                    |
+| `apps/mobile/.env` | Supabase + **需加** `EXPO_PUBLIC_FINNHUB_API_KEY`    |
 | `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                   |
 | Migrations         | `0001`–`0009` applied ✅ (user confirmed 2026-05-19) |
 | Supabase project   | `jdvlzkictwinkgcvgwew`                               |
-| Git branch         | `dev/stage-2`                                        |
+| Git branch         | `feat/finnhub-adapter`                               |
 
 ## Recent ADRs (most relevant first)
 

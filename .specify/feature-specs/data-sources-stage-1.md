@@ -212,6 +212,12 @@ pnpm typecheck                           # 6/6 workspaces clean
 
 ---
 
+## Stage 3 entry（2026-05-19）
+
+US market switched **Alpha Vantage → Finnhub** for **60/min** vs **25/day** quota. `createAlphaVantageAdapter` retained in `@arc/data-sources` for rollback; default registry wiring uses `createDefaultPriceAdapters` → `createFinnhubAdapter`. Mobile env: `EXPO_PUBLIC_FINNHUB_API_KEY` (see repo-root `.env.example`).
+
+---
+
 ## 不在本 step 范围
 
 - Stage 3 数据源（Tushare CN/HK、CoinGecko 加密、天天基金 FUND）→ Stage 3
