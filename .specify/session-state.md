@@ -6,7 +6,7 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-19 by Cursor Auto (J6 Welcome #1–#4 landed; Stage 2 four-feature DoD ready for → main PR)
+> **Last updated**: 2026-05-19 by Cursor Auto (J6 UAT S2-AC-4.1–4.6 ✅ user sign-off; Stage 2 → `main` PR unblocked)
 
 ---
 
@@ -15,9 +15,9 @@
 | Field                 | Value                                                                                          |
 | :-------------------- | :--------------------------------------------------------------------------------------------- |
 | **Active stage**      | **Stage 2 — wrap-up → `main` PR**                                                              |
-| **Step**              | J7–J9 ✅; **J6 Welcome** commit plan **#1–#4** ✅; **UAT J6 AC-4.1–4.6** ⏳ user sign-off      |
-| **Branch**            | `dev/stage-2` — HEAD `56de855` (+ any prior uncommitted J9 UAT fixes in tree)                  |
-| **Last commit**       | `56de855` — feat(seed): welcome dev scenarios + dev panel feature group                        |
+| **Step**              | J6–J9 ✅; **Stage 2 four-feature DoD** ✅ — open **`dev/stage-2` → `main` PR**                 |
+| **Branch**            | `dev/stage-2` — HEAD `4621931` (+ any prior uncommitted J9 UAT fixes in tree)                  |
+| **Last commit**       | `4621931` — docs(spec): sync user-journeys J6 + Stage 2 DoD                                    |
 | **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                 |
 | **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅ |
 | **Mobile dev server** | User Metro; UI changes → **⌘D → Reload**                                                       |
@@ -78,16 +78,16 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Stage 2 — J6 Welcome progress (2026-05-19)
 
-| Item                                                           | Status                                                                          |
-| :------------------------------------------------------------- | :------------------------------------------------------------------------------ |
-| Feature spec (`welcome-stage-2.md`) Accepted 2026-05-19        | ✅                                                                              |
-| Commit **#1** `/welcome` route + i18n                          | ✅ `4ae3da6`                                                                    |
-| Commit **#2** `useMarkWelcomeSeen` + `_layout` gate            | ✅ `416148d`                                                                    |
-| Commit **#3** `welcome:fresh` / `welcome:seen` DEV client seed | ✅ `56de855`                                                                    |
-| Commit **#4** `user-journeys.md` J6 + session-state            | ✅ this checkpoint                                                              |
-| **UAT S2-AC-4.1–4.6**                                          | ⏳ user (DEV Welcome → fresh/seen, CTA/skip, `/welcome` defense, airplane mode) |
+| Item                                                           | Status                                                                                                                           |
+| :------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| Feature spec (`welcome-stage-2.md`) Accepted 2026-05-19        | ✅                                                                                                                               |
+| Commit **#1** `/welcome` route + i18n                          | ✅ `4ae3da6`                                                                                                                     |
+| Commit **#2** `useMarkWelcomeSeen` + `_layout` gate            | ✅ `416148d`                                                                                                                     |
+| Commit **#3** `welcome:fresh` / `welcome:seen` DEV client seed | ✅ `56de855`                                                                                                                     |
+| Commit **#4** `user-journeys.md` J6 + session-state            | ✅ this checkpoint                                                                                                               |
+| **UAT S2-AC-4.1–4.6**                                          | ✅ user verified 2026-05-19 (4.1–4.3 CTA/skip; 4.4 via restart; 4.5 lint:copy + disclaimer; 4.6 Mac 断网替代 Simulator 飞行模式) |
 
-**Stage 2 DoD (four features)**：Daily Snapshot ✅ · Watchlist ✅ · Rebalance ✅ · Welcome ✅ — **ready to open Stage 2 → `main` PR** after J6 UAT.
+**Stage 2 DoD (four features)**：Daily Snapshot ✅ · Watchlist ✅ · Rebalance ✅ · Welcome ✅ — **可开 Stage 2 → `main` PR**。
 
 **Core algorithm contract** (locked):
 
@@ -124,7 +124,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 **2. User** — apply migration **0009** on dev Supabase; DEV → 再平衡 → 依次 seed aligned / mild / heavy → Insights 下拉刷新 → sign off S2-AC-3.x.
 
-**3. Stage 2 → `main` PR** — after J6 UAT AC-4.x ✅ (Welcome DEV → fresh → Reload → CTA/skip → 重启不进 Welcome).
+**3. Stage 2 → `main` PR** — J6 UAT ✅；整理分支（含未 commit 的 J9 bugfix 若有）→ `gh pr create`。
 
 **4. Switch-back-to-Opus triggers** (if still needed):
 

@@ -228,7 +228,7 @@ L1 unit tests not required (single boolean mutation; covered indirectly by L4 + 
 
 ## Verification checklist before merging back to `main`
 
-- [ ] All 6 S2-AC-4.x acceptance criteria manually verified
+- [x] All 6 S2-AC-4.x acceptance criteria manually verified (2026-05-19; AC-4.6 via Mac offline — Simulator 无飞行模式)
 - [ ] `pnpm typecheck` 6/6 ✅
 - [ ] `pnpm lint` 6/6 ✅
 - [ ] `pnpm test` ✅ (no new tests required; existing suite still green)
