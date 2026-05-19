@@ -24,7 +24,6 @@ import { getRegistry, priceCache } from "../market-data";
 import {
   CACHE_FIRST_READ_FRESHNESS_MS,
   isCacheFirstMarketData,
-  isFixtureMarketData,
   readPriceFreshnessMs,
 } from "../market-data-policy";
 
@@ -57,11 +56,8 @@ export const usePrice = (
       const adapter = getRegistry().resolvePriceAdapterByAssetId(assetId);
       const { symbol } = parseAssetId(assetId);
 
-      // cache-first mode: prefer any cached row; refuse cache miss to avoid
-      // burning AV quota outside an explicit pull-to-refresh.
-      // (fixture mode reads from FixtureAdapter which is essentially free —
-      // no need to guard; goes through fetchPriceWithCache normally.)
-      if (!forceNetwork && isCacheFirstMarketData() && !isFixtureMarketData()) {
+      // cache-first (dev): prefer cached row; miss → pull-to-refresh fetches Finnhub.
+      if (!forceNetwork && isCacheFirstMarketData()) {
         const cached = await priceCache.get(assetId, CACHE_FIRST_READ_FRESHNESS_MS);
         if (cached) return cached;
         throw new Error(`No cached quote for ${assetId}. Pull to refresh on the portfolio screen.`);

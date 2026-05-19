@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-19 by Cursor Composer — Stage 2 merged to `main`；Daily Snapshot cron smoke **401**；Finnhub adapter PR in flight
+> **Last updated**: 2026-05-19 by Cursor Composer — PR #7 merged；cron ✅；dev 默认 Finnhub（移除 fixture 开关）
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                              |
-| :-------------------- | :------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 entry** — Finnhub US adapter + cron go-live fix                                          |
-| **Step**              | Stage 2 merged ✅；`feat/finnhub-adapter` PR；Daily Snapshot GH Actions **401** 待修 secrets       |
-| **Branch**            | `feat/finnhub-adapter`                                                                             |
-| **Last commit**       | feat(mobile+ui): UI polish（Me 子栈、headers、TabBar、token 基建）— 以 `git log -1 --oneline` 为准 |
-| **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                     |
-| **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅     |
-| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                               |
+| Field                 | Value                                                                                          |
+| :-------------------- | :--------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 entry** — Finnhub + dev 全真实行情                                                   |
+| **Step**              | PR #7 merged ✅；cron ✅；PR pending: 移除 fixture 开关 + seed 走 Finnhub                      |
+| **Branch**            | `chore/dev-real-market-data-only`                                                              |
+| **Last commit**       | 以 `git log -1 --oneline` 为准                                                                 |
+| **PR**                | #7 merged (Finnhub)；open PR for real-market-data-only                                         |
+| **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅ |
+| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                           |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -108,8 +108,9 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Active blockers / waiting on user
 
-- **`EXPO_PUBLIC_FINNHUB_API_KEY`** — 用户已配置 ✅；`EXPO_PUBLIC_ALPHAVANTAGE_API_KEY` 应注释掉，自选/行情统一走 Finnhub。
-- ~~Daily Snapshot cron 401~~ **✅ 已修复 2026-05-19**：根因 Supabase 网关 `verify_jwt` 把 hex secret 当 JWT；`supabase/config.toml` + redeploy + GitHub secrets 与 `.env.dev.local` 对齐。GH run `26095476933` success，`written` totalValue 79174.8。
+- **`EXPO_PUBLIC_FINNHUB_API_KEY`** — 用户已配置于 `apps/mobile/.env` ✅。
+- **Daily Snapshot cron** ✅（`verify_jwt=false` + secrets 对齐；GH `26095476933`）。
+- **Dev 行情** — Settings「拉取真实行情」开关已移除；dev/prod 均 Finnhub + Frankfurter（dev = cache-first）。
 - **`brew install deno`** — optional, before `pnpm test:functions` locally (J8 dev-seed handler tests).
 
 ## Immediate next actions (next session)

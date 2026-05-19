@@ -45,7 +45,7 @@ export const validateUsSymbol = async (symbol: string): Promise<ValidateUsSymbol
     return { ok: false, code: "no_adapter", message: "US market adapter not configured" };
   }
 
-  // fixture / cache-first → any cached row is fresh; live → 15min window.
+  // cache-first (dev) → any cached row is fresh; live (prod) → 15min window.
   const readFreshness = isLiveMarketData()
     ? DEFAULT_PRICE_FRESHNESS_MS
     : CACHE_FIRST_READ_FRESHNESS_MS;

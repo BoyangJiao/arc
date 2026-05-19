@@ -43,7 +43,7 @@ const WL_PRICES: Record<string, string> = {
   "US:NVDA": "875.00",
 };
 
-/** Aligns with `apps/mobile/src/lib/dev-fixtures/quotes.json` for watchlist chip UAT. */
+/** Watchlist symbols for chip UAT — quotes come from Finnhub / price_snapshots cache. */
 const WL_CHANGE_PERCENT: Record<string, string> = {
   "US:AAPL": "-0.42",
   "US:MSFT": "1.05",
