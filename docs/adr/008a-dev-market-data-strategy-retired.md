@@ -1,9 +1,10 @@
-# ADR 008 — Dev 行情数据策略：FixtureAdapter + Settings 双档开关
+# ADR 008a — Dev 行情数据策略：FixtureAdapter + Settings 双档开关 (Retired)
 
-- **状态**: 已接受
+- **状态**: **已 retire（PR #8, 2026-05-19）** —— superseded by [ADR 010 — Dev 缓存信任策略](./010-dev-cache-trust-strategy.md)。Finnhub 切换后 fixture 路径被移除；Settings 双档开关随之撤掉；本文档仅保留作为决策史。
+- **历史编号**: 与 [ADR 008 — Token 使用纪律](./008-token-discipline-and-polish.md) 撞号；本文件 2026-05-19 重命名为 `008a-` 以消歧（原 `008-dev-market-data-strategy.md`）。
 - **日期**: 2026-05-17
 - **作者**: BoyangJiao + Claude (Opus 4.7)
-- **相关 ADR**: 001（Tech Stack — Supabase + Alpha Vantage adapter），007（Dev Auth & 种子数据策略 — 真实链路不可绕过）
+- **相关 ADR**: 001（Tech Stack — Supabase + Alpha Vantage adapter），007（Dev Auth & 种子数据策略 — 真实链路不可绕过），**010（继任 ADR — dev 缓存信任策略）**
 - **触发**: Stage 1 收尾期间 Cursor 引入了 `cache-first` 策略缓解 Alpha Vantage 25/day 免费配额，但只解决了 70% —— 加新 ticker 时仍打 AV、下拉刷新仍打 AV。用户提议改为「Settings 里的双档开关」明确控制是否走网络，统一支持多市场扩展。
 
 ---

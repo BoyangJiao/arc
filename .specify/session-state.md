@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-19 by Cursor Composer — PR #7/#8 merged；cron ✅；ADR 010 dev 缓存信任策略落地（HOOD/AAPL/MSFT/NVDA seed-dev 旁路）
+> **Last updated**: 2026-05-19 by Claude Opus 4.7 — Stage 2 → main merged；PR #6/#7/#8/#9 all merged；ADR 008 命名冲突修复（旧 fixture ADR 重命名为 008a-retired）；准备开 dev/stage-3
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                          |
-| :-------------------- | :--------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 entry** — Finnhub + dev 全真实行情 + 缓存信任策略（ADR 010）                         |
-| **Step**              | PR #7/#8 merged ✅；cron ✅；HOOD/AAPL/MSFT/NVDA `seed-dev` 旁路统一收口到 4 条读路径          |
-| **Branch**            | （需 `git status` 确认；本次 ADR 010 实施未 commit）                                           |
-| **Last commit**       | 以 `git log -1 --oneline` 为准                                                                 |
-| **PR**                | #7 merged (Finnhub)；#8 merged (移除 fixture 开关)；ADR 010 待开 PR                            |
-| **CI status**         | Local `pnpm typecheck` ✅ 6/6 / `pnpm lint` ✅ 0 errors / `pnpm test` ✅ 68/68（data-sources） |
-| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                           |
+| Field                 | Value                                                                                                                         |
+| :-------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 entry** — dev/stage-3 branch 待开；Finnhub + dev 全真实行情 + 缓存信任策略 (ADR 010) 已就绪                         |
+| **Step**              | Stage 2 → main 全部 merged (PR #6/#7/#8/#9)；ADR 008 命名冲突已修；准备 dev/stage-3 + 路线图草稿                              |
+| **Branch**            | `main` — clean working tree (post-ADR-008-rename cleanup pending commit)                                                      |
+| **Last commit**       | `975ed72` — Merge PR #9 (ADR 010 dev cache trust)                                                                             |
+| **PR**                | #6/#7/#8/#9 all merged ✅ on main                                                                                             |
+| **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm lint` 6/6 ✅ / `pnpm test` 141/141 ✅ (73 core + 68 data-sources) / `pnpm lint:copy` ✅ |
+| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                                                          |
 
 ## Stage 2 — J7 Daily Snapshot progress
 

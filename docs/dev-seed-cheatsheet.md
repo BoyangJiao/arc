@@ -243,4 +243,5 @@ App Dev Menu「切到：首日占位」
 
 - [测试策略总览](./testing-strategy.md)
 - [ADR 007 — Dev 种子数据](./adr/007-dev-auth-and-seed-strategy.md)
-- [ADR 008 — Fixture 行情](./adr/008-dev-market-data-strategy.md)
+- [ADR 008a — Fixture 行情 (Retired by ADR 010)](./adr/008a-dev-market-data-strategy-retired.md)
+- [ADR 010 — Dev 缓存信任策略](./adr/010-dev-cache-trust-strategy.md)

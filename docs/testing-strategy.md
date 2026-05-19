@@ -88,7 +88,7 @@
 
 ### Layer 5 — In-app dev menu 🟡 局部存在
 
-- **已有**：Me → 设置 → "拉取真实行情" toggle（ADR 008）
+- ~~Me → 设置 → "拉取真实行情" toggle（ADR 008a, retired by ADR 010 — dev 一律走 Finnhub）~~
 - **原则**：**只为运行时态切换**而存在（颜色切换、语言切换、报告货币切换）
 - **不要扩成**：数据形态选择器（首日 / 空仓 …）—— 那是 Layer 4
 
@@ -168,7 +168,8 @@
 ## 七、参考
 
 - ADR 007：Dev Auth + 种子数据策略
-- ADR 008：Dev 行情数据策略（FixtureAdapter）
+- ADR 008a：Dev 行情数据策略（FixtureAdapter — retired by ADR 010）
+- ADR 010：Dev 缓存信任策略（source 兜底 + Infinity freshness）
 - ADR 009：Daily Snapshot 时点
 - `.specify/feature-specs/daily-snapshot-stage-2.md` — Test plan 模板的参考实现
 - `tools/seed-dev-data.ts` — Layer 4 scenario 实现
