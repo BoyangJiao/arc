@@ -6,7 +6,7 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-19 by Cursor Auto (J6 UAT S2-AC-4.1–4.6 ✅ user sign-off; Stage 2 → `main` PR unblocked)
+> **Last updated**: 2026-05-19 by Cursor Auto (Expo SDK 55 upgrade committed; UI polish still uncommitted on branch)
 
 ---
 
@@ -20,7 +20,7 @@
 | **Last commit**       | `4621931` — docs(spec): sync user-journeys J6 + Stage 2 DoD                                    |
 | **PR**                | Stage 2 on `dev/stage-2`; Stage 1 PR #5 merged                                                 |
 | **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅ |
-| **Mobile dev server** | User Metro; UI changes → **⌘D → Reload**                                                       |
+| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**; UI polish still uncommitted              |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -153,6 +153,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **Rebalance DEV seed**: `rebalance:aligned|mild-drift|heavy-drift` 共用同一组 holdings；fixture 当前配置 ≈ **11.85 / 13.14 / 43.76 / 31.25**（见 `rebalance-seed-plans.ts`）。切换场景后 invalidate queries + 预热 `priceCache`/`fxCache`。
 - **`DeviationBar` (RN)**: 勿用 `h-2` + `h-full` 撑条高 — 用固定 `8px`；条宽按 `|deviationPercent|` 而非 `currentPercent`。
 - All prior Stage 1 gotchas still apply (FixtureAdapter, @arc/ui imports, OTP 8-digit, etc.).
+- **Expo SDK 55** (2026-05-19): `expo@~55`, RN **0.83.6**, React **19.2**; `app.json` 已移除 `newArchEnabled` / `edgeToEdgeEnabled`（SDK 55 默认）；monorepo 启用 `experiments.autolinkingModuleResolution`；根 `pnpm.overrides` 钉住 `react@19.2.0`。勿扫 **8082** 等非 Arc Metro 二维码（会报 SDK 54 不兼容）。
 
 ## Active env / config snapshot
 

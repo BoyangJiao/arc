@@ -19,11 +19,12 @@ Arc 是一个面向中国全球资产配置者的投资追踪 App，需要同时
 
 ## 决策
 
-### 跨端框架：Expo SDK 54 + Expo Router
+### 跨端框架：Expo SDK 55 + Expo Router
 
 **选择**：Expo（单代码库出 iOS / Android / Web）
 
 **放弃**：
+
 - Next.js — Expo Web 已能覆盖 Web 需求；引入 Next.js 会分裂代码库
 - React Native CLI — 失去 Expo 生态（OTA 热更新、EAS Build、托管工作流）
 
@@ -46,6 +47,7 @@ Arc 是一个面向中国全球资产配置者的投资追踪 App，需要同时
 **选择**：Supabase 全托管 BaaS
 
 **放弃**：
+
 - 自建 PostgreSQL — 需要运维，超出 MVP 阶段能力范围
 - Firebase — 文档型数据库不适合关系型金融数据（交易 / 持仓 / 汇率之间有大量 JOIN）
 - PlanetScale — 无 Row Level Security，个人金融数据安全性不足
@@ -59,6 +61,7 @@ Arc 是一个面向中国全球资产配置者的投资追踪 App，需要同时
 **选择**：Drizzle ORM + drizzle-kit（schema 即 TypeScript 类型）
 
 **放弃**：
+
 - Prisma — Serverless / Edge 环境下冷启动慢；Prisma Client 体积大
 - Kysely — 无 migration 工具，需自行管理 schema 变更
 
@@ -73,6 +76,7 @@ Arc 是一个面向中国全球资产配置者的投资追踪 App，需要同时
 **选择**：NativeWind 作为 React Native 的 Tailwind 实现；HeroUI Pro 作为组件库基础
 
 **架构**：分层封装（见 CLAUDE.md §五）
+
 - `packages/ui/primitives/` — re-export HeroUI（薄封装，业务代码只 import 这里）
 - `packages/ui/tokens/` — 颜色/字号/间距/语义色（含红涨绿跌切换）
 - `packages/ui/finance/` — 自建领域组件
@@ -94,6 +98,7 @@ interface PriceAdapter {
 ```
 
 **MVP 数据源**：
+
 - A股/港股：Tushare Pro（付费，合规）
 - 美股/ETF：Alpha Vantage（免费层 25 calls/day）
 - 加密货币：CoinGecko（免费）
@@ -112,13 +117,13 @@ interface PriceAdapter {
 
 ### 明确不选
 
-| 技术 | 原因 |
-|:---|:---|
-| tRPC | Expo 生态对 tRPC 兼容有摩擦；MVP 阶段 Supabase RPC 足够 |
-| Redux | 过度工程；Zustand + TanStack Query 更轻量 |
-| styled-components | 与 NativeWind 功能重叠 |
-| Detox / Playwright E2E | Stage 3 末才引入 |
-| 自动 API 同步 | 国内平台无开放 API；MVP 全手动 + CSV |
+| 技术                   | 原因                                                    |
+| :--------------------- | :------------------------------------------------------ |
+| tRPC                   | Expo 生态对 tRPC 兼容有摩擦；MVP 阶段 Supabase RPC 足够 |
+| Redux                  | 过度工程；Zustand + TanStack Query 更轻量               |
+| styled-components      | 与 NativeWind 功能重叠                                  |
+| Detox / Playwright E2E | Stage 3 末才引入                                        |
+| 自动 API 同步          | 国内平台无开放 API；MVP 全手动 + CSV                    |
 
 ---
 

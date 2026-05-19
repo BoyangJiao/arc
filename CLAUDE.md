@@ -87,7 +87,7 @@
 
 | 层        | 选型                                                          |
 | :-------- | :------------------------------------------------------------ |
-| 跨端框架  | Expo SDK 54 + Expo Router（file-based）                       |
+| 跨端框架  | Expo SDK 55 + Expo Router（file-based）                       |
 | 语言      | TypeScript strict                                             |
 | 样式      | Uniwind + Tailwind CSS v4                                     |
 | UI 组件   | HeroUI Native (OSS) + HeroUI Native Pro + 自建 finance/charts |
