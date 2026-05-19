@@ -29,7 +29,6 @@ import { useTranslation } from "@arc/i18n";
 import i18n from "@arc/i18n";
 import type { FinanceColorMode, Currency, Locale } from "@arc/core";
 
-import { useMarketDataPolicyStore } from "../../src/lib/market-data";
 import { useUserPreferences } from "../../src/lib/user-preferences";
 import { useColorMode } from "../../src/lib/theme";
 
@@ -39,9 +38,6 @@ export default function SettingsScreen() {
   const { prefs, update } = useUserPreferences();
   const { colorMode, toggleColorMode } = useColorMode();
   const { financeColorMode, setFinanceColorMode } = useFinanceColorMode();
-  const useRealMarketData = useMarketDataPolicyStore((s) => s.useRealMarketData);
-  const setUseRealMarketData = useMarketDataPolicyStore((s) => s.setUseRealMarketData);
-
   const isDark = colorMode === "dark";
 
   const isRedUp = financeColorMode === "redUpGreenDown";
@@ -152,22 +148,6 @@ export default function SettingsScreen() {
               {t("settings.devOnlyHeader")}
             </Text>
             <ListGroup>
-              <ListGroup.Item>
-                <ListGroup.ItemContent>
-                  <ListGroup.ItemTitle>{t("settings.useRealMarketData")}</ListGroup.ItemTitle>
-                  <ListGroup.ItemDescription>
-                    {useRealMarketData
-                      ? t("settings.useRealMarketDataOnHint")
-                      : t("settings.useRealMarketDataOffHint")}
-                  </ListGroup.ItemDescription>
-                </ListGroup.ItemContent>
-                <ListGroup.ItemSuffix>
-                  <Switch isSelected={useRealMarketData} onSelectedChange={setUseRealMarketData} />
-                </ListGroup.ItemSuffix>
-              </ListGroup.Item>
-
-              <Separator className="mx-4" />
-
               <PressableFeedback
                 animation={false}
                 onPress={() => router.push("/me/dev-tools" as Href)}

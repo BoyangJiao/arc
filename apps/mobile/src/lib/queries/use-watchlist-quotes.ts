@@ -4,7 +4,6 @@
 
 import { useCallback, useMemo } from "react";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
-import Decimal from "decimal.js";
 import { parseAssetId, type WatchlistRow } from "@arc/core";
 import {
   AdapterError,
@@ -14,36 +13,15 @@ import {
   type WatchlistQuoteFields,
 } from "@arc/data-sources";
 
-import fixtureData from "../dev-fixtures/quotes.json";
-import type { FixtureData } from "@arc/data-sources";
 import { getRegistry, priceCache } from "../market-data";
 import { throwIfWatchlistRateLimitSimArmed } from "../dev-tools/watchlist-rate-limit-sim";
-import {
-  CACHE_FIRST_READ_FRESHNESS_MS,
-  isCacheFirstMarketData,
-  isFixtureMarketData,
-} from "../market-data-policy";
+import { CACHE_FIRST_READ_FRESHNESS_MS, isCacheFirstMarketData } from "../market-data-policy";
 
-const fixtureChangePercent = (assetId: string): Decimal | null => {
-  const q = (fixtureData as FixtureData).quotes[assetId];
-  if (!q?.changePercent) return null;
-  try {
-    return new Decimal(q.changePercent);
-  } catch {
-    return null;
-  }
-};
-
-const toQuote = (assetId: string, fields: WatchlistQuoteFields): WatchlistRow["quote"] => {
-  let changePercent = fields.changePercent;
-  if (isFixtureMarketData()) {
-    changePercent = fixtureChangePercent(assetId) ?? changePercent;
-  }
-
+const toQuote = (_assetId: string, fields: WatchlistQuoteFields): WatchlistRow["quote"] => {
   return {
     price: fields.price,
     currency: fields.currency,
-    changePercent,
+    changePercent: fields.changePercent,
     asOf: fields.asOf,
     stale: fields.stale,
   };
@@ -77,7 +55,7 @@ export const useWatchlistQuotes = (
         try {
           throwIfWatchlistRateLimitSimArmed();
 
-          if (!forceNetwork && isCacheFirstMarketData() && !isFixtureMarketData()) {
+          if (!forceNetwork && isCacheFirstMarketData()) {
             const cached = await priceCache.get(assetId, CACHE_FIRST_READ_FRESHNESS_MS);
             if (cached) {
               return toQuote(assetId, {

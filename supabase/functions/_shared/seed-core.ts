@@ -32,10 +32,15 @@ export type Scenario = (typeof SCENARIOS)[number];
 export const isScenario = (v: unknown): v is Scenario =>
   typeof v === "string" && (SCENARIOS as readonly string[]).includes(v);
 
+export type UsMarketPrices = Record<"AAPL" | "MSFT" | "NVDA", string>;
+
 export interface ScenarioPlan {
   includeTransactions: boolean;
   baseline: null | {
-    prices: Record<"AAPL" | "MSFT" | "NVDA", string>;
+    /** Multiply live Finnhub marks (CLI seed) for yesterday's snapshot. */
+    factors?: Partial<Record<"AAPL" | "MSFT" | "NVDA", number>>;
+    /** Single factor applied to all three symbols when `factors` omitted. */
+    factor?: number;
     expectedDeltaSummary: string;
   };
   /** When set, (re)seeds watchlist_items for the user. */
@@ -52,19 +57,27 @@ export interface ScenarioPlan {
   description: string;
 }
 
-const CURRENT = { AAPL: 189.5, MSFT: 420.3, NVDA: 875.0 } as const;
+const FALLBACK_MARKS: UsMarketPrices = { AAPL: "189.50", MSFT: "420.30", NVDA: "875.00" };
 
-const baselineFromFactor = (factor: number) => ({
-  AAPL: (CURRENT.AAPL * factor).toFixed(2),
-  MSFT: (CURRENT.MSFT * factor).toFixed(2),
-  NVDA: (CURRENT.NVDA * factor).toFixed(2),
-});
+const baselineFromMarks = (
+  marks: UsMarketPrices,
+  spec: NonNullable<ScenarioPlan["baseline"]>
+): Record<"AAPL" | "MSFT" | "NVDA", string> => {
+  const symbols = ["AAPL", "MSFT", "NVDA"] as const;
+  const out = {} as Record<"AAPL" | "MSFT" | "NVDA", string>;
+  for (const sym of symbols) {
+    const base = Number(marks[sym]);
+    const factor = spec.factors?.[sym] ?? spec.factor ?? 1;
+    out[sym] = (base * factor).toFixed(2);
+  }
+  return out;
+};
 
 export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = {
   default: {
     includeTransactions: true,
     baseline: {
-      prices: baselineFromFactor(0.98),
+      factor: 0.98,
       expectedDeltaSummary: "≈ +2% (baseline ~-2% vs current)",
     },
     description: "Happy path: 3 holdings, yesterday's baseline ~2% below today.",
@@ -72,7 +85,7 @@ export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = {
   "daily-snapshot:big-gain": {
     includeTransactions: true,
     baseline: {
-      prices: baselineFromFactor(0.9),
+      factor: 0.9,
       expectedDeltaSummary: "≈ +10% (baseline ~-10% vs current)",
     },
     description: "Big positive day — large gain numbers + 3 green mover chips.",
@@ -80,7 +93,7 @@ export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = {
   "daily-snapshot:big-loss": {
     includeTransactions: true,
     baseline: {
-      prices: baselineFromFactor(1.05),
+      factor: 1.05,
       expectedDeltaSummary: "≈ -5% (baseline ~+5% vs current)",
     },
     description: "Big negative day — verifies negative coloring + sign formatting.",
@@ -88,7 +101,7 @@ export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = {
   "daily-snapshot:mixed-movers": {
     includeTransactions: true,
     baseline: {
-      prices: { AAPL: "188.56", MSFT: "433.30", NVDA: "810.19" },
+      factors: { AAPL: 0.995, MSFT: 1.031, NVDA: 0.926 },
       expectedDeltaSummary:
         "mixed (NVDA +8%, MSFT -3%, AAPL +0.5%) — verifies Top-3 sort + red/green mixed",
     },
@@ -115,7 +128,7 @@ export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = {
     includeTransactions: false,
     baseline: null,
     watchlist: { assetIds: ["US:AAPL", "US:MSFT", "US:NVDA"] },
-    description: "Watchlist with 3 US symbols + fresh fixture quotes.",
+    description: "Watchlist with 3 US symbols + fresh Finnhub-backed quotes.",
   },
   "watchlist:stale-quotes": {
     includeTransactions: false,
@@ -303,6 +316,8 @@ export interface RunSeedOptions {
   userId: string;
   scenario: Scenario;
   mode?: "reset" | "append";
+  /** Live US marks (Finnhub). CLI seed supplies these; Edge dev-seed uses fallbacks. */
+  usMarketPrices?: UsMarketPrices;
 }
 
 export interface RunSeedResult {
@@ -325,8 +340,16 @@ export const runSeedForUser = async (
 ): Promise<RunSeedResult> => {
   const { userId, scenario, mode = "reset" } = options;
   const plan = SCENARIO_PLANS[scenario];
+  const marks: UsMarketPrices = {
+    ...FALLBACK_MARKS,
+    ...options.usMarketPrices,
+    ...(plan.rebalance?.nvdaPrice ? { NVDA: plan.rebalance.nvdaPrice } : {}),
+  };
 
   log(`scenario: ${scenario} — ${plan.description}`);
+  if (options.usMarketPrices) {
+    log(`✓ Using live Finnhub marks AAPL=${marks.AAPL} MSFT=${marks.MSFT} NVDA=${marks.NVDA}`);
+  }
 
   const { error: assetErr } = await supabase
     .from("assets")
@@ -383,11 +406,10 @@ export const runSeedForUser = async (
     log(`✓ Inserted ${txRows.length} transactions`);
 
     const asOf = new Date().toISOString();
-    const nvdaPrice = plan.rebalance?.nvdaPrice ?? "875.00";
     const priceRows = [
-      { asset_id: "US:AAPL", as_of: asOf, price: "189.50", currency: "USD", source: "seed-dev" },
-      { asset_id: "US:MSFT", as_of: asOf, price: "420.30", currency: "USD", source: "seed-dev" },
-      { asset_id: "US:NVDA", as_of: asOf, price: nvdaPrice, currency: "USD", source: "seed-dev" },
+      { asset_id: "US:AAPL", as_of: asOf, price: marks.AAPL, currency: "USD", source: "seed-dev" },
+      { asset_id: "US:MSFT", as_of: asOf, price: marks.MSFT, currency: "USD", source: "seed-dev" },
+      { asset_id: "US:NVDA", as_of: asOf, price: marks.NVDA, currency: "USD", source: "seed-dev" },
       ...(plan.rebalance?.includeCashTx
         ? [{ asset_id: "CASH:USD", as_of: asOf, price: "1", currency: "USD", source: "seed-dev" }]
         : []),
@@ -416,6 +438,7 @@ export const runSeedForUser = async (
 
   if (plan.baseline) {
     const FX_USD_CNY = 7.2;
+    const baselinePrices = baselineFromMarks(marks, plan.baseline);
     const yesterdayAt23UTC = (() => {
       const d = new Date();
       d.setUTCDate(d.getUTCDate() - 1);
@@ -423,20 +446,20 @@ export const runSeedForUser = async (
       return d.toISOString();
     })();
 
-    const perAssetSnapshot = (
-      Object.keys(plan.baseline.prices) as Array<"AAPL" | "MSFT" | "NVDA">
-    ).map((sym) => {
-      const shares = SHARES_BY_SYMBOL[sym];
-      const priceNative = plan.baseline!.prices[sym];
-      const valueNative = Number(shares) * Number(priceNative);
-      return {
-        assetId: `US:${sym}`,
-        shares,
-        valueNative: valueNative.toFixed(2),
-        currency: "USD",
-        valueReporting: (valueNative * FX_USD_CNY).toFixed(2),
-      };
-    });
+    const perAssetSnapshot = (Object.keys(baselinePrices) as Array<"AAPL" | "MSFT" | "NVDA">).map(
+      (sym) => {
+        const shares = SHARES_BY_SYMBOL[sym];
+        const priceNative = baselinePrices[sym];
+        const valueNative = Number(shares) * Number(priceNative);
+        return {
+          assetId: `US:${sym}`,
+          shares,
+          valueNative: valueNative.toFixed(2),
+          currency: "USD",
+          valueReporting: (valueNative * FX_USD_CNY).toFixed(2),
+        };
+      }
+    );
 
     const totalValueReporting = perAssetSnapshot
       .reduce((acc, a) => acc + Number(a.valueReporting), 0)
@@ -550,25 +573,19 @@ export const runSeedForUser = async (
         ? new Date(Date.now() - 10 * 60 * 1000).toISOString()
         : new Date().toISOString();
 
-      const wlPrices: Record<string, string> = {
-        "US:AAPL": "189.50",
-        "US:MSFT": "420.30",
-        "US:NVDA": "875.00",
-      };
-
-      const wlChangePercent: Record<string, string> = {
-        "US:AAPL": "-0.42",
-        "US:MSFT": "1.05",
-        "US:NVDA": "3.21",
+      const wlMarkByAsset: Record<string, string> = {
+        "US:AAPL": marks.AAPL,
+        "US:MSFT": marks.MSFT,
+        "US:NVDA": marks.NVDA,
       };
 
       const priceRows = watchAssets.map((a) => ({
         asset_id: a.id,
         as_of: quoteAsOf,
-        price: wlPrices[a.id] ?? "100.00",
+        price: wlMarkByAsset[a.id] ?? marks.AAPL,
         currency: "USD",
         source: "seed-dev",
-        change_percent: wlChangePercent[a.id] ?? null,
+        change_percent: null,
       }));
 
       const { error: wlPriceErr } = await supabase

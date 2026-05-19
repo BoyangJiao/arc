@@ -5,7 +5,7 @@
 import Decimal from "decimal.js";
 import type { PriceQuote } from "@arc/core";
 
-import { fxCache, priceCache } from "../market-data";
+import { fxCache, getRegistry, priceCache } from "../market-data";
 import { supabase } from "../supabase";
 import {
   REBALANCE_FIXTURE_NVDA,
@@ -22,8 +22,6 @@ const EQUITY_ASSETS = [
   { id: "US:MSFT", market: "US", symbol: "MSFT", name: "Microsoft Corporation", currency: "USD" },
   { id: "US:NVDA", market: "US", symbol: "NVDA", name: "NVIDIA Corporation", currency: "USD" },
 ] as const;
-
-const BASE_PRICES = { AAPL: "189.50", MSFT: "420.30", NVDA: REBALANCE_FIXTURE_NVDA } as const;
 
 const BASE_TX = [
   {
@@ -62,63 +60,50 @@ const BASE_TX = [
 
 type RebalancePlan = {
   readonly targets: Readonly<Record<string, string>>;
-  readonly nvdaPrice: string;
+  readonly nvdaPriceOverride?: string;
 };
 
 const PLANS: Record<RebalanceScenarioId, RebalancePlan> = {
-  "rebalance:empty-target": { targets: {}, nvdaPrice: BASE_PRICES.NVDA },
-  "rebalance:aligned": { targets: REBALANCE_TARGETS_ALIGNED, nvdaPrice: BASE_PRICES.NVDA },
-  "rebalance:mild-drift": { targets: REBALANCE_TARGETS_MILD, nvdaPrice: REBALANCE_NVDA_MILD },
-  "rebalance:heavy-drift": { targets: REBALANCE_TARGETS_HEAVY, nvdaPrice: REBALANCE_NVDA_HEAVY },
+  "rebalance:empty-target": { targets: {} },
+  "rebalance:aligned": { targets: REBALANCE_TARGETS_ALIGNED },
+  "rebalance:mild-drift": {
+    targets: REBALANCE_TARGETS_MILD,
+    nvdaPriceOverride: REBALANCE_NVDA_MILD,
+  },
+  "rebalance:heavy-drift": {
+    targets: REBALANCE_TARGETS_HEAVY,
+    nvdaPriceOverride: REBALANCE_NVDA_HEAVY,
+  },
 };
 
 const SEED_SOURCE = "seed-dev";
 
-/** Overwrite layered price/fx cache so valuation matches seed (fixture + cache-first). */
-export const warmRebalanceMarketCache = async (nvdaPrice: string): Promise<void> => {
-  const asOf = new Date().toISOString();
-  const quotes: PriceQuote[] = [
-    {
-      assetId: "US:AAPL",
-      price: new Decimal(BASE_PRICES.AAPL),
-      currency: "USD",
-      asOf,
-      source: SEED_SOURCE,
-    },
-    {
-      assetId: "US:MSFT",
-      price: new Decimal(BASE_PRICES.MSFT),
-      currency: "USD",
-      asOf,
-      source: SEED_SOURCE,
-    },
-    {
-      assetId: "US:NVDA",
-      price: new Decimal(nvdaPrice),
-      currency: "USD",
-      asOf,
-      source: SEED_SOURCE,
-    },
-    {
-      assetId: "CASH:USD",
-      price: new Decimal(1),
-      currency: "USD" as const,
-      asOf,
-      source: SEED_SOURCE,
-    },
-  ];
+const fetchLiveUsQuote = async (symbol: string): Promise<PriceQuote> => {
+  const adapter = getRegistry().resolvePriceAdapter("US");
+  return adapter.fetchLatest(symbol);
+};
 
-  for (const quote of quotes) {
+/** Warm device cache from Finnhub (+ optional NVDA skew for drift UAT). */
+export const warmRebalanceMarketCache = async (nvdaPriceOverride?: string): Promise<void> => {
+  const symbols = ["AAPL", "MSFT", "NVDA"] as const;
+
+  for (const sym of symbols) {
+    let quote = await fetchLiveUsQuote(sym);
+    if (sym === "NVDA" && nvdaPriceOverride) {
+      quote = {
+        ...quote,
+        price: new Decimal(nvdaPriceOverride),
+        source: SEED_SOURCE,
+      };
+    }
     await priceCache.set(quote);
   }
 
-  await fxCache.set({
-    from: "USD",
-    to: "CNY",
-    rate: new Decimal("7.20"),
-    asOf,
-    source: SEED_SOURCE,
-  });
+  const cash = await getRegistry().resolvePriceAdapter("CASH").fetchLatest("USD");
+  await priceCache.set(cash);
+
+  const fx = await getRegistry().fxAdapter.fetchRate("USD", "CNY");
+  await fxCache.set(fx);
 };
 
 export class RebalanceSeedError extends Error {
@@ -185,28 +170,35 @@ export const runRebalanceSeedClient = async (
     }
   }
 
+  const aapl = await fetchLiveUsQuote("AAPL");
+  const msft = await fetchLiveUsQuote("MSFT");
+  let nvda = await fetchLiveUsQuote("NVDA");
+  if (plan.nvdaPriceOverride) {
+    nvda = { ...nvda, price: new Decimal(plan.nvdaPriceOverride), source: SEED_SOURCE };
+  }
+
   const asOf = new Date().toISOString();
   const priceRows = [
     {
       asset_id: "US:AAPL",
       as_of: asOf,
-      price: BASE_PRICES.AAPL,
+      price: aapl.price.toString(),
       currency: "USD",
-      source: SEED_SOURCE,
+      source: "finnhub",
     },
     {
       asset_id: "US:MSFT",
       as_of: asOf,
-      price: BASE_PRICES.MSFT,
+      price: msft.price.toString(),
       currency: "USD",
-      source: SEED_SOURCE,
+      source: "finnhub",
     },
     {
       asset_id: "US:NVDA",
       as_of: asOf,
-      price: plan.nvdaPrice,
+      price: nvda.price.toString(),
       currency: "USD",
-      source: SEED_SOURCE,
+      source: plan.nvdaPriceOverride ? SEED_SOURCE : "finnhub",
     },
     { asset_id: "CASH:USD", as_of: asOf, price: "1", currency: "USD", source: SEED_SOURCE },
   ];
@@ -215,18 +207,19 @@ export const runRebalanceSeedClient = async (
     .upsert(priceRows as never, { onConflict: "asset_id,as_of" });
   if (priceErr) throw new RebalanceSeedError(`写入 price_snapshots 失败: ${priceErr.message}`);
 
+  const fx = await getRegistry().fxAdapter.fetchRate("USD", "CNY");
   await supabase.from("fx_rates").upsert(
     {
       from_currency: "USD",
       to_currency: "CNY",
       as_of: asOf,
-      rate: "7.20",
-      source: SEED_SOURCE,
+      rate: fx.rate.toString(),
+      source: fx.source,
     } as never,
     { onConflict: "from_currency,to_currency,as_of" }
   );
 
-  await warmRebalanceMarketCache(plan.nvdaPrice);
+  await warmRebalanceMarketCache(plan.nvdaPriceOverride);
 
   return portfolioId;
 };

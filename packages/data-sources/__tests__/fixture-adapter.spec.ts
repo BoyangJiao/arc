@@ -51,7 +51,7 @@ describe("createFixturePriceAdapter", () => {
   it("throws NotFoundError for an unknown symbol with educational message", async () => {
     const adapter = createFixturePriceAdapter("US", FIXTURE);
     await expect(adapter.fetchLatest("TSLA")).rejects.toThrow(NotFoundError);
-    await expect(adapter.fetchLatest("TSLA")).rejects.toThrow(/dev-fixtures/);
+    await expect(adapter.fetchLatest("TSLA")).rejects.toThrow(/FixtureData/);
   });
 
   it("scoped to its market — does not leak cross-market lookups", async () => {

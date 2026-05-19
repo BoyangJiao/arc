@@ -86,7 +86,7 @@ export const createFixturePriceAdapter = (market: Market, data: FixtureData): Pr
     if (!q) {
       throw new NotFoundError(
         FIXTURE_SOURCE,
-        `no fixture quote for ${assetId}; add it to dev-fixtures/quotes.json or switch toggle ON`
+        `no fixture quote for ${assetId}; add it to the FixtureData passed to createFixturePriceAdapter`
       );
     }
     const changePercent = parseFixtureChangePercent(q);
@@ -146,7 +146,7 @@ export const createFixtureFxAdapter = (data: FixtureData): FxAdapter => ({
     }
     throw new NotFoundError(
       FIXTURE_SOURCE,
-      `no fixture FX rate for ${from}->${to}; add it to dev-fixtures/quotes.json or switch toggle ON`
+      `no fixture FX rate for ${from}->${to}; add it to the FixtureData passed to createFixtureFxAdapter`
     );
   },
 });

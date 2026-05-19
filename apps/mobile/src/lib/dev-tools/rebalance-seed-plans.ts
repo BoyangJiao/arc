@@ -1,11 +1,10 @@
 /**
- * Rebalance DEV scenario targets — derived from fixture holdings + quotes.json prices.
+ * Rebalance DEV scenario targets — fixed % allocations for seeded holdings.
  *
- * Holdings: 10×AAPL, 5×MSFT, 8×NVDA, 5000×CASH:USD @ fixture prices 189.50 / 420.30 / 875 / 1.
- * Current allocation ≈ 11.85% / 13.14% / 43.76% / 31.25% (sums to 100).
+ * Holdings: 10×AAPL, 5×MSFT, 8×NVDA, 5000×CASH:USD (cost basis from seed txs).
+ * Current allocation ≈ 11.85% / 13.14% / 43.76% / 31.25% at reference marks.
  *
- * Fixture mode (default) ignores Supabase price_snapshots — drift is driven by targets.
- * Live mode: mild/heavy also bump NVDA quote via warmRebalanceMarketCache.
+ * mild/heavy override NVDA mark in cache (warmRebalanceMarketCache) to force drift tiers.
  */
 
 export const REBALANCE_FIXTURE_NVDA = "875.00";

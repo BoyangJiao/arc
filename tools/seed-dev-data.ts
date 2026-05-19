@@ -15,15 +15,17 @@ import { createClient } from "@supabase/supabase-js";
 import {
   SCENARIOS,
   SeedError,
-  describeExpectedUi,
   runSeedForUser,
   type Scenario,
+  type UsMarketPrices,
 } from "../supabase/functions/_shared/seed-core.ts";
+import { fetchFinnhubUsQuotes } from "./fetch-finnhub-us-quotes.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const REPO_ROOT = resolve(__dirname, "..");
 const ENV_FILE = resolve(REPO_ROOT, ".env.dev.local");
+const MOBILE_ENV_FILE = resolve(REPO_ROOT, "apps/mobile/.env");
 
 interface SeedArgs {
   email: string;
@@ -182,10 +184,26 @@ async function main() {
   }
   console.log(`✓ Found user (id ${user.id.slice(0, 8)}…)`);
 
+  let usMarketPrices: UsMarketPrices | undefined;
+  const mobileEnv = existsSync(MOBILE_ENV_FILE) ? loadEnvFile(MOBILE_ENV_FILE) : {};
+  const finnhubKey = (
+    env.EXPO_PUBLIC_FINNHUB_API_KEY ??
+    mobileEnv.EXPO_PUBLIC_FINNHUB_API_KEY ??
+    ""
+  ).trim();
+  if (finnhubKey) {
+    console.log("→ Fetching live US marks from Finnhub…");
+    usMarketPrices = await fetchFinnhubUsQuotes(finnhubKey);
+  } else {
+    console.warn(
+      "⚠ EXPO_PUBLIC_FINNHUB_API_KEY missing (apps/mobile/.env) — seed uses fallback marks"
+    );
+  }
+
   try {
     const result = await runSeedForUser(
       supabase,
-      { userId: user.id, scenario: args.scenario, mode: args.mode },
+      { userId: user.id, scenario: args.scenario, mode: args.mode, usMarketPrices },
       (line) => console.log(line.startsWith("✓") || line.startsWith("↷") ? line : `  ${line}`)
     );
     console.log(
