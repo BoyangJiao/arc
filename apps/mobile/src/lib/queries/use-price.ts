@@ -26,6 +26,7 @@ import {
   isCacheFirstMarketData,
   readPriceFreshnessMs,
 } from "../market-data-policy";
+import { isStaleQuoteSource } from "../stale-quote";
 
 export interface UsePriceOptions {
   /** Override cache freshness window (ms). 0 = bypass cache. */
@@ -56,11 +57,11 @@ export const usePrice = (
       const adapter = getRegistry().resolvePriceAdapterByAssetId(assetId);
       const { symbol } = parseAssetId(assetId);
 
-      // cache-first (dev): prefer cached row; miss → pull-to-refresh fetches Finnhub.
+      // cache-first (dev): prefer trusted cached row; miss / stale → Finnhub.
       if (!forceNetwork && isCacheFirstMarketData()) {
         const cached = await priceCache.get(assetId, CACHE_FIRST_READ_FRESHNESS_MS);
-        if (cached) return cached;
-        throw new Error(`No cached quote for ${assetId}. Pull to refresh on the portfolio screen.`);
+        if (cached && !isStaleQuoteSource(cached)) return cached;
+        return fetchPriceWithCache({ adapter, symbol, cache: priceCache, freshnessMs: 0 });
       }
 
       return fetchPriceWithCache({

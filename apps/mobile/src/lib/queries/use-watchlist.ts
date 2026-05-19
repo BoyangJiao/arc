@@ -10,10 +10,12 @@ import {
   type UseQueryResult,
 } from "@tanstack/react-query";
 import type { Asset, Currency, Market, WatchlistRow } from "@arc/core";
-import { composeAssetId } from "@arc/core";
+import { composeAssetId, parseAssetId } from "@arc/core";
 
 import { useAuth } from "../auth";
 import { supabase } from "../supabase";
+
+import { prefetchWatchlistQuote } from "../prefetch-watchlist-quote";
 
 import { useWatchlistQuotes, type UseWatchlistQuotesOptions } from "./use-watchlist-quotes";
 
@@ -151,7 +153,7 @@ export const useAddWatchlistItem = (options: UseAddWatchlistItemOptions = {}) =>
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: AddWatchlistInput): Promise<void> => {
+    mutationFn: async (input: AddWatchlistInput): Promise<string> => {
       if (!user) throw new Error("Not signed in");
 
       const market = input.market ?? "US";
@@ -177,9 +179,23 @@ export const useAddWatchlistItem = (options: UseAddWatchlistItemOptions = {}) =>
         }
         throw error;
       }
+
+      return asset.id;
     },
-    onSuccess: async () => {
+    onSuccess: async (assetId) => {
+      try {
+        const { market, symbol } = parseAssetId(assetId);
+        await prefetchWatchlistQuote(market, symbol);
+      } catch (err) {
+        if (__DEV__) {
+          console.warn(
+            "[watchlist] prefetch quote after add failed:",
+            err instanceof Error ? err.message : err
+          );
+        }
+      }
       await queryClient.invalidateQueries({ queryKey: watchlistQueryKey(user?.id) });
+      await queryClient.invalidateQueries({ queryKey: ["watchlist-quote", assetId] });
       options.onSuccess?.();
     },
   });

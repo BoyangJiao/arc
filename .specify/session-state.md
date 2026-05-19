@@ -6,7 +6,7 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-19 by Cursor Composer — PR #7 merged；cron ✅；dev 默认 Finnhub（移除 fixture 开关）
+> **Last updated**: 2026-05-19 by Cursor Composer — PR #7/#8 merged；cron ✅；ADR 010 dev 缓存信任策略落地（HOOD/AAPL/MSFT/NVDA seed-dev 旁路）
 
 ---
 
@@ -14,12 +14,12 @@
 
 | Field                 | Value                                                                                          |
 | :-------------------- | :--------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 entry** — Finnhub + dev 全真实行情                                                   |
-| **Step**              | PR #7 merged ✅；cron ✅；PR pending: 移除 fixture 开关 + seed 走 Finnhub                      |
-| **Branch**            | `chore/dev-real-market-data-only`                                                              |
+| **Active stage**      | **Stage 3 entry** — Finnhub + dev 全真实行情 + 缓存信任策略（ADR 010）                         |
+| **Step**              | PR #7/#8 merged ✅；cron ✅；HOOD/AAPL/MSFT/NVDA `seed-dev` 旁路统一收口到 4 条读路径          |
+| **Branch**            | （需 `git status` 确认；本次 ADR 010 实施未 commit）                                           |
 | **Last commit**       | 以 `git log -1 --oneline` 为准                                                                 |
-| **PR**                | #7 merged (Finnhub)；open PR for real-market-data-only                                         |
-| **CI status**         | GitHub API unavailable this checkpoint; local `pnpm --filter @arc/mobile exec tsc --noEmit` ✅ |
+| **PR**                | #7 merged (Finnhub)；#8 merged (移除 fixture 开关)；ADR 010 待开 PR                            |
+| **CI status**         | Local `pnpm typecheck` ✅ 6/6 / `pnpm lint` ✅ 0 errors / `pnpm test` ✅ 68/68（data-sources） |
 | **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                           |
 
 ## Stage 2 — J7 Daily Snapshot progress
@@ -133,6 +133,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **Resolved 2026-05-18**: Dev tools UI = **two-level** (feature picker → scenarios), not flat list.
 - **Resolved 2026-05-18 (J9 UAT)**: Rebalance DEV 场景漂移应靠 **不同 `target_allocations`**（在 fixture 固定价下算出 ±7% / ±15%），不能只改 DB NVDA 价；seed 后须 **`warmRebalanceMarketCache()`**（fixture 模式不读 Supabase `price_snapshots`）。
 - **Resolved 2026-05-19 (UI polish)**: `/me` 拆 **嵌套 Stack**（`app/me/_layout.tsx`）— 根仅 `slide_from_left` + `animationMatchesGesture` + `fullScreenGestureEnabled`；子页自右 push。`InScreenHeader` 增加 `density: comfortable` 用于 modal（如自选搜索）。Tab 滚动底缘 `TabScrollShadow`（`ScrollShadow` + `LinearGradient`）。`@arc/eslint-plugin-token-discipline` + ADR 008 / DESIGN-TOKENS 同步。
+- **Resolved 2026-05-19 (ADR 010 dev cache trust)**: 四条 cache-first 读路径（`use-watchlist-quotes` / `use-portfolio-valuation` / `use-price` / `validate-us-symbol`）统一使用 `apps/mobile/src/lib/stale-quote.ts` 的 `isStaleQuoteSource`。`STALE_SOURCES = {seed-dev, fixture, alphavantage}` 或 `changePercent == null` → 不信任缓存、触发 Finnhub。`CACHE_FIRST_READ_FRESHNESS_MS` 保留 `Infinity`（24h freshness 与 dev 永不自动网络的设计冲突，收回）。DEV watchlist seed 假数据 **保留**（stale-quote 场景需要），仅加注释说明。
 
 ## Critical mental model (gotchas easy to forget)
 
@@ -147,6 +148,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **`use-watchlist-quotes`**: `catch` + `return null` = TanStack **success** → no `isError` → **no pull banner**. **`AdapterError` 子类必须 rethrow**（限流/网络/404 等）才能统计失败 + 显示横幅。
 - **Markets 下拉**: `forceRefresh` 在 **`isFetching` 结束** 后关闭，勿用短 `setTimeout`，否则 `queryKey` 切回会只吃缓存并丢涨跌展示路径。
 - **Rebalance DEV seed**: `rebalance:aligned|mild-drift|heavy-drift` 共用同一组 holdings；fixture 当前配置 ≈ **11.85 / 13.14 / 43.76 / 31.25**（见 `rebalance-seed-plans.ts`）。切换场景后 invalidate queries + 预热 `priceCache`/`fxCache`。
+- **缓存信任 (ADR 010)**: dev `cache-first` 不再无条件信任 cache。`source ∈ {seed-dev, fixture, alphavantage}` 或 `changePercent == null` → 走 Finnhub。新写一个 cache-first 读路径必须 `import { isStaleQuoteSource } from "../stale-quote"` 并在 `priceCache.get` 之后过滤，否则 HOOD/AAPL/MSFT/NVDA 类 bug 会复发。
 - **`DeviationBar` (RN)**: 勿用 `h-2` + `h-full` 撑条高 — 用固定 `8px`；条宽按 `|deviationPercent|` 而非 `currentPercent`。
 - All prior Stage 1 gotchas still apply (FixtureAdapter, @arc/ui imports, OTP 8-digit, etc.).
 - **Expo SDK 55** (2026-05-19): `expo@~55`, RN **0.83.6**, React **19.2**; `app.json` 已移除 `newArchEnabled` / `edgeToEdgeEnabled`（SDK 55 默认）；monorepo 启用 `experiments.autolinkingModuleResolution`；根 `pnpm.overrides` 钉住 `react@19.2.0`。勿扫 **8082** 等非 Arc Metro 二维码（会报 SDK 54 不兼容）。
@@ -163,12 +165,13 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Recent ADRs (most relevant first)
 
-| ADR     | Topic                                                          |
-| :------ | :------------------------------------------------------------- |
-| **009** | Daily Snapshot timing (23:00 UTC) + cron + cache-only snapshot |
-| 008     | FixtureAdapter + Settings market-data toggle                   |
-| 007     | Dev auth + seed SQL injection                                  |
-| 006     | `@arc/ui` layering                                             |
+| ADR     | Topic                                                                           |
+| :------ | :------------------------------------------------------------------------------ |
+| **010** | Dev cache trust strategy (`isStaleQuoteSource` 共享 helper；Infinity freshness) |
+| 009     | Daily Snapshot timing (23:00 UTC) + cron + cache-only snapshot                  |
+| 008     | FixtureAdapter + Settings market-data toggle（fixture 路径已退役）              |
+| 007     | Dev auth + seed SQL injection                                                   |
+| 006     | `@arc/ui` layering                                                              |
 
 ## How to use this file
 

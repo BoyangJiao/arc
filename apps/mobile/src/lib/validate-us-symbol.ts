@@ -1,8 +1,10 @@
 /**
  * validateUsSymbol — pre-flight check before recording a US equity transaction.
  *
- * cache-first: reuse any cached quote (device / Supabase); only call Alpha Vantage
- * when there is no cache yet (first time adding that ticker).
+ * cache-first: reuse any *trusted* cached quote (device / Supabase). Rows from
+ * retired sources (seed-dev / fixture / alphavantage) or without changePercent
+ * are skipped so the next add forces a real Finnhub fetch — otherwise a fake
+ * seed price could be written into a real transaction.
  *
  * live: normal fetchPriceWithCache with 15 min freshness.
  */
@@ -21,6 +23,7 @@ import {
   isLiveMarketData,
 } from "./market-data-policy";
 import { getRegistry, priceCache } from "./market-data";
+import { isStaleQuoteSource } from "./stale-quote";
 
 export type ValidateUsSymbolResult =
   | { ok: true; quote: PriceQuote }
@@ -51,12 +54,13 @@ export const validateUsSymbol = async (symbol: string): Promise<ValidateUsSymbol
     : CACHE_FIRST_READ_FRESHNESS_MS;
 
   const cached = await priceCache.get(assetId, readFreshness);
-  if (cached) {
+  if (cached && !isStaleQuoteSource(cached)) {
     return { ok: true, quote: cached };
   }
 
   if (isCacheFirstMarketData()) {
-    console.info(`[validateUsSymbol] cache miss for ${assetId} — one live quote fetch`);
+    const reason = cached ? `stale (${cached.source})` : "miss";
+    console.info(`[validateUsSymbol] cache ${reason} for ${assetId} — one live quote fetch`);
   }
 
   try {
