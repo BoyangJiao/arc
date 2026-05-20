@@ -107,12 +107,36 @@ const fillStaleQuotes = async (
   return merged;
 };
 
+const fetchQuotesForHoldings = async (
+  holdings: readonly Holding[],
+  freshnessMs: number
+): Promise<PriceQuote[]> => {
+  const quotes: PriceQuote[] = [];
+
+  for (let i = 0; i < holdings.length; i++) {
+    if (i > 0) {
+      const prevMarket = parseAssetId(holdings[i - 1]!.assetId).market;
+      if (prevMarket !== "CASH") await sleep(PRICE_INTER_SYMBOL_GAP_MS);
+    }
+    const quote = await fetchQuoteForHolding(holdings[i]!, freshnessMs);
+    if (quote) quotes.push(quote);
+  }
+
+  return quotes;
+};
+
 const fetchAllQuotes = async (
   holdings: readonly Holding[],
   forceNetwork: boolean
 ): Promise<PriceQuote[]> => {
   if (!forceNetwork && isCacheFirstMarketData()) {
-    return readCachedQuotesOnly(holdings);
+    const cached = await readCachedQuotesOnly(holdings);
+    const have = new Set(cached.map((q) => q.assetId));
+    const missing = holdings.filter((h) => !have.has(h.assetId));
+    if (missing.length === 0) return cached;
+
+    const fetched = await fetchQuotesForHoldings(missing, 0);
+    return fillStaleQuotes(holdings, [...cached, ...fetched]);
   }
 
   const freshnessMs = readPriceFreshnessMs(forceNetwork);
@@ -130,14 +154,8 @@ const fetchAllQuotes = async (
     needsNetwork.push(holding);
   }
 
-  for (let i = 0; i < needsNetwork.length; i++) {
-    if (i > 0) {
-      const prevMarket = parseAssetId(needsNetwork[i - 1]!.assetId).market;
-      if (prevMarket !== "CASH") await sleep(PRICE_INTER_SYMBOL_GAP_MS);
-    }
-    const quote = await fetchQuoteForHolding(needsNetwork[i]!, 0);
-    if (quote) quotes.push(quote);
-  }
+  const fetched = await fetchQuotesForHoldings(needsNetwork, 0);
+  quotes.push(...fetched);
 
   return fillStaleQuotes(holdings, quotes);
 };

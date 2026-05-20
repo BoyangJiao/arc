@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-19 by Claude Opus 4.7 — **Stage 3 roadmap Accepted**（14 个决策锁定 + Block C 改走 HeroUI Pro chart 组件 + 天天基金放弃 + 多组合现金模型确定）；**下一个 Opus 会话从 Block A spec 起步**
+> **Last updated**: 2026-05-20 by Cursor — **Block A complete ✅**（Phase 1A Tushare CN + Phase 2 AKShare wrapper）；用户 UAT smoke CN/HK/FUND/510300 + Vercel prod 部署通；**下一站 Opus review `dev/stage-3` + Block B spec**
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                                         |
-| :-------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — roadmap Accepted (2026-05-19), Block A spec drafting next**                                                       |
-| **Step**              | 14 个 Stage 3 决策锁定；下一步 = 新 Opus 会话起 `tushare-adapter-stage-3.md` (Block A 第一个 spec)                            |
-| **Branch**            | `dev/stage-3` —— 从 `main` 分出 + 含 Stage 2 全部成果 + Stage 3 roadmap commit                                                |
-| **Last commit**       | `3b46b21` — docs(stage-3): roadmap draft（本次会话后还会补 Accepted 状态更新 commit）                                         |
-| **PR**                | Stage 2 PR #6/#7/#8/#9 all merged ✅ on main；Stage 3 暂无 open PR                                                            |
-| **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm lint` 6/6 ✅ / `pnpm test` 141/141 ✅ (73 core + 68 data-sources) / `pnpm lint:copy` ✅ |
-| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                                                          |
+| Field                 | Value                                                                                       |
+| :-------------------- | :------------------------------------------------------------------------------------------ |
+| **Active stage**      | **Stage 3 — Block A ✅ done → Block B（多组合）待 Opus spec**                               |
+| **Step**              | commit #15 收尾 push 后 → **Opus review** `dev/stage-3` → 起草 `multi-portfolio-stage-3.md` |
+| **Branch**            | `dev/stage-3`（ahead of origin，含 Block A commit 链 + 收尾）                               |
+| **Last commit**       | _(pending push — Block A wrap-up #15)_                                                      |
+| **PR**                | Stage 2 merged ✅ on main；Stage 3 Block A 待 Opus review 后开 PR                           |
+| **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 122/122 ✅           |
+| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                        |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -131,29 +131,71 @@ _(Prior “uncommitted work” table superseded by the above.)_
 | **13** | **`notes` 字段标记 transfer**                | `transfer-out-to-{id}` / `transfer-in-from-{id}`                                                                            |
 | **14** | **UI 落点 `/me/cash-balances` 加"转账"按钮** | 不开新路由                                                                                                                  |
 
-**给下一个 Opus 会话的 hand-off**：
+## Stage 3 — Block A progress (started 2026-05-19；reshape 2026-05-20)
 
-- 你已经知道 14 个决策 → 直接起 `tushare-adapter-stage-3.md`，参照 Finnhub adapter 模板（`packages/data-sources/src/adapters/finnhub.ts` + tests）
-- ADR 011 在 Block A 末尾起草，覆盖：多源 fallback 优先级表 + AKShare 候补集成方案 + 法务地图复审
-- TWR/PA/Drawdown property tests 是 Block D Opus 主场，至少 20 个 property test 覆盖（vs J9 rebalance 26 个）
-- 用户 Tushare 账号需在 Block A 启动前注册（积分门槛参考 spec）
+**Reshape 触发**：用户 2026-05-20 注册 Tushare 时实证免费版（20 积分）仅 A 股 daily 可访问 → spec / ADR 011 重写为 Phase 1A + Phase 2。
+
+### Spec / ADR 状态
+
+| Item                                                                                                   | Status                                                      |
+| :----------------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
+| `tushare-adapter-stage-3.md` Accepted — 15 决策（含 #14 HK=b + #15 QuotaError extends AdapterError）   | ✅ reshape 2026-05-20                                       |
+| `docs/adr/011-multi-source-fallback-and-akshare.md` **Accepted** — Phase 2 升级为 Stage 3 Block A 必启 | ✅ 2026-05-20                                               |
+| Cursor handoff prompt reshape（commit chain Phase 1A + Phase 2 全重写）                                | ✅ —— `.specify/handoffs/cursor-stage-3-block-a-kickoff.md` |
+
+### Phase 1A — Tushare CN baseline
+
+| Commit                                                                                                           | Status                              |
+| :--------------------------------------------------------------------------------------------------------------- | :---------------------------------- |
+| **#1–#9** Tushare client / resolver / CN adapter / registry / mobile env / CN+HK+FUND seeds + migration 0010 RLS | ✅ committed + **UAT CN 真实价** ✅ |
+| **── Phase 1A DoD** ──                                                                                           | ✅                                  |
+
+### Phase 2 — AKShare wrapper（ADR 011 §决策五 必启）
+
+| Commit                                                                                                                                   | Status                                                                   |
+| :--------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| **#10–#14** akshare-wrapper (Vercel `builds`+`routes`, `lib/`, ETF `fund_etf_hist_em`) + adapters + withFallback + registry + mobile env | ✅ deployed `arc-akshare-wrapper.vercel.app` + **UAT HK/FUND/510300** ✅ |
+| **#15** docs(spec+adr+handoff) + session-state + valuation cache-miss fix                                                                | ✅ this checkpoint commit                                                |
+| **── Phase 2 DoD** ──                                                                                                                    | ✅                                                                       |
+
+### Deferred to Stage 3 末 / Stage 4
+
+| Item                                                              | 阻塞条件                                                         |
+| :---------------------------------------------------------------- | :--------------------------------------------------------------- |
+| commit #3 `tools/refresh-tushare-basics.ts` 抓 stock_basic 等     | 用户升 ¥200 / 2000 积分                                          |
+| commit #5 Tushare HK adapter                                      | 决策 14 锁定 Stage 3 不实施；Stage 4 评估                        |
+| commit #6 Tushare FUND adapter (`fund_nav` OF / `fund_daily` ETF) | OF：用户升 2000 积分；ETF：评估 ¥500 / 5000 积分 vs AKShare 持续 |
+| Live smoke：`HK:00700` / `FUND:*` via Tushare                     | 不发生 Stage 3                                                   |
+
+**给下一个会话的 hand-off**：
+
+- **Opus（用户已交接）**: review `dev/stage-3` Block A commit 链 → 起草 Block B `multi-portfolio-stage-3.md`
+- **Cursor/Sonnet**: Block B spec Accepted 后按 commit 链实现（多组合 / 转账 — 见 roadmap Block B）
+- **TWR/PA/Drawdown property tests** Block D Opus 主场（至少 20 个 property test）—— Stage 3 第 6-7 周启动
+- **用户外部 todo**：
+  1. Tushare token（commit #8 真实拉价依赖；commit #1-7 不需要）
+  2. Vercel 账号 + `vercel login`（commit #10 必需）
+  3. `docs/legal-risk-map.md` L3/L6/§六.6 复读（commit #10 前）
+  4. **可选**：Stage 3 末决定是否升 ¥200/2000 积分（commit #3 + commit #6 OF 解锁）
 
 ## Active blockers / waiting on user
 
-- **Tushare Pro 账号注册**（Block A 启动前需要）—— 免费版 100 积分起步；可选付费版（¥200/年扩积分）由用户自己决定
-- **`docs/legal-risk-map.md` 复读** —— AKShare 候补集成涉及合规复审，ADR 011 起草前用户先扫一遍
-- **`EXPO_PUBLIC_FINNHUB_API_KEY`** — 用户已配置于 `apps/mobile/.env` ✅
+- **Migration `0010`** `assets` CN/HK/FUND INSERT RLS — ✅ user applied (SQL Editor)
+- **`EXPO_PUBLIC_TUSHARE_TOKEN` + `EXPO_PUBLIC_AKSHARE_WRAPPER_*`** — ✅ `apps/mobile/.env`（改 env 须保存 + 重启 Metro）
+- **AKShare wrapper** — ✅ Vercel prod + token；Stage 4 前评估迁国内云（阿里云/火山）降延迟
+- **¥200 / 2000 Tushare 积分** — 可选；解锁 commit #3 `stock_basic` + commit #6 FUND OF
+- **`EXPO_PUBLIC_FINNHUB_API_KEY`** — ✅
 - **Daily Snapshot cron** ✅（`verify_jwt=false` + secrets 对齐；GH `26095476933`）
 - **Dev 行情** — Settings「拉取真实行情」开关已移除；dev/prod 均 Finnhub + Frankfurter（dev = cache-first）
 - **`brew install deno`** — optional, before `pnpm test:functions` locally (J8 dev-seed handler tests)
 
 ## Immediate next actions (next session)
 
-**1. ~~Fix Daily Snapshot cron~~** ✅ cron 冒烟通过（见上）；`supabase/config.toml` 需 merge 到 `main` 以免他人 redeploy 丢 `verify_jwt`。
+**1. Opus review** — `dev/stage-3` Block A（#1–#15）；重点 registry / withFallback / akshare-wrapper / migration 0010。
 
-**2. Merge `feat/finnhub-adapter`** — UAT：自选 NVDA/AAPL 价格 + 涨跌幅；Markets 下拉见 `finnhub.io` 请求。
+**2. Block B spec** — `multi-portfolio-stage-3.md`（多组合 switcher、独立现金、跨组合转账 — roadmap §决策 10–14）。
 
-**3. Stage 3 P0** — Tushare CN/HK、CoinGecko、基金净值；Performance Attribution / TWR。
+**3. Stage 3 体验债（非 Block B 阻塞）** — 组合估值并行拉价；`price_snapshots` RLS 写入 WARN；AKShare 迁国内节点。
 
 **4. Switch-back-to-Opus triggers** (Stage 3):
 
@@ -168,6 +210,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **Resolved 2026-05-18 (J9 UAT)**: Rebalance DEV 场景漂移应靠 **不同 `target_allocations`**（在 fixture 固定价下算出 ±7% / ±15%），不能只改 DB NVDA 价；seed 后须 **`warmRebalanceMarketCache()`**（fixture 模式不读 Supabase `price_snapshots`）。
 - **Resolved 2026-05-19 (UI polish)**: `/me` 拆 **嵌套 Stack**（`app/me/_layout.tsx`）— 根仅 `slide_from_left` + `animationMatchesGesture` + `fullScreenGestureEnabled`；子页自右 push。`InScreenHeader` 增加 `density: comfortable` 用于 modal（如自选搜索）。Tab 滚动底缘 `TabScrollShadow`（`ScrollShadow` + `LinearGradient`）。`@arc/eslint-plugin-token-discipline` + ADR 008 / DESIGN-TOKENS 同步。
 - **Resolved 2026-05-19 (ADR 010 dev cache trust)**: 四条 cache-first 读路径（`use-watchlist-quotes` / `use-portfolio-valuation` / `use-price` / `validate-us-symbol`）统一使用 `apps/mobile/src/lib/stale-quote.ts` 的 `isStaleQuoteSource`。`STALE_SOURCES = {seed-dev, fixture, alphavantage}` 或 `changePercent == null` → 不信任缓存、触发 Finnhub。`CACHE_FIRST_READ_FRESHNESS_MS` 保留 `Infinity`（24h freshness 与 dev 永不自动网络的设计冲突，收回）。DEV watchlist seed 假数据 **保留**（stale-quote 场景需要），仅加注释说明。
+- **Resolved 2026-05-20 (Block A)**: Tushare 免费版仅 A 股 daily；HK/FUND 主源 AKShare Vercel wrapper；场内 ETF（510300）用 `fund_etf_hist_em` 非 `stock_zh_a_hist`；`apps/mobile/.env` AKShare 行须落盘否则 Metro 不加载；cache-first 组合估值对 **cache miss** 自动补网拉价。
 
 ## Critical mental model (gotchas easy to forget)
 
@@ -186,26 +229,30 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **`DeviationBar` (RN)**: 勿用 `h-2` + `h-full` 撑条高 — 用固定 `8px`；条宽按 `|deviationPercent|` 而非 `currentPercent`。
 - All prior Stage 1 gotchas still apply (FixtureAdapter, @arc/ui imports, OTP 8-digit, etc.).
 - **Expo SDK 55** (2026-05-19): `expo@~55`, RN **0.83.6**, React **19.2**; `app.json` 已移除 `newArchEnabled` / `edgeToEdgeEnabled`（SDK 55 默认）；monorepo 启用 `experiments.autolinkingModuleResolution`；根 `pnpm.overrides` 钉住 `react@19.2.0`。勿扫 **8082** 等非 Arc Metro 二维码（会报 SDK 54 不兼容）。
+- **AKShare wrapper (Vercel)**: 纯 Python 子项目须 `vercel.json` **`builds` + `routes`**（勿仅用 `functions` glob）；共享代码放 `lib/` 勿放 `api/_shared/`。Hobby 冷启动慢；跨市场 4 标的串行拉价 UI 全表「加载中」直到最慢一只返回。
+- **Cross-market DEV seed**: `default:cn-only|hk-only|fund-only|cross-market` 走 **App 内 JWT**（`run-cross-market-seed-client.ts`），非 Edge `dev-seed`。
 
 ## Active env / config snapshot
 
-| File               | Status                                               |
-| :----------------- | :--------------------------------------------------- |
-| `apps/mobile/.env` | Supabase + **需加** `EXPO_PUBLIC_FINNHUB_API_KEY`    |
-| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                   |
-| Migrations         | `0001`–`0009` applied ✅ (user confirmed 2026-05-19) |
-| Supabase project   | `jdvlzkictwinkgcvgwew`                               |
-| Git branch         | `feat/finnhub-adapter`                               |
+| File               | Status                                                                       |
+| :----------------- | :--------------------------------------------------------------------------- |
+| `apps/mobile/.env` | Supabase + Finnhub + **Tushare + AKShare wrapper URL/token**（gitignored）   |
+| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                                           |
+| Migrations         | `0001`–`0010` applied ✅ (`0010` CN/HK/FUND assets RLS)                      |
+| AKShare wrapper    | `https://arc-akshare-wrapper.vercel.app` + `AKSHARE_WRAPPER_TOKEN` on Vercel |
+| Supabase project   | `jdvlzkictwinkgcvgwew`                                                       |
+| Git branch         | `dev/stage-3`                                                                |
 
 ## Recent ADRs (most relevant first)
 
-| ADR     | Topic                                                                           |
-| :------ | :------------------------------------------------------------------------------ |
-| **010** | Dev cache trust strategy (`isStaleQuoteSource` 共享 helper；Infinity freshness) |
-| 009     | Daily Snapshot timing (23:00 UTC) + cron + cache-only snapshot                  |
-| 008     | FixtureAdapter + Settings market-data toggle（fixture 路径已退役）              |
-| 007     | Dev auth + seed SQL injection                                                   |
-| 006     | `@arc/ui` layering                                                              |
+| ADR     | Topic                                                                                   |
+| :------ | :-------------------------------------------------------------------------------------- |
+| **011** | 多源 fallback + AKShare wrapper（Stage 3 HK/FUND primary）— **已接受 + Phase 2 已实施** |
+| 010     | Dev cache trust strategy (`isStaleQuoteSource` 共享 helper；Infinity freshness)         |
+| 009     | Daily Snapshot timing (23:00 UTC) + cron + cache-only snapshot                          |
+| 008     | FixtureAdapter + Settings market-data toggle（fixture 路径已退役）                      |
+| 007     | Dev auth + seed SQL injection                                                           |
+| 006     | `@arc/ui` layering                                                                      |
 
 ## How to use this file
 

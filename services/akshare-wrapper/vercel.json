@@ -1,7 +1,11 @@
 {
-  "functions": {
-    "api/**/*.py": {
-      "maxDuration": 60
-    }
-  }
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "builds": [
+    { "src": "api/quote.py", "use": "@vercel/python" },
+    { "src": "api/historical.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/api/quote", "dest": "api/quote.py" },
+    { "src": "/api/historical", "dest": "api/historical.py" }
+  ]
 }

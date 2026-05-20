@@ -1,11 +1,8 @@
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 import json
-import sys
 
-sys.path.insert(0, "api")
-
-from _shared.akshare_client import _require_token, fetch_quote  # noqa: E402
+from lib.akshare_client import _require_token, fetch_quote
 
 
 class handler(BaseHTTPRequestHandler):

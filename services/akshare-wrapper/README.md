@@ -42,9 +42,14 @@ vercel env add AKSHARE_WRAPPER_TOKEN
 vercel deploy --prod
 ```
 
-若出现 `Function Runtimes must have a valid version`：说明 `vercel.json` 里**不要**写 `"runtime": "python3.12"`（已改为用根目录 `.python-version` 指定 Python 3.12）。拉最新代码后重跑 deploy。
+**`vercel.json` 要点**（纯 Python 子项目必须用显式 `builds`，勿只靠 `functions` glob）：
 
-记下输出里的生产 URL，例如：`https://arc-akshare-wrapper.vercel.app`
+- Python 版本：根目录 `.python-version`（`3.12`）
+- 共享逻辑放在 `lib/`，**不要**放在 `api/_shared/`（否则 Vercel 不把 `api/*.py` 识别为函数）
+- 若报 `Function Runtimes must have a valid version`：勿写 `"runtime": "python3.12"`
+- 若报 `functions pattern doesn't match`：改用仓库内 `builds` + `routes`（见 `vercel.json`）
+
+记下输出里的生产 URL，例如：`https://arc-akshare-wrapper.vercel.app`（稳定别名，非每次 deploy 的 `*-xxx.vercel.app` 预览域）
 
 ### 5. 冒烟测试（本机终端）
 
@@ -116,13 +121,14 @@ Simulator：**⌘D → Reload**。
 
 ## 故障排查
 
-| 现象                                    | 处理                                                               |
-| --------------------------------------- | ------------------------------------------------------------------ |
-| App 报 `no price adapter for market HK` | 检查 `EXPO_PUBLIC_AKSHARE_WRAPPER_URL` 是否填、Metro 是否重启      |
-| curl 401                                | Token 与 Vercel env、`.env` 不一致                                 |
-| curl 503 / 超时                         | 冷启动或东方财富源波动；重试；必要时 Vercel Pro 加长 `maxDuration` |
-| 部署失败 `Module not found`             | 确认 `requirements.txt` 在仓库内；重新 `vercel deploy`             |
-| 仅自用                                  | 勿公开 URL；Token 等同 API Key，泄露后在 Vercel 轮换               |
+| 现象                                    | 处理                                                                                |
+| --------------------------------------- | ----------------------------------------------------------------------------------- |
+| App 报 `no price adapter for market HK` | 检查 `EXPO_PUBLIC_AKSHARE_WRAPPER_URL` 是否填、Metro 是否重启                       |
+| curl 401                                | Token 与 Vercel env、`.env` 不一致                                                  |
+| curl 503 / 超时                         | 冷启动或东方财富源波动；重试；必要时 Vercel Pro 加长 `maxDuration`                  |
+| 部署失败 `Module not found`             | 确认 `requirements.txt` 在仓库内；重新 `vercel deploy`                              |
+| `functions` pattern doesn't match       | 勿把共享代码放在 `api/` 下（用 `lib/`）；`vercel.json` 只指向 `api/quote.py` 等入口 |
+| 仅自用                                  | 勿公开 URL；Token 等同 API Key，泄露后在 Vercel 轮换                                |
 
 ---
 

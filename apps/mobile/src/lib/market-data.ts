@@ -83,6 +83,11 @@ if (__DEV__) {
   console.info(
     `[market-data] policy=${getEffectivePolicy()} (Finnhub + Frankfurter` +
       `${TUSHARE_TOKEN ? " + Tushare CN" : ""}` +
-      `${AKSHARE_WRAPPER_URL ? " + AKShare wrapper" : ""})`
+      `${AKSHARE_WRAPPER_URL && AKSHARE_WRAPPER_TOKEN ? " + AKShare HK/FUND" : ""})`
   );
+  if (!AKSHARE_WRAPPER_URL || !AKSHARE_WRAPPER_TOKEN) {
+    console.warn(
+      "[market-data] EXPO_PUBLIC_AKSHARE_WRAPPER_URL/TOKEN missing — HK/FUND quotes disabled; save apps/mobile/.env and restart Metro"
+    );
+  }
 }

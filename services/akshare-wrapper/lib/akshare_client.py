@@ -95,10 +95,34 @@ def fetch_hk_quote(symbol: str) -> dict[str, Any]:
     )
 
 
+def _is_exchange_traded_fund(code: str) -> bool:
+    """场内 ETF/LOF（如 510300、159915）— 用 fund_etf_hist_em，勿走 stock_zh_a_hist。"""
+    return code.startswith(("51", "56", "58", "159", "16"))
+
+
+def fetch_etf_quote(symbol: str) -> dict[str, Any]:
+    code = symbol.zfill(6)
+    df = ak.fund_etf_hist_em(symbol=code, period="daily", adjust="")
+    if df is None or df.empty:
+        raise LookupError(f"ETF symbol not found: {symbol}")
+    row = df.iloc[-1]
+    trade_date = str(row["日期"]).replace("-", "")
+    pct = row.get("涨跌幅")
+    change = float(pct) if pct is not None and pd.notna(pct) else None
+    return _quote(
+        f"FUND:{code}",
+        float(row["收盘"]),
+        "CNY",
+        _cn_as_of(trade_date),
+        "akshare-etf",
+        change,
+    )
+
+
 def fetch_fund_quote(symbol: str) -> dict[str, Any]:
     code = symbol.zfill(6)
-    if code.startswith("5") or code.startswith("1"):
-        return fetch_cn_quote(code)
+    if _is_exchange_traded_fund(code):
+        return fetch_etf_quote(code)
     df = ak.fund_open_fund_info_em(symbol=code, indicator="单位净值走势")
     if df is None or df.empty:
         raise LookupError(f"FUND symbol not found: {symbol}")
