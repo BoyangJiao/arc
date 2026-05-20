@@ -10,8 +10,17 @@
 
 import { parseAssetId, type Market } from "@arc/core";
 
+import {
+  createAkshareCnAdapter,
+  createAkshareFundAdapter,
+  createAkshareHkAdapter,
+  createAkshareClient,
+} from "./adapters/akshare";
 import { createCashPriceAdapter } from "./adapters/cash-adapter";
 import { createFinnhubAdapter } from "./adapters/finnhub";
+import { createTushareClient } from "./adapters/tushare/client";
+import { createTushareCnAdapter } from "./adapters/tushare/cn";
+import { withFallback } from "./adapters/with-fallback";
 import { NotFoundError } from "./errors";
 import type { FxAdapter, PriceAdapter } from "./interfaces";
 
@@ -29,14 +38,51 @@ export interface RegistryConfig {
 
 export interface DefaultPriceAdaptersConfig {
   finnhubApiKey: string;
+  tushareToken?: string;
+  akshareWrapperUrl?: string;
+  akshareWrapperToken?: string;
+  /** When true (default), CN uses withFallback(tushare, akshare) when both are configured. */
+  enableAkshareCnFallback?: boolean;
 }
 
-/** Default live price adapters — US via Finnhub (replaces Alpha Vantage in default registry). */
+/** Default live price adapters — US Finnhub; CN Tushare Phase 1A; HK/FUND AKShare Phase 2. */
 export const createDefaultPriceAdapters = (
   config: DefaultPriceAdaptersConfig
-): Partial<Record<Market, PriceAdapter>> => ({
-  US: createFinnhubAdapter({ apiKey: config.finnhubApiKey }),
-});
+): Partial<Record<Market, PriceAdapter>> => {
+  const tushareClient = config.tushareToken
+    ? createTushareClient({ token: config.tushareToken })
+    : null;
+
+  const akshareClient =
+    config.akshareWrapperUrl && config.akshareWrapperToken
+      ? createAkshareClient({
+          baseUrl: config.akshareWrapperUrl,
+          token: config.akshareWrapperToken,
+        })
+      : null;
+
+  const cnPrimary = tushareClient ? createTushareCnAdapter({ client: tushareClient }) : null;
+  const cnSecondary = akshareClient ? createAkshareCnAdapter({ client: akshareClient }) : null;
+
+  const adapters: Partial<Record<Market, PriceAdapter>> = {
+    US: createFinnhubAdapter({ apiKey: config.finnhubApiKey }),
+  };
+
+  if (cnPrimary && cnSecondary && config.enableAkshareCnFallback !== false) {
+    adapters.CN = withFallback(cnPrimary, cnSecondary);
+  } else if (cnPrimary) {
+    adapters.CN = cnPrimary;
+  } else if (cnSecondary) {
+    adapters.CN = cnSecondary;
+  }
+
+  if (akshareClient) {
+    adapters.HK = createAkshareHkAdapter({ client: akshareClient });
+    adapters.FUND = createAkshareFundAdapter({ client: akshareClient });
+  }
+
+  return adapters;
+};
 
 /**
  * Builds a registry with the CASH constant adapter always registered.
