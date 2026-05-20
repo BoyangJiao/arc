@@ -5,4 +5,6 @@ export * from "./domain";
 export * from "./snapshot";
 export * as returns from "./returns";
 export * as rebalance from "./rebalance";
+export * as portfolio from "./portfolio";
+export * from "./portfolio/transfer";
 export * as fx from "./fx";
