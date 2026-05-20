@@ -140,6 +140,8 @@ export const zh = {
     viaClientWatchlist: "自选数据已在 App 内直接写入（无需 Edge Function）。",
     viaClientRebalance: "再平衡组合数据已在 App 内直接写入（无需 Edge Function）。",
     viaClientWelcome: "欢迎屏标记已在 App 内直接写入（无需 Edge Function）。",
+    viaClientCrossMarket:
+      "组合已在 App 内直接写入（无需 Edge Function）。请下拉组合页拉取 CN/HK/基金真实价。",
     goWelcome: "打开欢迎屏",
     goInsights: "打开洞察",
     errorTitle: "场景应用失败",
