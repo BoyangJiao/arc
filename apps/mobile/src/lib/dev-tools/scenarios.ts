@@ -51,6 +51,17 @@ export const DEV_SEED_FEATURES = [
       { id: "welcome:seen", labelKey: "welSeen", goHref: "/(tabs)" as Href },
     ],
   },
+  {
+    id: "crossMarket",
+    labelKey: "crossMarket",
+    goHref: "/(tabs)" as Href,
+    scenarios: [
+      { id: "default:cn-only", labelKey: "cnOnly" },
+      { id: "default:hk-only", labelKey: "hkOnly" },
+      { id: "default:fund-only", labelKey: "fundOnly" },
+      { id: "default:cross-market", labelKey: "crossMarketMix" },
+    ],
+  },
 ] as const;
 
 export type DevSeedFeatureId = (typeof DEV_SEED_FEATURES)[number]["id"];

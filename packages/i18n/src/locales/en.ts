@@ -172,6 +172,11 @@ export const en = {
         label: "Welcome",
         description: "First-launch screen — has_seen_welcome fresh vs seen (on-device seed)",
       },
+      crossMarket: {
+        label: "CN / HK / FUND",
+        description:
+          "Portfolio holdings for A-share, HK, and fund — live Tushare + AKShare wrapper quotes",
+      },
     },
     fabOpen: "Open dev tools",
     fabDock: "Dock to screen edge",
@@ -238,6 +243,22 @@ export const en = {
       welSeen: {
         label: "Welcome already seen",
         hint: "has_seen_welcome=true — relaunch app skips Welcome",
+      },
+      cnOnly: {
+        label: "CN only (600519)",
+        hint: "100× CN:600519 — pull Portfolio for live Tushare CNY price",
+      },
+      hkOnly: {
+        label: "HK only (00700)",
+        hint: "50× HK:00700 — requires AKShare wrapper URL + token",
+      },
+      fundOnly: {
+        label: "FUND only (000001)",
+        hint: "1000× FUND:000001 — requires AKShare wrapper",
+      },
+      crossMarketMix: {
+        label: "CN + HK + FUND mix",
+        hint: "All three markets — verify each live quote path",
       },
     },
   },

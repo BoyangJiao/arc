@@ -167,6 +167,10 @@ export const zh = {
         label: "欢迎屏",
         description: "首登引导 — 切换 has_seen_welcome 未看过/已看过（App 内直接种子）",
       },
+      crossMarket: {
+        label: "A股 / 港股 / 基金",
+        description: "组合持仓 — Tushare A 股 + AKShare 港股/基金真实价",
+      },
     },
     fabOpen: "打开开发工具",
     fabDock: "贴边隐藏",
@@ -233,6 +237,22 @@ export const zh = {
       welSeen: {
         label: "已看过欢迎屏",
         hint: "has_seen_welcome=true — 重启 App 跳过欢迎屏",
+      },
+      cnOnly: {
+        label: "仅 A 股 (600519)",
+        hint: "100 股 CN:600519 — 下拉组合拉 Tushare 真实 CNY 价",
+      },
+      hkOnly: {
+        label: "仅港股 (00700)",
+        hint: "50 股 HK:00700 — 需配置 AKShare wrapper",
+      },
+      fundOnly: {
+        label: "仅基金 (000001)",
+        hint: "1000 份 FUND:000001 — 需配置 AKShare wrapper",
+      },
+      crossMarketMix: {
+        label: "跨市场混合",
+        hint: "CN + HK + FUND — 分别验证各市场报价",
       },
     },
   },
