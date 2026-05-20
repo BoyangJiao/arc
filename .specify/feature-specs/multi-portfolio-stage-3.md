@@ -147,9 +147,11 @@ Roadmap §决策 10–14（2026-05-19 锁定）规定数据模型零改动 + 跨
 - 新增 `<InsightsTabContent>` 容器组件：根据 `usePortfolios({ includeArchived: false })` 渲染 N 个 `<PortfolioInsightCard>`
 - 现有 `/insights/rebalance/setup` `/insights/rebalance/actions` 路由保留；接受 `portfolioId` query 参数（之前隐式用 active；现在需要 explicit 才能按 per-card context 跳）
 
-### 决策 8 — `activePortfolioId` 持久化 = Zustand + MMKV（A）
+### 决策 8 — `activePortfolioId` 持久化 = Zustand + **AsyncStorage**（修订 2026-05-20）
 
-如原 spec §Architecture「Active portfolio store」描述：Zustand store + MMKV persist；冷启动从 MMKV 读 → 命中且未归档则用；指向归档/删除 → fallback `portfolios[0]` + 清 MMKV；portfolios 空则 null。
+**初版（A）写的是 MMKV**，但 MMKV 是 native module，Expo Go 不内置 → 引入会让 Stage 3 自用阶段被迫切 Dev Build (10-15 分钟首编 + 后续每加 native dep 重编)。`activePortfolioId` 是低频写场景（< 10 次/天），AsyncStorage < 10ms boot read 完全够用。改为 Zustand + AsyncStorage 一条路径，MMKV 评估推到 Stage 4 + 真出现 high-frequency write hotspot 后再换。
+
+冷启动从 AsyncStorage 读 → 命中且未归档则用；指向归档/删除 → fallback `portfolios[0]` + clear；portfolios 空则 null。
 
 ### 决策 9 — 转账余额校验 = open-time snapshot + submit-time double-check（A）
 
@@ -249,7 +251,7 @@ export const buildTransferTransactions = (
 | `packages/db/src/schema/portfolios.ts`                           | + `archivedAt` field                                                                                                                     |
 | `packages/core/src/domain/types.ts`                              | extend `Portfolio` with `archivedAt`                                                                                                     |
 | `packages/core/src/portfolio/transfer.ts`                        | `TransferIntent` / `validateTransfer` / `buildTransferTransactions`                                                                      |
-| `apps/mobile/src/lib/store/active-portfolio.ts`                  | Zustand store + MMKV persist (Open Q 3 = A)                                                                                              |
+| `apps/mobile/src/lib/store/active-portfolio.ts`                  | Zustand store + AsyncStorage persist (决策 8)                                                                                            |
 | `apps/mobile/src/lib/queries/use-portfolios.ts`                  | extend with `useCreatePortfolio` / `useArchivePortfolio` / `useUnarchivePortfolio` / `useRenamePortfolio` / **`useHardDeletePortfolio`** |
 | `apps/mobile/src/lib/queries/use-active-portfolio.ts`            | derived hook: returns `Portfolio` from store + queries                                                                                   |
 | `apps/mobile/src/lib/queries/use-transfer.ts`                    | `useTransferBetweenPortfolios` mutation (calls `buildTransferTransactions` + supabase)                                                   |
@@ -269,17 +271,10 @@ export const buildTransferTransactions = (
 ### Active portfolio store (Open Q 3 = A)
 
 ```ts
-// apps/mobile/src/lib/store/active-portfolio.ts
+// apps/mobile/src/lib/store/active-portfolio.ts + active-portfolio-storage.ts
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { MMKV } from "react-native-mmkv";
-
-const storage = new MMKV();
-
-interface ActivePortfolioState {
-  activePortfolioId: string | null;
-  setActivePortfolioId: (id: string | null) => void;
-}
 
 export const useActivePortfolioStore = create<ActivePortfolioState>()(
   persist(
@@ -290,9 +285,9 @@ export const useActivePortfolioStore = create<ActivePortfolioState>()(
     {
       name: "arc.activePortfolioId",
       storage: createJSONStorage(() => ({
-        getItem: (k) => storage.getString(k) ?? null,
-        setItem: (k, v) => storage.set(k, v),
-        removeItem: (k) => storage.delete(k),
+        getItem: (k) => AsyncStorage.getItem(k),
+        setItem: (k, v) => AsyncStorage.setItem(k, v),
+        removeItem: (k) => AsyncStorage.removeItem(k),
       })),
     }
   )
@@ -429,14 +424,14 @@ Tap "转账到其他组合" →
 **When** 顶栏 switcher → 选 "加密钱包"
 **Then** Portfolio Tab / Insights Tab / Markets Tab 切到 "加密钱包" 数据（持仓 / rebalance / watchlist 都按该 portfolio）
 **When** 杀进程重启
-**Then** active 仍是 "加密钱包"（MMKV 持久化）
+**Then** active 仍是 "加密钱包"（AsyncStorage 持久化）
 
 ### S3-AC-B.3 — Active 指向归档 / 删除的 portfolio → fallback
 
 **Given** active = "加密钱包"
 **When** 归档 "加密钱包"
 **Then** active 自动 fallback 到 `portfolios[0]`（第一个非归档）
-**And** MMKV 同步更新
+**And** 本地持久化同步更新
 
 ### S3-AC-B.4 — 重命名 + 归档不破坏交易历史
 
@@ -546,7 +541,7 @@ Tap "转账到其他组合" →
 
 1. **`feat(db): portfolios.archived_at + migration 0011`** — schema + migration SQL + Drizzle 字段 + `apps/mobile` Portfolio type 同步
 2. **`feat(core): TransferIntent / validateTransfer / buildTransferTransactions + property tests`** — 5+ property tests（Decimal 边界 / same-portfolio reject / non-cash reject / negative amount reject / build pair 双笔 created_at 相同）— **Opus 推荐 review**
-3. **`feat(mobile): active-portfolio Zustand store + MMKV persist`** — store + `useActivePortfolio` derived hook + fallback 逻辑
+3. **`feat(mobile): active-portfolio Zustand store + AsyncStorage persist`** — store + `useActivePortfolio` derived hook + fallback 逻辑
 4. **`feat(mobile): portfolios CRUD hooks`** — `useCreatePortfolio` / `useArchivePortfolio` / `useUnarchivePortfolio` / `useRenamePortfolio` / **`useHardDeletePortfolio`**
 5. **`feat(mobile): /me/portfolios list + new portfolio modal + 已归档区 + 永久删除 confirm dialog`** — list 视图 + 已归档折叠 + 长按 actions + `HardDeleteConfirmDialog`（决策 6 refinement）
 6. **`feat(ui+mobile): PortfolioSwitcher (仅 Portfolio Tab)`** — `@arc/ui` 下拉组件 + **仅 Portfolio Tab 头部挂载**（决策 7）
@@ -603,7 +598,7 @@ Tap "转账到其他组合" →
 | 归档逻辑漏掉过滤位 → 估值 / rebalance 错算入归档 portfolio | Med              | 财务数据错                                  | `usePortfolios` 默认 `WHERE archived_at IS NULL`；要看归档显式传 `{ includeArchived: true }`             |
 | transfer notes 字符串约定后续 group_id 迁移困难            | Low              | 历史 transaction notes 不规整               | `notes` regex `^transfer-(out-to                                                                         | in-from)-([0-9a-f-]{36})$` 一致；Stage 4 加 group_id 迁移可回填 |
 | 单批 insert 失败时 partial state                           | Low              | 半笔 → 余额数据腐败                         | Supabase `insert([])` 是原子的（PostgREST 单 statement multi-row insert）；UAT verify                    |
-| 多设备同时切换 active portfolio                            | Low (单设备 dev) | 视图闪烁                                    | MMKV 是单设备本地存储，不跨设备同步；Stage 4 加 Supabase user_preferences 表                             |
+| 多设备同时切换 active portfolio                            | Low (单设备 dev) | 视图闪烁                                    | AsyncStorage 是单设备本地存储，不跨设备同步；Stage 4 加 Supabase user_preferences 表                     |
 | Rebalance target_allocations 跨 portfolio 串               | Low              | 切到 portfolio B 看到 portfolio A 的 target | `target_allocations` schema (migration 0007) 已含 `portfolio_id` FK + RLS — 切换天然过滤                 |
 
 ---

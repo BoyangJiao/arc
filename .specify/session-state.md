@@ -164,7 +164,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 | :------ | :-------------------------------------------- | :------------------ |
 | **#1**  | migration 0011 `archived_at`                  | ✅ user applied SQL |
 | **#2**  | `validateTransfer` + property tests           | ✅                  |
-| **#3**  | Zustand/MMKV + `useActivePortfolio`           | ✅                  |
+| **#3**  | Zustand/AsyncStorage + `useActivePortfolio`   | ✅                  |
 | **#4**  | portfolios CRUD hooks                         | ✅                  |
 | **#5**  | `/me/portfolios` + HardDeleteConfirmDialog    | ✅                  |
 | **#6**  | PortfolioSwitcher (Portfolio Tab only)        | ✅                  |

@@ -9,7 +9,7 @@ import type { Portfolio } from "../domain/types";
 export interface ResolveActivePortfolioResult {
   readonly portfolio: Portfolio | null;
   readonly effectiveId: string | null;
-  /** true 时调用方应 setActivePortfolioId(effectiveId) 以修正 MMKV 中的 stale id */
+  /** true 时调用方应 setActivePortfolioId(effectiveId) 以修正持久化中的 stale id */
   readonly shouldSyncStore: boolean;
 }
 
@@ -17,7 +17,7 @@ const unarchived = (portfolios: ReadonlyArray<Portfolio>): ReadonlyArray<Portfol
   portfolios.filter((p) => p.archivedAt === null);
 
 /**
- * @param storedId — Zustand/MMKV 中的 activePortfolioId（可为 null）
+ * @param storedId — Zustand persist（AsyncStorage）中的 activePortfolioId（可为 null）
  * @param portfolios — usePortfolios 返回的列表（created_at 升序）
  */
 export const resolveActivePortfolio = (
