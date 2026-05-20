@@ -42,6 +42,8 @@ vercel env add AKSHARE_WRAPPER_TOKEN
 vercel deploy --prod
 ```
 
+若出现 `Function Runtimes must have a valid version`：说明 `vercel.json` 里**不要**写 `"runtime": "python3.12"`（已改为用根目录 `.python-version` 指定 Python 3.12）。拉最新代码后重跑 deploy。
+
 记下输出里的生产 URL，例如：`https://arc-akshare-wrapper.vercel.app`
 
 ### 5. 冒烟测试（本机终端）
