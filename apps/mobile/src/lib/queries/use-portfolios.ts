@@ -18,6 +18,7 @@ interface DBPortfolioRow {
   name: string;
   reporting_currency: Currency;
   created_at: string;
+  archived_at: string | null;
 }
 
 const fromDB = (row: DBPortfolioRow): Portfolio => ({
@@ -26,6 +27,7 @@ const fromDB = (row: DBPortfolioRow): Portfolio => ({
   name: row.name,
   reportingCurrency: row.reporting_currency,
   createdAt: row.created_at,
+  archivedAt: row.archived_at,
 });
 
 export const usePortfolios = (): UseQueryResult<Portfolio[], Error> => {
@@ -39,7 +41,7 @@ export const usePortfolios = (): UseQueryResult<Portfolio[], Error> => {
 
       const { data, error } = await supabase
         .from("portfolios")
-        .select("id, user_id, name, reporting_currency, created_at")
+        .select("id, user_id, name, reporting_currency, created_at, archived_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: true });
 
@@ -60,7 +62,7 @@ export const usePortfolio = (id: string | undefined): UseQueryResult<Portfolio |
 
       const { data, error } = await supabase
         .from("portfolios")
-        .select("id, user_id, name, reporting_currency, created_at")
+        .select("id, user_id, name, reporting_currency, created_at, archived_at")
         .eq("id", id)
         .eq("user_id", user.id)
         .maybeSingle();

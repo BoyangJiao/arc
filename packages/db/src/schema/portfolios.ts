@@ -30,6 +30,8 @@ export const portfolios = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),
+    /** 软归档时间；NULL = 活跃组合（Stage 3 Block B）*/
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
   },
   (t) => [index("portfolios_user_id_idx").on(t.userId)]
 );

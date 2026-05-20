@@ -180,6 +180,8 @@ export interface Portfolio {
   /** 该 portfolio 的报告货币（用户偏好可覆盖到全局或个组合）*/
   readonly reportingCurrency: Currency;
   readonly createdAt: string;
+  /** 软归档时间（ISO）；NULL = 活跃 */
+  readonly archivedAt: string | null;
   /** 派生：当前持仓 */
   readonly holdings?: Holding[];
   /** Stage 2 字段：目标配置 */
