@@ -14,6 +14,11 @@ import {
   isWelcomeScenario,
   type DevSeedScenarioId,
 } from "./scenarios";
+import {
+  isCrossMarketScenario,
+  runCrossMarketSeedClient,
+  CrossMarketSeedError,
+} from "./run-cross-market-seed-client";
 import { runRebalanceSeedClient, RebalanceSeedError } from "./run-rebalance-seed-client";
 import { runWatchlistSeedClient, WatchlistSeedError } from "./run-watchlist-seed-client";
 import { runWelcomeSeedClient, WelcomeSeedError } from "./run-welcome-seed-client";
@@ -23,7 +28,7 @@ export interface DevSeedInvokeResult {
   scenario: string;
   portfolioId: string;
   expectedUi: string[];
-  via: "client-watchlist" | "client-rebalance" | "client-welcome" | "edge";
+  via: "client-watchlist" | "client-rebalance" | "client-welcome" | "client-cross-market" | "edge";
 }
 
 interface DevSeedErrorBody {
@@ -147,6 +152,33 @@ const invokeWelcomeClient = async (scenario: DevSeedScenarioId): Promise<DevSeed
   };
 };
 
+const invokeCrossMarketClient = async (
+  scenario: DevSeedScenarioId
+): Promise<DevSeedInvokeResult> => {
+  if (!isCrossMarketScenario(scenario)) {
+    throw new CrossMarketSeedError(`Not a cross-market scenario: ${scenario}`);
+  }
+
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    throw new CrossMarketSeedError("未登录 — 请先 OTP 登录");
+  }
+
+  const { portfolioId, expectedUi } = await runCrossMarketSeedClient(scenario, user.id);
+  await invalidateDevSeedQueries();
+
+  return {
+    ok: true,
+    scenario,
+    portfolioId,
+    expectedUi,
+    via: "client-cross-market",
+  };
+};
+
 const invokeRebalanceClient = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
   if (!isRebalanceScenario(scenario)) {
     throw new RebalanceSeedError(`Not a rebalance scenario: ${scenario}`);
@@ -183,6 +215,10 @@ export const invokeDevSeed = async (scenario: DevSeedScenarioId): Promise<DevSee
 
   if (isWelcomeScenario(scenario)) {
     return invokeWelcomeClient(scenario);
+  }
+
+  if (isCrossMarketScenario(scenario)) {
+    return invokeCrossMarketClient(scenario);
   }
 
   const result = await invokeEdgeDevSeed(scenario);

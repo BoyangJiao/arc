@@ -145,6 +145,8 @@ export const en = {
     viaClientWatchlist: "Watchlist seeded on-device (no Edge Function).",
     viaClientRebalance: "Rebalance portfolio seeded on-device (no Edge Function).",
     viaClientWelcome: "Welcome flag toggled on-device (no Edge Function).",
+    viaClientCrossMarket:
+      "Portfolio seeded on-device (no Edge deploy). Pull Portfolio for live CN/HK/FUND quotes.",
     goWelcome: "Open Welcome",
     goInsights: "Open Insights",
     errorTitle: "Could not apply scenario",

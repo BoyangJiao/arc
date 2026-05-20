@@ -71,7 +71,9 @@ export function DevToolsScenarioPanel({
               ? `\n\n${t("devTools.viaClientRebalance")}`
               : result.via === "client-welcome"
                 ? `\n\n${t("devTools.viaClientWelcome")}`
-                : "";
+                : result.via === "client-cross-market"
+                  ? `\n\n${t("devTools.viaClientCrossMarket")}`
+                  : "";
 
         Alert.alert(t("devTools.successTitle"), `${t("devTools.successBody")}${viaNote}`, [
           {
