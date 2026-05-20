@@ -11,9 +11,12 @@ import pandas as pd
 
 
 def _require_token(headers: dict[str, str]) -> None:
+    # Fail-closed: refuse to serve when AKSHARE_WRAPPER_TOKEN env not configured.
+    # 任何缺 env 的部署 (local dev / Vercel preview missing env / 配置错误) 都拒绝服务,
+    # 避免对全 internet 开放 (Block A code review P1-3).
     expected = os.environ.get("AKSHARE_WRAPPER_TOKEN", "")
     if not expected:
-        return
+        raise PermissionError("AKSHARE_WRAPPER_TOKEN must be configured")
     token = headers.get("x-arc-token") or headers.get("X-Arc-Token")
     if token != expected:
         raise PermissionError("unauthorized")
@@ -152,4 +155,112 @@ def fetch_quote(market: str, symbol: str) -> dict[str, Any]:
         return fetch_hk_quote(symbol)
     if m == "FUND":
         return fetch_fund_quote(symbol)
+    raise ValueError(f"unsupported market: {market}")
+
+
+# ---- Historical window fetch (Block A P1-1) -------------------------------
+
+def _iso_to_ymd(iso: str) -> str:
+    # Accept ISO 8601 with or without timezone — slice the date portion (YYYY-MM-DD).
+    date_part = iso.split("T")[0]
+    return date_part.replace("-", "")
+
+
+def fetch_cn_window(symbol: str, start_ymd: str, end_ymd: str) -> list[dict[str, Any]]:
+    code = symbol.zfill(6)
+    df = ak.stock_zh_a_hist(
+        symbol=code, period="daily", start_date=start_ymd, end_date=end_ymd, adjust=""
+    )
+    if df is None or df.empty:
+        return []
+    out: list[dict[str, Any]] = []
+    for i in range(len(df)):
+        row = df.iloc[i]
+        trade_date = str(row["日期"]).replace("-", "")
+        pct = row.get("涨跌幅")
+        change = float(pct) if pct is not None and pd.notna(pct) else None
+        out.append(
+            _quote(f"CN:{code}", float(row["收盘"]), "CNY", _cn_as_of(trade_date), "akshare-cn", change)
+        )
+    return out
+
+
+def fetch_hk_window(symbol: str, start_ymd: str, end_ymd: str) -> list[dict[str, Any]]:
+    code = (symbol.lstrip("0") or symbol).zfill(5)
+    df = ak.stock_hk_hist(
+        symbol=code, period="daily", start_date=start_ymd, end_date=end_ymd, adjust=""
+    )
+    if df is None or df.empty:
+        return []
+    out: list[dict[str, Any]] = []
+    for i in range(len(df)):
+        row = df.iloc[i]
+        trade_date = str(row["日期"]).replace("-", "")
+        pct = row.get("涨跌幅")
+        change = float(pct) if pct is not None and pd.notna(pct) else None
+        out.append(
+            _quote(f"HK:{code}", float(row["收盘"]), "HKD", _hk_as_of(trade_date), "akshare-hk", change)
+        )
+    return out
+
+
+def fetch_etf_window(symbol: str, start_ymd: str, end_ymd: str) -> list[dict[str, Any]]:
+    code = symbol.zfill(6)
+    df = ak.fund_etf_hist_em(
+        symbol=code, period="daily", start_date=start_ymd, end_date=end_ymd, adjust=""
+    )
+    if df is None or df.empty:
+        return []
+    out: list[dict[str, Any]] = []
+    for i in range(len(df)):
+        row = df.iloc[i]
+        trade_date = str(row["日期"]).replace("-", "")
+        pct = row.get("涨跌幅")
+        change = float(pct) if pct is not None and pd.notna(pct) else None
+        out.append(
+            _quote(f"FUND:{code}", float(row["收盘"]), "CNY", _cn_as_of(trade_date), "akshare-etf", change)
+        )
+    return out
+
+
+def fetch_open_fund_window(symbol: str, start_ymd: str, end_ymd: str) -> list[dict[str, Any]]:
+    # fund_open_fund_info_em 不接受 date 参数 — 拉全量后按日期窗口过滤
+    code = symbol.zfill(6)
+    df = ak.fund_open_fund_info_em(symbol=code, indicator="单位净值走势")
+    if df is None or df.empty:
+        return []
+    out: list[dict[str, Any]] = []
+    prev_nav: float | None = None
+    for i in range(len(df)):
+        row = df.iloc[i]
+        nav_date = str(row["净值日期"]).replace("-", "")
+        if nav_date < start_ymd or nav_date > end_ymd:
+            prev_nav = float(row["单位净值"])
+            continue
+        nav = float(row["单位净值"])
+        change = (nav - prev_nav) / prev_nav * 100 if prev_nav else None
+        out.append(_quote(f"FUND:{code}", nav, "CNY", _fund_as_of(nav_date), "akshare-fund", change))
+        prev_nav = nav
+    return out
+
+
+def fetch_fund_window(symbol: str, start_ymd: str, end_ymd: str) -> list[dict[str, Any]]:
+    code = symbol.zfill(6)
+    if _is_exchange_traded_fund(code):
+        return fetch_etf_window(code, start_ymd, end_ymd)
+    return fetch_open_fund_window(code, start_ymd, end_ymd)
+
+
+def fetch_quotes_window(
+    market: str, symbol: str, from_iso: str, to_iso: str
+) -> list[dict[str, Any]]:
+    m = market.upper()
+    start = _iso_to_ymd(from_iso)
+    end = _iso_to_ymd(to_iso)
+    if m == "CN":
+        return fetch_cn_window(symbol, start, end)
+    if m == "HK":
+        return fetch_hk_window(symbol, start, end)
+    if m == "FUND":
+        return fetch_fund_window(symbol, start, end)
     raise ValueError(f"unsupported market: {market}")

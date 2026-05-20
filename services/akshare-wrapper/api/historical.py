@@ -2,7 +2,7 @@ from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 import json
 
-from lib.akshare_client import _require_token, fetch_quote
+from lib.akshare_client import _require_token, fetch_quote, fetch_quotes_window
 
 
 class handler(BaseHTTPRequestHandler):
@@ -17,10 +17,13 @@ class handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({"message": "market and symbol required"}).encode())
                 return
-            # Stage 3: return latest only; extend with date window when Block C needs it
-            _ = qs.get("from")
-            _ = qs.get("to")
-            body = [fetch_quote(market, symbol)]
+            # Block A P1-1: implement real date window. Without from/to, return latest 1 row (compat).
+            from_iso = (qs.get("from") or [""])[0]
+            to_iso = (qs.get("to") or [""])[0]
+            if from_iso and to_iso:
+                body = fetch_quotes_window(market, symbol, from_iso, to_iso)
+            else:
+                body = [fetch_quote(market, symbol)]
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
@@ -33,7 +36,14 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
             self.wfile.write(json.dumps({"message": str(e)}).encode())
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError) as e:
+            # Transient upstream — signal retry (Block A P1-2).
             self.send_response(503)
+            self.send_header("Retry-After", "60")
+            self.end_headers()
+            self.wfile.write(json.dumps({"message": str(e)}).encode())
+        except Exception as e:
+            # Bug / data shape change — no retry hint; client → NetworkError → bubble (Sentry-ready).
+            self.send_response(500)
             self.end_headers()
             self.wfile.write(json.dumps({"message": str(e)}).encode())

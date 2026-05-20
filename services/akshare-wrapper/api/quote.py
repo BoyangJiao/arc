@@ -30,8 +30,15 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
             self.wfile.write(json.dumps({"message": str(e)}).encode())
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError) as e:
+            # Transient upstream network failure (Block A P1-2 split): signal retry.
+            # requests.exceptions.{ConnectionError,Timeout,HTTPError,RequestException} all extend OSError.
             self.send_response(503)
             self.send_header("Retry-After", "60")
+            self.end_headers()
+            self.wfile.write(json.dumps({"message": str(e)}).encode())
+        except Exception as e:
+            # Bug / data shape change / unknown — do NOT signal retry; client → NetworkError → bubble (Sentry-ready).
+            self.send_response(500)
             self.end_headers()
             self.wfile.write(json.dumps({"message": str(e)}).encode())
