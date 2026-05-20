@@ -29,6 +29,9 @@ export const SCENARIOS = [
   "default:hk-only",
   "default:fund-only",
   "default:cross-market",
+  "portfolios:single",
+  "portfolios:multi-3",
+  "portfolios:transfer-history",
 ] as const;
 
 export type Scenario = (typeof SCENARIOS)[number];
@@ -225,6 +228,21 @@ const buildScenarioPlans = (): Record<Scenario, ScenarioPlan> => ({
     transactions: SEED_CROSS_MARKET_TRANSACTIONS,
     skipPriceSnapshots: true,
     description: "CN + HK + FUND mix — live multi-market adapters.",
+  },
+  "portfolios:single": {
+    includeTransactions: false,
+    baseline: null,
+    description: "Single portfolio only — switcher has no ▼.",
+  },
+  "portfolios:multi-3": {
+    includeTransactions: false,
+    baseline: null,
+    description: "Three portfolios with holdings, targets, and CASH balances.",
+  },
+  "portfolios:transfer-history": {
+    includeTransactions: false,
+    baseline: null,
+    description: "Multi-3 plus one historical CASH transfer pair (notes pattern).",
   },
 });
 
@@ -455,12 +473,218 @@ const noopLog: LogFn = () => {};
 /**
  * Idempotent dev seed for one user. Requires service-role Supabase client.
  */
+const runPortfoliosBlockBSeed = async (
+  supabase: SupabaseClient,
+  userId: string,
+  scenario: Scenario,
+  mode: "reset" | "append",
+  log: LogFn
+): Promise<RunSeedResult> => {
+  if (mode === "reset") {
+    const { error: delErr } = await supabase.from("portfolios").delete().eq("user_id", userId);
+    if (delErr) throw new SeedError(`Portfolio delete failed: ${delErr.message}`);
+    log("✓ Cleared portfolios for user");
+  }
+
+  const cashAssets = [
+    { id: "CASH:USD", market: "CASH", symbol: "USD", name: "USD", currency: "USD" },
+    { id: "CASH:CNY", market: "CASH", symbol: "CNY", name: "CNY", currency: "CNY" },
+  ];
+  const { error: assetErr } = await supabase
+    .from("assets")
+    .upsert([...SEED_ASSETS, ...cashAssets] as never, { onConflict: "id" });
+  if (assetErr) throw new SeedError(`Asset upsert failed: ${assetErr.message}`);
+
+  const portfolioDefs =
+    scenario === "portfolios:single"
+      ? [{ name: "My Portfolio", reporting_currency: "CNY" as const }]
+      : [
+          { name: "My Portfolio", reporting_currency: "CNY" as const },
+          { name: "加密钱包", reporting_currency: "USD" as const },
+          { name: "401k", reporting_currency: "USD" as const },
+        ];
+
+  const createdIds: string[] = [];
+  for (const def of portfolioDefs) {
+    const { data, error } = await supabase
+      .from("portfolios")
+      .insert({ user_id: userId, name: def.name, reporting_currency: def.reporting_currency })
+      .select("id")
+      .single();
+    if (error || !data) throw new SeedError(`Portfolio insert failed: ${error?.message}`);
+    createdIds.push(data.id as string);
+    log(`✓ Portfolio "${def.name}"`);
+  }
+
+  const [p1, p2, p3] = createdIds;
+  const iso = monthsAgo(0);
+
+  if (p1) {
+    await supabase.from("transactions").insert([
+      {
+        portfolio_id: p1,
+        asset_id: "CN:600519",
+        type: "BUY",
+        shares: "10",
+        price_per_share: "1688",
+        currency: "CNY",
+        fee: "0",
+        trade_date: monthsAgo(2),
+        notes: "portfolios:multi-3",
+      },
+      {
+        portfolio_id: p1,
+        asset_id: "CASH:CNY",
+        type: "BUY",
+        shares: "12000",
+        price_per_share: "1",
+        currency: "CNY",
+        fee: "0",
+        trade_date: iso,
+        notes: "portfolios:multi-3",
+      },
+    ]);
+    await supabase.from("target_allocations").delete().eq("portfolio_id", p1);
+    await supabase.from("target_allocations").insert([
+      { portfolio_id: p1, asset_id: "CN:600519", target_percent: "40" },
+      { portfolio_id: p1, asset_id: "CASH:CNY", target_percent: "60" },
+    ]);
+  }
+
+  if (p2 && scenario !== "portfolios:single") {
+    await supabase.from("transactions").insert([
+      {
+        portfolio_id: p2,
+        asset_id: "US:NVDA",
+        type: "BUY",
+        shares: "5",
+        price_per_share: "875",
+        currency: "USD",
+        fee: "0",
+        trade_date: monthsAgo(1),
+        notes: "portfolios:multi-3",
+      },
+      {
+        portfolio_id: p2,
+        asset_id: "CASH:USD",
+        type: "BUY",
+        shares: "3000",
+        price_per_share: "1",
+        currency: "USD",
+        fee: "0",
+        trade_date: iso,
+        notes: "portfolios:multi-3",
+      },
+    ]);
+    await supabase.from("target_allocations").delete().eq("portfolio_id", p2);
+    await supabase.from("target_allocations").insert([
+      { portfolio_id: p2, asset_id: "US:NVDA", target_percent: "70" },
+      { portfolio_id: p2, asset_id: "CASH:USD", target_percent: "30" },
+    ]);
+  }
+
+  if (p3 && scenario !== "portfolios:single") {
+    await supabase.from("transactions").insert([
+      {
+        portfolio_id: p3,
+        asset_id: "US:AAPL",
+        type: "BUY",
+        shares: "20",
+        price_per_share: "189.5",
+        currency: "USD",
+        fee: "0",
+        trade_date: monthsAgo(3),
+        notes: "portfolios:multi-3",
+      },
+      {
+        portfolio_id: p3,
+        asset_id: "US:MSFT",
+        type: "BUY",
+        shares: "8",
+        price_per_share: "420.3",
+        currency: "USD",
+        fee: "0",
+        trade_date: monthsAgo(2),
+        notes: "portfolios:multi-3",
+      },
+      {
+        portfolio_id: p3,
+        asset_id: "CASH:USD",
+        type: "BUY",
+        shares: "8000",
+        price_per_share: "1",
+        currency: "USD",
+        fee: "0",
+        trade_date: iso,
+        notes: "portfolios:multi-3",
+      },
+    ]);
+    await supabase.from("target_allocations").delete().eq("portfolio_id", p3);
+    await supabase.from("target_allocations").insert([
+      { portfolio_id: p3, asset_id: "US:AAPL", target_percent: "35" },
+      { portfolio_id: p3, asset_id: "US:MSFT", target_percent: "25" },
+      { portfolio_id: p3, asset_id: "CASH:USD", target_percent: "40" },
+    ]);
+  }
+
+  if (scenario === "portfolios:transfer-history" && p1 && p2) {
+    await supabase.from("transactions").insert([
+      {
+        portfolio_id: p1,
+        asset_id: "CASH:USD",
+        type: "BUY",
+        shares: "2000",
+        price_per_share: "1",
+        currency: "USD",
+        fee: "0",
+        trade_date: monthsAgo(1),
+        notes: "portfolios:multi-3",
+      },
+      {
+        portfolio_id: p1,
+        asset_id: "CASH:USD",
+        type: "SELL",
+        shares: "500",
+        price_per_share: "1",
+        currency: "USD",
+        fee: "0",
+        trade_date: iso,
+        notes: `transfer-out-to-${p2}`,
+      },
+      {
+        portfolio_id: p2,
+        asset_id: "CASH:USD",
+        type: "BUY",
+        shares: "500",
+        price_per_share: "1",
+        currency: "USD",
+        fee: "0",
+        trade_date: iso,
+        notes: `transfer-in-from-${p1}`,
+      },
+    ]);
+    log("✓ Seeded transfer pair");
+  }
+
+  const expectedUi = describeExpectedUi(scenario);
+  return { scenario, portfolioId: p1 ?? createdIds[0]!, expectedUi };
+};
+
 export const runSeedForUser = async (
   supabase: SupabaseClient,
   options: RunSeedOptions,
   log: LogFn = noopLog
 ): Promise<RunSeedResult> => {
   const { userId, scenario, mode = "reset" } = options;
+
+  if (
+    scenario === "portfolios:single" ||
+    scenario === "portfolios:multi-3" ||
+    scenario === "portfolios:transfer-history"
+  ) {
+    return runPortfoliosBlockBSeed(supabase, userId, scenario, mode, log);
+  }
+
   const plan = SCENARIO_PLANS[scenario];
   const marks: UsMarketPrices = {
     ...FALLBACK_MARKS,
@@ -815,5 +1039,14 @@ export const describeExpectedUi = (scenario: Scenario): string[] => {
       return ["Portfolio: 1000× FUND:000001 — live NAV via AKShare wrapper"];
     case "default:cross-market":
       return ["Portfolio: CN + HK + FUND holdings — verify each market quotes"];
+    case "portfolios:single":
+      return ["Single portfolio — Portfolio Tab name without ▼ chevron"];
+    case "portfolios:multi-3":
+      return [
+        "Three portfolios — Portfolio Tab ▼ switcher",
+        "Insights Tab — 3 cards + cross-portfolio placeholder",
+      ];
+    case "portfolios:transfer-history":
+      return ["Multi-3 + transfer notes on transactions for CASH:USD"];
   }
 };

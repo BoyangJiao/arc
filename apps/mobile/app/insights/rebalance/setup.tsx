@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Alert, View } from "react-native";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import Decimal from "decimal.js";
 import { rebalance, type TargetAllocation } from "@arc/core";
 import {
@@ -20,8 +20,8 @@ import { useTranslation } from "@arc/i18n";
 
 import { assetLabel } from "../../../src/lib/rebalance-format";
 import {
+  useActivePortfolio,
   usePortfolioHoldings,
-  usePortfolios,
   useUpsertTargetAllocations,
 } from "../../../src/lib/queries";
 
@@ -44,8 +44,12 @@ const tryPercent = (raw: string): Decimal | null => {
 export default function RebalanceSetupScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { data: portfolios } = usePortfolios();
-  const portfolioId = portfolios?.[0]?.id;
+  const { portfolioId: queryPortfolioId } = useLocalSearchParams<{ portfolioId?: string }>();
+  const { activePortfolioId } = useActivePortfolio();
+  const portfolioId =
+    typeof queryPortfolioId === "string" && queryPortfolioId.length > 0
+      ? queryPortfolioId
+      : (activePortfolioId ?? undefined);
   const { holdings } = usePortfolioHoldings(portfolioId);
   const upsert = useUpsertTargetAllocations();
 

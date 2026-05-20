@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from "react";
-import { Stack } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import Decimal from "decimal.js";
 import { parseAssetId, type Currency, type Market } from "@arc/core";
 import {
@@ -16,15 +16,19 @@ import { useTranslation } from "@arc/i18n";
 
 import { assetLabel, formatSharesWithUnit } from "../../../src/lib/rebalance-format";
 import { currencySymbol, formatMoney } from "../../../src/lib/format-money";
-import { usePortfolios, useRebalance } from "../../../src/lib/queries";
+import { useActivePortfolio, useRebalance } from "../../../src/lib/queries";
 import { useUserPreferences } from "../../../src/lib/user-preferences";
 
 export default function RebalanceActionsScreen() {
   const { t } = useTranslation();
   const { prefs } = useUserPreferences();
   const reportingCurrency = prefs?.reportingCurrency ?? "CNY";
-  const { data: portfolios } = usePortfolios();
-  const portfolioId = portfolios?.[0]?.id;
+  const { portfolioId: queryPortfolioId } = useLocalSearchParams<{ portfolioId?: string }>();
+  const { activePortfolioId } = useActivePortfolio();
+  const portfolioId =
+    typeof queryPortfolioId === "string" && queryPortfolioId.length > 0
+      ? queryPortfolioId
+      : (activePortfolioId ?? undefined);
 
   const { deviations, valuation } = useRebalance(portfolioId, reportingCurrency);
 

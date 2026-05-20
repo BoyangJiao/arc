@@ -56,6 +56,20 @@ export default function MeScreen() {
 
       <View className="mt-4">
         <ListGroup>
+          <PressableFeedback
+            animation={false}
+            onPress={() => router.push("/me/portfolios" as Href)}
+          >
+            <PressableFeedback.Scale>
+              <ListGroup.Item disabled>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>{t("portfolios.manage")}</ListGroup.ItemTitle>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix />
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+            <PressableFeedback.Ripple />
+          </PressableFeedback>
           <PressableFeedback animation={false} onPress={() => router.push("/me/settings" as Href)}>
             <PressableFeedback.Scale>
               <ListGroup.Item disabled>

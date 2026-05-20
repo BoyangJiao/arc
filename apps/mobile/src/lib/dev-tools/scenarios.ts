@@ -62,6 +62,16 @@ export const DEV_SEED_FEATURES = [
       { id: "default:cross-market", labelKey: "crossMarketMix" },
     ],
   },
+  {
+    id: "portfolios",
+    labelKey: "portfolios",
+    goHref: "/me/portfolios" as Href,
+    scenarios: [
+      { id: "portfolios:single", labelKey: "pfSingle" },
+      { id: "portfolios:multi-3", labelKey: "pfMulti3" },
+      { id: "portfolios:transfer-history", labelKey: "pfTransfer" },
+    ],
+  },
 ] as const;
 
 export type DevSeedFeatureId = (typeof DEV_SEED_FEATURES)[number]["id"];

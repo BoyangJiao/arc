@@ -1,15 +1,5 @@
 /**
  * (tabs)/index.tsx — Portfolio Tab (Home)
- *
- * Per IA v2.2 §四:
- * - Top area: total asset value (large font) in reporting currency
- * - Portfolio card list: each card shows name + holdings count + market value
- * - Tap card → router.push(`/portfolio/${id}`)
- * - Empty state guidance if no portfolio / no holdings
- * - Top bar: TabScreenHeader — same height / layout as Markets / Insights tabs
- *
- * Fix 4 (audit): total value now uses usePortfolioValuation (price + FX +
- * computeMarketValue chain), not raw cost basis. S1-AC-2/3 verifiable.
  */
 
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
@@ -28,9 +18,11 @@ import {
 import { useTranslation } from "@arc/i18n";
 import { parseAssetId, resolvePortfolioDisplayName } from "@arc/core";
 
+import { PortfolioSwitcher } from "../../src/components/PortfolioSwitcher";
 import { useAuth } from "../../src/lib/auth";
 import { currencySymbol, formatMoney } from "../../src/lib/format-money";
 import {
+  useActivePortfolio,
   useDailyDelta,
   usePortfolios,
   usePortfolioHoldings,
@@ -40,7 +32,6 @@ import { useUserPreferences } from "../../src/lib/user-preferences";
 
 const ZERO = new Decimal(0);
 
-/** Render Decimal with explicit sign + 2 decimals, like "+352.20" / "-12.30" / "0.00". */
 const formatSignedDecimal = (value: Decimal): string => {
   if (value.isZero()) return value.toFixed(2);
   const sign = value.isPositive() ? "+" : "-";
@@ -55,18 +46,19 @@ export default function PortfolioTab() {
   const { prefs } = useUserPreferences();
   const reportingCurrency = prefs?.reportingCurrency ?? "CNY";
 
+  const { portfolio: activePortfolio, isLoading: activeLoading } = useActivePortfolio();
   const { data: portfolios, isPending: portfoliosLoading } = usePortfolios();
 
-  const defaultPortfolio = portfolios?.[0];
-  const { holdings, isPending: holdingsPending } = usePortfolioHoldings(defaultPortfolio?.id);
+  const activeId = activePortfolio?.id;
+  const { holdings, isPending: holdingsPending } = usePortfolioHoldings(activeId);
   const {
     data: valuation,
     isFetching: valuationFetching,
     isError: valuationError,
     refreshFromLive,
-  } = usePortfolioValuation(defaultPortfolio?.id, reportingCurrency);
+  } = usePortfolioValuation(activeId, reportingCurrency);
 
-  const dailyDelta = useDailyDelta(defaultPortfolio?.id, reportingCurrency);
+  const dailyDelta = useDailyDelta(activeId, reportingCurrency);
 
   const holdingsCount = holdings.length;
   const pricedCount = valuation?.perAsset.length ?? 0;
@@ -87,6 +79,7 @@ export default function PortfolioTab() {
     <Screen scroll={false} contentContainerStyle={{ flexGrow: 1 }}>
       <TabScreenHeader
         title={t("tabs.portfolio")}
+        centerSlot={<PortfolioSwitcher />}
         leftSlot={
           <Pressable onPress={handleAvatarPress} accessibilityLabel={t("me.title")} hitSlop={8}>
             <UserAvatar seed={user?.email} size={40} />
@@ -148,7 +141,7 @@ export default function PortfolioTab() {
             />
           ) : null}
 
-          {portfoliosLoading ? (
+          {portfoliosLoading || activeLoading ? (
             <Text className="text-muted">{t("common.loading")}</Text>
           ) : !portfolios || portfolios.length === 0 ? (
             <Card>
@@ -170,12 +163,18 @@ export default function PortfolioTab() {
                           {resolvePortfolioDisplayName(portfolio.name, t("portfolio.myPortfolio"))}
                         </Text>
                         <Text className="text-muted text-sm">
-                          {t("portfolio.holdingsCount", { count: holdingsCount })}
+                          {portfolio.id === activeId
+                            ? t("portfolios.activeMarker")
+                            : portfolio.reportingCurrency}
                         </Text>
                       </View>
                       <View className="items-end">
                         <Text className="text-foreground font-semibold">
-                          {valuationFetching && !valuation ? t("common.loading") : totalValueText}
+                          {portfolio.id === activeId
+                            ? valuationFetching && !valuation
+                              ? t("common.loading")
+                              : totalValueText
+                            : "—"}
                         </Text>
                       </View>
                     </View>
@@ -185,12 +184,12 @@ export default function PortfolioTab() {
             ))
           )}
 
-          {defaultPortfolio && !hasHoldings && !holdingsPending && !valuationFetching && (
+          {activePortfolio && !hasHoldings && !holdingsPending && !valuationFetching && (
             <View className="mt-4">
               <Card>
                 <Pressable
                   onPress={() =>
-                    router.push(`/portfolio/${defaultPortfolio.id}/transactions/new` as Href)
+                    router.push(`/portfolio/${activePortfolio.id}/transactions/new` as Href)
                   }
                 >
                   <View className="p-6 items-center">

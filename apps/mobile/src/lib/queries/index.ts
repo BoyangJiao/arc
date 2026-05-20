@@ -6,8 +6,20 @@
 
 export { usePrice, type UsePriceOptions } from "./use-price";
 export { useFxRate, type UseFxRateOptions } from "./use-fx-rate";
-export { usePortfolios, usePortfolio, useEnsureDefaultPortfolio } from "./use-portfolios";
+export {
+  usePortfolios,
+  usePortfolio,
+  useEnsureDefaultPortfolio,
+  useCreatePortfolio,
+  useArchivePortfolio,
+  useUnarchivePortfolio,
+  useRenamePortfolio,
+  useHardDeletePortfolio,
+  usePortfolioTransactionCount,
+  type UsePortfoliosOptions,
+} from "./use-portfolios";
 export { useActivePortfolio, type UseActivePortfolioResult } from "./use-active-portfolio";
+export { useTransferBetweenPortfolios, TransferValidationError } from "./use-transfer";
 export {
   useTransactions,
   useCreateTransaction,

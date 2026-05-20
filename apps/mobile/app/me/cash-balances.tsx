@@ -1,5 +1,5 @@
 /**
- * /me/cash-balances — set cash balances via BUY/SELL on CASH:* (Stage 2).
+ * /me/cash-balances — set cash balances + cross-portfolio transfer (Stage 3 Block B).
  */
 
 import { useState } from "react";
@@ -15,9 +15,11 @@ import {
   scrollContentBelowInScreenHeader,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
+import { resolvePortfolioDisplayName } from "@arc/core";
 
+import { CashBalanceTransferDialog } from "../../src/components/CashBalanceTransferDialog";
 import { currencySymbol } from "../../src/lib/format-money";
-import { usePortfolios } from "../../src/lib/queries";
+import { useActivePortfolio } from "../../src/lib/queries";
 import {
   useCashBalances,
   useSaveCashBalances,
@@ -37,12 +39,16 @@ const tryAmount = (raw: string): Decimal | null => {
 
 export default function CashBalancesScreen() {
   const { t } = useTranslation();
-  const { data: portfolios } = usePortfolios();
-  const portfolioId = portfolios?.[0]?.id;
+  const { portfolio, activePortfolioId } = useActivePortfolio();
+  const portfolioId = activePortfolioId ?? undefined;
   const { rows } = useCashBalances(portfolioId);
   const save = useSaveCashBalances();
-
+  const [transferOpen, setTransferOpen] = useState(false);
   const [inputs, setInputs] = useState<Record<string, string>>({});
+
+  const portfolioName = portfolio
+    ? resolvePortfolioDisplayName(portfolio.name, t("portfolio.myPortfolio"))
+    : "";
 
   const getInput = (assetId: CashAssetId, balance: Decimal) =>
     inputs[assetId] ?? balance.toString();
@@ -68,7 +74,14 @@ export default function CashBalancesScreen() {
 
   return (
     <Screen contentContainerStyle={scrollContentBelowInScreenHeader}>
-      <InScreenHeader title={t("rebalance.cashBalancesTitle")} leftType="back" />
+      <InScreenHeader
+        title={
+          portfolioName
+            ? `${t("rebalance.cashBalancesTitle")} (${portfolioName})`
+            : t("rebalance.cashBalancesTitle")
+        }
+        leftType="back"
+      />
       <Text className="text-muted text-sm mb-4">{t("rebalance.cashBalancesIntro")}</Text>
       <Text className="text-muted text-xs mb-6">{t("rebalance.cashBalancesStageNote")}</Text>
 
@@ -97,9 +110,31 @@ export default function CashBalancesScreen() {
         ))}
       </View>
 
-      <Button className="mt-8" isDisabled={save.isPending} onPress={() => void handleSave()}>
+      <Button
+        className="mt-8"
+        isDisabled={save.isPending || !portfolioId}
+        onPress={() => void handleSave()}
+      >
         {t("common.save")}
       </Button>
+
+      <Button
+        className="mt-3"
+        variant="secondary"
+        isDisabled={!portfolioId}
+        onPress={() => setTransferOpen(true)}
+      >
+        <Button.Label>{t("portfolios.transferCta")}</Button.Label>
+      </Button>
+
+      {portfolioId ? (
+        <CashBalanceTransferDialog
+          open={transferOpen}
+          onOpenChange={setTransferOpen}
+          sourcePortfolioId={portfolioId}
+          sourcePortfolioName={portfolioName}
+        />
+      ) : null}
     </Screen>
   );
 }

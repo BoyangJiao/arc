@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-20 by Cursor — **Block A complete ✅**（Phase 1A Tushare CN + Phase 2 AKShare wrapper）；用户 UAT smoke CN/HK/FUND/510300 + Vercel prod 部署通；**下一站 Opus review `dev/stage-3` + Block B spec**
+> **Last updated**: 2026-05-20 by Cursor — **Block B commits #1–#12 implemented**（多组合 CRUD / switcher / 转账 / Insights 卡片仪表盘 / seed）；`pnpm typecheck` + `pnpm test` 全绿；**下一站 Block C spec + UAT**
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                       |
-| :-------------------- | :------------------------------------------------------------------------------------------ |
-| **Active stage**      | **Stage 3 — Block A ✅ done → Block B（多组合）待 Opus spec**                               |
-| **Step**              | commit #15 收尾 push 后 → **Opus review** `dev/stage-3` → 起草 `multi-portfolio-stage-3.md` |
-| **Branch**            | `dev/stage-3`（ahead of origin，含 Block A commit 链 + 收尾）                               |
-| **Last commit**       | `2756fd9` — docs(stage-3): complete Block A (#15); pushed `origin/dev/stage-3`              |
-| **PR**                | Stage 2 merged ✅ on main；Stage 3 Block A 待 Opus review 后开 PR                           |
-| **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 122/122 ✅           |
-| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                        |
+| Field                 | Value                                                                                |
+| :-------------------- | :----------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 — Block B ✅ implemented (#1–#12) → Block C 待起草**                       |
+| **Step**              | UAT Block B（`pnpm seed:portfolios:multi-3`）→ Opus 起草 `holdings-table-stage-3.md` |
+| **Branch**            | `dev/stage-3`（含 #1–#3 + Block B #4–#12 本地 commits）                              |
+| **Last commit**       | Block B #4–#12 batch（见 git log）                                                   |
+| **PR**                | Stage 2 merged ✅ on main；Stage 3 Block A 待 Opus review 后开 PR                    |
+| **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 122/122 ✅    |
+| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                 |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -157,6 +157,23 @@ _(Prior “uncommitted work” table superseded by the above.)_
 | **#10–#14** akshare-wrapper (Vercel `builds`+`routes`, `lib/`, ETF `fund_etf_hist_em`) + adapters + withFallback + registry + mobile env | ✅ deployed `arc-akshare-wrapper.vercel.app` + **UAT HK/FUND/510300** ✅ |
 | **#15** docs(spec+adr+handoff) + session-state + valuation cache-miss fix                                                                | ✅ this checkpoint commit                                                |
 | **── Phase 2 DoD** ──                                                                                                                    | ✅                                                                       |
+
+## Stage 3 — Block B progress (multi-portfolio + transfer)
+
+| Commit  | Item                                          | Status              |
+| :------ | :-------------------------------------------- | :------------------ |
+| **#1**  | migration 0011 `archived_at`                  | ✅ user applied SQL |
+| **#2**  | `validateTransfer` + property tests           | ✅                  |
+| **#3**  | Zustand/MMKV + `useActivePortfolio`           | ✅                  |
+| **#4**  | portfolios CRUD hooks                         | ✅                  |
+| **#5**  | `/me/portfolios` + HardDeleteConfirmDialog    | ✅                  |
+| **#6**  | PortfolioSwitcher (Portfolio Tab only)        | ✅                  |
+| **#7**  | `useTransferBetweenPortfolios` + sheet        | ✅                  |
+| **#8**  | cash-balances 转账入口                        | ✅                  |
+| **#9**  | `useActivePortfolio` rewire + `?portfolioId=` | ✅ grep 零匹配      |
+| **#10** | Insights 卡片仪表盘 + empty state             | ✅                  |
+| **#11** | seed `portfolios:*` + DEV panel               | ✅                  |
+| **#12** | session-state bump                            | ✅                  |
 
 ### Deferred to Stage 3 末 / Stage 4
 
