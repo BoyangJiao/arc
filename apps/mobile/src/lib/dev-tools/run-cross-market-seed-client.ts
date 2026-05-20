@@ -105,12 +105,18 @@ const EXPECTED_UI: Record<CrossMarketScenarioId, string[]> = {
   "default:cross-market": ["Portfolio: CN + HK + FUND — verify each market quotes"],
 };
 
+const MIGRATION_0010_HINT =
+  "请在 Supabase SQL Editor 执行 packages/db/drizzle/migrations/0010_assets_cn_hk_fund_stage3.sql（种子资产行 + CN/HK/FUND 的 RLS INSERT 策略）。";
+
 export class CrossMarketSeedError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "CrossMarketSeedError";
   }
 }
+
+const isAssetsRlsError = (message: string): boolean =>
+  /row-level security|RLS/i.test(message) && /assets/i.test(message);
 
 export const runCrossMarketSeedClient = async (
   scenario: CrossMarketScenarioId,
@@ -125,10 +131,30 @@ export const runCrossMarketSeedClient = async (
   const { error: delPortErr } = await supabase.from("portfolios").delete().eq("user_id", userId);
   if (delPortErr) throw new CrossMarketSeedError(`清空组合失败: ${delPortErr.message}`);
 
-  const { error: assetErr } = await supabase
+  const assetIds = CROSS_MARKET_ASSETS.map((a) => a.id);
+  const { data: existingAssets, error: loadErr } = await supabase
     .from("assets")
-    .upsert(CROSS_MARKET_ASSETS as never, { onConflict: "id", ignoreDuplicates: true });
-  if (assetErr) throw new CrossMarketSeedError(`写入 assets 失败: ${assetErr.message}`);
+    .select("id")
+    .in("id", assetIds);
+  if (loadErr) throw new CrossMarketSeedError(`读取 assets 失败: ${loadErr.message}`);
+
+  const existingIds = new Set((existingAssets ?? []).map((r) => r.id as string));
+  const missingIds = assetIds.filter((id) => !existingIds.has(id));
+
+  if (missingIds.length > 0) {
+    const { error: assetErr } = await supabase
+      .from("assets")
+      .upsert(CROSS_MARKET_ASSETS as never, { onConflict: "id", ignoreDuplicates: true });
+    if (assetErr) {
+      const msg = assetErr.message ?? "";
+      if (isAssetsRlsError(msg)) {
+        throw new CrossMarketSeedError(
+          `无法注册资产行（${missingIds.join(", ")}）：RLS 未放行 CN/HK/FUND。\n${MIGRATION_0010_HINT}`
+        );
+      }
+      throw new CrossMarketSeedError(`写入 assets 失败: ${msg}`);
+    }
+  }
 
   const { data: port, error: portErr } = await supabase
     .from("portfolios")
