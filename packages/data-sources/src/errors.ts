@@ -4,6 +4,7 @@
  * 所有 adapter 都必须只抛 AdapterError 子类，不抛裸 Error / fetch Response。
  * 这样 mobile 业务层 / TanStack Query 可以根据错误类型决定 UX：
  *   - RateLimitError → 显示"配额用完，X 分钟后重试"；降级显示缓存
+ *   - QuotaError → 显示"数据源权限不足"；ADR 011 withFallback 用 instanceof 切 secondary
  *   - NetworkError → 显示离线 banner + 重试按钮
  *   - ParseError → 静默 fallback + Sentry 报警（schema 漂移）
  *   - NotFoundError → 显示"找不到该资产"
@@ -29,6 +30,24 @@ export class NetworkError extends AdapterError {
   constructor(source: string, cause?: unknown) {
     super("Network request failed", source, cause);
     this.name = "NetworkError";
+  }
+}
+
+/**
+ * 数据源权限 / 积分 / 配额不足（区别于 RateLimitError 的瞬时频率限制）
+ *
+ * 典型场景：Tushare `code 40002`（积分不足 / 权限不足）、AKShare wrapper 配额耗尽。
+ * 与 NetworkError 区分以让 ADR 011 的 `withFallback` 可以用 `instanceof QuotaError`
+ * 决定 try-secondary（积分不足 → 切 AKShare）vs bubble（transport 错误 → 报错）。
+ */
+export class QuotaError extends AdapterError {
+  /** Source-specific 错误码（Tushare 数字 / AKShare 等可能是字符串） */
+  readonly code: string | number;
+
+  constructor(source: string, code: string | number, message: string) {
+    super(`Quota: ${code} ${message}`, source);
+    this.name = "QuotaError";
+    this.code = code;
   }
 }
 
