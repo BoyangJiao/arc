@@ -29,6 +29,7 @@ export const SCENARIOS = [
   "default:hk-only",
   "default:fund-only",
   "default:cross-market",
+  "default:crypto-only",
   "portfolios:single",
   "portfolios:multi-3",
   "portfolios:transfer-history",
@@ -229,6 +230,13 @@ const buildScenarioPlans = (): Record<Scenario, ScenarioPlan> => ({
     skipPriceSnapshots: true,
     description: "CN + HK + FUND mix — live multi-market adapters.",
   },
+  "default:crypto-only": {
+    includeTransactions: true,
+    baseline: null,
+    transactions: SEED_CRYPTO_ONLY_TRANSACTIONS,
+    skipPriceSnapshots: true,
+    description: "CRYPTO only: BTC × 0.5 + ETH × 5 + USDC × 1000 — live CoinGecko USD quotes.",
+  },
   "portfolios:single": {
     includeTransactions: false,
     baseline: null,
@@ -319,6 +327,9 @@ export const SEED_ASSETS = [
     name: "沪深300ETF",
     currency: "CNY",
   },
+  { id: "CRYPTO:BTC", market: "CRYPTO", symbol: "BTC", name: "Bitcoin", currency: "USD" },
+  { id: "CRYPTO:ETH", market: "CRYPTO", symbol: "ETH", name: "Ethereum", currency: "USD" },
+  { id: "CRYPTO:USDC", market: "CRYPTO", symbol: "USDC", name: "USD Coin", currency: "USD" },
 ] as const;
 
 export interface SeedTx {
@@ -335,6 +346,12 @@ export interface SeedTx {
 const monthsAgo = (m: number) => {
   const d = new Date();
   d.setMonth(d.getMonth() - m);
+  return d.toISOString();
+};
+
+const daysAgo = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
   return d.toISOString();
 };
 
@@ -401,6 +418,39 @@ export const SEED_CROSS_MARKET_TRANSACTIONS: SeedTx[] = [
     fee: "0",
     trade_date: monthsAgo(0),
     notes: "FUND ETF dev seed",
+  },
+];
+
+export const SEED_CRYPTO_ONLY_TRANSACTIONS: SeedTx[] = [
+  {
+    asset_id: "CRYPTO:BTC",
+    type: "BUY",
+    shares: "0.5",
+    price_per_share: "65000",
+    currency: "USD",
+    fee: "0",
+    trade_date: daysAgo(7),
+    notes: "CRYPTO-only dev seed",
+  },
+  {
+    asset_id: "CRYPTO:ETH",
+    type: "BUY",
+    shares: "5",
+    price_per_share: "3200",
+    currency: "USD",
+    fee: "0",
+    trade_date: daysAgo(14),
+    notes: "CRYPTO-only dev seed",
+  },
+  {
+    asset_id: "CRYPTO:USDC",
+    type: "BUY",
+    shares: "1000",
+    price_per_share: "1",
+    currency: "USD",
+    fee: "0",
+    trade_date: daysAgo(21),
+    notes: "CRYPTO-only dev seed",
   },
 ];
 
@@ -625,6 +675,116 @@ const runPortfoliosBlockBSeed = async (
       { portfolio_id: p3, asset_id: "US:MSFT", target_percent: "25" },
       { portfolio_id: p3, asset_id: "CASH:USD", target_percent: "40" },
     ]);
+  }
+
+  const snapshotAsOf = (() => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - 1);
+    d.setUTCHours(23, 0, 0, 0);
+    return d.toISOString();
+  })();
+
+  const portfolioSnapshots: Array<{
+    portfolio_id: string;
+    as_of: string;
+    total_value: string;
+    total_cost_basis: string;
+    reporting_currency: "CNY" | "USD";
+    per_asset: unknown;
+    source: "manual";
+  }> = [];
+
+  if (p1) {
+    portfolioSnapshots.push({
+      portfolio_id: p1,
+      as_of: snapshotAsOf,
+      total_value: "50000.00",
+      total_cost_basis: "50000.00",
+      reporting_currency: "CNY",
+      per_asset: [
+        {
+          assetId: "CN:600519",
+          shares: "10",
+          valueNative: "15000.00",
+          currency: "CNY",
+          valueReporting: "15000.00",
+        },
+        {
+          assetId: "CASH:CNY",
+          shares: "12000",
+          valueNative: "12000.00",
+          currency: "CNY",
+          valueReporting: "12000.00",
+        },
+      ],
+      source: "manual",
+    });
+  }
+  if (p2 && scenario !== "portfolios:single") {
+    portfolioSnapshots.push({
+      portfolio_id: p2,
+      as_of: snapshotAsOf,
+      total_value: "12000.00",
+      total_cost_basis: "12000.00",
+      reporting_currency: "USD",
+      per_asset: [
+        {
+          assetId: "US:NVDA",
+          shares: "5",
+          valueNative: "4000.00",
+          currency: "USD",
+          valueReporting: "4000.00",
+        },
+        {
+          assetId: "CASH:USD",
+          shares: "3000",
+          valueNative: "3000.00",
+          currency: "USD",
+          valueReporting: "3000.00",
+        },
+      ],
+      source: "manual",
+    });
+  }
+  if (p3 && scenario !== "portfolios:single") {
+    portfolioSnapshots.push({
+      portfolio_id: p3,
+      as_of: snapshotAsOf,
+      total_value: "28000.00",
+      total_cost_basis: "28000.00",
+      reporting_currency: "USD",
+      per_asset: [
+        {
+          assetId: "US:AAPL",
+          shares: "20",
+          valueNative: "10000.00",
+          currency: "USD",
+          valueReporting: "10000.00",
+        },
+        {
+          assetId: "US:MSFT",
+          shares: "8",
+          valueNative: "8000.00",
+          currency: "USD",
+          valueReporting: "8000.00",
+        },
+        {
+          assetId: "CASH:USD",
+          shares: "8000",
+          valueNative: "8000.00",
+          currency: "USD",
+          valueReporting: "8000.00",
+        },
+      ],
+      source: "manual",
+    });
+  }
+  if (portfolioSnapshots.length > 0) {
+    const { error: snapErr } = await supabase
+      .from("portfolio_value_snapshots")
+      .upsert(portfolioSnapshots as never, { onConflict: "portfolio_id,as_of" });
+    if (snapErr) throw new SeedError(`portfolio_value_snapshots upsert failed: ${snapErr.message}`);
+    log("✓ Per-portfolio daily snapshots (B.11)");
   }
 
   if (scenario === "portfolios:transfer-history" && p1 && p2) {
@@ -1039,6 +1199,11 @@ export const describeExpectedUi = (scenario: Scenario): string[] => {
       return ["Portfolio: 1000× FUND:000001 — live NAV via AKShare wrapper"];
     case "default:cross-market":
       return ["Portfolio: CN + HK + FUND holdings — verify each market quotes"];
+    case "default:crypto-only":
+      return [
+        "Portfolio: 0.5× CRYPTO:BTC + 5× CRYPTO:ETH + 1000× CRYPTO:USDC",
+        "Pull Portfolio to fetch live USD prices via CoinGecko (no API key)",
+      ];
     case "portfolios:single":
       return ["Single portfolio — Portfolio Tab name without ▼ chevron"];
     case "portfolios:multi-3":

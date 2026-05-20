@@ -10,6 +10,7 @@ export const zh = {
     save: "保存",
     back: "返回",
     close: "关闭",
+    refresh: "刷新数据",
   },
   tabs: {
     portfolio: "组合",
@@ -142,6 +143,12 @@ export const zh = {
     viaClientWelcome: "欢迎屏标记已在 App 内直接写入（无需 Edge Function）。",
     viaClientCrossMarket:
       "组合已在 App 内直接写入（无需 Edge Function）。请下拉组合页拉取 CN/HK/基金真实价。",
+    viaClientPortfolios:
+      "多组合数据已在 App 内直接写入（无需 Edge Function）。会重置为所选多组合场景。",
+    destructiveTitle: "将重置全部组合数据",
+    destructiveBody:
+      "「每日快照」与「再平衡」场景会清空当前账号下所有组合并重建单组合测试数据，多组合 Stage 3 状态会丢失。建议先用「多组合」场景，或改用 pnpm seed:portfolios:*。",
+    destructiveConfirm: "仍要应用",
     goWelcome: "打开欢迎屏",
     goInsights: "打开洞察",
     errorTitle: "场景应用失败",
@@ -170,8 +177,8 @@ export const zh = {
         description: "首登引导 — 切换 has_seen_welcome 未看过/已看过（App 内直接种子）",
       },
       crossMarket: {
-        label: "A股 / 港股 / 基金",
-        description: "组合持仓 — Tushare A 股 + AKShare 港股/基金真实价",
+        label: "A股 / 港股 / 基金 / 加密",
+        description: "组合持仓 — Tushare A 股 + AKShare 港股/基金 + CoinGecko 加密真实价",
       },
       portfolios: {
         label: "多组合",
@@ -260,6 +267,10 @@ export const zh = {
         label: "跨市场混合",
         hint: "CN + HK + FUND — 分别验证各市场报价",
       },
+      cryptoOnly: {
+        label: "仅加密 (BTC/ETH/USDC)",
+        hint: "0.5 BTC + 5 ETH + 1000 USDC — 下拉 Portfolio 拉 CoinGecko 美元价",
+      },
       pfSingle: {
         label: "单组合",
         hint: "仅一个组合 — Portfolio Tab 无 ▼",
@@ -298,8 +309,9 @@ export const zh = {
     emptyInsightsTitle: "暂无使用中的组合",
     emptyInsightsHint: "可在「我的 → 投资组合」新建组合后查看洞察。",
     hardDeleteTitle: "永久删除该组合？",
-    hardDeleteDescription: "「{name}」及 {count} 笔交易记录将被永久删除，无法恢复。",
-    hardDeleteInputLabel: "输入「{name}」以确认",
+    hardDeleteDescription: "「{{name}}」及 {{count}} 笔交易记录将被永久删除，无法恢复。",
+    hardDeleteInputLabel: "输入「{{name}}」以确认",
+    manageAccessibility: "管理投资组合",
     hardDeleteConfirm: "确认永久删除",
     transferCta: "转账到其他组合",
     transferTitle: "转账到其他组合",
@@ -330,6 +342,9 @@ export const zh = {
   },
   rebalance: {
     title: "再平衡",
+    sectionTitle: "再平衡分析",
+    activePortfolioHint: "当前组合：{{name}}",
+    allPortfoliosSection: "全部组合概览",
     emptyNoHoldingsTitle: "请先添加持仓",
     emptyNoHoldingsHint: "在组合 Tab 录入首笔交易后，可在此设置目标配置并查看偏离度。",
     emptyTargetsTitle: "设置目标配置以追踪偏离度",

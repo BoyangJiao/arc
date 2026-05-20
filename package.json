@@ -32,6 +32,7 @@
     "seed:hk-only": "tsx tools/seed-dev-data.ts --scenario default:hk-only",
     "seed:fund-only": "tsx tools/seed-dev-data.ts --scenario default:fund-only",
     "seed:cross-market": "tsx tools/seed-dev-data.ts --scenario default:cross-market",
+    "seed:crypto-only": "tsx tools/seed-dev-data.ts --scenario default:crypto-only",
     "seed:portfolios:single": "tsx tools/seed-dev-data.ts --scenario portfolios:single",
     "seed:portfolios:multi-3": "tsx tools/seed-dev-data.ts --scenario portfolios:multi-3",
     "seed:portfolios:transfer-history": "tsx tools/seed-dev-data.ts --scenario portfolios:transfer-history",

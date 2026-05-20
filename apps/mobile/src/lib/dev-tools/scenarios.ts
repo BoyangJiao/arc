@@ -60,6 +60,7 @@ export const DEV_SEED_FEATURES = [
       { id: "default:hk-only", labelKey: "hkOnly" },
       { id: "default:fund-only", labelKey: "fundOnly" },
       { id: "default:cross-market", labelKey: "crossMarketMix" },
+      { id: "default:crypto-only", labelKey: "cryptoOnly" },
     ],
   },
   {
@@ -129,6 +130,17 @@ export type WelcomeScenarioId = (typeof WELCOME_SCENARIO_IDS)[number];
 
 export const isWelcomeScenario = (id: DevSeedScenarioId): id is WelcomeScenarioId =>
   (WELCOME_SCENARIO_IDS as readonly string[]).includes(id);
+
+export const PORTFOLIO_SCENARIO_IDS = [
+  "portfolios:single",
+  "portfolios:multi-3",
+  "portfolios:transfer-history",
+] as const satisfies readonly DevSeedScenarioId[];
+
+export type PortfolioScenarioId = (typeof PORTFOLIO_SCENARIO_IDS)[number];
+
+export const isPortfolioScenario = (id: DevSeedScenarioId): id is PortfolioScenarioId =>
+  (PORTFOLIO_SCENARIO_IDS as readonly string[]).includes(id);
 
 export const findFeatureForScenario = (scenarioId: DevSeedScenarioId): DevSeedFeatureGroup =>
   DEV_SEED_FEATURES.find((f) => f.scenarios.some((s) => s.id === scenarioId)) ??

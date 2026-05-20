@@ -10,6 +10,7 @@ export const en = {
     save: "Save",
     back: "Back",
     close: "Close",
+    refresh: "Refresh data",
   },
   tabs: {
     portfolio: "Portfolio",
@@ -147,6 +148,12 @@ export const en = {
     viaClientWelcome: "Welcome flag toggled on-device (no Edge Function).",
     viaClientCrossMarket:
       "Portfolio seeded on-device (no Edge deploy). Pull Portfolio for live CN/HK/FUND quotes.",
+    viaClientPortfolios:
+      "Multi-portfolio data seeded on-device (no Edge). Resets to the selected portfolios scenario.",
+    destructiveTitle: "Resets all portfolios",
+    destructiveBody:
+      "Daily Snapshot and Rebalance scenarios wipe all portfolios and recreate a single test portfolio. Multi-portfolio Stage 3 state will be lost. Use the Portfolios feature or pnpm seed:portfolios:* first.",
+    destructiveConfirm: "Apply anyway",
     goWelcome: "Open Welcome",
     goInsights: "Open Insights",
     errorTitle: "Could not apply scenario",
@@ -175,9 +182,9 @@ export const en = {
         description: "First-launch screen — has_seen_welcome fresh vs seen (on-device seed)",
       },
       crossMarket: {
-        label: "CN / HK / FUND",
+        label: "CN / HK / FUND / CRYPTO",
         description:
-          "Portfolio holdings for A-share, HK, and fund — live Tushare + AKShare wrapper quotes",
+          "Portfolio holdings for A-share, HK, fund, and crypto — live Tushare, AKShare, CoinGecko quotes",
       },
       portfolios: {
         label: "Portfolios",
@@ -266,6 +273,10 @@ export const en = {
         label: "CN + HK + FUND mix",
         hint: "All three markets — verify each live quote path",
       },
+      cryptoOnly: {
+        label: "CRYPTO only (BTC/ETH/USDC)",
+        hint: "0.5 BTC + 5 ETH + 1000 USDC — pull Portfolio for live CoinGecko USD",
+      },
       pfSingle: {
         label: "Single portfolio",
         hint: "One portfolio — no ▼ on Portfolio Tab",
@@ -305,8 +316,9 @@ export const en = {
     emptyInsightsHint: "Create a portfolio from Me → Portfolios to see insights here.",
     hardDeleteTitle: "Delete portfolio permanently?",
     hardDeleteDescription:
-      '"{name}" and {count} transaction records will be deleted permanently. This cannot be undone.',
-    hardDeleteInputLabel: 'Type "{name}" to confirm',
+      '"{{name}}" and {{count}} transaction records will be deleted permanently. This cannot be undone.',
+    hardDeleteInputLabel: 'Type "{{name}}" to confirm',
+    manageAccessibility: "Manage portfolios",
     hardDeleteConfirm: "Delete permanently",
     transferCta: "Transfer to another portfolio",
     transferTitle: "Transfer to another portfolio",
@@ -338,6 +350,9 @@ export const en = {
   },
   rebalance: {
     title: "Rebalance",
+    sectionTitle: "Rebalance analysis",
+    activePortfolioHint: "Active portfolio: {{name}}",
+    allPortfoliosSection: "All portfolios",
     emptyNoHoldingsTitle: "Add holdings first",
     emptyNoHoldingsHint:
       "Record your first transaction from the Portfolio tab, then set target allocations here.",
