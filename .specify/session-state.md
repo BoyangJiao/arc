@@ -17,7 +17,7 @@
 | **Active stage**      | **Stage 3 — Block A ✅ done → Block B（多组合）待 Opus spec**                               |
 | **Step**              | commit #15 收尾 push 后 → **Opus review** `dev/stage-3` → 起草 `multi-portfolio-stage-3.md` |
 | **Branch**            | `dev/stage-3`（ahead of origin，含 Block A commit 链 + 收尾）                               |
-| **Last commit**       | _(pending push — Block A wrap-up #15)_                                                      |
+| **Last commit**       | `2756fd9` — docs(stage-3): complete Block A (#15); pushed `origin/dev/stage-3`              |
 | **PR**                | Stage 2 merged ✅ on main；Stage 3 Block A 待 Opus review 后开 PR                           |
 | **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 122/122 ✅           |
 | **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                        |
