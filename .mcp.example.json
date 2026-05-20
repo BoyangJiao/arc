@@ -14,6 +14,10 @@
       "headers": {
         "x-heroui-personal-token": "YOUR_HEROUI_PERSONAL_TOKEN"
       }
+    },
+    "tushareMcp": {
+      "type": "http",
+      "url": "https://api.tushare.pro/mcp/?token=YOUR_TUSHARE_TOKEN"
     }
   }
 }
