@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-20 by Cursor — **Block B commits #1–#12 implemented**（多组合 CRUD / switcher / 转账 / Insights 卡片仪表盘 / seed）；`pnpm typecheck` + `pnpm test` 全绿；**下一站 Block C spec + UAT**
+> **Last updated**: 2026-05-20 by Cursor Composer — **CoinGecko adapter 6 commits ✅**（Block A 漏单收口）；`pnpm --filter @arc/data-sources test` 159/159 ✅；下一步 Block C 主链（Opus 起 handoff prompt）
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                |
-| :-------------------- | :----------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block B ✅ implemented (#1–#12) → Block C 待起草**                       |
-| **Step**              | UAT Block B（`pnpm seed:portfolios:multi-3`）→ Opus 起草 `holdings-table-stage-3.md` |
-| **Branch**            | `dev/stage-3`（含 #1–#3 + Block B #4–#12 本地 commits）                              |
-| **Last commit**       | Block B #4–#12 batch（见 git log）                                                   |
-| **PR**                | Stage 2 merged ✅ on main；Stage 3 Block A 待 Opus review 后开 PR                    |
-| **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 122/122 ✅    |
-| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                                 |
+| Field                 | Value                                                                             |
+| :-------------------- | :-------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 — CoinGecko ✅ → Block C 主链（holdings + tx entry）**                  |
+| **Step**              | CoinGecko 6 commits merged locally；Opus post-batch review → Block C handoff      |
+| **Branch**            | `dev/stage-3`（+CoinGecko #1–#6 commits）                                         |
+| **Last commit**       | `feat(mobile+seed): CRYPTO seed scenario default:crypto-only`                     |
+| **PR**                | Stage 2 merged ✅ on main；Stage 3 CoinGecko 待 push/review                       |
+| **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 159/159 ✅ |
+| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                              |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -195,6 +195,48 @@ _(Prior “uncommitted work” table superseded by the above.)_
   3. `docs/legal-risk-map.md` L3/L6/§六.6 复读（commit #10 前）
   4. **可选**：Stage 3 末决定是否升 ¥200/2000 积分（commit #3 + commit #6 OF 解锁）
 
+## Stage 3 — Block C planning (2 specs Accepted 2026-05-20，串行 i)
+
+**Reshape**: 原 Block C 仅"持仓表 + 详情页 + 图表"；扩展加入 (a) Block A 漏单 CoinGecko adapter；(b) 跨市场 transaction entry UI；(c) AKShare wrapper `/api/search` endpoint。原因：没有这些 Stage 3 DoD"自用 ≥ 4 周"无法启动。
+
+### Specs Accepted
+
+| Spec                                                                              | 决策                                        | Commits | 估时    |
+| :-------------------------------------------------------------------------------- | :------------------------------------------ | :------ | :------ |
+| `.specify/feature-specs/coingecko-adapter-stage-3.md`（Block A 漏单）             | 6                                           | 6       | ~3-5h   |
+| `.specify/feature-specs/holdings-and-transactions-stage-3.md`（Block C expanded） | 13（8 architecture + 5 UX-level A/A/A/A/A） | 13      | ~17-22h |
+
+### Phase 1 — CoinGecko (preflight to Block C)
+
+| Commit                                                                                         | Status                                              |
+| :--------------------------------------------------------------------------------------------- | :-------------------------------------------------- |
+| #1–#6 (client / coin-id resolver + bundled top200 / adapter / registry / seed / session-state) | ✅ committed locally (`b0a913c` … `fd614c6`)        |
+| Live smoke: DEV `default:crypto-only` → 真实 USD 价 + 24h 变动 + CNY 换算                      | ⏳ user UAT after `pnpm seed:crypto-only` once      |
+| Phase 1 DoD                                                                                    | ✅ code complete — pending Opus review + live smoke |
+
+### Phase 2 — Block C 主链（CoinGecko 完成后起）
+
+| Commit                                                                                                     | Status |
+| :--------------------------------------------------------------------------------------------------------- | :----- |
+| #1 migration 0012 (assets CRYPTO RLS)                                                                      | ⏳     |
+| #2 `@arc/ui/charts/` wrapper 层（**Opus review ADR 必要性**）                                              | ⏳     |
+| #3 MarketChip / AllocationDonut extract / HoldingsTable / HoldingRow                                       | ⏳     |
+| #4 with-fallback classifier add NotImplementedError→try-secondary（**Opus review**；ADR 011 §决策三 同步） | ⏳     |
+| #5 AKShare wrapper `/api/search` + lib search_cn/hk/fund（**用户 redeploy Vercel**）                       | ⏳     |
+| #6 AKShare client searchSymbols + per-market adapter wires                                                 | ⏳     |
+| #7 4 query hooks (use-symbol-search-cross-market / historical-quotes / asset-detail / value-snapshots)     | ⏳     |
+| #8 last-used-market AsyncStorage store                                                                     | ⏳     |
+| #9 `/asset/[market]/[symbol]` 详情页                                                                       | ⏳     |
+| #10 Portfolio Tab integrate HoldingsTable + PortfolioValueOverTimeCard                                     | ⏳     |
+| #11 SymbolPicker + MarketSelector + tx entry rewrite（**Opus post-batch review**）                         | ⏳     |
+| #12 multi-market seed + 30-days-history scenarios                                                          | ⏳     |
+| #13 docs(spec+adr+session-state) 收尾                                                                      | ⏳     |
+
+### 给下一个会话的 hand-off
+
+- **Sonnet/Cursor**: CoinGecko ✅ — 待 Opus review；通过后接 Block C 主链（`holdings-and-transactions-stage-3.md` 13 commits）
+- **Opus 本会话/后续**: (1) CoinGecko 6 commits post-batch review；(2) 起 Block C handoff prompt；(3) Block C #2 charts wrapper / #4 classifier / #11 tx entry review
+
 ## Active blockers / waiting on user
 
 - **Migration `0010`** `assets` CN/HK/FUND INSERT RLS — ✅ user applied (SQL Editor)
@@ -247,7 +289,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - All prior Stage 1 gotchas still apply (FixtureAdapter, @arc/ui imports, OTP 8-digit, etc.).
 - **Expo SDK 55** (2026-05-19): `expo@~55`, RN **0.83.6**, React **19.2**; `app.json` 已移除 `newArchEnabled` / `edgeToEdgeEnabled`（SDK 55 默认）；monorepo 启用 `experiments.autolinkingModuleResolution`；根 `pnpm.overrides` 钉住 `react@19.2.0`。勿扫 **8082** 等非 Arc Metro 二维码（会报 SDK 54 不兼容）。
 - **AKShare wrapper (Vercel)**: 纯 Python 子项目须 `vercel.json` **`builds` + `routes`**（勿仅用 `functions` glob）；共享代码放 `lib/` 勿放 `api/_shared/`。Hobby 冷启动慢；跨市场 4 标的串行拉价 UI 全表「加载中」直到最慢一只返回。
-- **Cross-market DEV seed**: `default:cn-only|hk-only|fund-only|cross-market` 走 **App 内 JWT**（`run-cross-market-seed-client.ts`），非 Edge `dev-seed`。
+- **Cross-market DEV seed**: `default:cn-only|hk-only|fund-only|cross-market|crypto-only` 走 **App 内 JWT**（`run-cross-market-seed-client.ts`），非 Edge `dev-seed`。CRYPTO 资产行首次需 `pnpm seed:crypto-only`（service_role）或 Block C migration 0012。
 
 ## Active env / config snapshot
 
