@@ -38,6 +38,10 @@ export {
 } from "./market-data-policy";
 
 const FINNHUB_KEY = process.env.EXPO_PUBLIC_FINNHUB_API_KEY ?? "";
+const TUSHARE_TOKEN = process.env.EXPO_PUBLIC_TUSHARE_TOKEN ?? "";
+const AKSHARE_WRAPPER_URL = process.env.EXPO_PUBLIC_AKSHARE_WRAPPER_URL ?? "";
+const AKSHARE_WRAPPER_TOKEN = process.env.EXPO_PUBLIC_AKSHARE_WRAPPER_TOKEN ?? "";
+const ENABLE_AKSHARE_CN_FALLBACK = process.env.EXPO_PUBLIC_ENABLE_AKSHARE_CN_FALLBACK !== "false";
 
 if (!FINNHUB_KEY && !__DEV__) {
   console.warn("[market-data] EXPO_PUBLIC_FINNHUB_API_KEY missing — price queries will fail");
@@ -45,7 +49,17 @@ if (!FINNHUB_KEY && !__DEV__) {
 
 const liveFxAdapter = createFrankfurterAdapter();
 const livePriceAdapters = FINNHUB_KEY
-  ? createDefaultPriceAdapters({ finnhubApiKey: FINNHUB_KEY })
+  ? createDefaultPriceAdapters({
+      finnhubApiKey: FINNHUB_KEY,
+      ...(TUSHARE_TOKEN ? { tushareToken: TUSHARE_TOKEN } : {}),
+      ...(AKSHARE_WRAPPER_URL && AKSHARE_WRAPPER_TOKEN
+        ? {
+            akshareWrapperUrl: AKSHARE_WRAPPER_URL,
+            akshareWrapperToken: AKSHARE_WRAPPER_TOKEN,
+            enableAkshareCnFallback: ENABLE_AKSHARE_CN_FALLBACK,
+          }
+        : {}),
+    })
   : {};
 
 const registry: AdapterRegistry = createDefaultRegistry({
@@ -66,5 +80,9 @@ export const fxCache: FxCache = createMemoryFxCache(
 );
 
 if (__DEV__) {
-  console.info(`[market-data] policy=${getEffectivePolicy()} (Finnhub + Frankfurter)`);
+  console.info(
+    `[market-data] policy=${getEffectivePolicy()} (Finnhub + Frankfurter` +
+      `${TUSHARE_TOKEN ? " + Tushare CN" : ""}` +
+      `${AKSHARE_WRAPPER_URL ? " + AKShare wrapper" : ""})`
+  );
 }
