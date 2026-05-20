@@ -13,6 +13,7 @@
  * single TanStack Query with proper invalidation.
  */
 
+import { useMemo } from "react";
 import { Alert, View } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import {
@@ -36,11 +37,13 @@ import Decimal from "decimal.js";
 
 import { formatMoney } from "../../../src/lib/format-money";
 import {
+  useAssetCatalog,
   useDeleteAssetTransactions,
   usePortfolio,
   usePortfolioHoldings,
   usePortfolioValuation,
 } from "../../../src/lib/queries";
+import type { AssetCatalogRow } from "../../../src/lib/queries/use-asset-catalog";
 import { useUserPreferences } from "../../../src/lib/user-preferences";
 
 const ZERO = new Decimal(0);
@@ -57,6 +60,8 @@ export default function PortfolioDetailScreen() {
   const { data: portfolio } = usePortfolio(id);
 
   const { holdings, isPending: holdingsPending } = usePortfolioHoldings(id);
+  const assetIds = useMemo(() => holdings.map((h) => h.assetId), [holdings]);
+  const { data: assetCatalog } = useAssetCatalog(assetIds);
 
   // Full valuation chain (transactions → holdings → prices → FX → totals)
   const {
@@ -84,11 +89,17 @@ export default function PortfolioDetailScreen() {
     router.push(`/portfolio/${id}/transactions/new` as Href);
   };
 
-  const handleRemoveHolding = (assetId: string, symbol: string) => {
+  const holdingLabel = (assetId: string): string => {
+    const meta = assetCatalog?.get(assetId);
+    const { symbol } = parseAssetId(assetId);
+    return meta?.name && meta.name !== symbol ? `${meta.name} (${symbol})` : symbol;
+  };
+
+  const handleRemoveHolding = (assetId: string) => {
     if (!id) return;
     Alert.alert(
       t("portfolioDetail.removeHoldingTitle"),
-      t("portfolioDetail.removeHoldingMessage", { symbol }),
+      t("portfolioDetail.removeHoldingMessage", { symbol: holdingLabel(assetId) }),
       [
         { text: t("common.cancel"), style: "cancel" },
         {
@@ -175,12 +186,11 @@ export default function PortfolioDetailScreen() {
               <HoldingRow
                 key={holding.assetId}
                 holding={holding}
+                assetMeta={assetCatalog?.get(holding.assetId)}
                 valuation={row}
                 quoteLoading={!row && (valuationPending || valuationFetching)}
                 reportingCurrency={reportingCurrency}
-                onRemove={() =>
-                  handleRemoveHolding(holding.assetId, parseAssetId(holding.assetId).symbol)
-                }
+                onRemove={() => handleRemoveHolding(holding.assetId)}
                 t={t}
               />
             );
@@ -207,6 +217,7 @@ export default function PortfolioDetailScreen() {
 
 interface HoldingRowProps {
   holding: Holding;
+  assetMeta?: AssetCatalogRow;
   valuation: MarketValuation | undefined;
   quoteLoading: boolean;
   reportingCurrency: Currency;
@@ -216,6 +227,7 @@ interface HoldingRowProps {
 
 function HoldingRow({
   holding,
+  assetMeta,
   valuation,
   quoteLoading,
   reportingCurrency,
@@ -223,6 +235,8 @@ function HoldingRow({
   t,
 }: HoldingRowProps) {
   const { symbol } = parseAssetId(holding.assetId);
+  const displayName = assetMeta?.name?.trim() || symbol;
+  const showSymbolLine = displayName !== symbol;
   const priceLabel = valuation
     ? valuation.priceNative.toFixed(2)
     : quoteLoading
@@ -248,9 +262,13 @@ function HoldingRow({
     >
       <Card>
         <View className="flex-row items-center px-3 py-3">
-          <View className="flex-1">
-            <Text className="text-foreground font-medium">{symbol}</Text>
-            <Text className="text-muted text-xs">{holding.currency}</Text>
+          <View className="flex-1 min-w-0 pr-2">
+            <Text className="text-foreground font-medium" numberOfLines={1}>
+              {displayName}
+            </Text>
+            <Text className="text-muted text-xs" numberOfLines={1}>
+              {showSymbolLine ? `${symbol} · ${holding.currency}` : holding.currency}
+            </Text>
           </View>
           <Text className="text-foreground w-16 text-right text-sm">
             {holding.shares.toFixed(2)}
