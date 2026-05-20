@@ -70,4 +70,26 @@ describe("createDefaultPriceAdapters — Tushare / AKShare", () => {
     });
     expect(registry.resolvePriceAdapter("CN").source).toBe("akshare-cn");
   });
+
+  test("CRYPTO resolves CoinGecko without api key (free tier)", () => {
+    const adapters = createDefaultPriceAdapters({ finnhubApiKey: "k" });
+    const registry = createDefaultRegistry({
+      priceAdapters: adapters,
+      fxAdapter: createFrankfurterAdapter(),
+    });
+    const crypto = registry.resolvePriceAdapter("CRYPTO");
+    expect(crypto.market).toBe("CRYPTO");
+    expect(crypto.source).toBe("coingecko");
+  });
+
+  test("resolvePriceAdapterByAssetId CRYPTO:BTC → CoinGecko adapter", () => {
+    const adapters = createDefaultPriceAdapters({ finnhubApiKey: "k" });
+    const registry = createDefaultRegistry({
+      priceAdapters: adapters,
+      fxAdapter: createFrankfurterAdapter(),
+    });
+    const adapter = registry.resolvePriceAdapterByAssetId("CRYPTO:BTC");
+    expect(adapter.source).toBe("coingecko");
+    expect(adapter.market).toBe("CRYPTO");
+  });
 });

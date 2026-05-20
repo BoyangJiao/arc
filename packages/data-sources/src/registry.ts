@@ -17,6 +17,7 @@ import {
   createAkshareClient,
 } from "./adapters/akshare";
 import { createCashPriceAdapter } from "./adapters/cash-adapter";
+import { createCoingeckoAdapter } from "./adapters/coingecko";
 import { createFinnhubAdapter } from "./adapters/finnhub";
 import { createTushareClient } from "./adapters/tushare/client";
 import { createTushareCnAdapter } from "./adapters/tushare/cn";
@@ -43,6 +44,8 @@ export interface DefaultPriceAdaptersConfig {
   akshareWrapperToken?: string;
   /** When true (default), CN uses withFallback(tushare, akshare) when both are configured. */
   enableAkshareCnFallback?: boolean;
+  /** Optional — Stage 4 evaluate demo API key */
+  coingeckoApiKey?: string;
 }
 
 /** Default live price adapters — US Finnhub; CN Tushare Phase 1A; HK/FUND AKShare Phase 2. */
@@ -66,6 +69,7 @@ export const createDefaultPriceAdapters = (
 
   const adapters: Partial<Record<Market, PriceAdapter>> = {
     US: createFinnhubAdapter({ apiKey: config.finnhubApiKey }),
+    CRYPTO: createCoingeckoAdapter({ apiKey: config.coingeckoApiKey }),
   };
 
   if (cnPrimary && cnSecondary && config.enableAkshareCnFallback !== false) {
