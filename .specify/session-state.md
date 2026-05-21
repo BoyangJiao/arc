@@ -6,21 +6,21 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-20 by Cursor Composer — **CoinGecko adapter 6 commits ✅**（Block A 漏单收口）；`pnpm --filter @arc/data-sources test` 159/159 ✅；下一步 Block C 主链（Opus 起 handoff prompt）
+> **Last updated**: 2026-05-21 by Cursor — **Block C 主链 13 commits 代码完成**（#1–#13 on `dev/stage-3`）；待用户：Supabase 跑 **0012+0013**、AKShare wrapper `vercel --prod`、Opus review #2/#4/#11、UAT
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                             |
-| :-------------------- | :-------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — CoinGecko ✅ → Block C 主链（holdings + tx entry）**                  |
-| **Step**              | CoinGecko 6 commits merged locally；Opus post-batch review → Block C handoff      |
-| **Branch**            | `dev/stage-3`（+CoinGecko #1–#6 commits）                                         |
-| **Last commit**       | `feat(mobile+seed): CRYPTO seed scenario default:crypto-only`                     |
-| **PR**                | Stage 2 merged ✅ on main；Stage 3 CoinGecko 待 push/review                       |
-| **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 159/159 ✅ |
-| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                              |
+| Field                 | Value                                                                              |
+| :-------------------- | :--------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 — Block C ✅ 代码闭环 → UAT + Opus review → Block D**                    |
+| **Step**              | Block C commits #1–#13 已落地；用户跑 migration 0012/0013 + AKShare redeploy + UAT |
+| **Branch**            | `dev/stage-3`（+CoinGecko #1–#6 commits）                                          |
+| **Last commit**       | `feat(mobile): cross-market tx entry`（Block C #11；见 `git log` 完整链）          |
+| **PR**                | Stage 2 merged ✅ on main；Stage 3 CoinGecko 待 push/review                        |
+| **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 159/159 ✅  |
+| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                               |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -216,26 +216,27 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ### Phase 2 — Block C 主链（CoinGecko 完成后起）
 
-| Commit                                                                                                     | Status |
-| :--------------------------------------------------------------------------------------------------------- | :----- |
-| #1 migration 0012 (assets CRYPTO RLS)                                                                      | ⏳     |
-| #2 `@arc/ui/charts/` wrapper 层（**Opus review ADR 必要性**）                                              | ⏳     |
-| #3 MarketChip / AllocationDonut extract / HoldingsTable / HoldingRow                                       | ⏳     |
-| #4 with-fallback classifier add NotImplementedError→try-secondary（**Opus review**；ADR 011 §决策三 同步） | ⏳     |
-| #5 AKShare wrapper `/api/search` + lib search_cn/hk/fund（**用户 redeploy Vercel**）                       | ⏳     |
-| #6 AKShare client searchSymbols + per-market adapter wires                                                 | ⏳     |
-| #7 4 query hooks (use-symbol-search-cross-market / historical-quotes / asset-detail / value-snapshots)     | ⏳     |
-| #8 last-used-market AsyncStorage store                                                                     | ⏳     |
-| #9 `/asset/[market]/[symbol]` 详情页                                                                       | ⏳     |
-| #10 Portfolio Tab integrate HoldingsTable + PortfolioValueOverTimeCard                                     | ⏳     |
-| #11 SymbolPicker + MarketSelector + tx entry rewrite（**Opus post-batch review**）                         | ⏳     |
-| #12 multi-market seed + 30-days-history scenarios                                                          | ⏳     |
-| #13 docs(spec+adr+session-state) 收尾                                                                      | ⏳     |
+| Commit                                                                         | Status                |
+| :----------------------------------------------------------------------------- | :-------------------- |
+| #1 migration **0013** (assets CRYPTO RLS)                                      | ✅ 代码；**用户 SQL** |
+| #2 `@arc/ui/charts/` wrapper 层（**Opus review**）                             | ✅                    |
+| #3 MarketChip / AllocationDonut / HoldingsTable / HoldingRow                   | ✅                    |
+| #4 with-fallback NotImplementedError→try-secondary（**Opus review**；ADR 011） | ✅                    |
+| #5 AKShare `/api/search`（**用户 vercel --prod**）                             | ✅ 代码               |
+| #6 AKShare client searchSymbols + adapter wires                                | ✅                    |
+| #7 4 query hooks + rangeToWindow                                               | ✅                    |
+| #8 last-used-market AsyncStorage                                               | ✅                    |
+| #9 `/asset/[market]/[symbol]` 详情页                                           | ✅                    |
+| #10 Portfolio Tab HoldingsTable + PortfolioValueOverTimeCard                   | ✅                    |
+| #11 tx entry rewrite（**Opus post-batch review**）                             | ✅                    |
+| #12 `portfolios:multi-market-full` + `portfolios:30-days-history`              | ✅                    |
+| #13 session-state bump                                                         | ✅                    |
 
 ### 给下一个会话的 hand-off
 
-- **Sonnet/Cursor**: CoinGecko ✅ — 待 Opus review；通过后接 Block C 主链（`holdings-and-transactions-stage-3.md` 13 commits）
-- **Opus 本会话/后续**: (1) CoinGecko 6 commits post-batch review；(2) 起 Block C handoff prompt；(3) Block C #2 charts wrapper / #4 classifier / #11 tx entry review
+- **用户**: (1) Supabase SQL Editor 跑 **0012** + **0013**；(2) `cd services/akshare-wrapper && vercel --prod`；(3) DEV `portfolios:multi-market-full` / `30-days-history` UAT；(4) CN search NotImpl→AKShare fallback 冒烟
+- **Opus**: review commits #2 charts wrapper / #4 classifier+ADR 011 / #11 tx entry；通过后起草 **Block D** `twr-stage-3.md`
+- **Sonnet/Cursor**: Block C UAT bugfix only；新 feature → Block D
 
 ## Active blockers / waiting on user
 
