@@ -73,3 +73,7 @@ export {
   type HoldingsTableProps,
   type HoldingsTableRow,
 } from "./HoldingsTable";
+export {
+  PortfolioValueOverTimeCard,
+  type PortfolioValueOverTimeCardProps,
+} from "./PortfolioValueOverTimeCard";
