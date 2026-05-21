@@ -114,6 +114,7 @@ Simulator：**⌘D → Reload**。
 | ----------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `GET /api/quote?market=CN\|HK\|FUND&symbol=...`             | 最新价；Header `X-Arc-Token`                                                    |
 | `GET /api/historical?market=...&symbol=...&from=ISO&to=ISO` | 日期窗口拉取（YYYY-MM-DD 解析）；`from`/`to` 缺一时回退为单日数组（兼容旧调用） |
+| `GET /api/search?market=CN\|HK\|FUND&q=...`                 | Symbol search（最多 8 条）；模块级 24h DataFrame 缓存                           |
 
 错误：401 未授权 / 403 token 不匹配 / 404 标的 / 503 + Retry-After 上游瞬时 / **500 wrapper 内部错（不重试）**。
 

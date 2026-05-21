@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import os
+import time
 from datetime import datetime, timezone
 from typing import Any
 
 import akshare as ak
 import pandas as pd
+
+# Module-level spot/name tables — 24h TTL to avoid re-downloading on every search.
+_DF_CACHE: dict[str, tuple[Any, float]] = {}
+_DF_CACHE_TTL_SEC = 24 * 60 * 60
 
 
 def _require_token(headers: dict[str, str]) -> None:
@@ -249,6 +254,71 @@ def fetch_fund_window(symbol: str, start_ymd: str, end_ymd: str) -> list[dict[st
     if _is_exchange_traded_fund(code):
         return fetch_etf_window(code, start_ymd, end_ymd)
     return fetch_open_fund_window(code, start_ymd, end_ymd)
+
+
+def _cached_df(key: str, loader) -> Any:
+    now = time.time()
+    entry = _DF_CACHE.get(key)
+    if entry is not None:
+        df, ts = entry
+        if now - ts < _DF_CACHE_TTL_SEC:
+            return df
+    df = loader()
+    _DF_CACHE[key] = (df, now)
+    return df
+
+
+def _search_rows(
+    df: pd.DataFrame,
+    code_col: str,
+    name_col: str,
+    market: str,
+    currency: str,
+    q: str,
+    limit: int = 8,
+) -> list[dict[str, Any]]:
+    q_stripped = q.strip()
+    if not q_stripped:
+        return []
+    q_lower = q_stripped.lower()
+    mask = df[code_col].astype(str).str.contains(q_stripped, case=False, na=False) | df[
+        name_col
+    ].astype(str).str.contains(q_stripped, case=False, na=False)
+    if q_lower != q_stripped:
+        mask = mask | df[name_col].astype(str).str.contains(q_lower, case=False, na=False)
+    rows = df[mask].head(limit)
+    out: list[dict[str, Any]] = []
+    for _, row in rows.iterrows():
+        code = str(row[code_col]).strip()
+        name = str(row[name_col]).strip()
+        if market == "HK":
+            code = code.zfill(5)
+        elif market in ("CN", "FUND"):
+            code = code.zfill(6)
+        out.append(
+            {
+                "assetId": f"{market}:{code}",
+                "symbol": code,
+                "name": name,
+                "market": market,
+                "currency": currency,
+            }
+        )
+    return out
+
+
+def fetch_search(market: str, q: str) -> list[dict[str, Any]]:
+    m = market.upper()
+    if m == "CN":
+        df = _cached_df("cn_spot", ak.stock_zh_a_spot_em)
+        return _search_rows(df, "代码", "名称", "CN", "CNY", q)
+    if m == "HK":
+        df = _cached_df("hk_spot", ak.stock_hk_spot_em)
+        return _search_rows(df, "代码", "名称", "HK", "HKD", q)
+    if m == "FUND":
+        df = _cached_df("fund_names", ak.fund_name_em)
+        return _search_rows(df, "基金代码", "基金简称", "FUND", "CNY", q)
+    raise ValueError(f"unsupported market: {market}")
 
 
 def fetch_quotes_window(
