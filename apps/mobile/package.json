@@ -19,6 +19,7 @@
     "@expo/metro-runtime": "~55.0.11",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@shopify/react-native-skia": "^2.6.2",
     "@supabase/supabase-js": "^2.105.2",
     "@tanstack/react-query": "^5.90.5",
     "decimal.js": "^10.5.0",
@@ -47,6 +48,7 @@
     "tailwind-variants": "^3.2.2",
     "tailwindcss": "^4.2.4",
     "uniwind": "^1.6.4",
+    "victory-native": "^41.20.2",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
