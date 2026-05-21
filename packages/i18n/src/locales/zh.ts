@@ -316,13 +316,9 @@ export const zh = {
         label: "转账记录",
         hint: "三组合 + CASH 转账 notes 配对",
       },
-      pfMultiMarketFull: {
-        label: "Block C 多市场全持仓",
-        hint: "单组合：US/CN/HK/FUND/CRYPTO/CASH，用于 UAT 持仓表",
-      },
       pf30DaysHistory: {
-        label: "Block C 30 天净值历史",
-        hint: "多市场全持仓 + 30 条 portfolio_value_snapshots（area-chart）",
+        label: "Block C Hero 全量 UAT",
+        hint: "多市场全持仓 + 730 天净值曲线（Portfolio Tab Hero / 图表 / 持仓表）；首选 Block C polish 场景",
       },
     },
   },

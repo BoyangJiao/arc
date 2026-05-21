@@ -6,22 +6,22 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-21 by Cursor — **Block C UAT 专会话 handoff**（代码 #1–#13 ✅；ADR 012 提议未 commit）
+> **Last updated**: 2026-05-21 by Cursor — **Block C Hero UI/UX polish committed** + dev seed 场景整理 + UAT 提交纪律
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                  |
-| :-------------------- | :------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block C UAT**（修 bug / 签 S3-AC-C.1–C.12；**不做** Block D / 新 feature） |
-| **Step**              | 13 commits 已 merge 本地链；migration 0012/0013 + AKShare search + DEV seed UAT        |
-| **Branch**            | `dev/stage-3`（**ahead 20** vs `origin/dev/stage-3`）                                  |
-| **Last commit**       | `b2b6474` `docs(spec+session-state): Block C main chain complete — UAT handoff`        |
-| **PR**                | 未开；UAT 通过后再 push / Opus review                                                  |
-| **CI status**         | 末次本地 `pnpm typecheck` 6/6 ✅；`@arc/data-sources` tests ✅（会话末 159+）          |
-| **Mobile dev server** | `pnpm mobile` → **8081**；改 `.env` / migration 后 **Metro `--clear`**                 |
-| **Out of scope**      | ADR 012 终版、Block D TWR、大陆 Auth 实现                                              |
+| Field                 | Value                                                                                         |
+| :-------------------- | :-------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 — Block C UAT**（修 bug / 签 S3-AC-C.1–C.12；**不做** Block D / 新 feature）        |
+| **Step**              | 主链 13 commits ✅；**Hero chart polish** `7c7755b` ✅；UAT 数据/adapter 层仍有 unstaged 改动 |
+| **Branch**            | `dev/stage-3`（**ahead 22** vs `origin/dev/stage-3`）                                         |
+| **Last commit**       | `7c7755b` `feat(ui): Portfolio hero chart polish and scrub UX (ADR 013).`                     |
+| **PR**                | 未开；UAT 通过后再 push / Opus review                                                         |
+| **CI status**         | 末次 `pnpm typecheck` 6/6 ✅（Hero commit 前）                                                |
+| **Mobile dev server** | `pnpm mobile` → **8081**；改 `.env` / migration 后 **Metro `--clear`**                        |
+| **Out of scope**      | ADR 012 终版、Block D TWR、大陆 Auth 实现                                                     |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -237,15 +237,43 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ### Block C UAT — 前置（新会话第一件事）
 
-| Step | 动作                                                                                                                         | 验证                                          |
-| :--- | :--------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- |
-| 0    | `apps/mobile/.env` 的 `EXPO_PUBLIC_SUPABASE_URL` ref = **`jdvlzkictwinkgcvgwew`**（与 SQL Editor 同一 project）              | Dashboard URL 一致                            |
-| 1    | Supabase SQL Editor 跑 **0012** + **0013**（文件含 `DROP POLICY IF EXISTS` 幂等；0013 可能有 destructive 警告 → dev 可 Run） | 0012 若报 policy exists → 已应用可跳过        |
-| 2    | `cd services/akshare-wrapper && vercel --prod`（commit #5 后）                                                               | `curl` `/api/search?market=CN&q=茅台` + token |
-| 3    | `pnpm mobile -- --clear`；DEV 登录（邮箱 OTP）                                                                               | 冷启动无 Metro 旧 bundle 错                   |
-| 4    | DEV FAB → **组合** → `portfolios:multi-market-full` 或 `portfolios:30-days-history`                                          | Portfolio Tab 有多市场持仓 / 30 天曲线        |
+| Step | 动作                                                                                                                         | 验证                                                            |
+| :--- | :--------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------- |
+| 0    | `apps/mobile/.env` 的 `EXPO_PUBLIC_SUPABASE_URL` ref = **`jdvlzkictwinkgcvgwew`**（与 SQL Editor 同一 project）              | Dashboard URL 一致                                              |
+| 1    | Supabase SQL Editor 跑 **0012** + **0013**（文件含 `DROP POLICY IF EXISTS` 幂等；0013 可能有 destructive 警告 → dev 可 Run） | 0012 若报 policy exists → 已应用可跳过                          |
+| 2    | `cd services/akshare-wrapper && vercel --prod`（commit #5 后）                                                               | `curl` `/api/search?market=CN&q=茅台` + token                   |
+| 3    | `pnpm mobile -- --clear`；DEV 登录（邮箱 OTP）                                                                               | 冷启动无 Metro 旧 bundle 错                                     |
+| 4    | DEV FAB → **组合** → **`portfolios:30-days-history`**（首选）或 `portfolios:multi-3` / `daily-snapshot:*`                    | Portfolio Tab Hero + 730 天曲线 / 多组合切换 / 日涨跌 edge case |
 
-**工作区未 commit（UAT 前知悉）**: `0012`/`0013` SQL 幂等补丁、`docs/adr/012-*.md`（提议）、本 `session-state.md`。
+### Block C — Portfolio Hero UI/UX polish（2026-05-21，commit `7c7755b`）
+
+**范围**：`PortfolioHeroSection`（L3 组合）+ `@arc/ui/charts/*` L2 polish（点阵 area fill、scrub 遮罩/日期、Segment 周期条）。**非**仅多组合 —— 凡 **Portfolio Tab + 当前 active portfolio** 均走新 Hero（单组合 / 多组合切换同样 UI）。
+
+| 组件                    | 层           | 说明                                                              |
+| :---------------------- | :----------- | :---------------------------------------------------------------- |
+| `PortfolioHeroSection`  | L3 finance   | 总市值 + 变动行 + `AreaChart` + `TimeRangeSelector` + mover chips |
+| `AreaChart` + L2 子模块 | L3/L2 charts | 点阵、scrub、涨跌色；HeroUI Pro 仅 L1 挂载                        |
+| `DailySnapshotCard`     | L2（保留）   | Portfolio Tab **已不再渲染**；delta 类型仍复用                    |
+| ADR 013                 | docs         | wrapper 所有权纪律                                                |
+
+**DEV 场景（Hero UAT 首选）**：
+
+| 场景                               | 覆盖                                                                                                  |
+| :--------------------------------- | :---------------------------------------------------------------------------------------------------- |
+| **`portfolios:30-days-history`**   | ✅ **最全**：多市场持仓 + 730 天 `portfolio_value_snapshots` + Hero chart/scrub                       |
+| `portfolios:multi-3`               | 多组合 ▼ 切换（非全市场）                                                                             |
+| `daily-snapshot:*`                 | 日涨跌 edge case（first-day / mixed-movers 等）；仍进 Portfolio Tab                                   |
+| `default:cross-market` 等          | 单市场报价 smoke；**不**替代 30-days-history                                                          |
+| ~~`portfolios:multi-market-full`~~ | 已从 DEV FAB 移除（被 30-days-history 严格覆盖）；CLI `pnpm seed:portfolios:multi-market-full` 仍可用 |
+
+**UI polish 单独提交纪律（Opus Block C review 前必读）**：
+
+1. Block C **L2/L3 UI/UX polish**（`packages/ui` charts/finance、`PortfolioHeroSection`）与 Opus 审查的 **adapter / RLS / hooks / core** 层 **正交** —— 可先 commit polish slice（已验证 `7c7755b`）。
+2. **提交前自检**：改动是否仅 UI + 薄 wiring（`index.tsx` props、`time-range.ts` UTC、`snapshotsToChartPoints.asOf`）？是 → 可提交。
+3. **若触及** `data-sources`、`packages/core` 估值、`migration`、snapshot cron/query 契约 → **先通知用户**，由用户决定是否与 Opus review 并行或等 review 后再合。
+4. Opus review 后若只改数据层，Hero 组件 **通常无需回滚**；最多同步 `ChartPoint` / hook 字段。
+
+**工作区未 commit（UAT / Opus 仍待）**：US adapter、Finnhub/AV 历史价、migration 0012/0013 补丁、seed 扩展、`asset/[symbol]` 等 —— 见 `git status`。
 
 ### Block C UAT — S3-AC-C 清单（契约：holdings-and-transactions-stage-3.md §S3-AC-C）
 
@@ -259,7 +287,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 | **C.6**  | trade_date 可 back-date ≠ created_at   | 录 NVDA 指定日期                        | ⏳   |
 | **C.7**  | per-portfolio last-used market         | 两组合各录不同 market 再进 tx           | ⏳   |
 | **C.8**  | Insights donut 按 asset 权重           | 美股组合三标的                          | ⏳   |
-| **C.9**  | Portfolio area-chart 30 天             | seed `30-days-history`                  | ⏳   |
+| **C.9**  | Portfolio area-chart + Hero scrub      | seed **`30-days-history`**（730 天）    | ⏳   |
 | **C.10** | search 503 限流 UI 保留旧结果          | DEV 模拟或 wrapper 限流                 | ⏳   |
 | **C.11** | Tushare CN NotImpl → AKShare fallback  | 搜 CN（主源 stub）                      | ⏳   |
 | **C.12** | 详情「我的持仓」盈亏色                 | 持有 CN:600519                          | ⏳   |
@@ -268,17 +296,17 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ### 关键路径（修 bug 时）
 
-| 领域              | 路径                                                                                                   |
-| :---------------- | :----------------------------------------------------------------------------------------------------- |
-| Spec / AC         | `.specify/feature-specs/holdings-and-transactions-stage-3.md`                                          |
-| Kickoff           | `.specify/handoffs/cursor-stage-3-block-c-kickoff.md`                                                  |
-| Portfolio Tab     | `apps/mobile/app/(tabs)/index.tsx`, `HoldingsTable`, `PortfolioValueOverTimeCard`                      |
-| Asset 详情        | `apps/mobile/app/asset/[market]/[symbol].tsx`, hooks `use-asset-detail`, `use-historical-quotes`       |
-| Tx 录入           | `apps/mobile/app/portfolio/...` tx entry 路由, `use-transactions`, `use-symbol-search-cross-market`    |
-| Charts            | `packages/ui/src/charts/*`                                                                             |
-| Search / fallback | `with-fallback.ts`, `services/akshare-wrapper/api/search.py`                                           |
-| Seed              | `run-portfolios-seed-client.ts`, DEV panel `portfolios:multi-market-full` / `30-days-history`          |
-| Migrations        | `0012_portfolio_value_snapshots_user_insert_manual.sql`, `0013_assets_authenticated_insert_crypto.sql` |
+| 领域              | 路径                                                                                                                                        |
+| :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
+| Spec / AC         | `.specify/feature-specs/holdings-and-transactions-stage-3.md`                                                                               |
+| Kickoff           | `.specify/handoffs/cursor-stage-3-block-c-kickoff.md`                                                                                       |
+| Portfolio Tab     | `apps/mobile/app/(tabs)/index.tsx`, **`PortfolioHeroSection`**, `HoldingsTable`                                                             |
+| Asset 详情        | `apps/mobile/app/asset/[market]/[symbol].tsx`, hooks `use-asset-detail`, `use-historical-quotes`                                            |
+| Tx 录入           | `apps/mobile/app/portfolio/...` tx entry 路由, `use-transactions`, `use-symbol-search-cross-market`                                         |
+| Charts            | `packages/ui/src/charts/*`                                                                                                                  |
+| Search / fallback | `with-fallback.ts`, `services/akshare-wrapper/api/search.py`                                                                                |
+| Seed              | `run-portfolios-seed-client.ts`, DEV panel **`portfolios:30-days-history`**（CLI 仍可用 `pnpm seed:portfolios:multi-market-full` 轻量种子） |
+| Migrations        | `0012_portfolio_value_snapshots_user_insert_manual.sql`, `0013_assets_authenticated_insert_crypto.sql`                                      |
 
 ### 给 Block C UAT 专会话的 hand-off（复制到新 Chat）
 
@@ -287,7 +315,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 必读：CLAUDE.md → .specify/session-state.md §Block C UAT → holdings-and-transactions-stage-3.md §S3-AC-C。
 
-分支 dev/stage-3 @ b2b6474。前置：Supabase 0012+0013、AKShare vercel --prod、DEV seed multi-market-full。
+分支 dev/stage-3 @ `7c7755b`。前置：Supabase 0012+0013、AKShare vercel --prod、DEV seed **`portfolios:30-days-history`**。
 
 用户将提供 UAT 失败项；只修回归，不改 scope。Opus review #2/#4/#11 与 Block D 本阶段不做。
 ```
@@ -310,12 +338,19 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Immediate next actions (next session)
 
-**Block C UAT 专会话（当前优先级）**
+**Block C — 下一 UI 问题（新会话）**
+
+1. 读 CLAUDE.md → 本文件 §Block C Hero polish + §UI polish 提交纪律
+2. DEV FAB → **组合** → **`portfolios:30-days-history`** → Portfolio Tab 验证
+3. 继续 Portfolio / Block C 剩余 UI polish 或 UAT 失败项修复
+4. **单独 commit UI polish 前**：对照 §UI polish 提交纪律 判断 Opus 影响
+
+**Block C UAT / Opus（并行轨）**
 
 1. 跑前置表（0012/0013、vercel --prod、DEV seed、Metro clear）
-2. 按 §S3-AC-C.1–C.12 逐项签 off；失败项记 bug 列表
-3. 仅修 UAT 回归；每项修完重跑相关 AC
-4. 全绿 → 更新本表 AC 列为 ✅ → 再 push / Opus Block C review → Block D spec
+2. 按 §S3-AC-C.1–C.12 签 off；失败项记 bug
+3. 全绿 → push → Opus Block C review（#2 charts / #4 fallback / #11 tx entry + 数据层）
+4. 合入 unstaged adapter/seed 改动前与用户确认
 
 **暂缓**：ADR 012 接受、Block D、大陆 Auth 实现。
 
@@ -333,6 +368,8 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **Resolved 2026-05-19 (UI polish)**: `/me` 拆 **嵌套 Stack**（`app/me/_layout.tsx`）— 根仅 `slide_from_left` + `animationMatchesGesture` + `fullScreenGestureEnabled`；子页自右 push。`InScreenHeader` 增加 `density: comfortable` 用于 modal（如自选搜索）。Tab 滚动底缘 `TabScrollShadow`（`ScrollShadow` + `LinearGradient`）。`@arc/eslint-plugin-token-discipline` + ADR 008 / DESIGN-TOKENS 同步。
 - **Resolved 2026-05-19 (ADR 010 dev cache trust)**: 四条 cache-first 读路径（`use-watchlist-quotes` / `use-portfolio-valuation` / `use-price` / `validate-us-symbol`）统一使用 `apps/mobile/src/lib/stale-quote.ts` 的 `isStaleQuoteSource`。`STALE_SOURCES = {seed-dev, fixture, alphavantage}` 或 `changePercent == null` → 不信任缓存、触发 Finnhub。`CACHE_FIRST_READ_FRESHNESS_MS` 保留 `Infinity`（24h freshness 与 dev 永不自动网络的设计冲突，收回）。DEV watchlist seed 假数据 **保留**（stale-quote 场景需要），仅加注释说明。
 - **Resolved 2026-05-20 (Block A)**: Tushare 免费版仅 A 股 daily；HK/FUND 主源 AKShare Vercel wrapper；场内 ETF（510300）用 `fund_etf_hist_em` 非 `stock_zh_a_hist`；`apps/mobile/.env` AKShare 行须落盘否则 Metro 不加载；cache-first 组合估值对 **cache miss** 自动补网拉价。
+- **Resolved 2026-05-21 (Block C Hero)**: Portfolio Tab 用 **`PortfolioHeroSection`** 替代 `DailySnapshotCard` + `PortfolioValueOverTimeCard` 叠 Card；chart polish 在 `@arc/ui/charts` L2（ADR 013）。**全局**：active portfolio 不论单/多组合均同一 Hero UI。
+- **Resolved 2026-05-21 (UI commit discipline)**: Block C UI/UX polish 可单独 commit，若仅 L2/L3 + 薄 wiring；触及 data-sources/core/migration 先问用户再 commit。
 
 ## Critical mental model (gotchas easy to forget)
 
@@ -352,7 +389,8 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - All prior Stage 1 gotchas still apply (FixtureAdapter, @arc/ui imports, OTP 8-digit, etc.).
 - **Expo SDK 55** (2026-05-19): `expo@~55`, RN **0.83.6**, React **19.2**; `app.json` 已移除 `newArchEnabled` / `edgeToEdgeEnabled`（SDK 55 默认）；monorepo 启用 `experiments.autolinkingModuleResolution`；根 `pnpm.overrides` 钉住 `react@19.2.0`。勿扫 **8082** 等非 Arc Metro 二维码（会报 SDK 54 不兼容）。
 - **AKShare wrapper (Vercel)**: 纯 Python 子项目须 `vercel.json` **`builds` + `routes`**（勿仅用 `functions` glob）；共享代码放 `lib/` 勿放 `api/_shared/`。Hobby 冷启动慢；跨市场 4 标的串行拉价 UI 全表「加载中」直到最慢一只返回。
-- **Cross-market DEV seed**: `default:cn-only|hk-only|fund-only|cross-market|crypto-only` 走 **App 内 JWT**（`run-cross-market-seed-client.ts`），非 Edge `dev-seed`。CRYPTO 资产行首次需 `pnpm seed:crypto-only`（service_role）或 Block C migration 0012。
+- **Portfolio Hero**: `import { PortfolioHeroSection } from '@arc/ui'` — 业务页不拼 chart 子组件。DEV 全量 UAT → **`portfolios:30-days-history`**（FAB **组合** → 落地 Portfolio Tab）。
+- **Cross-market DEV seed**: `default:cn-only|hk-only|fund-only|cross-market|crypto-only` 走 **App 内 JWT**（`run-cross-market-seed-client.ts`），非 Edge `dev-seed`。CRYPTO 资产行首次需 `pnpm seed:crypto-only`（service_role）或 Block C migration 0013。
 
 ## Active env / config snapshot
 
@@ -369,6 +407,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 | ADR     | Topic                                                                                             |
 | :------ | :------------------------------------------------------------------------------------------------ |
+| **013** | `@arc/ui` wrapper 所有权 + chart L2 polish（Portfolio Hero 落地）— **已接受**                     |
 | **012** | 双区域 Auth + 数据驻留（大陆微信/手机/邮箱，P1 BFF + Supabase session）— **提议，待 Opus review** |
 | **011** | 多源 fallback + AKShare wrapper（Stage 3 HK/FUND primary）— **已接受 + Phase 2 已实施**           |
 | 010     | Dev cache trust strategy (`isStaleQuoteSource` 共享 helper；Infinity freshness)                   |
@@ -380,5 +419,5 @@ _(Prior “uncommitted work” table superseded by the above.)_
 ## How to use this file
 
 1. **Block C UAT 会话**: CLAUDE.md → this file §Block C UAT → `holdings-and-transactions-stage-3.md` §S3-AC-C.
-2. DEV FAB: **组合** → `portfolios:multi-market-full` / `portfolios:30-days-history`（非 Edge dev-seed）。
+2. DEV FAB: **组合** → **`portfolios:30-days-history`**（Hero 全量 UAT）；日涨跌 edge → **每日快照** 组。
 3. End session: `/checkpoint`.
