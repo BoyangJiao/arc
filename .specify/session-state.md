@@ -6,21 +6,22 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-21 by Cursor — **Block C 主链 13 commits 代码完成**（#1–#13 on `dev/stage-3`）；待用户：Supabase 跑 **0012+0013**、AKShare wrapper `vercel --prod`、Opus review #2/#4/#11、UAT
+> **Last updated**: 2026-05-21 by Cursor — **Block C UAT 专会话 handoff**（代码 #1–#13 ✅；ADR 012 提议未 commit）
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                              |
-| :-------------------- | :--------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block C ✅ 代码闭环 → UAT + Opus review → Block D**                    |
-| **Step**              | Block C commits #1–#13 已落地；用户跑 migration 0012/0013 + AKShare redeploy + UAT |
-| **Branch**            | `dev/stage-3`（+CoinGecko #1–#6 commits）                                          |
-| **Last commit**       | `feat(mobile): cross-market tx entry`（Block C #11；见 `git log` 完整链）          |
-| **PR**                | Stage 2 merged ✅ on main；Stage 3 CoinGecko 待 push/review                        |
-| **CI status**         | Local `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 159/159 ✅  |
-| **Mobile dev server** | Default **8081** (`pnpm mobile`); Expo Go **SDK 55**                               |
+| Field                 | Value                                                                                  |
+| :-------------------- | :------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 — Block C UAT**（修 bug / 签 S3-AC-C.1–C.12；**不做** Block D / 新 feature） |
+| **Step**              | 13 commits 已 merge 本地链；migration 0012/0013 + AKShare search + DEV seed UAT        |
+| **Branch**            | `dev/stage-3`（**ahead 20** vs `origin/dev/stage-3`）                                  |
+| **Last commit**       | `b2b6474` `docs(spec+session-state): Block C main chain complete — UAT handoff`        |
+| **PR**                | 未开；UAT 通过后再 push / Opus review                                                  |
+| **CI status**         | 末次本地 `pnpm typecheck` 6/6 ✅；`@arc/data-sources` tests ✅（会话末 159+）          |
+| **Mobile dev server** | `pnpm mobile` → **8081**；改 `.env` / migration 后 **Metro `--clear`**                 |
+| **Out of scope**      | ADR 012 终版、Block D TWR、大陆 Auth 实现                                              |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -214,29 +215,87 @@ _(Prior “uncommitted work” table superseded by the above.)_
 | Live smoke: DEV `default:crypto-only` → 真实 USD 价 + 24h 变动 + CNY 换算                      | ⏳ user UAT after `pnpm seed:crypto-only` once      |
 | Phase 1 DoD                                                                                    | ✅ code complete — pending Opus review + live smoke |
 
-### Phase 2 — Block C 主链（CoinGecko 完成后起）
+### Phase 2 — Block C 主链（13 commits — 执行记录）
 
-| Commit                                                                         | Status                |
-| :----------------------------------------------------------------------------- | :-------------------- |
-| #1 migration **0013** (assets CRYPTO RLS)                                      | ✅ 代码；**用户 SQL** |
-| #2 `@arc/ui/charts/` wrapper 层（**Opus review**）                             | ✅                    |
-| #3 MarketChip / AllocationDonut / HoldingsTable / HoldingRow                   | ✅                    |
-| #4 with-fallback NotImplementedError→try-secondary（**Opus review**；ADR 011） | ✅                    |
-| #5 AKShare `/api/search`（**用户 vercel --prod**）                             | ✅ 代码               |
-| #6 AKShare client searchSymbols + adapter wires                                | ✅                    |
-| #7 4 query hooks + rangeToWindow                                               | ✅                    |
-| #8 last-used-market AsyncStorage                                               | ✅                    |
-| #9 `/asset/[market]/[symbol]` 详情页                                           | ✅                    |
-| #10 Portfolio Tab HoldingsTable + PortfolioValueOverTimeCard                   | ✅                    |
-| #11 tx entry rewrite（**Opus post-batch review**）                             | ✅                    |
-| #12 `portfolios:multi-market-full` + `portfolios:30-days-history`              | ✅                    |
-| #13 session-state bump                                                         | ✅                    |
+| #   | Git (short) | Commit message (摘要)                                    | Status                           |
+| :-- | :---------- | :------------------------------------------------------- | :------------------------------- |
+| 1   | `dc27321`   | `feat(db): migration 0013 assets CRYPTO insert RLS`      | ✅ code                          |
+| 2   | `9ffcaf7`   | `feat(ui): @arc/ui/charts wrapper layer`                 | ✅ Opus review ⏳                |
+| 3   | `5a92de3`   | `feat(ui): MarketChip, AllocationDonut, HoldingsTable…`  | ✅                               |
+| 4   | `08e86f3`   | `feat(data-sources): NotImplementedError → withFallback` | ✅ Opus review ⏳                |
+| 5   | `691b430`   | `feat(akshare-wrapper): /api/search`                     | ✅ code; **Vercel prod** ⏳ user |
+| 6   | `6e0050f`   | `feat(data-sources): AKShare searchSymbols + wires`      | ✅                               |
+| 7   | `924e89c`   | `feat(mobile): Block C query hooks + rangeToWindow`      | ✅                               |
+| 8   | `6f49e4f`   | `feat(mobile): last-used-market AsyncStorage`            | ✅                               |
+| 9   | `80a1cb1`   | `feat(mobile): asset detail page`                        | ✅                               |
+| 10  | `afceffd`   | `feat(mobile): holdings table + NAV over-time card`      | ✅                               |
+| 11  | `251fc11`   | `feat(mobile): cross-market tx entry`                    | ✅ Opus review ⏳                |
+| 12  | `9a7e6ee`   | `feat(seed): multi-market-full + 30-days-history`        | ✅                               |
+| 13  | `b2b6474`   | `docs(spec+session-state): Block C main chain complete`  | ✅                               |
 
-### 给下一个会话的 hand-off
+**Block B UAT prep（同链，非 Block C 编号）**: `36b24bc` Portfolio tab header + migration **0012** `portfolio_value_snapshots_user_insert_manual`.
 
-- **用户**: (1) Supabase SQL Editor 跑 **0012** + **0013**；(2) `cd services/akshare-wrapper && vercel --prod`；(3) DEV `portfolios:multi-market-full` / `30-days-history` UAT；(4) CN search NotImpl→AKShare fallback 冒烟
-- **Opus**: review commits #2 charts wrapper / #4 classifier+ADR 011 / #11 tx entry；通过后起草 **Block D** `twr-stage-3.md`
-- **Sonnet/Cursor**: Block C UAT bugfix only；新 feature → Block D
+### Block C UAT — 前置（新会话第一件事）
+
+| Step | 动作                                                                                                                         | 验证                                          |
+| :--- | :--------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- |
+| 0    | `apps/mobile/.env` 的 `EXPO_PUBLIC_SUPABASE_URL` ref = **`jdvlzkictwinkgcvgwew`**（与 SQL Editor 同一 project）              | Dashboard URL 一致                            |
+| 1    | Supabase SQL Editor 跑 **0012** + **0013**（文件含 `DROP POLICY IF EXISTS` 幂等；0013 可能有 destructive 警告 → dev 可 Run） | 0012 若报 policy exists → 已应用可跳过        |
+| 2    | `cd services/akshare-wrapper && vercel --prod`（commit #5 后）                                                               | `curl` `/api/search?market=CN&q=茅台` + token |
+| 3    | `pnpm mobile -- --clear`；DEV 登录（邮箱 OTP）                                                                               | 冷启动无 Metro 旧 bundle 错                   |
+| 4    | DEV FAB → **组合** → `portfolios:multi-market-full` 或 `portfolios:30-days-history`                                          | Portfolio Tab 有多市场持仓 / 30 天曲线        |
+
+**工作区未 commit（UAT 前知悉）**: `0012`/`0013` SQL 幂等补丁、`docs/adr/012-*.md`（提议）、本 `session-state.md`。
+
+### Block C UAT — S3-AC-C 清单（契约：holdings-and-transactions-stage-3.md §S3-AC-C）
+
+| AC       | 测什么                                 | DEV / 操作提示                          | 状态 |
+| :------- | :------------------------------------- | :-------------------------------------- | :--- |
+| **C.1**  | 持仓表 market 分组 + 双币种            | seed `multi-market-full`；reporting=CNY | ⏳   |
+| **C.2**  | tap 行 → `/asset/CN/600519`            | 任一行                                  | ⏳   |
+| **C.3**  | 详情 1M→1Y 重拉 historical             | CN 标的                                 | ⏳   |
+| **C.4**  | tx entry CN 搜「茅台」→ AKShare search | 需 #5 prod + env token                  | ⏳   |
+| **C.5**  | CRYPTO BUY → ensureAsset + tx          | migration **0013** 必 applied           | ⏳   |
+| **C.6**  | trade_date 可 back-date ≠ created_at   | 录 NVDA 指定日期                        | ⏳   |
+| **C.7**  | per-portfolio last-used market         | 两组合各录不同 market 再进 tx           | ⏳   |
+| **C.8**  | Insights donut 按 asset 权重           | 美股组合三标的                          | ⏳   |
+| **C.9**  | Portfolio area-chart 30 天             | seed `30-days-history`                  | ⏳   |
+| **C.10** | search 503 限流 UI 保留旧结果          | DEV 模拟或 wrapper 限流                 | ⏳   |
+| **C.11** | Tushare CN NotImpl → AKShare fallback  | 搜 CN（主源 stub）                      | ⏳   |
+| **C.12** | 详情「我的持仓」盈亏色                 | 持有 CN:600519                          | ⏳   |
+
+**UAT 记录建议**：每 AC 一行 ✅/❌ + 截图/现象；❌ 附复现步骤 → 新会话只修 listed bugs。
+
+### 关键路径（修 bug 时）
+
+| 领域              | 路径                                                                                                   |
+| :---------------- | :----------------------------------------------------------------------------------------------------- |
+| Spec / AC         | `.specify/feature-specs/holdings-and-transactions-stage-3.md`                                          |
+| Kickoff           | `.specify/handoffs/cursor-stage-3-block-c-kickoff.md`                                                  |
+| Portfolio Tab     | `apps/mobile/app/(tabs)/index.tsx`, `HoldingsTable`, `PortfolioValueOverTimeCard`                      |
+| Asset 详情        | `apps/mobile/app/asset/[market]/[symbol].tsx`, hooks `use-asset-detail`, `use-historical-quotes`       |
+| Tx 录入           | `apps/mobile/app/portfolio/...` tx entry 路由, `use-transactions`, `use-symbol-search-cross-market`    |
+| Charts            | `packages/ui/src/charts/*`                                                                             |
+| Search / fallback | `with-fallback.ts`, `services/akshare-wrapper/api/search.py`                                           |
+| Seed              | `run-portfolios-seed-client.ts`, DEV panel `portfolios:multi-market-full` / `30-days-history`          |
+| Migrations        | `0012_portfolio_value_snapshots_user_insert_manual.sql`, `0013_assets_authenticated_insert_crypto.sql` |
+
+### 给 Block C UAT 专会话的 hand-off（复制到新 Chat）
+
+```
+接力 Arc Stage 3 Block C UAT only（修 S3-AC-C.x，不做新 feature / Block D）。
+
+必读：CLAUDE.md → .specify/session-state.md §Block C UAT → holdings-and-transactions-stage-3.md §S3-AC-C。
+
+分支 dev/stage-3 @ b2b6474。前置：Supabase 0012+0013、AKShare vercel --prod、DEV seed multi-market-full。
+
+用户将提供 UAT 失败项；只修回归，不改 scope。Opus review #2/#4/#11 与 Block D 本阶段不做。
+```
+
+### 并行轨（不阻塞 UAT）
+
+- **Opus**（另会话）: review `9ffcaf7` / `08e86f3` / `251fc11`；ADR 012 提议 review
+- **Block D**: UAT 全绿后再 `twr-stage-3.md`
 
 ## Active blockers / waiting on user
 
@@ -251,13 +310,16 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Immediate next actions (next session)
 
-**1. Opus review** — `dev/stage-3` Block A（#1–#15）；重点 registry / withFallback / akshare-wrapper / migration 0010。
+**Block C UAT 专会话（当前优先级）**
 
-**2. Block B spec** — `multi-portfolio-stage-3.md`（多组合 switcher、独立现金、跨组合转账 — roadmap §决策 10–14）。
+1. 跑前置表（0012/0013、vercel --prod、DEV seed、Metro clear）
+2. 按 §S3-AC-C.1–C.12 逐项签 off；失败项记 bug 列表
+3. 仅修 UAT 回归；每项修完重跑相关 AC
+4. 全绿 → 更新本表 AC 列为 ✅ → 再 push / Opus Block C review → Block D spec
 
-**3. Stage 3 体验债（非 Block B 阻塞）** — 组合估值并行拉价；`price_snapshots` RLS 写入 WARN；AKShare 迁国内节点。
+**暂缓**：ADR 012 接受、Block D、大陆 Auth 实现。
 
-**4. Switch-back-to-Opus triggers** (Stage 3):
+**Switch-back-to-Opus triggers** (Stage 3):
 
 - TWR / MWR 算法（property tests 强需求）
 - Performance Attribution 算法
@@ -294,28 +356,29 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Active env / config snapshot
 
-| File               | Status                                                                       |
-| :----------------- | :--------------------------------------------------------------------------- |
-| `apps/mobile/.env` | Supabase + Finnhub + **Tushare + AKShare wrapper URL/token**（gitignored）   |
-| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                                           |
-| Migrations         | `0001`–`0010` applied ✅ (`0010` CN/HK/FUND assets RLS)                      |
-| AKShare wrapper    | `https://arc-akshare-wrapper.vercel.app` + `AKSHARE_WRAPPER_TOKEN` on Vercel |
-| Supabase project   | `jdvlzkictwinkgcvgwew`                                                       |
-| Git branch         | `dev/stage-3`                                                                |
+| File               | Status                                                                                            |
+| :----------------- | :------------------------------------------------------------------------------------------------ |
+| `apps/mobile/.env` | Supabase + Finnhub + **Tushare + AKShare wrapper URL/token**（gitignored）                        |
+| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                                                                |
+| Migrations         | `0001`–`0010` ✅；**0012** manual snapshot insert、**0013** CRYPTO assets — **UAT 前用户 SQL** ⏳ |
+| AKShare wrapper    | `https://arc-akshare-wrapper.vercel.app` + `AKSHARE_WRAPPER_TOKEN` on Vercel                      |
+| Supabase project   | `jdvlzkictwinkgcvgwew`                                                                            |
+| Git branch         | `dev/stage-3`                                                                                     |
 
 ## Recent ADRs (most relevant first)
 
-| ADR     | Topic                                                                                   |
-| :------ | :-------------------------------------------------------------------------------------- |
-| **011** | 多源 fallback + AKShare wrapper（Stage 3 HK/FUND primary）— **已接受 + Phase 2 已实施** |
-| 010     | Dev cache trust strategy (`isStaleQuoteSource` 共享 helper；Infinity freshness)         |
-| 009     | Daily Snapshot timing (23:00 UTC) + cron + cache-only snapshot                          |
-| 008     | FixtureAdapter + Settings market-data toggle（fixture 路径已退役）                      |
-| 007     | Dev auth + seed SQL injection                                                           |
-| 006     | `@arc/ui` layering                                                                      |
+| ADR     | Topic                                                                                             |
+| :------ | :------------------------------------------------------------------------------------------------ |
+| **012** | 双区域 Auth + 数据驻留（大陆微信/手机/邮箱，P1 BFF + Supabase session）— **提议，待 Opus review** |
+| **011** | 多源 fallback + AKShare wrapper（Stage 3 HK/FUND primary）— **已接受 + Phase 2 已实施**           |
+| 010     | Dev cache trust strategy (`isStaleQuoteSource` 共享 helper；Infinity freshness)                   |
+| 009     | Daily Snapshot timing (23:00 UTC) + cron + cache-only snapshot                                    |
+| 008     | FixtureAdapter + Settings market-data toggle（fixture 路径已退役）                                |
+| 007     | Dev auth + seed SQL injection                                                                     |
+| 006     | `@arc/ui` layering                                                                                |
 
 ## How to use this file
 
-1. Read CLAUDE.md → this file → `watchlist-stage-2.md` if doing J8 UAT.
-2. DEV FAB: pick **自选** or **每日快照**, then a scenario.
+1. **Block C UAT 会话**: CLAUDE.md → this file §Block C UAT → `holdings-and-transactions-stage-3.md` §S3-AC-C.
+2. DEV FAB: **组合** → `portfolios:multi-market-full` / `portfolios:30-days-history`（非 Edge dev-seed）。
 3. End session: `/checkpoint`.
