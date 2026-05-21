@@ -158,7 +158,7 @@ const MIGRATION_0010_HINT =
   "请在 Supabase SQL Editor 执行 packages/db/drizzle/migrations/0010_assets_cn_hk_fund_stage3.sql（种子资产行 + CN/HK/FUND 的 RLS INSERT 策略）。";
 
 const CRYPTO_ASSETS_BOOTSTRAP_HINT =
-  "CRYPTO 资产行需 service_role 写入。请先运行一次：pnpm seed:crypto-only（或等 Block C migration 0012）。";
+  "CRYPTO 资产行需 service_role 写入。请先运行一次：pnpm seed:crypto-only（或等 Block C migration 0013 RLS）。";
 
 export class CrossMarketSeedError extends Error {
   constructor(message: string) {

@@ -1,28 +1,10 @@
 /**
- * portfolio/[id]/transactions/new.tsx — Add Transaction (form sheet)
- *
- * Per IA v2.2 §四 + ADR 006 §决策六:
- * - Presentation: iOS form sheet (card-stack); configured on the Stack.Screen in app/_layout.tsx
- * - Form: asset symbol / type (BUY-only Stage 1) / date (today Stage 1) / shares / price / fee
- * - All financial values use Decimal (CLAUDE.md §3.1). Decimal.js parsing
- *   replaces the audit-flagged Number()/isNaN combo that violated the rule.
- * - assetId composed via composeAssetId(market, symbol) from @arc/core, not
- *   ad-hoc string concat (audit P0-5)
- * - currency derived from market (US → USD); no hardcoded "USD" fallback that
- *   could mismatch a user-typed "CN:..." prefix
- *
- * Stage 1 deliberate simplifications:
- * - Market locked to US — only adapter currently registered (Step 3)
- * - Type locked to BUY — sell/dividend/split arrive in Stage 3
- * - Date locked to today — DatePicker arrives in Fix 6 alongside Pro components
- * - Asset must exist in `assets` table (seeded via tools/seed-dev-data.ts); if a
- *   user types a symbol that's not pre-seeded, the FK insert will fail and we
- *   surface a clear error. Stage 2's asset-search Modal removes this friction.
+ * portfolio/[id]/transactions/new.tsx — Cross-market transaction entry (Block C).
  */
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
-import { useLocalSearchParams, useRouter, Stack } from "expo-router";
+import { useLocalSearchParams, useRouter, Stack, type Href } from "expo-router";
 import Decimal from "decimal.js";
 import {
   Button,
@@ -36,33 +18,44 @@ import {
   TextField,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
-import { composeAssetId, type Currency, type Market } from "@arc/core";
+import { composeAssetId, type Currency, type Market, type TransactionType } from "@arc/core";
+import type { SymbolSearchResult } from "@arc/data-sources";
 
-import { useCreateTransaction } from "../../../../src/lib/queries";
+import { MarketSelector } from "../../../../src/components/MarketSelector";
+import { SymbolPicker } from "../../../../src/components/SymbolPicker";
+import { useCreateTransaction, type CreateTransactionAssetMeta } from "../../../../src/lib/queries";
+import { getLastUsedMarket, setLastUsedMarket } from "../../../../src/lib/store/last-used-market";
 
-// Stage 1: only US market supported (Alpha Vantage adapter wired in Step 3).
-const STAGE_1_MARKET: Market = "US";
-const STAGE_1_MARKET_CURRENCY: Currency = "USD";
+const TX_TYPES: readonly TransactionType[] = ["BUY", "SELL", "DIVIDEND", "SPLIT"];
+
+const defaultCurrencyForMarket = (market: Market): Currency => {
+  switch (market) {
+    case "CN":
+    case "FUND":
+      return "CNY";
+    case "HK":
+      return "HKD";
+    case "US":
+    case "CRYPTO":
+      return "USD";
+    case "CASH":
+      return "USD";
+    default: {
+      const _exhaustive: never = market;
+      return _exhaustive;
+    }
+  }
+};
+
+const todayIsoDate = (): string => new Date().toISOString().slice(0, 10);
 
 interface FormErrors {
-  symbol?: string;
   shares?: string;
   pricePerShare?: string;
   fee?: string;
+  tradeDate?: string;
 }
 
-interface ValidatedValues {
-  symbol: string;
-  shares: Decimal;
-  pricePerShare: Decimal;
-  fee: Decimal;
-}
-
-/**
- * Parse a user-entered numeric string as Decimal.
- * Returns null on any input the Decimal constructor would reject (or on NaN).
- * Comma stripping handled here since decimal.js doesn't accept "1,000.00".
- */
 function tryDecimal(raw: string): Decimal | null {
   const trimmed = raw.trim().replace(/,/g, "");
   if (!trimmed) return null;
@@ -77,52 +70,89 @@ function tryDecimal(raw: string): Decimal | null {
 export default function AddTransactionScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { id: portfolioId } = useLocalSearchParams<{ id: string }>();
+  const {
+    id: portfolioId,
+    prefillMarket,
+    prefillSymbol,
+  } = useLocalSearchParams<{
+    id: string;
+    prefillMarket?: string;
+    prefillSymbol?: string;
+  }>();
 
   const createTransaction = useCreateTransaction();
 
-  // Form state — strings during input; converted to Decimal at validate/submit.
-  const [symbol, setSymbol] = useState("");
+  const [step, setStep] = useState<1 | 2>(() => (prefillMarket && prefillSymbol ? 2 : 1));
+  const [market, setMarket] = useState<Market>("US");
+  const [selected, setSelected] = useState<SymbolSearchResult | null>(() =>
+    prefillMarket && prefillSymbol
+      ? {
+          assetId: composeAssetId(prefillMarket as Market, prefillSymbol),
+          market: prefillMarket as Market,
+          symbol: prefillSymbol,
+          name: prefillSymbol,
+          currency: defaultCurrencyForMarket(prefillMarket as Market),
+        }
+      : null
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [txType, setTxType] = useState<TransactionType>("BUY");
   const [shares, setShares] = useState("");
   const [pricePerShare, setPricePerShare] = useState("");
   const [fee, setFee] = useState("0");
+  const [tradeDate, setTradeDate] = useState(todayIsoDate);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const validate = (): { ok: false } | { ok: true; values: ValidatedValues } => {
+  useEffect(() => {
+    if (!portfolioId) return;
+    void getLastUsedMarket(portfolioId).then((m) => {
+      if (m && !prefillMarket) setMarket(m);
+    });
+  }, [portfolioId, prefillMarket]);
+
+  const currency = useMemo(
+    () => selected?.currency ?? defaultCurrencyForMarket(market),
+    [selected, market]
+  );
+
+  const marketLabel = useCallback(
+    (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US"),
+    [t]
+  );
+
+  const handleMarketChange = (m: Market) => {
+    setMarket(m);
+    setSelected(null);
+    setSearchQuery("");
+    if (portfolioId) void setLastUsedMarket(portfolioId, m);
+  };
+
+  const handleSelectSymbol = (row: SymbolSearchResult) => {
+    setSelected(row);
+    setStep(2);
+  };
+
+  const validateStep2 = (): boolean => {
     const next: FormErrors = {};
-
-    const sym = symbol.trim().toUpperCase();
-    if (!sym) next.symbol = t("transaction.required");
-
     const sharesD = tryDecimal(shares);
     if (!sharesD || sharesD.lte(0)) next.shares = t("transaction.invalidNumber");
-
     const priceD = tryDecimal(pricePerShare);
     if (!priceD || priceD.lte(0)) next.pricePerShare = t("transaction.invalidNumber");
-
     const feeD = fee.trim() ? tryDecimal(fee) : new Decimal(0);
     if (!feeD || feeD.lt(0)) next.fee = t("transaction.invalidNumber");
-
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(tradeDate.trim())) {
+      next.tradeDate = t("transaction.invalidDate");
+    }
     setErrors(next);
-    if (Object.keys(next).length > 0) return { ok: false };
-
-    return {
-      ok: true,
-      values: {
-        symbol: sym,
-        // Non-null assertions safe — branches above guard each.
-        shares: sharesD!,
-        pricePerShare: priceD!,
-        fee: feeD!,
-      },
-    };
+    return Object.keys(next).length === 0;
   };
 
   const resolveCreateError = (err: unknown): string => {
     const msg = err instanceof Error ? err.message : "";
     if (msg.startsWith("SYMBOL_NOT_FOUND:")) {
-      const sym = msg.slice("SYMBOL_NOT_FOUND:".length) || symbol.trim().toUpperCase();
+      const sym = msg.slice("SYMBOL_NOT_FOUND:".length);
       return t("transaction.symbolNotFound", { symbol: sym });
     }
     if (msg === "SYMBOL_RATE_LIMITED") {
@@ -132,32 +162,73 @@ export default function AddTransactionScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!portfolioId) return;
-    const result = validate();
-    if (!result.ok) return;
+    if (!portfolioId || !selected) return;
+    if (!validateStep2()) return;
 
-    const assetId = composeAssetId(STAGE_1_MARKET, result.values.symbol);
+    const sharesD = tryDecimal(shares)!;
+    const priceD = tryDecimal(pricePerShare)!;
+    const feeD = fee.trim() ? tryDecimal(fee)! : new Decimal(0);
+
+    const assetMeta: CreateTransactionAssetMeta = {
+      market: selected.market,
+      symbol: selected.symbol,
+      name: selected.name,
+      currency: selected.currency,
+    };
 
     try {
       await createTransaction.mutateAsync({
         portfolioId,
-        assetId,
-        type: "BUY",
-        shares: result.values.shares.toString(),
-        pricePerShare: result.values.pricePerShare.toString(),
-        currency: STAGE_1_MARKET_CURRENCY,
-        fee: result.values.fee.toString(),
-        tradeDate: new Date().toISOString(),
+        assetId: selected.assetId,
+        type: txType,
+        shares: sharesD.toString(),
+        pricePerShare: priceD.toString(),
+        currency: selected.currency,
+        fee: feeD.toString(),
+        tradeDate: new Date(`${tradeDate}T12:00:00.000Z`).toISOString(),
         notes: notes.trim() || undefined,
+        assetMeta,
       });
-      router.back();
+      setSubmitSuccess(true);
     } catch {
-      // Error surfaced via createTransaction.isError below.
+      /* surfaced below */
     }
   };
 
+  const resetForContinue = () => {
+    setSubmitSuccess(false);
+    setStep(1);
+    setSelected(null);
+    setSearchQuery("");
+    setShares("");
+    setPricePerShare("");
+    setFee("0");
+    setTradeDate(todayIsoDate());
+    setNotes("");
+    setErrors({});
+  };
+
   const isSubmitting = createTransaction.isPending;
-  const todayLabel = new Date().toLocaleDateString();
+
+  if (submitSuccess) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false, presentation: "formSheet" }} />
+        <Screen edges={["bottom"]}>
+          <InScreenHeader title={t("transaction.addTitle")} leftType="close" />
+          <View className="gap-4 items-center py-8">
+            <Text className="text-foreground text-center">{t("transaction.success")}</Text>
+            <Button onPress={resetForContinue}>
+              <Button.Label>{t("transaction.continueEntry")}</Button.Label>
+            </Button>
+            <Button variant="secondary" onPress={() => router.replace("/(tabs)" as Href)}>
+              <Button.Label>{t("transaction.doneBackToPortfolio")}</Button.Label>
+            </Button>
+          </View>
+        </Screen>
+      </>
+    );
+  }
 
   return (
     <>
@@ -165,109 +236,113 @@ export default function AddTransactionScreen() {
       <Screen edges={["bottom"]}>
         <InScreenHeader title={t("transaction.addTitle")} leftType="close" />
         <View className="gap-4">
-          {/* Asset symbol — required, locked to US market in Stage 1 */}
-          <TextField isRequired isInvalid={!!errors.symbol}>
-            <Label>{t("portfolioDetail.asset")}</Label>
-            <Input
-              placeholder={t("transaction.assetSearch")}
-              value={symbol}
-              onChangeText={setSymbol}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              editable={!isSubmitting}
-            />
-            <Description>{t("transaction.marketUsHint")}</Description>
-            {errors.symbol && <FieldError>{errors.symbol}</FieldError>}
-          </TextField>
-
-          {/* Type — Stage 1 locked to BUY (read-only indicator) */}
-          <View>
-            <Text className="text-foreground text-sm font-medium mb-1">
-              {t("transaction.type")}
-            </Text>
-            <Text className="text-foreground text-base">{t("transaction.buy")}</Text>
-            <Text className="text-muted text-xs mt-1">{t("transaction.typeLockedHint")}</Text>
-          </View>
-
-          {/* Date — Stage 1 locked to today (DatePicker arrives in Fix 6) */}
-          <View>
-            <Text className="text-foreground text-sm font-medium mb-1">
-              {t("transaction.date")}
-            </Text>
-            <Text className="text-foreground text-base">{todayLabel}</Text>
-            <Text className="text-muted text-xs mt-1">{t("transaction.dateLockedHint")}</Text>
-          </View>
-
-          {/* Shares */}
-          <TextField isRequired isInvalid={!!errors.shares}>
-            <Label>{t("transaction.shares")}</Label>
-            <Input
-              placeholder="0"
-              value={shares}
-              onChangeText={setShares}
-              keyboardType="decimal-pad"
-              editable={!isSubmitting}
-            />
-            {errors.shares && <FieldError>{errors.shares}</FieldError>}
-          </TextField>
-
-          {/* Price per share */}
-          <TextField isRequired isInvalid={!!errors.pricePerShare}>
-            <Label>
-              {t("transaction.pricePerShare")} ({STAGE_1_MARKET_CURRENCY})
-            </Label>
-            <Input
-              placeholder="0.00"
-              value={pricePerShare}
-              onChangeText={setPricePerShare}
-              keyboardType="decimal-pad"
-              editable={!isSubmitting}
-            />
-            {errors.pricePerShare && <FieldError>{errors.pricePerShare}</FieldError>}
-          </TextField>
-
-          {/* Fee */}
-          <TextField isInvalid={!!errors.fee}>
-            <Label>
-              {t("transaction.fee")} ({STAGE_1_MARKET_CURRENCY})
-            </Label>
-            <Input
-              placeholder="0.00"
-              value={fee}
-              onChangeText={setFee}
-              keyboardType="decimal-pad"
-              editable={!isSubmitting}
-            />
-            {errors.fee && <FieldError>{errors.fee}</FieldError>}
-          </TextField>
-
-          {/* Notes */}
-          <TextField>
-            <Label>{t("transaction.notes")}</Label>
-            <Input
-              placeholder={t("transaction.notesPlaceholder")}
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={2}
-              editable={!isSubmitting}
-            />
-          </TextField>
-
-          {/* Submit */}
-          <View className="mt-4">
-            <Button onPress={handleSubmit} isDisabled={isSubmitting}>
-              <Button.Label>
-                {isSubmitting ? t("transaction.validatingSymbol") : t("transaction.submit")}
-              </Button.Label>
-            </Button>
-          </View>
-
-          {/* Error display (e.g. FK violation when asset isn't pre-seeded) */}
-          {createTransaction.isError && (
-            <Text className="text-danger text-sm text-center">
-              {resolveCreateError(createTransaction.error)}
-            </Text>
+          {step === 1 ? (
+            <>
+              <MarketSelector value={market} onChange={handleMarketChange} labelFor={marketLabel} />
+              <SymbolPicker
+                market={market}
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
+                onSelect={handleSelectSymbol}
+                placeholder={t("transaction.assetSearchCrossMarket")}
+                emptyHint={t("transaction.searchMinChars")}
+                searchUnavailable={t("transaction.searchUnavailable")}
+              />
+            </>
+          ) : (
+            <>
+              {selected ? (
+                <Text className="text-foreground font-medium">
+                  {selected.name} ({selected.assetId})
+                </Text>
+              ) : null}
+              <View className="flex-row flex-wrap gap-2">
+                {TX_TYPES.map((type) => {
+                  const label =
+                    type === "BUY"
+                      ? t("transaction.buy")
+                      : type === "SELL"
+                        ? t("transaction.sell")
+                        : type === "DIVIDEND"
+                          ? t("transaction.dividend")
+                          : t("transaction.split");
+                  return (
+                    <Button
+                      key={type}
+                      variant={txType === type ? "primary" : "secondary"}
+                      onPress={() => setTxType(type)}
+                    >
+                      <Button.Label>{label}</Button.Label>
+                    </Button>
+                  );
+                })}
+              </View>
+              <TextField isRequired isInvalid={!!errors.shares}>
+                <Label>{t("transaction.shares")}</Label>
+                <Input
+                  value={shares}
+                  onChangeText={setShares}
+                  keyboardType="decimal-pad"
+                  editable={!isSubmitting}
+                />
+                {errors.shares && <FieldError>{errors.shares}</FieldError>}
+              </TextField>
+              <TextField isRequired isInvalid={!!errors.pricePerShare}>
+                <Label>
+                  {t("transaction.pricePerShare")} ({currency})
+                </Label>
+                <Input
+                  value={pricePerShare}
+                  onChangeText={setPricePerShare}
+                  keyboardType="decimal-pad"
+                  editable={!isSubmitting}
+                />
+                {errors.pricePerShare && <FieldError>{errors.pricePerShare}</FieldError>}
+              </TextField>
+              <TextField isInvalid={!!errors.fee}>
+                <Label>
+                  {t("transaction.fee")} ({currency})
+                </Label>
+                <Input
+                  value={fee}
+                  onChangeText={setFee}
+                  keyboardType="decimal-pad"
+                  editable={!isSubmitting}
+                />
+                {errors.fee && <FieldError>{errors.fee}</FieldError>}
+              </TextField>
+              <TextField isRequired isInvalid={!!errors.tradeDate}>
+                <Label>{t("transaction.date")}</Label>
+                <Input
+                  value={tradeDate}
+                  onChangeText={setTradeDate}
+                  placeholder="YYYY-MM-DD"
+                  editable={!isSubmitting}
+                />
+                <Description>{t("transaction.dateHint")}</Description>
+                {errors.tradeDate && <FieldError>{errors.tradeDate}</FieldError>}
+              </TextField>
+              <TextField>
+                <Label>{t("transaction.notes")}</Label>
+                <Input
+                  value={notes}
+                  onChangeText={setNotes}
+                  multiline
+                  numberOfLines={2}
+                  editable={!isSubmitting}
+                />
+              </TextField>
+              <Button onPress={handleSubmit} isDisabled={isSubmitting || !selected}>
+                <Button.Label>
+                  {isSubmitting ? t("transaction.submitting") : t("transaction.submit")}
+                </Button.Label>
+              </Button>
+              {createTransaction.isError ? (
+                <Text className="text-danger text-sm text-center">
+                  {resolveCreateError(createTransaction.error)}
+                </Text>
+              ) : null}
+            </>
           )}
         </View>
       </Screen>

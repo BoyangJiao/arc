@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tan
 import Decimal from "decimal.js";
 import {
   parseAssetId,
+  type Asset,
   type Currency,
   type Market,
   type Transaction,
@@ -71,6 +72,13 @@ export const useTransactions = (
   });
 };
 
+export interface CreateTransactionAssetMeta {
+  readonly market: Market;
+  readonly symbol: string;
+  readonly name: string;
+  readonly currency: Currency;
+}
+
 export interface CreateTransactionInput {
   portfolioId: string;
   assetId: string;
@@ -81,31 +89,28 @@ export interface CreateTransactionInput {
   fee: string; // Decimal string
   tradeDate: string; // ISO date
   notes?: string;
+  /** When set, upserts assets row before insert (cross-market tx entry). */
+  assetMeta?: CreateTransactionAssetMeta;
 }
 
 /**
  * Ensure `assets` row exists before inserting a transaction (FK).
  * Stage 1 US-only: name defaults to symbol until Stage 2 search enriches metadata.
  */
-const ensureAssetExists = async (assetId: string): Promise<void> => {
-  const { market, symbol } = parseAssetId(assetId);
-  if (market !== "US") {
-    throw new Error("Stage 1 only supports US market assets");
-  }
-
+const ensureAssetRow = async (asset: Asset): Promise<void> => {
   const { error } = await supabase.from("assets").upsert(
     {
-      id: assetId,
-      market: market as Market,
-      symbol,
-      name: symbol,
-      currency: "USD",
+      id: asset.id,
+      market: asset.market,
+      symbol: asset.symbol,
+      name: asset.name,
+      currency: asset.currency,
     },
     { onConflict: "id", ignoreDuplicates: true }
   );
 
   if (error) {
-    throw new Error(`Could not register asset ${assetId}: ${error.message}`);
+    throw new Error(`Could not register asset ${asset.id}: ${error.message}`);
   }
 };
 
@@ -117,22 +122,35 @@ export const useCreateTransaction = () => {
     mutationFn: async (input: CreateTransactionInput) => {
       if (!user) throw new Error("Not signed in");
 
-      const { symbol } = parseAssetId(input.assetId);
-      const validation = await validateUsSymbol(symbol);
-      if (!validation.ok) {
-        if (validation.code === "not_found") {
-          throw new Error(`SYMBOL_NOT_FOUND:${symbol}`);
+      const { market, symbol } = parseAssetId(input.assetId);
+
+      if (market === "US") {
+        const validation = await validateUsSymbol(symbol);
+        if (!validation.ok) {
+          if (validation.code === "not_found") {
+            throw new Error(`SYMBOL_NOT_FOUND:${symbol}`);
+          }
+          if (validation.code === "rate_limited") {
+            throw new Error("SYMBOL_RATE_LIMITED");
+          }
+          throw new Error(validation.message);
         }
-        if (validation.code === "rate_limited") {
-          throw new Error("SYMBOL_RATE_LIMITED");
-        }
-        throw new Error(validation.message);
+        await priceCache.set(validation.quote);
       }
 
-      // Warm session + Supabase cache so valuation does not re-hit AV for this symbol.
-      await priceCache.set(validation.quote);
-
-      await ensureAssetExists(input.assetId);
+      const meta = input.assetMeta ?? {
+        market,
+        symbol,
+        name: symbol,
+        currency: input.currency,
+      };
+      await ensureAssetRow({
+        id: input.assetId,
+        market: meta.market,
+        symbol: meta.symbol,
+        name: meta.name,
+        currency: meta.currency,
+      });
 
       const { error } = await supabase.from("transactions").insert({
         portfolio_id: input.portfolioId,

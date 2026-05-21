@@ -25,6 +25,7 @@ export {
   useCreateTransaction,
   useDeleteAssetTransactions,
   type CreateTransactionInput,
+  type CreateTransactionAssetMeta,
 } from "./use-transactions";
 export { usePortfolioHoldings } from "./use-portfolio-holdings";
 export { useAssetCatalog, type AssetCatalogRow } from "./use-asset-catalog";
