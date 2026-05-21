@@ -2,21 +2,27 @@
  * (tabs)/index.tsx — Portfolio Tab (Home)
  */
 
+import { useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
+import { parseAssetId, type Market } from "@arc/core";
 import {
   Card,
   DailySnapshotCard,
   FLOATING_TAB_BAR_BOTTOM_INSET,
+  HoldingsTable,
+  PortfolioValueOverTimeCard,
   Screen,
   TabScreenHeader,
   TabScrollShadow,
   Text,
   UserAvatar,
+  DEFAULT_TIME_RANGE,
+  type TimeRange,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
-import { parseAssetId, resolvePortfolioDisplayName } from "@arc/core";
+import { resolvePortfolioDisplayName } from "@arc/core";
 
 import {
   PortfolioTabHeaderCenter,
@@ -25,10 +31,18 @@ import {
 import { useAuth } from "../../src/lib/auth";
 import { currencySymbol, formatMoney } from "../../src/lib/format-money";
 import {
+  buildHoldingsTableRows,
+  formatMarketSectionHeader,
+} from "../../src/lib/holdings-presenter";
+import {
   useActivePortfolio,
+  useAssetCatalog,
   useDailyDelta,
   usePortfolioHoldings,
   usePortfolioValuation,
+  usePortfolioValueSnapshots,
+  snapshotsToChartPoints,
+  snapshotPeakTrough,
 } from "../../src/lib/queries";
 import { useUserPreferences } from "../../src/lib/user-preferences";
 
@@ -44,6 +58,7 @@ export default function PortfolioTab() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
+  const [chartRange, setChartRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
 
   const { prefs } = useUserPreferences();
 
@@ -60,6 +75,31 @@ export default function PortfolioTab() {
   } = usePortfolioValuation(activeId, reportingCurrency);
 
   const dailyDelta = useDailyDelta(activeId, reportingCurrency);
+  const snapshots = usePortfolioValueSnapshots(activeId, chartRange);
+
+  const assetIds = useMemo(() => holdings.map((h) => h.assetId), [holdings]);
+  const catalog = useAssetCatalog(assetIds);
+
+  const formatPercent = (d: Decimal) => `${d.isPositive() ? "+" : ""}${d.toFixed(2)}%`;
+
+  const holdingsRows = useMemo(
+    () =>
+      buildHoldingsTableRows({
+        holdings,
+        perAsset: valuation?.perAsset ?? [],
+        catalog: catalog.data,
+        reportingCurrency,
+        formatPercent,
+        sharesLabel: (shares, symbol) =>
+          t("portfolio.sharesRow", { shares: shares.toFixed(2), symbol }),
+      }),
+    [holdings, valuation?.perAsset, catalog.data, reportingCurrency, t]
+  );
+
+  const chartPoints = snapshotsToChartPoints(snapshots.data ?? []);
+  const { peak, trough } = snapshotPeakTrough(snapshots.data ?? []);
+
+  const marketLabel = (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US");
 
   const holdingsCount = holdings.length;
   const pricedCount = valuation?.perAsset.length ?? 0;
@@ -75,8 +115,9 @@ export default function PortfolioTab() {
     router.push("/me" as Href);
   };
 
-  const handlePortfolioPress = (id: string) => {
-    router.push(`/portfolio/${id}` as Href);
+  const handleRowPress = (assetId: string) => {
+    const { market, symbol } = parseAssetId(assetId);
+    router.push(`/asset/${market}/${symbol}` as Href);
   };
 
   return (
@@ -110,7 +151,7 @@ export default function PortfolioTab() {
             />
           }
         >
-          <View className="mb-6">
+          <View>
             <Text className="text-muted text-sm mb-1">{t("portfolio.totalValue")}</Text>
             <Text className="text-foreground text-4xl font-bold">{totalValueText}</Text>
             {hasHoldings && (
@@ -127,6 +168,23 @@ export default function PortfolioTab() {
             )}
           </View>
 
+          {activePortfolio ? (
+            <PortfolioValueOverTimeCard
+              title={t("portfolio.navOverTime")}
+              totalValueLabel={totalValueText}
+              peakLabel={t("portfolio.peak")}
+              troughLabel={t("portfolio.trough")}
+              peakValue={peak ? formatMoney(peak, reportingCurrency) : "—"}
+              troughValue={trough ? formatMoney(trough, reportingCurrency) : "—"}
+              disclaimer={t("common.disclaimer")}
+              chartData={chartPoints}
+              range={chartRange}
+              onRangeChange={setChartRange}
+              loading={snapshots.isFetching}
+              emptyMessage={t("portfolio.noSnapshotHistory")}
+            />
+          ) : null}
+
           {dailyDelta.data ? (
             <DailySnapshotCard
               delta={dailyDelta.data}
@@ -139,9 +197,8 @@ export default function PortfolioTab() {
               formatPercent={(percent) => `${formatSignedDecimal(percent)}%`}
               formatAssetLabel={(assetId) => parseAssetId(assetId).symbol}
               onMoverPress={(assetId) => {
-                if (__DEV__) {
-                  console.info(`[daily-snapshot] tap ${assetId} — asset detail lands in Stage 3`);
-                }
+                const { market, symbol } = parseAssetId(assetId);
+                router.push(`/asset/${market}/${symbol}` as Href);
               }}
             />
           ) : null}
@@ -157,57 +214,43 @@ export default function PortfolioTab() {
                 </Text>
               </View>
             </Card>
-          ) : (
-            <Pressable onPress={() => handlePortfolioPress(activePortfolio.id)}>
-              <Card>
-                <View className="p-4">
-                  <View className="flex-row items-center justify-between">
-                    <View>
-                      <Text className="text-foreground font-semibold text-lg">
-                        {resolvePortfolioDisplayName(
-                          activePortfolio.name,
-                          t("portfolio.myPortfolio")
-                        )}
-                      </Text>
-                      <Text className="text-muted text-sm">
-                        {activePortfolio.reportingCurrency}
-                      </Text>
-                    </View>
-                    <View className="items-end">
-                      <Text className="text-foreground font-semibold">
-                        {valuationFetching && !valuation ? t("common.loading") : totalValueText}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </Card>
-            </Pressable>
-          )}
+          ) : null}
+
+          {hasHoldings && !holdingsPending ? (
+            <HoldingsTable
+              rows={holdingsRows}
+              getSectionHeader={(market) =>
+                formatMarketSectionHeader(
+                  marketLabel(market),
+                  holdingsRows.filter((r) => r.market === market),
+                  valuation?.perAsset ?? [],
+                  reportingCurrency
+                )
+              }
+              collapseLabel={t("holdings.collapse")}
+              expandLabel={t("holdings.expand")}
+              onRowPress={handleRowPress}
+            />
+          ) : null}
 
           {activePortfolio && !hasHoldings && !holdingsPending && !valuationFetching && (
-            <View className="mt-4">
-              <Card>
-                <Pressable
-                  onPress={() =>
-                    router.push(`/portfolio/${activePortfolio.id}/transactions/new` as Href)
-                  }
-                >
-                  <View className="p-6 items-center">
-                    <Text className="text-muted text-center mb-2">{t("portfolio.empty")}</Text>
-                    <Text className="text-foreground font-semibold">
-                      {t("portfolio.emptyAction")}
-                    </Text>
-                  </View>
-                </Pressable>
-              </Card>
-            </View>
+            <Card>
+              <Pressable
+                onPress={() =>
+                  router.push(`/portfolio/${activePortfolio.id}/transactions/new` as Href)
+                }
+              >
+                <View className="p-6 items-center">
+                  <Text className="text-muted text-center mb-2">{t("portfolio.empty")}</Text>
+                  <Text className="text-foreground font-semibold">
+                    {t("portfolio.emptyAction")}
+                  </Text>
+                </View>
+              </Pressable>
+            </Card>
           )}
 
-          <View className="mt-4">
-            <Text className="text-muted text-xs text-center">
-              {t("common.notInvestmentAdvice")}
-            </Text>
-          </View>
+          <Text className="text-muted text-xs text-center">{t("common.notInvestmentAdvice")}</Text>
         </ScrollView>
       </TabScrollShadow>
     </Screen>
