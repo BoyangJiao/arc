@@ -71,6 +71,8 @@ export const DEV_SEED_FEATURES = [
       { id: "portfolios:single", labelKey: "pfSingle" },
       { id: "portfolios:multi-3", labelKey: "pfMulti3" },
       { id: "portfolios:transfer-history", labelKey: "pfTransfer" },
+      { id: "portfolios:multi-market-full", labelKey: "pfMultiMarketFull" },
+      { id: "portfolios:30-days-history", labelKey: "pf30DaysHistory" },
     ],
   },
 ] as const;
@@ -135,6 +137,8 @@ export const PORTFOLIO_SCENARIO_IDS = [
   "portfolios:single",
   "portfolios:multi-3",
   "portfolios:transfer-history",
+  "portfolios:multi-market-full",
+  "portfolios:30-days-history",
 ] as const satisfies readonly DevSeedScenarioId[];
 
 export type PortfolioScenarioId = (typeof PORTFOLIO_SCENARIO_IDS)[number];

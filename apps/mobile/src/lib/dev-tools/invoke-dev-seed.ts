@@ -53,6 +53,8 @@ export const invalidateDevSeedQueries = async (): Promise<void> => {
     queryClient.invalidateQueries({ queryKey: ["watchlist"] }),
     queryClient.invalidateQueries({ queryKey: ["watchlist-quote"] }),
     queryClient.invalidateQueries({ queryKey: ["symbol-search"] }),
+    queryClient.invalidateQueries({ queryKey: ["historical"] }),
+    queryClient.invalidateQueries({ queryKey: ["portfolio-value-snapshots"] }),
     queryClient.invalidateQueries({ queryKey: ["targetAllocations"] }),
     queryClient.invalidateQueries({ queryKey: ["rebalance"] }),
     queryClient.invalidateQueries({ queryKey: ["userPreferences"] }),

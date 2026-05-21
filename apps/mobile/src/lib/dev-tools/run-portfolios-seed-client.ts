@@ -12,9 +12,12 @@ const SEED_ASSETS = [
   { id: "US:MSFT", market: "US", symbol: "MSFT", name: "Microsoft Corporation", currency: "USD" },
   { id: "US:NVDA", market: "US", symbol: "NVDA", name: "NVIDIA Corporation", currency: "USD" },
   { id: "CN:600519", market: "CN", symbol: "600519", name: "贵州茅台", currency: "CNY" },
+  { id: "CN:000001", market: "CN", symbol: "000001", name: "平安银行", currency: "CNY" },
   { id: "HK:00700", market: "HK", symbol: "00700", name: "腾讯控股", currency: "HKD" },
   { id: "FUND:000001", market: "FUND", symbol: "000001", name: "华夏成长", currency: "CNY" },
   { id: "FUND:510300", market: "FUND", symbol: "510300", name: "沪深300ETF", currency: "CNY" },
+  { id: "CRYPTO:BTC", market: "CRYPTO", symbol: "BTC", name: "Bitcoin", currency: "USD" },
+  { id: "CRYPTO:ETH", market: "CRYPTO", symbol: "ETH", name: "Ethereum", currency: "USD" },
 ] as const;
 
 const monthsAgo = (m: number) => {
@@ -26,6 +29,13 @@ const monthsAgo = (m: number) => {
 const yesterdayAt23Utc = () => {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() - 1);
+  d.setUTCHours(23, 0, 0, 0);
+  return d.toISOString();
+};
+
+const dayAt23Utc = (daysAgo: number) => {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - daysAgo);
   d.setUTCHours(23, 0, 0, 0);
   return d.toISOString();
 };
@@ -125,10 +135,209 @@ const ensureSeedAssets = async (
   }
 };
 
+const runMultiMarketFullSeed = async (
+  userId: string
+): Promise<{ portfolioId: string; expectedUi: string[] }> => {
+  const { error: delErr } = await supabase.from("portfolios").delete().eq("user_id", userId);
+  if (delErr) throw new PortfoliosSeedError(`清空组合失败: ${delErr.message}`);
+
+  const cashAssets = [
+    { id: "CASH:USD", market: "CASH", symbol: "USD", name: "USD", currency: "USD" },
+    { id: "CASH:CNY", market: "CASH", symbol: "CNY", name: "CNY", currency: "CNY" },
+  ];
+  await ensureSeedAssets([...SEED_ASSETS, ...cashAssets]);
+
+  const { data, error } = await supabase
+    .from("portfolios")
+    .insert({ user_id: userId, name: "Block C 多市场", reporting_currency: "CNY" })
+    .select("id")
+    .single();
+  if (error || !data) throw new PortfoliosSeedError(`创建组合失败: ${error?.message}`);
+  const portfolioId = data.id as string;
+  const tradeDate = monthsAgo(1);
+
+  await supabase.from("transactions").insert([
+    {
+      portfolio_id: portfolioId,
+      asset_id: "US:AAPL",
+      type: "BUY",
+      shares: "10",
+      price_per_share: "180",
+      currency: "USD",
+      fee: "0",
+      trade_date: tradeDate,
+      notes: "portfolios:multi-market-full",
+    },
+    {
+      portfolio_id: portfolioId,
+      asset_id: "US:NVDA",
+      type: "BUY",
+      shares: "5",
+      price_per_share: "800",
+      currency: "USD",
+      fee: "0",
+      trade_date: tradeDate,
+      notes: "portfolios:multi-market-full",
+    },
+    {
+      portfolio_id: portfolioId,
+      asset_id: "CN:600519",
+      type: "BUY",
+      shares: "100",
+      price_per_share: "1680",
+      currency: "CNY",
+      fee: "0",
+      trade_date: tradeDate,
+      notes: "portfolios:multi-market-full",
+    },
+    {
+      portfolio_id: portfolioId,
+      asset_id: "CN:000001",
+      type: "BUY",
+      shares: "1000",
+      price_per_share: "12",
+      currency: "CNY",
+      fee: "0",
+      trade_date: tradeDate,
+      notes: "portfolios:multi-market-full",
+    },
+    {
+      portfolio_id: portfolioId,
+      asset_id: "HK:00700",
+      type: "BUY",
+      shares: "200",
+      price_per_share: "380",
+      currency: "HKD",
+      fee: "0",
+      trade_date: tradeDate,
+      notes: "portfolios:multi-market-full",
+    },
+    {
+      portfolio_id: portfolioId,
+      asset_id: "FUND:510300",
+      type: "BUY",
+      shares: "5000",
+      price_per_share: "4.5",
+      currency: "CNY",
+      fee: "0",
+      trade_date: tradeDate,
+      notes: "portfolios:multi-market-full",
+    },
+    {
+      portfolio_id: portfolioId,
+      asset_id: "CRYPTO:BTC",
+      type: "BUY",
+      shares: "0.25",
+      price_per_share: "65000",
+      currency: "USD",
+      fee: "0",
+      trade_date: tradeDate,
+      notes: "portfolios:multi-market-full",
+    },
+    {
+      portfolio_id: portfolioId,
+      asset_id: "CRYPTO:ETH",
+      type: "BUY",
+      shares: "2",
+      price_per_share: "3200",
+      currency: "USD",
+      fee: "0",
+      trade_date: tradeDate,
+      notes: "portfolios:multi-market-full",
+    },
+    {
+      portfolio_id: portfolioId,
+      asset_id: "CASH:CNY",
+      type: "BUY",
+      shares: "5000",
+      price_per_share: "1",
+      currency: "CNY",
+      fee: "0",
+      trade_date: tradeDate,
+      notes: "portfolios:multi-market-full",
+    },
+    {
+      portfolio_id: portfolioId,
+      asset_id: "CASH:USD",
+      type: "BUY",
+      shares: "1000",
+      price_per_share: "1",
+      currency: "USD",
+      fee: "0",
+      trade_date: tradeDate,
+      notes: "portfolios:multi-market-full",
+    },
+  ]);
+
+  await seedPortfolioSnapshots([
+    {
+      portfolioId,
+      reportingCurrency: "CNY",
+      totalValue: "250000.00",
+      perAsset: [
+        {
+          assetId: "CN:600519",
+          shares: "100",
+          valueNative: "168000.00",
+          currency: "CNY",
+          valueReporting: "168000.00",
+        },
+      ],
+    },
+  ]);
+
+  return {
+    portfolioId,
+    expectedUi: ["单组合", "US/CN/HK/FUND/CRYPTO/CASH 持仓", "持仓表分组"],
+  };
+};
+
+const runThirtyDaysHistorySeed = async (
+  userId: string
+): Promise<{ portfolioId: string; expectedUi: string[] }> => {
+  const base = await runMultiMarketFullSeed(userId);
+  let total = 100_000;
+  const payload = [];
+  for (let daysAgo = 29; daysAgo >= 0; daysAgo--) {
+    const dailyPct = Math.random() * 0.16 - 0.08;
+    total = Math.max(10_000, total * (1 + dailyPct));
+    payload.push({
+      portfolio_id: base.portfolioId,
+      as_of: dayAt23Utc(daysAgo),
+      total_value: total.toFixed(2),
+      total_cost_basis: total.toFixed(2),
+      reporting_currency: "CNY",
+      per_asset: [],
+      source: "manual" as const,
+    });
+  }
+  const { error } = await supabase
+    .from("portfolio_value_snapshots")
+    .upsert(payload as never, { onConflict: "portfolio_id,as_of", ignoreDuplicates: true });
+  if (error) {
+    const msg = error.message ?? "";
+    if (isSnapshotsRlsError(msg)) {
+      throw new PortfoliosSeedError(`30 天快照写入失败（RLS）。\n${MIGRATION_0012_HINT}`);
+    }
+    throw new PortfoliosSeedError(`30 天快照写入失败: ${msg}`);
+  }
+  return {
+    portfolioId: base.portfolioId,
+    expectedUi: [...base.expectedUi, "30 天 area-chart 数据"],
+  };
+};
+
 export const runPortfoliosSeedClient = async (
   scenario: PortfolioScenarioId,
   userId: string
 ): Promise<{ portfolioId: string; expectedUi: string[] }> => {
+  if (scenario === "portfolios:multi-market-full") {
+    return runMultiMarketFullSeed(userId);
+  }
+  if (scenario === "portfolios:30-days-history") {
+    return runThirtyDaysHistorySeed(userId);
+  }
+
   const { error: delErr } = await supabase.from("portfolios").delete().eq("user_id", userId);
   if (delErr) throw new PortfoliosSeedError(`清空组合失败: ${delErr.message}`);
 

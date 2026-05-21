@@ -322,6 +322,14 @@ export const en = {
         label: "Transfer history",
         hint: "Multi-3 + CASH transfer notes pair",
       },
+      pfMultiMarketFull: {
+        label: "Block C multi-market full",
+        hint: "Single portfolio: US/CN/HK/FUND/CRYPTO/CASH holdings for UAT",
+      },
+      pf30DaysHistory: {
+        label: "Block C 30-day NAV history",
+        hint: "Multi-market full + 30 manual portfolio_value_snapshots for area chart",
+      },
     },
   },
   portfolios: {
