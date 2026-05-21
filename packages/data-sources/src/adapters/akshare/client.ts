@@ -4,9 +4,10 @@
 
 import Decimal from "decimal.js";
 
-import type { PriceQuote } from "@arc/core";
+import type { Currency, Market, PriceQuote } from "@arc/core";
 
 import { NetworkError, NotFoundError, ParseError, QuotaError, RateLimitError } from "../../errors";
+import type { SymbolSearchResult } from "../../interfaces";
 
 export interface AkshareClient {
   fetchLatest(market: "CN" | "HK" | "FUND", symbol: string): Promise<PriceQuote>;
@@ -16,6 +17,10 @@ export interface AkshareClient {
     from: Date,
     to: Date
   ): Promise<ReadonlyArray<PriceQuote>>;
+  searchSymbols(
+    market: "CN" | "HK" | "FUND",
+    query: string
+  ): Promise<ReadonlyArray<SymbolSearchResult>>;
 }
 
 export interface AkshareClientConfig {
@@ -36,6 +41,14 @@ interface AkshareQuoteJson {
 interface AkshareErrorJson {
   code?: string;
   message?: string;
+}
+
+interface AkshareSearchJson {
+  assetId?: string;
+  symbol?: string;
+  name?: string;
+  market?: string;
+  currency?: string;
 }
 
 const parseQuoteJson = (
@@ -160,6 +173,20 @@ export const createAkshareClient = (config: AkshareClientConfig): AkshareClient 
         throw new ParseError(`akshare-${market.toLowerCase()}`, "historical response not array");
       }
       return body.map((row) => parseQuoteJson(row, market, symbol));
+    },
+
+    async searchSymbols(market, query) {
+      const body = await request<AkshareSearchJson[]>("/api/search", { market, q: query });
+      if (!Array.isArray(body)) {
+        throw new ParseError(`akshare-${market.toLowerCase()}`, "search response not array");
+      }
+      return body.slice(0, 8).map((row) => ({
+        assetId: row.assetId ?? `${market}:${row.symbol ?? ""}`,
+        symbol: String(row.symbol ?? ""),
+        name: String(row.name ?? row.symbol ?? ""),
+        market: (row.market ?? market) as Market,
+        currency: (row.currency ?? "CNY") as Currency,
+      }));
     },
   };
 };

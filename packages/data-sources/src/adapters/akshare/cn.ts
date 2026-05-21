@@ -14,5 +14,6 @@ export const createAkshareCnAdapter = (config: AkshareCnAdapterConfig): PriceAda
     source: SOURCE,
     fetchLatest: (symbol) => client.fetchLatest("CN", symbol),
     fetchHistorical: (symbol, from, to) => client.fetchHistorical("CN", symbol, from, to),
+    searchSymbols: (query) => client.searchSymbols("CN", query),
   };
 };

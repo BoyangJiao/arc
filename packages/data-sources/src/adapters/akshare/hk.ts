@@ -14,5 +14,6 @@ export const createAkshareHkAdapter = (config: AkshareHkAdapterConfig): PriceAda
     source: SOURCE,
     fetchLatest: (symbol) => client.fetchLatest("HK", symbol),
     fetchHistorical: (symbol, from, to) => client.fetchHistorical("HK", symbol, from, to),
+    searchSymbols: (query) => client.searchSymbols("HK", query),
   };
 };

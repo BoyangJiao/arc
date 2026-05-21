@@ -78,4 +78,23 @@ describe("Akshare client", () => {
     });
     await expect(client.fetchLatest("FUND", "000001")).rejects.toBeInstanceOf(NetworkError);
   });
+
+  test("searchSymbols returns SymbolSearchResult rows", async () => {
+    const client = createAkshareClient({
+      baseUrl: "https://wrapper.example",
+      token: "secret",
+      fetcher: mockFetch([
+        {
+          assetId: "CN:600519",
+          symbol: "600519",
+          name: "贵州茅台",
+          market: "CN",
+          currency: "CNY",
+        },
+      ]),
+    });
+    const rows = await client.searchSymbols("CN", "茅台");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.assetId).toBe("CN:600519");
+  });
 });

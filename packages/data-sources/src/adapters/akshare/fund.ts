@@ -14,5 +14,6 @@ export const createAkshareFundAdapter = (config: AkshareFundAdapterConfig): Pric
     source: SOURCE,
     fetchLatest: (symbol) => client.fetchLatest("FUND", symbol),
     fetchHistorical: (symbol, from, to) => client.fetchHistorical("FUND", symbol, from, to),
+    searchSymbols: (query) => client.searchSymbols("FUND", query),
   };
 };
