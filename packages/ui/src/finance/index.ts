@@ -59,3 +59,17 @@ export {
   type DeviationBarRow,
   type RebalanceActionRow,
 } from "./rebalance-types";
+
+export { MarketChip, type MarketChipProps } from "./MarketChip";
+export {
+  AllocationDonut,
+  type AllocationDonutProps,
+  type AllocationDonutSlice,
+} from "./AllocationDonut";
+export { HoldingRow, type HoldingRowProps } from "./HoldingRow";
+export {
+  HoldingsTable,
+  HOLDINGS_MARKET_ORDER,
+  type HoldingsTableProps,
+  type HoldingsTableRow,
+} from "./HoldingsTable";
