@@ -19,6 +19,7 @@ import {
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
+import { InsightsActiveRebalancePanel } from "../../src/components/InsightsActiveRebalancePanel";
 import { PortfolioInsightCardLoader } from "../../src/components/PortfolioInsightCardLoader";
 import { useAuth } from "../../src/lib/auth";
 import { usePortfolios } from "../../src/lib/queries";
@@ -102,6 +103,14 @@ export default function InsightsTab() {
             />
           }
         >
+          <InsightsActiveRebalancePanel />
+
+          {portfolios.length > 1 ? (
+            <Text className="text-foreground font-semibold text-base">
+              {t("rebalance.allPortfoliosSection")}
+            </Text>
+          ) : null}
+
           {portfolios.map((portfolio) => (
             <PortfolioInsightCardLoader key={portfolio.id} portfolio={portfolio} />
           ))}

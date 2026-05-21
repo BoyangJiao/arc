@@ -26,11 +26,20 @@ export const resolveActivePortfolio = (
 ): ResolveActivePortfolioResult => {
   const active = unarchived(portfolios);
 
-  if (active.length === 0) {
+  if (portfolios.length > 0 && active.length === 0) {
     return {
       portfolio: null,
       effectiveId: null,
       shouldSyncStore: storedId !== null,
+    };
+  }
+
+  if (active.length === 0) {
+    // Query still loading — keep persisted id; do not overwrite AsyncStorage.
+    return {
+      portfolio: null,
+      effectiveId: storedId,
+      shouldSyncStore: false,
     };
   }
 

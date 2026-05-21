@@ -7,13 +7,16 @@
 
 import { queryClient } from "../query-client";
 import { supabase } from "../supabase";
+import { useActivePortfolioStore } from "../store/active-portfolio";
 import {
   goHrefForScenario,
+  isPortfolioScenario,
   isRebalanceScenario,
   isWatchlistScenario,
   isWelcomeScenario,
   type DevSeedScenarioId,
 } from "./scenarios";
+import { runPortfoliosSeedClient, PortfoliosSeedError } from "./run-portfolios-seed-client";
 import {
   isCrossMarketScenario,
   runCrossMarketSeedClient,
@@ -28,7 +31,13 @@ export interface DevSeedInvokeResult {
   scenario: string;
   portfolioId: string;
   expectedUi: string[];
-  via: "client-watchlist" | "client-rebalance" | "client-welcome" | "client-cross-market" | "edge";
+  via:
+    | "client-watchlist"
+    | "client-rebalance"
+    | "client-welcome"
+    | "client-cross-market"
+    | "client-portfolios"
+    | "edge";
 }
 
 interface DevSeedErrorBody {
@@ -179,6 +188,34 @@ const invokeCrossMarketClient = async (
   };
 };
 
+const invokePortfoliosClient = async (
+  scenario: DevSeedScenarioId
+): Promise<DevSeedInvokeResult> => {
+  if (!isPortfolioScenario(scenario)) {
+    throw new PortfoliosSeedError(`Not a portfolios scenario: ${scenario}`);
+  }
+
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    throw new PortfoliosSeedError("未登录 — 请先 OTP 登录");
+  }
+
+  const { portfolioId, expectedUi } = await runPortfoliosSeedClient(scenario, user.id);
+  useActivePortfolioStore.getState().setActivePortfolioId(portfolioId);
+  await invalidateDevSeedQueries();
+
+  return {
+    ok: true,
+    scenario,
+    portfolioId,
+    expectedUi,
+    via: "client-portfolios",
+  };
+};
+
 const invokeRebalanceClient = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
   if (!isRebalanceScenario(scenario)) {
     throw new RebalanceSeedError(`Not a rebalance scenario: ${scenario}`);
@@ -219,6 +256,10 @@ export const invokeDevSeed = async (scenario: DevSeedScenarioId): Promise<DevSee
 
   if (isCrossMarketScenario(scenario)) {
     return invokeCrossMarketClient(scenario);
+  }
+
+  if (isPortfolioScenario(scenario)) {
+    return invokePortfoliosClient(scenario);
   }
 
   const result = await invokeEdgeDevSeed(scenario);

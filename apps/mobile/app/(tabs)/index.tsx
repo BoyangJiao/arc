@@ -18,13 +18,15 @@ import {
 import { useTranslation } from "@arc/i18n";
 import { parseAssetId, resolvePortfolioDisplayName } from "@arc/core";
 
-import { PortfolioSwitcher } from "../../src/components/PortfolioSwitcher";
+import {
+  PortfolioTabHeaderCenter,
+  PortfolioTabHeaderManageButton,
+} from "../../src/components/PortfolioTabHeader";
 import { useAuth } from "../../src/lib/auth";
 import { currencySymbol, formatMoney } from "../../src/lib/format-money";
 import {
   useActivePortfolio,
   useDailyDelta,
-  usePortfolios,
   usePortfolioHoldings,
   usePortfolioValuation,
 } from "../../src/lib/queries";
@@ -44,12 +46,11 @@ export default function PortfolioTab() {
   const { user } = useAuth();
 
   const { prefs } = useUserPreferences();
-  const reportingCurrency = prefs?.reportingCurrency ?? "CNY";
 
   const { portfolio: activePortfolio, isLoading: activeLoading } = useActivePortfolio();
-  const { data: portfolios, isPending: portfoliosLoading } = usePortfolios();
 
   const activeId = activePortfolio?.id;
+  const reportingCurrency = activePortfolio?.reportingCurrency ?? prefs?.reportingCurrency ?? "CNY";
   const { holdings, isPending: holdingsPending } = usePortfolioHoldings(activeId);
   const {
     data: valuation,
@@ -65,7 +66,10 @@ export default function PortfolioTab() {
   const hasPartialQuotes =
     holdingsCount > 0 && pricedCount > 0 && pricedCount < holdingsCount && !valuationFetching;
   const hasHoldings = holdingsCount > 0;
-  const totalValueText = formatMoney(valuation?.totalValue ?? ZERO, reportingCurrency);
+  const totalValueText = formatMoney(
+    hasHoldings && valuation ? valuation.totalValue : ZERO,
+    reportingCurrency
+  );
 
   const handleAvatarPress = () => {
     router.push("/me" as Href);
@@ -79,12 +83,13 @@ export default function PortfolioTab() {
     <Screen scroll={false} contentContainerStyle={{ flexGrow: 1 }}>
       <TabScreenHeader
         title={t("tabs.portfolio")}
-        centerSlot={<PortfolioSwitcher />}
+        centerSlot={<PortfolioTabHeaderCenter />}
         leftSlot={
           <Pressable onPress={handleAvatarPress} accessibilityLabel={t("me.title")} hitSlop={8}>
             <UserAvatar seed={user?.email} size={40} />
           </Pressable>
         }
+        rightSlot={<PortfolioTabHeaderManageButton />}
       />
 
       <TabScrollShadow>
@@ -141,9 +146,9 @@ export default function PortfolioTab() {
             />
           ) : null}
 
-          {portfoliosLoading || activeLoading ? (
+          {activeLoading ? (
             <Text className="text-muted">{t("common.loading")}</Text>
-          ) : !portfolios || portfolios.length === 0 ? (
+          ) : !activePortfolio ? (
             <Card>
               <View className="p-6 items-center">
                 <Text className="text-muted text-center mb-2">{t("portfolio.noPortfolios")}</Text>
@@ -153,35 +158,30 @@ export default function PortfolioTab() {
               </View>
             </Card>
           ) : (
-            portfolios.map((portfolio) => (
-              <Pressable key={portfolio.id} onPress={() => handlePortfolioPress(portfolio.id)}>
-                <Card>
-                  <View className="p-4">
-                    <View className="flex-row items-center justify-between">
-                      <View>
-                        <Text className="text-foreground font-semibold text-lg">
-                          {resolvePortfolioDisplayName(portfolio.name, t("portfolio.myPortfolio"))}
-                        </Text>
-                        <Text className="text-muted text-sm">
-                          {portfolio.id === activeId
-                            ? t("portfolios.activeMarker")
-                            : portfolio.reportingCurrency}
-                        </Text>
-                      </View>
-                      <View className="items-end">
-                        <Text className="text-foreground font-semibold">
-                          {portfolio.id === activeId
-                            ? valuationFetching && !valuation
-                              ? t("common.loading")
-                              : totalValueText
-                            : "—"}
-                        </Text>
-                      </View>
+            <Pressable onPress={() => handlePortfolioPress(activePortfolio.id)}>
+              <Card>
+                <View className="p-4">
+                  <View className="flex-row items-center justify-between">
+                    <View>
+                      <Text className="text-foreground font-semibold text-lg">
+                        {resolvePortfolioDisplayName(
+                          activePortfolio.name,
+                          t("portfolio.myPortfolio")
+                        )}
+                      </Text>
+                      <Text className="text-muted text-sm">
+                        {activePortfolio.reportingCurrency}
+                      </Text>
+                    </View>
+                    <View className="items-end">
+                      <Text className="text-foreground font-semibold">
+                        {valuationFetching && !valuation ? t("common.loading") : totalValueText}
+                      </Text>
                     </View>
                   </View>
-                </Card>
-              </Pressable>
-            ))
+                </View>
+              </Card>
+            </Pressable>
           )}
 
           {activePortfolio && !hasHoldings && !holdingsPending && !valuationFetching && (

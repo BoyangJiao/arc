@@ -9,6 +9,7 @@ import { DEFAULT_PORTFOLIO_CANONICAL_NAME, type Currency, type Portfolio } from 
 
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
+import { useActivePortfolioStore } from "../store/active-portfolio";
 
 export type UsePortfoliosOptions = {
   /** Include archived portfolios (default: active only). */
@@ -113,8 +114,11 @@ export const useCreatePortfolio = () => {
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: () => {
+    onSuccess: (newId) => {
       if (user) invalidatePortfolios(queryClient, user.id);
+      useActivePortfolioStore.getState().setActivePortfolioId(newId);
+      void queryClient.removeQueries({ queryKey: ["portfolioValuation"] });
+      void queryClient.removeQueries({ queryKey: ["dailySnapshot"] });
     },
   });
 };

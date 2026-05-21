@@ -47,11 +47,11 @@ describe("resolveActivePortfolio", () => {
     expect(result.shouldSyncStore).toBe(true);
   });
 
-  it("portfolios empty → null + sync store when stale id present", () => {
+  it("portfolios empty (loading) → keep stored id, no store sync", () => {
     expect(resolveActivePortfolio("p1", [])).toEqual({
       portfolio: null,
-      effectiveId: null,
-      shouldSyncStore: true,
+      effectiveId: "p1",
+      shouldSyncStore: false,
     });
     expect(resolveActivePortfolio(null, [])).toEqual({
       portfolio: null,

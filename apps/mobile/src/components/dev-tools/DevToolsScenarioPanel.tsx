@@ -13,10 +13,13 @@ import { useDevToolsFabStore } from "../../lib/dev-tools/dev-tools-fab-store";
 import { useWatchlistRateLimitSimStore } from "../../lib/dev-tools/watchlist-rate-limit-sim";
 import {
   DEV_SEED_FEATURES,
+  findFeatureForScenario,
   type DevSeedFeatureId,
   type DevSeedScenarioId,
   type DevSeedScenarioLabelKey,
 } from "../../lib/dev-tools/scenarios";
+
+const DESTRUCTIVE_FEATURE_IDS = new Set<DevSeedFeatureId>(["dailySnapshot", "rebalance"]);
 
 export interface DevToolsScenarioPanelProps {
   onApplied?: () => void;
@@ -48,49 +51,65 @@ export function DevToolsScenarioPanel({
 
   const runScenario = useCallback(
     async (scenarioId: DevSeedScenarioId) => {
-      setActiveScenarioId(scenarioId);
-      try {
-        const result = await invokeDevSeed(scenarioId);
-        setLastSuccessId(scenarioId);
-        onApplied?.();
+      const feature = findFeatureForScenario(scenarioId);
 
-        const goHref = goHrefForScenario(scenarioId);
-        const goLabel =
-          selectedFeatureId === "watchlist"
-            ? t("devTools.goMarkets")
-            : selectedFeatureId === "rebalance"
-              ? t("devTools.goInsights")
-              : selectedFeatureId === "welcome"
-                ? t("devTools.goWelcome")
-                : t("devTools.goPortfolio");
+      const applyScenario = async () => {
+        setActiveScenarioId(scenarioId);
+        try {
+          const result = await invokeDevSeed(scenarioId);
+          setLastSuccessId(scenarioId);
+          onApplied?.();
 
-        const viaNote =
-          result.via === "client-watchlist"
-            ? `\n\n${t("devTools.viaClientWatchlist")}`
-            : result.via === "client-rebalance"
-              ? `\n\n${t("devTools.viaClientRebalance")}`
-              : result.via === "client-welcome"
-                ? `\n\n${t("devTools.viaClientWelcome")}`
-                : result.via === "client-cross-market"
-                  ? `\n\n${t("devTools.viaClientCrossMarket")}`
-                  : "";
+          const goHref = goHrefForScenario(scenarioId);
+          const goLabel =
+            selectedFeatureId === "watchlist"
+              ? t("devTools.goMarkets")
+              : selectedFeatureId === "rebalance"
+                ? t("devTools.goInsights")
+                : selectedFeatureId === "welcome"
+                  ? t("devTools.goWelcome")
+                  : t("devTools.goPortfolio");
 
-        Alert.alert(t("devTools.successTitle"), `${t("devTools.successBody")}${viaNote}`, [
-          {
-            text: goLabel,
-            onPress: () => {
-              setPanelOpen(false);
-              router.replace(goHref);
+          const viaNote =
+            result.via === "client-watchlist"
+              ? `\n\n${t("devTools.viaClientWatchlist")}`
+              : result.via === "client-rebalance"
+                ? `\n\n${t("devTools.viaClientRebalance")}`
+                : result.via === "client-welcome"
+                  ? `\n\n${t("devTools.viaClientWelcome")}`
+                  : result.via === "client-cross-market"
+                    ? `\n\n${t("devTools.viaClientCrossMarket")}`
+                    : result.via === "client-portfolios"
+                      ? `\n\n${t("devTools.viaClientPortfolios")}`
+                      : "";
+
+          Alert.alert(t("devTools.successTitle"), `${t("devTools.successBody")}${viaNote}`, [
+            {
+              text: goLabel,
+              onPress: () => {
+                setPanelOpen(false);
+                router.replace(goHref);
+              },
             },
-          },
-          { text: t("common.close") },
+            { text: t("common.close") },
+          ]);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          Alert.alert(t("devTools.errorTitle"), message);
+        } finally {
+          setActiveScenarioId(null);
+        }
+      };
+
+      if (DESTRUCTIVE_FEATURE_IDS.has(feature.id)) {
+        Alert.alert(t("devTools.destructiveTitle"), t("devTools.destructiveBody"), [
+          { text: t("common.cancel"), style: "cancel" },
+          { text: t("devTools.destructiveConfirm"), onPress: () => void applyScenario() },
         ]);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        Alert.alert(t("devTools.errorTitle"), message);
-      } finally {
-        setActiveScenarioId(null);
+        return;
       }
+
+      await applyScenario();
     },
     [onApplied, router, selectedFeatureId, setPanelOpen, t]
   );

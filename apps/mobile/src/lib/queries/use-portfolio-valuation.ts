@@ -227,7 +227,8 @@ export const usePortfolioValuation = (
     enabled: !!portfolioId && holdings.length > 0,
     staleTime: queryStaleTime,
     gcTime: Number.isFinite(queryStaleTime) ? queryStaleTime * 2 : 24 * 60 * 60_000,
-    placeholderData: (previous) => previous,
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[1] === portfolioId ? previous : undefined,
     queryFn: async (): Promise<PortfolioValuation | null> => {
       if (!portfolioId || holdings.length === 0) return null;
 
