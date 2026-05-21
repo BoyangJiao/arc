@@ -40,6 +40,15 @@ export {
 } from "./use-watchlist";
 export { useWatchlistQuotes, type UseWatchlistQuotesOptions } from "./use-watchlist-quotes";
 export { useSymbolSearch, type UseSymbolSearchResult } from "./use-symbol-search";
+export { useSymbolSearchCrossMarket } from "./use-symbol-search-cross-market";
+export { useHistoricalQuotes, historicalQuotesToChartPoints } from "./use-historical-quotes";
+export { useAssetDetail, type AssetDetailView } from "./use-asset-detail";
+export {
+  usePortfolioValueSnapshots,
+  snapshotsToChartPoints,
+  snapshotPeakTrough,
+  type PortfolioSnapshotPoint,
+} from "./use-portfolio-value-snapshots";
 export {
   useTargetAllocations,
   useUpsertTargetAllocations,
