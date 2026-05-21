@@ -108,14 +108,15 @@ arc-akshare-wrapper/                ← 新 repo 或 Arc monorepo 内 services/
 
 `withFallback(primary, secondary, classifier?)` 是 `PriceAdapter` 同 shape 的高阶包装。`classifier(error)` 决定是否切到 secondary。**用 `instanceof` 判定，不 sniff 字符串** —— 见 `packages/data-sources/src/errors.ts` `QuotaError` 子类（2026-05-20 commit #1 fold-in）：
 
-| Primary 抛错                                               | classifier 判定 | 行为                                     |
-| :--------------------------------------------------------- | :-------------- | :--------------------------------------- |
-| `RateLimitError` (Tushare `code 40203` / HTTP 429)         | `try-secondary` | 立即调 secondary                         |
-| **`QuotaError`** (Tushare `code 40002` / AKShare 配额耗尽) | `try-secondary` | `instanceof QuotaError` 一行判定         |
-| `NetworkError` HTTP 5xx                                    | `try-secondary` | 通过 `cause` 字符串 / 状态码字段二次判定 |
-| `NetworkError` HTTP 401 / 403 (Tushare `code 40001` 同)    | `bubble`        | 配置 / token 错误，secondary 无意义      |
-| **`NotFoundError`**                                        | `bubble`        | symbol 不存在，secondary 也找不到        |
-| `ParseError`                                               | `bubble`        | 数据形态变化，应该报警                   |
+| Primary 抛错                                                     | classifier 判定 | 行为                                     |
+| :--------------------------------------------------------------- | :-------------- | :--------------------------------------- |
+| `RateLimitError` (Tushare `code 40203` / HTTP 429)               | `try-secondary` | 立即调 secondary                         |
+| **`QuotaError`** (Tushare `code 40002` / AKShare 配额耗尽)       | `try-secondary` | `instanceof QuotaError` 一行判定         |
+| `NetworkError` HTTP 5xx                                          | `try-secondary` | 通过 `cause` 字符串 / 状态码字段二次判定 |
+| `NetworkError` HTTP 401 / 403 (Tushare `code 40001` 同)          | `bubble`        | 配置 / token 错误，secondary 无意义      |
+| **`NotImplementedError`** (e.g. Tushare CN `searchSymbols` stub) | `try-secondary` | 切 AKShare CN search 等候补实现          |
+| **`NotFoundError`**                                              | `bubble`        | symbol 不存在，secondary 也找不到        |
+| `ParseError`                                                     | `bubble`        | 数据形态变化，应该报警                   |
 
 实施位置：`packages/data-sources/src/adapters/with-fallback.ts`。`searchSymbols` 不走 fallback（bundled JSON 永远命中 / AKShare adapter 自带 search）。`fetchHistorical` 走同一 classifier。
 

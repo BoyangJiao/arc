@@ -6,6 +6,7 @@ import {
   AdapterError,
   NetworkError,
   NotFoundError,
+  NotImplementedError,
   ParseError,
   QuotaError,
   RateLimitError,
@@ -17,6 +18,7 @@ export type FallbackDecision = "try-secondary" | "bubble";
 export const defaultFallbackClassifier = (err: unknown): FallbackDecision => {
   if (err instanceof RateLimitError) return "try-secondary";
   if (err instanceof QuotaError) return "try-secondary";
+  if (err instanceof NotImplementedError) return "try-secondary";
   if (err instanceof NetworkError) {
     const causeStr = String(err.cause ?? "");
     if (
@@ -42,11 +44,7 @@ export const withFallback = (
       try {
         return await fn(primary);
       } catch (err) {
-        if (
-          classifier(err) === "try-secondary" &&
-          !(err instanceof NotFoundError) &&
-          !(err instanceof ParseError)
-        ) {
+        if (classifier(err) === "try-secondary") {
           if (err instanceof AdapterError) {
             console.warn({
               primary: primary.source,

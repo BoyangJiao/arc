@@ -4,7 +4,14 @@ import Decimal from "decimal.js";
 import type { PriceQuote } from "@arc/core";
 
 import { withFallback, defaultFallbackClassifier } from "../src/adapters/with-fallback";
-import { NetworkError, NotFoundError, ParseError, QuotaError, RateLimitError } from "../src/errors";
+import {
+  NetworkError,
+  NotFoundError,
+  NotImplementedError,
+  ParseError,
+  QuotaError,
+  RateLimitError,
+} from "../src/errors";
 import type { PriceAdapter } from "../src/interfaces";
 
 const quote: PriceQuote = {
@@ -27,6 +34,7 @@ describe("defaultFallbackClassifier", () => {
   test.each([
     [new RateLimitError("p", 1000), "try-secondary"],
     [new QuotaError("p", 40002, "quota"), "try-secondary"],
+    [new NotImplementedError("p", "searchSymbols"), "try-secondary"],
     [new NetworkError("p", "HTTP 500"), "try-secondary"],
     [new NetworkError("p", "40001: bad token"), "bubble"],
     [new NetworkError("p", "HTTP 401 unauthorized"), "bubble"],
@@ -83,6 +91,20 @@ describe("withFallback", () => {
     );
     await expect(adapter.fetchLatest("600519")).rejects.toBeInstanceOf(NetworkError);
     expect(secondary).not.toHaveBeenCalled();
+  });
+
+  test("primary NotImplementedError → secondary searchSymbols", async () => {
+    const secondary = vi.fn().mockResolvedValue([]);
+    const adapter = withFallback(
+      stubAdapter("primary", {
+        searchSymbols: () => Promise.reject(new NotImplementedError("primary", "searchSymbols")),
+      }),
+      stubAdapter("secondary", {
+        searchSymbols: secondary,
+      })
+    );
+    await adapter.searchSymbols!("茅台");
+    expect(secondary).toHaveBeenCalledOnce();
   });
 
   test("primary NotFoundError → bubble", async () => {
