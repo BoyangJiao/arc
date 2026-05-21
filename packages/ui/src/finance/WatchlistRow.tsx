@@ -2,7 +2,6 @@
  * WatchlistRow — Stage 2 J8 presentational list row.
  *
  * Pure presentational: symbol / name / price / change% chip + optional stale dot.
- * Change % uses Pro TrendChip with finance color mode (S1-AC-5 / S2-AC-2.7).
  */
 
 import { type ReactNode } from "react";
@@ -11,10 +10,8 @@ import type Decimal from "decimal.js";
 
 import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
-import { TrendChip } from "../primitives-pro";
-import { useFinanceColorMode } from "../tokens/business-context";
 
-import { pnlSignFromDecimal, trendDirectionForPnL } from "./trend-for-business";
+import { ChangePercentBadge } from "./ChangePercentBadge";
 
 export interface WatchlistRowProps {
   readonly symbol: string;
@@ -40,13 +37,7 @@ export function WatchlistRow(props: WatchlistRowProps): ReactNode {
     accessibilityLabel,
   } = props;
 
-  const { financeColorMode } = useFinanceColorMode();
-
   const changeLabel = changePercent !== null ? formatPercent(changePercent) : "—";
-  const trend =
-    changePercent !== null
-      ? trendDirectionForPnL(pnlSignFromDecimal(changePercent), financeColorMode)
-      : "neutral";
 
   const content = (
     <Card>
@@ -70,9 +61,11 @@ export function WatchlistRow(props: WatchlistRowProps): ReactNode {
             ) : null}
           </View>
           {changePercent !== null ? (
-            <TrendChip trend={trend} size="sm" variant="soft">
-              {changeLabel}
-            </TrendChip>
+            <ChangePercentBadge
+              changePercent={changePercent}
+              formatPercent={formatPercent}
+              size="sm"
+            />
           ) : (
             <Text className="text-muted text-sm font-medium">{changeLabel}</Text>
           )}

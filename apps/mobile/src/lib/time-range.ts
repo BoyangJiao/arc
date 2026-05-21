@@ -1,5 +1,6 @@
 /**
  * EOD chart window helpers — Block C time-range selector.
+ * Snapshots are stored at 23:00 UTC; windows use UTC to avoid dropping the latest point.
  */
 
 import type { TimeRange } from "@arc/ui";
@@ -9,32 +10,41 @@ export interface TimeWindow {
   readonly to: Date;
 }
 
-export const rangeToWindow = (range: TimeRange, now: Date = new Date()): TimeWindow => {
-  const to = new Date(now);
-  to.setHours(23, 59, 59, 999);
+const endOfUtcDay = (d: Date): Date => {
+  const out = new Date(d);
+  out.setUTCHours(23, 59, 59, 999);
+  return out;
+};
 
-  const from = new Date(now);
-  from.setHours(0, 0, 0, 0);
+const startOfUtcDay = (d: Date): Date => {
+  const out = new Date(d);
+  out.setUTCHours(0, 0, 0, 0);
+  return out;
+};
+
+export const rangeToWindow = (range: TimeRange, now: Date = new Date()): TimeWindow => {
+  const to = endOfUtcDay(now);
+  const from = startOfUtcDay(now);
 
   switch (range) {
     case "1D":
       break;
     case "1W":
-      from.setDate(from.getDate() - 7);
+      from.setUTCDate(from.getUTCDate() - 7);
       break;
     case "1M":
-      from.setDate(from.getDate() - 30);
+      from.setUTCDate(from.getUTCDate() - 30);
       break;
     case "3M":
-      from.setDate(from.getDate() - 90);
+      from.setUTCDate(from.getUTCDate() - 90);
       break;
     case "YTD":
-      return { from: new Date(now.getFullYear(), 0, 1), to };
+      return { from: startOfUtcDay(new Date(Date.UTC(now.getUTCFullYear(), 0, 1))), to };
     case "1Y":
-      from.setDate(from.getDate() - 365);
+      from.setUTCDate(from.getUTCDate() - 365);
       break;
     case "ALL":
-      return { from: new Date("2020-01-01T00:00:00.000Z"), to };
+      return { from: new Date(Date.UTC(2020, 0, 1)), to };
     default: {
       const _exhaustive: never = range;
       return _exhaustive;

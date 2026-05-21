@@ -19,12 +19,14 @@
  */
 
 import { type ReactNode } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import type Decimal from "decimal.js";
 
 import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
+
+import { DailyMoverChips } from "./DailyMoverChips";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Public types — kept structurally compatible with @arc/core DailyDelta so
@@ -150,65 +152,17 @@ export function DailySnapshotCard(props: DailySnapshotCardProps): ReactNode {
 
         {/* Movers row */}
         {visibleMovers.length > 0 && (
-          <View className="flex-row gap-2 mt-3">
-            {visibleMovers.map((mover) => (
-              <MoverChip
-                key={mover.assetId}
-                mover={mover}
-                label={formatAssetLabel(mover.assetId)}
-                formatPercent={formatPercent}
-                onPress={onMoverPress}
-                businessClasses={businessClasses}
-              />
-            ))}
+          <View className="mt-3">
+            <DailyMoverChips
+              movers={visibleMovers}
+              formatPercent={formatPercent}
+              formatAssetLabel={formatAssetLabel}
+              onMoverPress={onMoverPress}
+              maxMovers={maxMovers}
+            />
           </View>
         )}
       </View>
     </Card>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-// MoverChip — one tap target per mover
-
-interface MoverChipProps {
-  mover: DailySnapshotAssetDelta;
-  label: string;
-  formatPercent: (percent: Decimal) => string;
-  onPress?: (assetId: string) => void;
-  businessClasses: ReturnType<typeof useBusinessClasses>;
-}
-
-function MoverChip({
-  mover,
-  label,
-  formatPercent,
-  onPress,
-  businessClasses,
-}: MoverChipProps): ReactNode {
-  const sign = signOf(mover.deltaPercent);
-  const colorClass =
-    sign === "positive"
-      ? businessClasses.gain.text
-      : sign === "negative"
-        ? businessClasses.loss.text
-        : businessClasses.pnlNeutral.text;
-
-  return (
-    <Pressable
-      onPress={() => onPress?.(mover.assetId)}
-      accessibilityRole="button"
-      accessibilityLabel={`${label} ${formatPercent(mover.deltaPercent)}`}
-      className="flex-1 bg-surface-secondary rounded-lg px-3 py-2 active:opacity-70"
-    >
-      <View className="gap-0.5">
-        <Text className="text-foreground text-xs font-medium" numberOfLines={1}>
-          {label}
-        </Text>
-        <Text className={`text-sm font-semibold ${colorClass}`} numberOfLines={1}>
-          {formatPercent(mover.deltaPercent)}
-        </Text>
-      </View>
-    </Pressable>
   );
 }

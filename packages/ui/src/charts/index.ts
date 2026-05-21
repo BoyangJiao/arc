@@ -7,5 +7,9 @@
 export { LineChart, type ArcLineChartProps, type ArcLineChartColor } from "./LineChart";
 export { AreaChart, type ArcAreaChartProps } from "./AreaChart";
 export { ChartCrosshair } from "./ChartCrosshair";
+export { ChartSkeleton, type ChartSkeletonProps } from "./ChartSkeleton";
 export { TimeRangeSelector, type TimeRangeSelectorProps } from "./TimeRangeSelector";
+export { CHART_TIME_RANGE_GAP } from "./chart-scrub-layout";
 export { TIME_RANGE_OPTIONS, DEFAULT_TIME_RANGE, type TimeRange, type ChartPoint } from "./types";
+export { decimateChartPoints, DEFAULT_CHART_DISPLAY_MAX_POINTS } from "./decimate-chart-points";
+export type { ChartScrubState } from "../finance/chart-scrub";

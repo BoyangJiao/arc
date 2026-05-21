@@ -1,53 +1,178 @@
 /**
  * AreaChart — @arc/ui wrapper over HeroUI Pro area-chart.
- * Fill colors use default accent-chart tokens (ADR 003 — business does not pass raw colors).
+ *
+ * Arc-owned: dot fill, stroke line, scrubber, period coloring (ADR 013).
  */
 
-import type { ReactNode } from "react";
-import { useMemo } from "react";
-import { AreaChart as ProAreaChart } from "heroui-native-pro/area-chart";
+import "./ensure-chart-peers";
 
+import type { ReactNode } from "react";
+import { memo, useMemo } from "react";
+import { View } from "react-native";
+import { AreaChart as ProAreaChart } from "heroui-native-pro/area-chart";
+import { LineChart as ProLineChart } from "heroui-native-pro/line-chart";
+import type { ChartBounds, PointsArray } from "victory-native";
+
+import { ChartAreaDotFill } from "./ChartAreaDotFill";
+import { HIDDEN_CARTESIAN_AXIS_PROPS } from "./chart-axis-props";
+import { ChartPressOverlay, type NumericChartPressState } from "./ChartPressOverlay";
+import { ChartSkeleton } from "./ChartSkeleton";
+import { dotOpacityProfileForData } from "./chart-dot-opacity";
+import { ensureRenderableChartPoints, toChartSeries } from "./chart-series";
 import type { ChartPoint } from "./types";
+import { useChartPeriodStrokeColor } from "./use-chart-period-stroke-color";
+import type { ChartScrubState } from "../finance/chart-scrub";
 
 export interface ArcAreaChartProps {
   readonly data: ReadonlyArray<ChartPoint>;
   readonly height?: number;
+  readonly loading?: boolean;
+  readonly valuePrefix?: string;
+  readonly interactive?: boolean;
+  readonly showStrokeLine?: boolean;
+  readonly showValueLabel?: boolean;
+  readonly formatScrubDate?: (isoTimestamp: string) => string;
+  readonly onScrubChange?: (state: ChartScrubState | null) => void;
 }
 
-type AreaDatum = { index: number; value: number };
+type SeriesRow = { index: number; value: number };
 
-export function AreaChart({ data, height = 192 }: ArcAreaChartProps): ReactNode {
-  const series = useMemo(
-    (): AreaDatum[] => data.map((p, index) => ({ index, value: p.y })),
-    [data]
-  );
+const heightClassFor = (height: number): string =>
+  height >= 256 ? "h-64" : height >= 224 ? "h-56" : "h-48";
 
-  if (series.length === 0) {
-    return null;
-  }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- third-party chart compound API
+const ProAreaChartRoot = ProAreaChart as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ProLineChartLine = ProLineChart.Line as any;
 
-  const heightClass = height >= 256 ? "h-64" : height >= 224 ? "h-56" : "h-48";
+interface AreaChartCanvasProps {
+  readonly series: ReadonlyArray<SeriesRow>;
+  readonly strokeColor: string;
+  readonly dotTopOpacity: number;
+  readonly dotBottomOpacity: number;
+  readonly heightClass: string;
+  readonly showStrokeLine: boolean;
+  readonly chartPressState?: NumericChartPressState;
+  readonly onChartBoundsChange?: (bounds: ChartBounds) => void;
+  readonly renderOverlays?: (chartBounds: ChartBounds) => ReactNode;
+}
 
+const AreaChartCanvas = memo(function AreaChartCanvas({
+  series,
+  strokeColor,
+  dotTopOpacity,
+  dotBottomOpacity,
+  heightClass,
+  showStrokeLine,
+  chartPressState,
+  onChartBoundsChange,
+  renderOverlays,
+}: AreaChartCanvasProps): ReactNode {
   return (
-    <ProAreaChart
+    <ProAreaChartRoot
       data={series}
       xKey="index"
       yKeys={["value"]}
+      chartPressState={chartPressState}
+      onChartBoundsChange={onChartBoundsChange}
       wrapperClassName={`w-full ${heightClass}`}
+      {...HIDDEN_CARTESIAN_AXIS_PROPS}
     >
-      {({
-        points,
-        chartBounds,
-      }: {
-        points: { value: Parameters<typeof ProAreaChart.Area>[0]["points"] };
-        chartBounds: { bottom: number };
-      }) => (
-        <ProAreaChart.Area
-          points={points.value}
-          y0={chartBounds.bottom}
-          colorClassName="accent-chart-1"
+      {(args: { points: { value: PointsArray }; chartBounds: ChartBounds }) => (
+        <>
+          <ProAreaChart.Area points={args.points.value} y0={args.chartBounds.bottom} opacity={0} />
+          <ChartAreaDotFill
+            points={args.points.value}
+            y0={args.chartBounds.bottom}
+            color={strokeColor}
+            left={args.chartBounds.left}
+            right={args.chartBounds.right}
+            top={args.chartBounds.top}
+            bottom={args.chartBounds.bottom}
+            topOpacity={dotTopOpacity}
+            bottomOpacity={dotBottomOpacity}
+          />
+          {showStrokeLine ? (
+            <ProLineChartLine points={args.points.value} color={strokeColor} curveType="linear" />
+          ) : null}
+          {renderOverlays?.(args.chartBounds)}
+        </>
+      )}
+    </ProAreaChartRoot>
+  );
+});
+
+export function AreaChart({
+  data,
+  height = 192,
+  loading = false,
+  valuePrefix = "",
+  interactive = true,
+  showStrokeLine = true,
+  showValueLabel = true,
+  formatScrubDate,
+  onScrubChange,
+}: ArcAreaChartProps): ReactNode {
+  const renderable = useMemo(() => ensureRenderableChartPoints(data), [data]);
+  const series = useMemo((): SeriesRow[] => [...toChartSeries(renderable)], [renderable]);
+  const strokeColor = useChartPeriodStrokeColor(renderable);
+  const dotOpacity = useMemo(() => dotOpacityProfileForData(renderable), [renderable]);
+  const scrubPoints = useMemo(
+    () => renderable.map((p) => ({ asOf: p.asOf ?? p.label })),
+    [renderable]
+  );
+  const scrubDateLabels = useMemo(() => {
+    if (!formatScrubDate) return [];
+    return renderable.map((p) => formatScrubDate(p.asOf ?? p.label ?? ""));
+  }, [formatScrubDate, renderable]);
+
+  if (series.length === 0) {
+    return loading ? <ChartSkeleton height={height} /> : null;
+  }
+
+  const heightClass = heightClassFor(height);
+
+  return (
+    <View className="relative w-full">
+      {interactive ? (
+        <ChartPressOverlay
+          height={height}
+          valuePrefix={valuePrefix}
+          indicatorColor={strokeColor}
+          showValueLabel={showValueLabel}
+          scrubPoints={scrubPoints}
+          scrubDateLabels={scrubDateLabels}
+          onScrubChange={onScrubChange}
+        >
+          {({ chartPressState, onChartBoundsChange, renderOverlays }) => (
+            <AreaChartCanvas
+              series={series}
+              strokeColor={strokeColor}
+              dotTopOpacity={dotOpacity.topOpacity}
+              dotBottomOpacity={dotOpacity.bottomOpacity}
+              heightClass={heightClass}
+              showStrokeLine={showStrokeLine}
+              chartPressState={chartPressState}
+              onChartBoundsChange={onChartBoundsChange}
+              renderOverlays={renderOverlays}
+            />
+          )}
+        </ChartPressOverlay>
+      ) : (
+        <AreaChartCanvas
+          series={series}
+          strokeColor={strokeColor}
+          dotTopOpacity={dotOpacity.topOpacity}
+          dotBottomOpacity={dotOpacity.bottomOpacity}
+          heightClass={heightClass}
+          showStrokeLine={showStrokeLine}
         />
       )}
-    </ProAreaChart>
+      {loading ? (
+        <View className="absolute inset-0 bg-background/80 justify-center">
+          <ChartSkeleton height={height} />
+        </View>
+      ) : null}
+    </View>
   );
 }

@@ -8,10 +8,8 @@ import type Decimal from "decimal.js";
 
 import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
-import { TrendChip } from "../primitives-pro";
-import { useFinanceColorMode } from "../tokens/business-context";
 
-import { pnlSignFromDecimal, trendDirectionForPnL } from "./trend-for-business";
+import { ChangePercentBadge } from "./ChangePercentBadge";
 
 export interface HoldingRowProps {
   readonly symbol: string;
@@ -40,12 +38,7 @@ export function HoldingRow(props: HoldingRowProps): ReactNode {
     accessibilityLabel,
   } = props;
 
-  const { financeColorMode } = useFinanceColorMode();
   const changeLabel = changePercent !== null ? formatPercent(changePercent) : "—";
-  const trend =
-    changePercent !== null
-      ? trendDirectionForPnL(pnlSignFromDecimal(changePercent), financeColorMode)
-      : "neutral";
 
   const content = (
     <Card>
@@ -63,9 +56,15 @@ export function HoldingRow(props: HoldingRowProps): ReactNode {
         <View className="items-end gap-0.5 shrink-0">
           <View className="flex-row items-center gap-2">
             <Text className="text-muted text-xs">{priceLabel}</Text>
-            <TrendChip trend={trend} size="sm" variant="soft">
-              {changeLabel}
-            </TrendChip>
+            {changePercent !== null ? (
+              <ChangePercentBadge
+                changePercent={changePercent}
+                formatPercent={formatPercent}
+                size="sm"
+              />
+            ) : (
+              <Text className="text-muted text-xs">{changeLabel}</Text>
+            )}
           </View>
           <Text className="text-foreground text-sm font-medium">{nativeValueLabel}</Text>
           {reportingValueLabel ? (

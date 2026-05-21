@@ -1,9 +1,10 @@
 /**
- * TimeRangeSelector — segmented control for EOD chart windows (default 1M).
+ * TimeRangeSelector — full-width Segment row for EOD chart windows (default 1M).
+ *
+ * Unselected: transparent; selected: sliding `Segment.Indicator` pill only.
  */
 
 import type { ReactNode } from "react";
-import { View } from "react-native";
 import { Segment } from "heroui-native-pro/segment";
 
 import { DEFAULT_TIME_RANGE, TIME_RANGE_OPTIONS, type TimeRange } from "./types";
@@ -22,16 +23,20 @@ export function TimeRangeSelector({
   const selected = value ?? defaultValue;
 
   return (
-    <View className="w-full">
-      <Segment value={selected} onValueChange={(next) => onChange(next as TimeRange)}>
-        <Segment.ScrollView>
-          {TIME_RANGE_OPTIONS.map((range) => (
-            <Segment.Item key={range} value={range}>
-              <Segment.Label>{range}</Segment.Label>
-            </Segment.Item>
-          ))}
-        </Segment.ScrollView>
-      </Segment>
-    </View>
+    <Segment
+      className="w-full gap-0"
+      value={selected}
+      size="sm"
+      onValueChange={(next) => onChange(next as TimeRange)}
+    >
+      <Segment.Group className="w-full self-stretch flex-row bg-transparent p-0 gap-0 rounded-none shadow-none">
+        <Segment.Indicator className="bg-surface-secondary shadow-none" />
+        {TIME_RANGE_OPTIONS.map((range) => (
+          <Segment.Item key={range} value={range} className="flex-1 min-w-0 px-0 py-1">
+            <Segment.Label className="text-xs font-medium text-center">{range}</Segment.Label>
+          </Segment.Item>
+        ))}
+      </Segment.Group>
+    </Segment>
   );
 }

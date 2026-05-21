@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Decimal from "decimal.js";
 import type { Currency } from "@arc/core";
 import type { TimeRange } from "@arc/ui";
@@ -31,6 +31,7 @@ export const usePortfolioValueSnapshots = (portfolioId: string | undefined, rang
     ],
     enabled: !!user && !!portfolioId,
     staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<readonly PortfolioSnapshotPoint[]> => {
       if (!portfolioId) return [];
 
@@ -55,10 +56,12 @@ export const usePortfolioValueSnapshots = (portfolioId: string | undefined, rang
 
 export const snapshotsToChartPoints = (
   points: readonly PortfolioSnapshotPoint[]
-): ReadonlyArray<{ x: number; y: number }> =>
+): ReadonlyArray<{ x: number; y: number; label: string; asOf: string }> =>
   points.map((p, index) => ({
     x: index,
     y: p.totalValue.toNumber(),
+    label: p.asOf.slice(0, 10),
+    asOf: p.asOf,
   }));
 
 export const snapshotPeakTrough = (

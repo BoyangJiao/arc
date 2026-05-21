@@ -17,6 +17,8 @@ export {
   type DailySnapshotAssetDelta,
 } from "./DailySnapshotCard";
 
+export { DailyMoverChips, type DailyMoverChipsProps } from "./DailyMoverChips";
+
 export { WatchlistRow, type WatchlistRowProps } from "./WatchlistRow";
 export { WatchlistEmptyState, type WatchlistEmptyStateProps } from "./WatchlistEmptyState";
 export { WatchlistSearchField, type WatchlistSearchFieldProps } from "./WatchlistSearchField";
@@ -66,6 +68,7 @@ export {
   type AllocationDonutProps,
   type AllocationDonutSlice,
 } from "./AllocationDonut";
+export { ChangePercentBadge, type ChangePercentBadgeProps } from "./ChangePercentBadge";
 export { HoldingRow, type HoldingRowProps } from "./HoldingRow";
 export {
   HoldingsTable,
@@ -73,6 +76,10 @@ export {
   type HoldingsTableProps,
   type HoldingsTableRow,
 } from "./HoldingsTable";
+export { PortfolioHeroSection, type PortfolioHeroSectionProps } from "./PortfolioHeroSection";
+export { computePeriodChange, type PeriodChange } from "./compute-period-change";
+export { formatCompactChangeLine } from "./format-compact-change";
+export { type ChartScrubState, scrubStateFromChartPoint, periodStartValue } from "./chart-scrub";
 export {
   PortfolioValueOverTimeCard,
   type PortfolioValueOverTimeCardProps,

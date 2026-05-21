@@ -2,17 +2,18 @@
  * (tabs)/index.tsx — Portfolio Tab (Home)
  */
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
 import { parseAssetId, type Market } from "@arc/core";
 import {
   Card,
-  DailySnapshotCard,
+  decimateChartPoints,
   FLOATING_TAB_BAR_BOTTOM_INSET,
+  formatCompactChangeLine,
   HoldingsTable,
-  PortfolioValueOverTimeCard,
+  PortfolioHeroSection,
   Screen,
   TabScreenHeader,
   TabScrollShadow,
@@ -21,9 +22,6 @@ import {
   DEFAULT_TIME_RANGE,
   type TimeRange,
 } from "@arc/ui";
-import { useTranslation } from "@arc/i18n";
-import { resolvePortfolioDisplayName } from "@arc/core";
-
 import {
   PortfolioTabHeaderCenter,
   PortfolioTabHeaderManageButton,
@@ -42,9 +40,9 @@ import {
   usePortfolioValuation,
   usePortfolioValueSnapshots,
   snapshotsToChartPoints,
-  snapshotPeakTrough,
 } from "../../src/lib/queries";
 import { useUserPreferences } from "../../src/lib/user-preferences";
+import { useTranslation } from "@arc/i18n";
 
 const ZERO = new Decimal(0);
 
@@ -55,7 +53,7 @@ const formatSignedDecimal = (value: Decimal): string => {
 };
 
 export default function PortfolioTab() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const [chartRange, setChartRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
@@ -96,8 +94,20 @@ export default function PortfolioTab() {
     [holdings, valuation?.perAsset, catalog.data, reportingCurrency, t]
   );
 
-  const chartPoints = snapshotsToChartPoints(snapshots.data ?? []);
-  const { peak, trough } = snapshotPeakTrough(snapshots.data ?? []);
+  const chartPoints = useMemo(
+    () => decimateChartPoints(snapshotsToChartPoints(snapshots.data ?? [])),
+    [snapshots.data]
+  );
+
+  const formatAnchorTime = useCallback(
+    (iso: string) =>
+      new Intl.DateTimeFormat(i18n.language.startsWith("zh") ? "zh-CN" : "en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "UTC",
+      }).format(new Date(iso)),
+    [i18n.language]
+  );
 
   const marketLabel = (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US");
 
@@ -106,10 +116,6 @@ export default function PortfolioTab() {
   const hasPartialQuotes =
     holdingsCount > 0 && pricedCount > 0 && pricedCount < holdingsCount && !valuationFetching;
   const hasHoldings = holdingsCount > 0;
-  const totalValueText = formatMoney(
-    hasHoldings && valuation ? valuation.totalValue : ZERO,
-    reportingCurrency
-  );
 
   const handleAvatarPress = () => {
     router.push("/me" as Href);
@@ -117,6 +123,7 @@ export default function PortfolioTab() {
 
   const handleRowPress = (assetId: string) => {
     const { market, symbol } = parseAssetId(assetId);
+    if (market === "CASH") return;
     router.push(`/asset/${market}/${symbol}` as Href);
   };
 
@@ -151,57 +158,40 @@ export default function PortfolioTab() {
             />
           }
         >
-          <View>
-            <Text className="text-muted text-sm mb-1">{t("portfolio.totalValue")}</Text>
-            <Text className="text-foreground text-4xl font-bold">{totalValueText}</Text>
-            {hasHoldings && (
-              <Text className="text-muted text-xs mt-1">{t("common.disclaimer")}</Text>
-            )}
-            {hasPartialQuotes && (
-              <Text className="text-muted text-xs mt-1">
-                {t("portfolio.partialQuotes", { loaded: pricedCount, total: holdingsCount })}{" "}
-                {t("portfolio.partialQuotesMissing", { missing: holdingsCount - pricedCount })}
-              </Text>
-            )}
-            {valuationError && (
-              <Text className="text-danger text-xs mt-1">{t("common.error")}</Text>
-            )}
-          </View>
-
           {activePortfolio ? (
-            <PortfolioValueOverTimeCard
-              title={t("portfolio.navOverTime")}
-              totalValueLabel={totalValueText}
-              peakLabel={t("portfolio.peak")}
-              troughLabel={t("portfolio.trough")}
-              peakValue={peak ? formatMoney(peak, reportingCurrency) : "—"}
-              troughValue={trough ? formatMoney(trough, reportingCurrency) : "—"}
-              disclaimer={t("common.disclaimer")}
-              chartData={chartPoints}
-              range={chartRange}
-              onRangeChange={setChartRange}
-              loading={snapshots.isFetching}
-              emptyMessage={t("portfolio.noSnapshotHistory")}
-            />
-          ) : null}
-
-          {dailyDelta.data ? (
-            <DailySnapshotCard
-              delta={dailyDelta.data}
-              title={t("dailySnapshot.title")}
+            <PortfolioHeroSection
+              totalValueTitle={t("portfolio.totalValue")}
+              liveTotalValue={hasHoldings && valuation ? valuation.totalValue : ZERO}
+              formatMoney={(amount) => formatMoney(amount, reportingCurrency)}
+              delta={dailyDelta.data ?? null}
               noBaselineMessage={t("dailySnapshot.noBaseline")}
-              disclaimer={t("common.disclaimer")}
-              formatAmount={(amount) =>
-                `${currencySymbol(reportingCurrency)}${formatSignedDecimal(amount)}`
+              formatChangeLine={(delta, percent) =>
+                formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))
               }
               formatPercent={(percent) => `${formatSignedDecimal(percent)}%`}
               formatAssetLabel={(assetId) => parseAssetId(assetId).symbol}
+              formatAnchorTime={formatAnchorTime}
               onMoverPress={(assetId) => {
                 const { market, symbol } = parseAssetId(assetId);
+                if (market === "CASH") return;
                 router.push(`/asset/${market}/${symbol}` as Href);
               }}
+              chartData={chartPoints}
+              chartRange={chartRange}
+              onChartRangeChange={setChartRange}
+              chartLoading={snapshots.isFetching}
+              valuePrefix={currencySymbol(reportingCurrency)}
+              emptyChartMessage={t("portfolio.noSnapshotHistory")}
             />
           ) : null}
+
+          {hasPartialQuotes && (
+            <Text className="text-muted text-xs -mt-2">
+              {t("portfolio.partialQuotes", { loaded: pricedCount, total: holdingsCount })}{" "}
+              {t("portfolio.partialQuotesMissing", { missing: holdingsCount - pricedCount })}
+            </Text>
+          )}
+          {valuationError && <Text className="text-danger text-xs -mt-2">{t("common.error")}</Text>}
 
           {activeLoading ? (
             <Text className="text-muted">{t("common.loading")}</Text>

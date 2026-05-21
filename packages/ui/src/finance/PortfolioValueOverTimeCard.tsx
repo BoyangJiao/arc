@@ -1,5 +1,7 @@
 /**
  * PortfolioValueOverTimeCard — cumulative NAV area chart + time range + peak/trough.
+ *
+ * @deprecated Use `PortfolioHeroSection` on Portfolio Tab (Block C UAT — no Card wrapper).
  */
 
 import type { ReactNode } from "react";
@@ -20,6 +22,7 @@ export interface PortfolioValueOverTimeCardProps {
   readonly range: TimeRange;
   readonly onRangeChange: (range: TimeRange) => void;
   readonly loading?: boolean;
+  readonly valuePrefix?: string;
   readonly emptyMessage?: string;
 }
 
@@ -36,8 +39,11 @@ export function PortfolioValueOverTimeCard(props: PortfolioValueOverTimeCardProp
     range,
     onRangeChange,
     loading = false,
+    valuePrefix = "",
     emptyMessage,
   } = props;
+
+  const hasChart = chartData.length > 0;
 
   return (
     <Card>
@@ -46,12 +52,10 @@ export function PortfolioValueOverTimeCard(props: PortfolioValueOverTimeCardProp
         <Text className="text-foreground text-2xl font-bold">{totalValueLabel}</Text>
         <Text className="text-muted text-xs">{disclaimer}</Text>
         <TimeRangeSelector value={range} onChange={onRangeChange} />
-        {loading ? (
-          <Text className="text-muted text-sm">{emptyMessage ?? "…"}</Text>
-        ) : chartData.length === 0 ? (
-          <Text className="text-muted text-sm">{emptyMessage}</Text>
+        {hasChart || loading ? (
+          <AreaChart data={chartData} height={192} loading={loading} valuePrefix={valuePrefix} />
         ) : (
-          <AreaChart data={chartData} height={192} />
+          <Text className="text-muted text-sm">{emptyMessage}</Text>
         )}
         <View className="flex-row justify-between">
           <View>
