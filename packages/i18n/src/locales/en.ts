@@ -79,8 +79,10 @@ export const en = {
     addTransactionCta: "Record a transaction for this asset",
   },
   dailySnapshot: {
-    title: "Today's change",
+    title: "Daily P&L",
     noBaseline: "First time here — daily change starts tracking tomorrow",
+    detailTitle: "Daily P&L",
+    detailPlaceholder: "Detail screen coming soon",
   },
   portfolioDetail: {
     totalMarketValue: "Total Market Value",

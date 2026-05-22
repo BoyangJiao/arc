@@ -79,8 +79,10 @@ export const zh = {
     addTransactionCta: "录入此资产交易",
   },
   dailySnapshot: {
-    title: "今日变动",
+    title: "每日盈亏",
     noBaseline: "首次启动，明日开始追踪每日变动",
+    detailTitle: "每日盈亏",
+    detailPlaceholder: "详情页开发中",
   },
   portfolioDetail: {
     totalMarketValue: "总市值",

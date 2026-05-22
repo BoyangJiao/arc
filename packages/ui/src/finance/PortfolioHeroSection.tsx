@@ -1,7 +1,8 @@
 /**
- * PortfolioHeroSection — Portfolio Tab hero: total value, daily delta, NAV chart, movers.
+ * PortfolioHeroSection — Portfolio Tab hero: total value, daily delta, NAV chart.
  *
  * Scrub: header value + period change mirror chart anchor (Coinbase-style); date on chart.
+ * Daily P&L card lives below this section (`DailySnapshotCard`).
  */
 
 import type { ReactNode } from "react";
@@ -11,7 +12,6 @@ import Decimal from "decimal.js";
 import type { ChartScrubState } from "./chart-scrub";
 import { computePeriodChange } from "./compute-period-change";
 import type { DailySnapshotDelta } from "./DailySnapshotCard";
-import { DailyMoverChips } from "./DailyMoverChips";
 
 import {
   AreaChart,
@@ -40,17 +40,13 @@ export interface PortfolioHeroSectionProps {
   readonly noBaselineMessage: string;
   /** Coinbase-style single line: ↑¥1,234.56 (+8.15%). */
   readonly formatChangeLine: (delta: Decimal, percent: Decimal | null) => string;
-  readonly formatPercent: (percent: Decimal) => string;
-  readonly formatAssetLabel: (assetId: string) => string;
   readonly formatAnchorTime: (isoTimestamp: string) => string;
-  readonly onMoverPress?: (assetId: string) => void;
   readonly chartData: ReadonlyArray<ChartPoint>;
   readonly chartRange: TimeRange;
   readonly onChartRangeChange: (range: TimeRange) => void;
   readonly chartLoading?: boolean;
   readonly valuePrefix?: string;
   readonly emptyChartMessage?: string;
-  readonly maxMovers?: number;
 }
 
 const signOf = (value: Decimal): "positive" | "negative" | "zero" => {
@@ -75,17 +71,13 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
     delta,
     noBaselineMessage,
     formatChangeLine,
-    formatPercent,
-    formatAssetLabel,
     formatAnchorTime,
-    onMoverPress,
     chartData,
     chartRange,
     onChartRangeChange,
     chartLoading = false,
     valuePrefix = "",
     emptyChartMessage,
-    maxMovers = 2,
   } = props;
 
   const businessClasses = useBusinessClasses();
@@ -162,16 +154,6 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
           <TimeRangeSelector value={chartRange} onChange={onChartRangeChange} />
         )}
       </View>
-
-      {!scrub && delta?.status === "ok" && delta.movers.length > 0 ? (
-        <DailyMoverChips
-          movers={delta.movers}
-          formatPercent={formatPercent}
-          formatAssetLabel={formatAssetLabel}
-          onMoverPress={onMoverPress}
-          maxMovers={maxMovers}
-        />
-      ) : null}
     </View>
   );
 }

@@ -196,6 +196,12 @@ export const typographySpecs = {
     fontWeight: "medium",
     tabularNums: true,
   },
+  /** Outline insight card title (e.g. daily snapshot — accent tint per ADR 008). */
+  snapshotCardTitle: {
+    fontSize: "sm",
+    fontWeight: "medium",
+    lineHeight: "snug",
+  },
   /** Captions, tertiary lines, hints. */
   caption: {
     fontSize: "xs",
@@ -320,6 +326,8 @@ export const TYPO_CHANGE_MD = typography.changeMd;
 export const TYPO_CHANGE_AMOUNT = typography.changeAmount;
 export const TYPO_BADGE_SM = typography.badgeSm;
 export const TYPO_BADGE_MD = typography.badgeMd;
+/** Snapshot / insight card title — pair with `text-accent-soft-foreground`. */
+export const TYPO_SNAPSHOT_CARD_TITLE = `${typography.snapshotCardTitle} text-accent-soft-foreground`;
 export const TYPO_CAPTION = typography.caption;
 export const TYPO_CAPTION_FOREGROUND = typography.captionForeground;
 export const TYPO_CAPTION_MEDIUM = typography.captionMedium;

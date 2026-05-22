@@ -26,7 +26,7 @@ export function HoldingsMarketFilter({
   selectedMarkets,
   onSelectedMarketsChange,
 }: HoldingsMarketFilterProps): ReactNode {
-  if (markets.length === 0) return null;
+  if (markets.length < 2) return null;
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>

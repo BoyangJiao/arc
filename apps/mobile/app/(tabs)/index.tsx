@@ -12,11 +12,11 @@ import {
   decimateChartPoints,
   FLOATING_TAB_BAR_BOTTOM_INSET,
   formatCompactChangeLine,
-  formatSignedPercent,
   HOLDINGS_MARKET_ORDER,
   HoldingsMarketFilter,
   HoldingsTable,
   type HoldingPeriodChange,
+  DailySnapshotCard,
   PortfolioHeroSection,
   Screen,
   TabScreenHeader,
@@ -231,6 +231,20 @@ export default function PortfolioTab() {
     [i18n.language]
   );
 
+  const formatSnapshotFooterDate = useCallback(
+    (iso: string) =>
+      new Intl.DateTimeFormat(i18n.language.startsWith("zh") ? "zh-CN" : "en-US", {
+        dateStyle: "medium",
+        timeZone: "UTC",
+      }).format(new Date(iso)),
+    [i18n.language]
+  );
+
+  const handleDailySnapshotPress = useCallback(() => {
+    if (!activeId) return;
+    router.push(`/portfolio/${activeId}/daily-snapshot` as Href);
+  }, [activeId, router]);
+
   const pricedCount = valuation?.perAsset.length ?? 0;
   const hasPartialQuotes =
     holdingsCount > 0 && pricedCount > 0 && pricedCount < holdingsCount && !valuationFetching;
@@ -295,14 +309,7 @@ export default function PortfolioTab() {
                 formatChangeLine={(delta, percent) =>
                   formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))
                 }
-                formatPercent={formatSignedPercent}
-                formatAssetLabel={(assetId) => parseAssetId(assetId).symbol}
                 formatAnchorTime={formatAnchorTime}
-                onMoverPress={(assetId) => {
-                  const { market, symbol } = parseAssetId(assetId);
-                  if (market === "CASH") return;
-                  router.push(`/asset/${market}/${symbol}` as Href);
-                }}
                 chartData={chartPoints}
                 chartRange={chartRange}
                 onChartRangeChange={setChartRange}
@@ -310,6 +317,18 @@ export default function PortfolioTab() {
                 valuePrefix={currencySymbol(reportingCurrency)}
                 emptyChartMessage={t("portfolio.noSnapshotHistory")}
               />
+              {heroDelta && heroDelta.status !== "empty-portfolio" ? (
+                <DailySnapshotCard
+                  delta={heroDelta}
+                  title={t("dailySnapshot.title")}
+                  noBaselineMessage={t("dailySnapshot.noBaseline")}
+                  formatChangeLine={(delta, percent) =>
+                    formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))
+                  }
+                  formatFooterDate={formatSnapshotFooterDate}
+                  onPress={heroDelta.status === "ok" ? handleDailySnapshotPress : undefined}
+                />
+              ) : null}
             </View>
           ) : null}
 

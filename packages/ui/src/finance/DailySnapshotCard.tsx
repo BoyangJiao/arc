@@ -1,33 +1,22 @@
 /**
- * DailySnapshotCard — Stage 2 J7 "Daily Snapshot" presentational card.
+ * DailySnapshotCard — Portfolio Tab daily P&L summary (outline / transparent).
  *
- * Pure presentational: receives a DailyDelta + format helpers, renders one
- * of 3 visible states (status='ok' | 'no-baseline' | 'empty-portfolio'
- * which is hidden). No data fetching, no global state — the consuming
- * page composes it with use-daily-delta (step 4).
- *
- * Color rules (per ADR 003 v3.1 + ADR 006 — Business tokens, not Foundation):
- *   - Positive delta: `useBusinessClasses().gain.text`
- *   - Negative delta: `useBusinessClasses().loss.text`
- *   - Zero / placeholder: `text-muted`
- * The toggle in Settings flips green↔red mapping automatically via
- * BusinessTokensProvider — this card is where S1-AC-5 (deferred from Stage 1)
- * gets visually verified.
- *
- * See .specify/feature-specs/daily-snapshot-stage-2.md §UI contract for
- * layout / states / interaction rules.
+ * Layout mirrors compact insight cards (title → body → footer):
+ * transparent fill, subtle border, tight padding.
  */
 
 import { type ReactNode } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import type Decimal from "decimal.js";
 
-import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
-import { TYPO_BODY, TYPO_DISCLAIMER, TYPO_LABEL, typographyClass } from "../tokens/typography";
-
-import { DailyMoverChips } from "./DailyMoverChips";
+import {
+  TYPO_BODY_SM,
+  TYPO_CAPTION,
+  TYPO_SNAPSHOT_CARD_TITLE,
+  typographyClass,
+} from "../tokens/typography";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Public types — kept structurally compatible with @arc/core DailyDelta so
@@ -51,78 +40,63 @@ export interface DailySnapshotDelta {
 }
 
 export interface DailySnapshotCardProps {
-  /** Delta result from `computeDailyDelta` in @arc/core */
-  delta: DailySnapshotDelta;
-  /** Title text e.g. "今日变动" / "Today's change" */
-  title: string;
-  /** Body for the no-baseline placeholder e.g. "首次启动，明日开始追踪每日变动" */
-  noBaselineMessage: string;
-  /** Disclaimer line e.g. "仅供参考，可能延迟" */
-  disclaimer: string;
-  /**
-   * Format the total delta amount, e.g. (Decimal(352.20)) => "¥+352.20".
-   * The sign prefix is the consumer's choice; ADR 006 keeps i18n + currency
-   * concerns out of @arc/ui.
-   */
-  formatAmount: (amount: Decimal) => string;
-  /** Format the percentage, e.g. (Decimal(1.23)) => "+1.23%". */
-  formatPercent: (percent: Decimal) => string;
-  /** Map assetId → display label (e.g. "US:AAPL" → "AAPL"). */
-  formatAssetLabel: (assetId: string) => string;
-  /** Called when a mover chip is tapped. Stage 2 callers should no-op (or log). */
-  onMoverPress?: (assetId: string) => void;
-  /** Max movers to display (default 3). */
-  maxMovers?: number;
-  /** Test-only label override for accessibility queries. */
-  accessibilityLabel?: string;
+  readonly delta: DailySnapshotDelta;
+  readonly title: string;
+  readonly noBaselineMessage: string;
+  readonly formatChangeLine: (delta: Decimal, percent: Decimal | null) => string;
+  readonly formatFooterDate: (isoTimestamp: string) => string;
+  readonly onPress?: () => void;
+  readonly accessibilityLabel?: string;
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// Sign helpers (avoid importing Decimal directly — duck-typed)
+/** Outline shell — transparent bg, compact inset (参考「最新动态」卡片). */
+const OUTLINE_FRAME = "rounded-2xl border border-border bg-transparent px-4 py-3 gap-1";
 
 const signOf = (value: Decimal): "positive" | "negative" | "zero" => {
   if (value.isZero()) return "zero";
   return value.isNegative() ? "negative" : "positive";
 };
 
-// ──────────────────────────────────────────────────────────────────────────
-// Component
+function DailySnapshotCardFrame({
+  children,
+  accessibilityLabel,
+}: {
+  readonly children: ReactNode;
+  readonly accessibilityLabel?: string;
+}): ReactNode {
+  return (
+    <View className={OUTLINE_FRAME} accessibilityLabel={accessibilityLabel}>
+      {children}
+    </View>
+  );
+}
 
 export function DailySnapshotCard(props: DailySnapshotCardProps): ReactNode {
   const {
     delta,
     title,
     noBaselineMessage,
-    disclaimer,
-    formatAmount,
-    formatPercent,
-    formatAssetLabel,
-    onMoverPress,
-    maxMovers = 3,
+    formatChangeLine,
+    formatFooterDate,
+    onPress,
     accessibilityLabel,
   } = props;
 
-  // status='empty-portfolio' → don't render at all (consumer keeps space for
-  // its own empty-state CTA)
   if (delta.status === "empty-portfolio") {
     return null;
   }
 
   const businessClasses = useBusinessClasses();
 
-  // ── State: no-baseline (first day) ────────────────────────────────────
   if (delta.status === "no-baseline") {
     return (
-      <Card>
-        <View className="p-4 gap-2" accessibilityLabel={accessibilityLabel ?? title}>
-          <Text className={TYPO_LABEL}>{title}</Text>
-          <Text className={TYPO_BODY}>{noBaselineMessage}</Text>
-        </View>
-      </Card>
+      <DailySnapshotCardFrame accessibilityLabel={accessibilityLabel ?? title}>
+        <Text className={TYPO_SNAPSHOT_CARD_TITLE}>{title}</Text>
+        <Text className={TYPO_BODY_SM}>{noBaselineMessage}</Text>
+      </DailySnapshotCardFrame>
     );
   }
 
-  // ── State: ok ─────────────────────────────────────────────────────────
   const totalSign = signOf(delta.totalDeltaReporting);
   const totalColorClass =
     totalSign === "positive"
@@ -131,39 +105,31 @@ export function DailySnapshotCard(props: DailySnapshotCardProps): ReactNode {
         ? businessClasses.loss.text
         : businessClasses.pnlNeutral.text;
 
-  const visibleMovers = delta.movers.slice(0, maxMovers);
+  const body = (
+    <DailySnapshotCardFrame accessibilityLabel={accessibilityLabel ?? title}>
+      <Text className={TYPO_SNAPSHOT_CARD_TITLE}>{title}</Text>
+      <Text
+        className={typographyClass("bodySm", "tabular-nums", totalColorClass)}
+        numberOfLines={2}
+      >
+        {formatChangeLine(delta.totalDeltaReporting, delta.totalDeltaPercent)}
+      </Text>
+      {delta.baselineAsOf ? (
+        <Text className={TYPO_CAPTION}>{formatFooterDate(delta.baselineAsOf)}</Text>
+      ) : null}
+    </DailySnapshotCardFrame>
+  );
+
+  if (!onPress) return body;
 
   return (
-    <Card>
-      <View className="p-4 gap-2" accessibilityLabel={accessibilityLabel ?? title}>
-        <Text className={TYPO_LABEL}>{title}</Text>
-
-        {/* Total — large, colored */}
-        <Text className={typographyClass("display3xl", totalColorClass)}>
-          {formatAmount(delta.totalDeltaReporting)}
-        </Text>
-
-        {/* Percent + disclaimer in one row */}
-        <View className="flex-row items-baseline gap-2">
-          <Text className={typographyClass("changeMd", totalColorClass)}>
-            {formatPercent(delta.totalDeltaPercent)}
-          </Text>
-          <Text className={TYPO_DISCLAIMER}>· {disclaimer}</Text>
-        </View>
-
-        {/* Movers row */}
-        {visibleMovers.length > 0 && (
-          <View className="mt-3">
-            <DailyMoverChips
-              movers={visibleMovers}
-              formatPercent={formatPercent}
-              formatAssetLabel={formatAssetLabel}
-              onMoverPress={onMoverPress}
-              maxMovers={maxMovers}
-            />
-          </View>
-        )}
-      </View>
-    </Card>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+      className="active:opacity-80"
+    >
+      {body}
+    </Pressable>
   );
 }
