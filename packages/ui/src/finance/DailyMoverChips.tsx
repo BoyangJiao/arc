@@ -8,6 +8,7 @@ import type Decimal from "decimal.js";
 
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
+import { TYPO_CAPTION_MEDIUM, typographyClass } from "../tokens/typography";
 
 import type { DailySnapshotAssetDelta } from "./DailySnapshotCard";
 
@@ -55,10 +56,10 @@ export function DailyMoverChips({
             className="flex-1 bg-surface-secondary rounded-lg px-3 py-2 active:opacity-70"
           >
             <View className="gap-0.5">
-              <Text className="text-foreground text-xs font-medium" numberOfLines={1}>
+              <Text className={TYPO_CAPTION_MEDIUM} numberOfLines={1}>
                 {formatAssetLabel(mover.assetId)}
               </Text>
-              <Text className={`text-sm font-semibold ${colorClass}`} numberOfLines={1}>
+              <Text className={typographyClass("rowValue", colorClass)} numberOfLines={1}>
                 {formatPercent(mover.deltaPercent)}
               </Text>
             </View>

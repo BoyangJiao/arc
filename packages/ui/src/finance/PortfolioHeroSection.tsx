@@ -22,6 +22,14 @@ import {
 } from "../charts";
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
+import {
+  TYPO_CAPTION,
+  TYPO_CHANGE_LG,
+  TYPO_DISPLAY,
+  TYPO_EMPTY_MESSAGE,
+  TYPO_LABEL,
+  typographyClass,
+} from "../tokens/typography";
 
 export interface PortfolioHeroSectionProps {
   readonly totalValueTitle: string;
@@ -121,16 +129,16 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
 
   return (
     <View className="gap-3">
-      <Text className="text-muted text-sm">{totalValueTitle}</Text>
+      <Text className={TYPO_LABEL}>{totalValueTitle}</Text>
       <View className="gap-1">
-        <Text className="text-foreground text-4xl font-bold">{formatMoney(heroValue)}</Text>
+        <Text className={TYPO_DISPLAY}>{formatMoney(heroValue)}</Text>
         <View className="min-h-[24px] justify-center">
           {heroChange ? (
-            <Text className={`text-base font-semibold ${changeColorClass}`}>
+            <Text className={typographyClass("changeLg", changeColorClass)}>
               {formatChangeLine(heroChange.delta, heroChange.percent)}
             </Text>
           ) : delta?.status === "no-baseline" ? (
-            <Text className="text-muted text-xs">{noBaselineMessage}</Text>
+            <Text className={TYPO_CAPTION}>{noBaselineMessage}</Text>
           ) : null}
         </View>
       </View>
@@ -147,7 +155,7 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
             onScrubChange={handleScrubChange}
           />
         ) : emptyChartMessage ? (
-          <Text className="text-muted text-sm py-8 text-center">{emptyChartMessage}</Text>
+          <Text className={typographyClass("emptyMessage", "py-8")}>{emptyChartMessage}</Text>
         ) : null}
 
         {(hasChart || chartLoading) && (

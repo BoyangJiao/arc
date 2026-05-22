@@ -9,6 +9,7 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import Svg, { G, Path } from "react-native-svg";
 import { Text } from "../primitives/Text";
+import { TYPO_CAPTION, TYPO_CAPTION_FOREGROUND } from "../tokens/typography";
 
 import type { RebalanceDonutSegment } from "./rebalance-types";
 
@@ -113,11 +114,11 @@ export function DeviationDonut({
                   backgroundColor: RING_STROKE_PALETTE[index % RING_STROKE_PALETTE.length],
                 }}
               />
-              <Text className="text-foreground text-xs" numberOfLines={1}>
+              <Text className={TYPO_CAPTION_FOREGROUND} numberOfLines={1}>
                 {seg.label}
               </Text>
             </View>
-            <Text className="text-muted text-xs">{seg.percent.toFixed(0)}%</Text>
+            <Text className={TYPO_CAPTION}>{seg.percent.toFixed(0)}%</Text>
           </View>
         ))}
       </View>

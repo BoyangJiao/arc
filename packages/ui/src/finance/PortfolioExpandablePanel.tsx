@@ -12,6 +12,13 @@ import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
 import { CaretRightIcon } from "../wrappers/icons";
 import { ThemedIcon } from "../wrappers/themed-icon";
+import {
+  TYPO_BODY_MEDIUM,
+  TYPO_CAPTION,
+  TYPO_LABEL,
+  TYPO_METRIC_SM,
+  TYPO_OVERLINE,
+} from "../tokens/typography";
 
 export interface PortfolioExpandableHoldingRow {
   readonly id: string;
@@ -78,10 +85,10 @@ export function PortfolioExpandablePanel(props: PortfolioExpandablePanelProps): 
                     className="flex-row items-center justify-between rounded-xl bg-surface-secondary px-3 py-2.5 active:opacity-80"
                   >
                     <View className="flex-1 min-w-0 pr-2">
-                      <Text className="text-foreground font-medium" numberOfLines={1}>
+                      <Text className={TYPO_BODY_MEDIUM} numberOfLines={1}>
                         {portfolio.name}
                       </Text>
-                      <Text className="text-muted text-xs" numberOfLines={1}>
+                      <Text className={TYPO_CAPTION} numberOfLines={1}>
                         {portfolio.summaryLabel}
                       </Text>
                     </View>
@@ -94,11 +101,9 @@ export function PortfolioExpandablePanel(props: PortfolioExpandablePanelProps): 
             ) : null}
 
             <View className="gap-2">
-              <Text className="text-muted text-xs font-medium uppercase tracking-wide">
-                {holdingsTitle}
-              </Text>
+              <Text className={TYPO_OVERLINE}>{holdingsTitle}</Text>
               {holdings.length === 0 ? (
-                <Text className="text-muted text-sm">{emptyHoldingsLabel}</Text>
+                <Text className={TYPO_LABEL}>{emptyHoldingsLabel}</Text>
               ) : (
                 holdings.map((row) => (
                   <Pressable
@@ -109,16 +114,14 @@ export function PortfolioExpandablePanel(props: PortfolioExpandablePanelProps): 
                     className="flex-row items-center justify-between py-1 active:opacity-80"
                   >
                     <View className="flex-1 min-w-0 pr-3">
-                      <Text className="text-foreground font-medium">{row.symbol}</Text>
+                      <Text className={TYPO_BODY_MEDIUM}>{row.symbol}</Text>
                       {row.subtitle ? (
-                        <Text className="text-muted text-xs" numberOfLines={1}>
+                        <Text className={TYPO_CAPTION} numberOfLines={1}>
                           {row.subtitle}
                         </Text>
                       ) : null}
                     </View>
-                    <Text className="text-foreground text-sm font-medium shrink-0">
-                      {row.valueLabel}
-                    </Text>
+                    <Text className={`${TYPO_METRIC_SM} shrink-0`}>{row.valueLabel}</Text>
                   </Pressable>
                 ))
               )}

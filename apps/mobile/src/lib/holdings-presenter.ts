@@ -5,20 +5,53 @@
 import Decimal from "decimal.js";
 import { parseAssetId, type Currency, type Holding, type Market } from "@arc/core";
 import type { MarketValuation } from "@arc/core";
-import type { HoldingsTableRow } from "@arc/ui";
+import type { HoldingPeriodChange, HoldingsTableRow } from "@arc/ui";
+import { computePeriodChange } from "@arc/ui";
 
 import type { AssetCatalogRow } from "./queries/use-asset-catalog";
+import { resolveAssetLogoUrl } from "./asset-logo-url";
 import { formatMoney } from "./format-money";
 
 const MARKET_ORDER: readonly Market[] = ["US", "CN", "HK", "FUND", "CRYPTO", "CASH"];
+
+const resolvePeriodChange = (
+  assetId: string,
+  valueReporting: Decimal,
+  periodBaselineByAsset: ReadonlyMap<string, Decimal> | null
+): HoldingPeriodChange => {
+  if (!periodBaselineByAsset) {
+    return { kind: "unavailable" };
+  }
+  if (!periodBaselineByAsset.has(assetId)) {
+    return { kind: "new-position" };
+  }
+  const baselineReporting = periodBaselineByAsset.get(assetId)!;
+  const computed = computePeriodChange(valueReporting.toNumber(), baselineReporting.toNumber());
+  return {
+    kind: "ok",
+    delta: computed.delta,
+    percent: computed.percent,
+  };
+};
 
 export const buildHoldingsTableRows = (input: {
   holdings: readonly Holding[];
   perAsset: readonly MarketValuation[];
   catalog: ReadonlyMap<string, AssetCatalogRow> | undefined;
   reportingCurrency: Currency;
-  formatPercent: (d: Decimal) => string;
-  sharesLabel: (shares: Decimal, symbol: string) => string;
+  quoteLoading: boolean;
+  formatPeriodChangeLine: (delta: Decimal, percent: Decimal | null) => string;
+  positionLabel: (shares: Decimal, market: Market, symbol: string) => string;
+  marketLabel: (market: Market) => string;
+  newPositionLabel: string;
+  formatAccessibilityLabel: (args: {
+    symbol: string;
+    name: string;
+    valueLabel: string;
+    periodChange: HoldingPeriodChange;
+  }) => string;
+  /** Earliest snapshot in chart range — per-asset valueReporting baseline. */
+  periodBaselineByAsset: ReadonlyMap<string, Decimal> | null;
 }): HoldingsTableRow[] => {
   const valByAsset = new Map(input.perAsset.map((v) => [v.assetId, v]));
 
@@ -29,26 +62,33 @@ export const buildHoldingsTableRows = (input: {
     const cat = input.catalog?.get(holding.assetId);
     const { market, symbol } = parseAssetId(holding.assetId);
     const name = cat?.name ?? symbol;
-    const nativeCurrency = holding.currency;
-    const nativeValue = val?.valueNative ?? holding.shares.times(holding.averageCost);
-    const reportingValue = val?.valueReporting ?? nativeValue;
-    const price = val?.priceNative ?? holding.averageCost;
-    const changePercent = val?.unrealizedPnLPercent ?? null;
-    const dualCurrency = nativeCurrency !== input.reportingCurrency;
+    const valueReporting = val?.valueReporting ?? holding.shares.times(holding.averageCost);
+    const valueLabel = formatMoney(valueReporting, input.reportingCurrency);
+    const periodChange = resolvePeriodChange(
+      holding.assetId,
+      valueReporting,
+      input.periodBaselineByAsset
+    );
 
     rows.push({
       assetId: holding.assetId,
       market,
       symbol,
       name,
-      sharesLabel: input.sharesLabel(holding.shares, symbol),
-      priceLabel: formatMoney(price, nativeCurrency),
-      nativeValueLabel: formatMoney(nativeValue, nativeCurrency),
-      reportingValueLabel: dualCurrency
-        ? formatMoney(reportingValue, input.reportingCurrency)
-        : undefined,
-      changePercent,
-      formatPercent: input.formatPercent,
+      marketLabel: input.marketLabel(market),
+      imageUrl: resolveAssetLogoUrl(market, symbol),
+      positionLabel: input.positionLabel(holding.shares, market, symbol),
+      valueLabel,
+      valueLoading: input.quoteLoading && !val,
+      periodChange,
+      newPositionLabel: input.newPositionLabel,
+      formatPeriodChangeLine: input.formatPeriodChangeLine,
+      accessibilityLabel: input.formatAccessibilityLabel({
+        symbol,
+        name,
+        valueLabel,
+        periodChange,
+      }),
     });
   }
 

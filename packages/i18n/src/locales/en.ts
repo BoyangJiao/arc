@@ -41,6 +41,7 @@ export const en = {
     trough: "Trough",
     noSnapshotHistory: "No history yet — daily snapshots will appear after the cron runs",
     sharesRow: "{{shares}} × {{symbol}}",
+    positionLine: "{{shares}} × {{price}}",
   },
   holdings: {
     markets: {
@@ -53,6 +54,22 @@ export const en = {
     },
     collapse: "Collapse",
     expand: "Expand",
+    sectionTitle: "My holdings",
+    filterEmpty: "No holdings match the selected markets",
+    periodChange: {
+      newPosition: "New position",
+    },
+    positionUnits: {
+      equity: "{{shares}} shares",
+      fund: "{{shares}} units",
+      crypto: "{{shares}} {{symbol}}",
+      cash: "{{shares}} {{symbol}}",
+    },
+    a11y: {
+      row: "{{symbol}}, {{name}}, value {{value}}",
+      rowWithChange: "{{symbol}}, {{name}}, value {{value}}, period change {{change}}",
+      rowNewPosition: "{{symbol}}, {{name}}, value {{value}}, new position in selected period",
+    },
   },
   assetDetail: {
     myHolding: "My holding",
@@ -322,9 +339,13 @@ export const en = {
         label: "Transfer history",
         hint: "Multi-3 + CASH transfer notes pair",
       },
+      pfMultiMarketFull: {
+        label: "Block C holdings UAT",
+        hint: "Multi-market table: mixed period change + MSFT new-position chip; anchor snapshots (no 730d chart)",
+      },
       pf30DaysHistory: {
         label: "Block C Hero full UAT",
-        hint: "Multi-market holdings + 730-day NAV series (Portfolio Tab hero / chart / table); preferred Block C polish seed",
+        hint: "Same holdings + 730-day NAV + per-asset history (hero / chart / period change)",
       },
     },
   },

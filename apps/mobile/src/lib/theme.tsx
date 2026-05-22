@@ -45,7 +45,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const toggleColorMode = useCallback(() => {
     setColorModeState((prev) => {
-      const next = prev === "light" ? "dark" : "light";
+      const next: ColorMode = prev === "light" ? "dark" : "light";
       Appearance.setColorScheme(next);
       return next;
     });
@@ -63,7 +63,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
  *
  * @example
  *   const { colorMode, toggleColorMode } = useColorMode();
- *   <Switch isSelected={colorMode === 'dark'} onSelectedChange={toggleColorMode} />
+ *   <Switch
+ *     isSelected={colorMode === 'dark'}
+ *     onSelectedChange={(selected) => setColorMode(selected ? 'dark' : 'light')}
+ *   />
  */
 export function useColorMode(): ThemeContextValue {
   return useContext(ThemeContext);

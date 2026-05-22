@@ -2,7 +2,7 @@
  * Asset detail — /asset/[market]/[symbol]
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
@@ -13,15 +13,16 @@ import {
   Screen,
   Text,
   TimeRangeSelector,
-  TrendChip,
+  formatSignedPercent,
+  useBusinessClasses,
+  typographyClass,
   type TimeRange,
   DEFAULT_TIME_RANGE,
-  useFinanceColorMode,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import { composeAssetId, type Market } from "@arc/core";
 
-import { formatMoney } from "../../../src/lib/format-money";
+import { formatMoney, currencySymbol } from "../../../src/lib/format-money";
 import { useActivePortfolio } from "../../../src/lib/queries/use-active-portfolio";
 import {
   historicalQuotesToChartPoints,
@@ -30,10 +31,10 @@ import {
 } from "../../../src/lib/queries";
 export default function AssetDetailScreen() {
   const { t } = useTranslation();
+  const businessClasses = useBusinessClasses();
   const router = useRouter();
   const { market, symbol } = useLocalSearchParams<{ market: string; symbol: string }>();
   const [range, setRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
-  const { financeColorMode } = useFinanceColorMode();
   const { portfolio } = useActivePortfolio();
 
   const detail = useAssetDetail(market, symbol);
@@ -41,16 +42,27 @@ export default function AssetDetailScreen() {
   const historical = useHistoricalQuotes(assetId, range);
   const chartData = historicalQuotesToChartPoints(historical.data ?? []);
 
+  useEffect(() => {
+    if (market === "CASH") {
+      router.back();
+    }
+  }, [market, router]);
+
+  if (market === "CASH") {
+    return null;
+  }
+
   const quote = detail.data?.latestQuote;
   const changePercent = quote?.changePercent ?? null;
-  const trend = (() => {
-    if (changePercent === null || changePercent.isZero()) return "neutral" as const;
-    const gain = changePercent.isPositive();
-    if (gain) return financeColorMode === "greenUpRedDown" ? ("up" as const) : ("down" as const);
-    return financeColorMode === "greenUpRedDown" ? ("down" as const) : ("up" as const);
-  })();
 
-  const formatPercent = (d: Decimal) => `${d.isPositive() ? "+" : ""}${d.toFixed(2)}%`;
+  const changeColorClass =
+    changePercent === null
+      ? businessClasses.pnlNeutral.text
+      : changePercent.isPositive()
+        ? businessClasses.gain.text
+        : changePercent.isNegative()
+          ? businessClasses.loss.text
+          : businessClasses.pnlNeutral.text;
 
   const handleAddTx = () => {
     if (!portfolio?.id || !market || !symbol) return;
@@ -75,9 +87,9 @@ export default function AssetDetailScreen() {
                   {formatMoney(quote.price, quote.currency)}
                 </Text>
                 {changePercent !== null ? (
-                  <TrendChip trend={trend} size="sm" variant="soft">
-                    {formatPercent(changePercent)}
-                  </TrendChip>
+                  <Text className={typographyClass("rowValue", changeColorClass)}>
+                    {formatSignedPercent(changePercent)}
+                  </Text>
                 ) : null}
               </View>
             ) : (
@@ -86,7 +98,12 @@ export default function AssetDetailScreen() {
           </View>
 
           <TimeRangeSelector value={range} onChange={setRange} />
-          <LineChart data={chartData} height={224} />
+          <LineChart
+            data={chartData}
+            height={224}
+            loading={historical.isFetching}
+            valuePrefix={currencySymbol(detail.data?.currency ?? quote?.currency ?? "CNY")}
+          />
 
           {detail.data?.holding ? (
             <View className="gap-2 border-t border-border pt-4">

@@ -366,6 +366,57 @@ Use the generated font and text scale through HeroUI components and Tailwind tex
 | `8xl` | Inter | `96px` | `96px` | `--text-8xl` | `text-8xl` |
 | `9xl` | Inter | `128px` | `128px` | `--text-9xl` | `text-9xl` |
 
+### Semantic typography (`packages/ui/src/tokens/typography.ts`)
+
+**Stage 3:** each role is a `TypographySpec` (`fontSize`, `fontWeight`, `color`, `lineHeight`, `letterSpacing`, `tabularNums`, …) compiled to Tailwind via `typographySpecToClassName()`. **Stage 4:** tune specs or bind to CSS variables without touching components.
+
+**Usage**
+
+```tsx
+import { TYPO_LABEL, typographyClass } from "@arc/ui";
+
+<Text className={TYPO_LABEL}>{totalValueTitle}</Text>
+<Text className={typographyClass("changeLg", gainTextClass)}>{changeLine}</Text>
+```
+
+Gain/loss / deviation colors: pass business palette class as the second argument to `typographyClass` — never bake `text-success` into specs.
+
+| Role                  | Spec highlights                           | Typical use                          |
+| --------------------- | ----------------------------------------- | ------------------------------------ | ------------------ |
+| `display`             | 4xl / bold / foreground / tight / tabular | Hero total                           |
+| `display2xl`          | 2xl / bold / tabular                      | Insight card value                   |
+| `display3xl`          | 3xl / bold / tabular                      | Daily snapshot delta                 |
+| `sectionTitle`        | lg / semibold                             | 「我的持仓」                         |
+| `titleLg`             | lg / semibold                             | Portfolio name                       |
+| `title`               | base / semibold                           | Card title, stack header             |
+| `label`               | sm / muted                                | 总市值、空状态说明                   |
+| `metric`              | base / semibold / tabular                 | Holding value                        |
+| `metricSm`            | sm / medium / tabular                     | Watchlist price, peak/trough         |
+| `symbol`              | base / semibold                           | Ticker                               |
+| `rowTitle`            | sm / medium                               | Deviation row label                  |
+| `rowValue`            | sm / semibold / tabular                   | Deviation %, mover % (+ color)       |
+| `changeLg`            | base / semibold / tabular                 | Hero period change (+ color)         |
+| `changeMd`            | base / medium / tabular                   | Daily snapshot % (+ color)           |
+| `changeAmount`        | xs / medium / tabular                     | Holding period delta (+ color)       |
+| `badgeSm` / `badgeMd` | xs                                        | sm / medium / tabular                | ChangePercentBadge |
+| `body`                | base / foreground                         | Body copy                            |
+| `bodySm`              | sm / foreground                           | Secondary inline                     |
+| `bodyMedium`          | base / medium                             | Form row label                       |
+| `caption`             | xs / muted                                | Name, shares, hints                  |
+| `captionForeground`   | xs / foreground                           | Donut segment label                  |
+| `captionMedium`       | xs / medium / foreground                  | Mover symbol                         |
+| `controlLabel`        | xs / medium                               | Toggle, segment, filter              |
+| `overline`            | xs / medium / muted / wide / uppercase    | Section overline                     |
+| `emptyMessage`        | sm / muted / center                       | Empty chart block                    |
+| `disclaimer`          | xs / muted                                | Footnotes                            |
+| `fieldLabel`          | xs / muted                                | Form field label                     |
+| `danger` / `dangerSm` | xs                                        | sm / danger                          | Validation errors  |
+| `avatarMonogram`      | semibold / white                          | Avatar initials (+ `style.fontSize`) |
+| `avatarBadge`         | medium / muted                            | Market badge (+ `style.fontSize`)    |
+| `chipStatus`          | xs / muted                                | 「新建仓」 chip                      |
+
+**Weight:** `font-semibold` for titles; `font-bold` only for hero numbers. **Color:** Foundation `foreground` / `muted` / `danger` only in specs — business colors layered via `typographyClass(role, extra)`.
+
 ### Font and Letter Spacing
 
 | Token            | Raw value           | Formula / source | HeroUI variable          | Tailwind / component equivalent                                                 | Purpose                                                    |

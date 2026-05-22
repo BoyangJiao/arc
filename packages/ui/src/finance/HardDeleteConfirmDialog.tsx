@@ -5,6 +5,7 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { Button, Dialog, Input, Label, Text, TextField } from "../primitives";
+import { TYPO_LABEL } from "../tokens/typography";
 
 export interface HardDeleteConfirmDialogProps {
   readonly open: boolean;
@@ -47,7 +48,7 @@ export function HardDeleteConfirmDialog({
         <Dialog.Content>
           <Dialog.Title>{title}</Dialog.Title>
           <Dialog.Description>
-            <Text className="text-muted text-sm">{description}</Text>
+            <Text className={TYPO_LABEL}>{description}</Text>
           </Dialog.Description>
           <View className="gap-3 mt-4">
             <TextField>

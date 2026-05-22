@@ -25,6 +25,7 @@ import type Decimal from "decimal.js";
 import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
+import { TYPO_BODY, TYPO_DISCLAIMER, TYPO_LABEL, typographyClass } from "../tokens/typography";
 
 import { DailyMoverChips } from "./DailyMoverChips";
 
@@ -114,8 +115,8 @@ export function DailySnapshotCard(props: DailySnapshotCardProps): ReactNode {
     return (
       <Card>
         <View className="p-4 gap-2" accessibilityLabel={accessibilityLabel ?? title}>
-          <Text className="text-muted text-sm">{title}</Text>
-          <Text className="text-foreground text-base">{noBaselineMessage}</Text>
+          <Text className={TYPO_LABEL}>{title}</Text>
+          <Text className={TYPO_BODY}>{noBaselineMessage}</Text>
         </View>
       </Card>
     );
@@ -135,19 +136,19 @@ export function DailySnapshotCard(props: DailySnapshotCardProps): ReactNode {
   return (
     <Card>
       <View className="p-4 gap-2" accessibilityLabel={accessibilityLabel ?? title}>
-        <Text className="text-muted text-sm">{title}</Text>
+        <Text className={TYPO_LABEL}>{title}</Text>
 
         {/* Total — large, colored */}
-        <Text className={`text-3xl font-bold ${totalColorClass}`}>
+        <Text className={typographyClass("display3xl", totalColorClass)}>
           {formatAmount(delta.totalDeltaReporting)}
         </Text>
 
         {/* Percent + disclaimer in one row */}
         <View className="flex-row items-baseline gap-2">
-          <Text className={`text-base font-medium ${totalColorClass}`}>
+          <Text className={typographyClass("changeMd", totalColorClass)}>
             {formatPercent(delta.totalDeltaPercent)}
           </Text>
-          <Text className="text-muted text-xs">· {disclaimer}</Text>
+          <Text className={TYPO_DISCLAIMER}>· {disclaimer}</Text>
         </View>
 
         {/* Movers row */}

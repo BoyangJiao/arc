@@ -12,12 +12,23 @@ import {
   decimateChartPoints,
   FLOATING_TAB_BAR_BOTTOM_INSET,
   formatCompactChangeLine,
+  formatSignedPercent,
+  HOLDINGS_MARKET_ORDER,
+  HoldingsMarketFilter,
   HoldingsTable,
+  type HoldingPeriodChange,
   PortfolioHeroSection,
   Screen,
   TabScreenHeader,
   TabScrollShadow,
   Text,
+  TYPO_CAPTION,
+  TYPO_DANGER,
+  TYPO_DISCLAIMER,
+  TYPO_EMPTY_MESSAGE,
+  TYPO_LABEL,
+  TYPO_TITLE,
+  typographyClass,
   UserAvatar,
   DEFAULT_TIME_RANGE,
   type TimeRange,
@@ -28,10 +39,7 @@ import {
 } from "../../src/components/PortfolioTabHeader";
 import { useAuth } from "../../src/lib/auth";
 import { currencySymbol, formatMoney } from "../../src/lib/format-money";
-import {
-  buildHoldingsTableRows,
-  formatMarketSectionHeader,
-} from "../../src/lib/holdings-presenter";
+import { buildHoldingsTableRows } from "../../src/lib/holdings-presenter";
 import {
   useActivePortfolio,
   useAssetCatalog,
@@ -39,6 +47,7 @@ import {
   usePortfolioHoldings,
   usePortfolioValuation,
   usePortfolioValueSnapshots,
+  periodBaselineByAsset,
   snapshotsToChartPoints,
 } from "../../src/lib/queries";
 import { useUserPreferences } from "../../src/lib/user-preferences";
@@ -46,17 +55,12 @@ import { useTranslation } from "@arc/i18n";
 
 const ZERO = new Decimal(0);
 
-const formatSignedDecimal = (value: Decimal): string => {
-  if (value.isZero()) return value.toFixed(2);
-  const sign = value.isPositive() ? "+" : "-";
-  return `${sign}${value.abs().toFixed(2)}`;
-};
-
 export default function PortfolioTab() {
   const { i18n, t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const [chartRange, setChartRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
+  const [selectedMarketFilters, setSelectedMarketFilters] = useState<Set<Market>>(() => new Set());
 
   const { prefs } = useUserPreferences();
 
@@ -78,7 +82,56 @@ export default function PortfolioTab() {
   const assetIds = useMemo(() => holdings.map((h) => h.assetId), [holdings]);
   const catalog = useAssetCatalog(assetIds);
 
-  const formatPercent = (d: Decimal) => `${d.isPositive() ? "+" : ""}${d.toFixed(2)}%`;
+  const marketLabel = useCallback(
+    (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US"),
+    [t]
+  );
+
+  const formatPositionLabel = useCallback(
+    (shares: Decimal, market: Market, symbol: string) => {
+      const qty = shares.toFixed(2);
+      switch (market) {
+        case "FUND":
+          return t("holdings.positionUnits.fund", { shares: qty });
+        case "CRYPTO":
+          return t("holdings.positionUnits.crypto", { shares: qty, symbol });
+        case "CASH":
+          return t("holdings.positionUnits.cash", { shares: qty, symbol });
+        default:
+          return t("holdings.positionUnits.equity", { shares: qty });
+      }
+    },
+    [t]
+  );
+
+  const formatHoldingsAccessibilityLabel = useCallback(
+    (args: {
+      symbol: string;
+      name: string;
+      valueLabel: string;
+      periodChange: HoldingPeriodChange;
+    }) => {
+      const { symbol, name, valueLabel, periodChange } = args;
+      if (periodChange.kind === "new-position") {
+        return t("holdings.a11y.rowNewPosition", { symbol, name, value: valueLabel });
+      }
+      if (periodChange.kind === "ok") {
+        const change = formatCompactChangeLine(
+          periodChange.delta,
+          periodChange.percent,
+          currencySymbol(reportingCurrency)
+        );
+        return t("holdings.a11y.rowWithChange", { symbol, name, value: valueLabel, change });
+      }
+      return t("holdings.a11y.row", { symbol, name, value: valueLabel });
+    },
+    [t, reportingCurrency]
+  );
+
+  const holdingsPeriodBaseline = useMemo(
+    () => periodBaselineByAsset(snapshots.data ?? []),
+    [snapshots.data]
+  );
 
   const holdingsRows = useMemo(
     () =>
@@ -87,12 +140,38 @@ export default function PortfolioTab() {
         perAsset: valuation?.perAsset ?? [],
         catalog: catalog.data,
         reportingCurrency,
-        formatPercent,
-        sharesLabel: (shares, symbol) =>
-          t("portfolio.sharesRow", { shares: shares.toFixed(2), symbol }),
+        quoteLoading: valuationFetching && !valuation,
+        formatPeriodChangeLine: (delta, percent) =>
+          formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency)),
+        positionLabel: formatPositionLabel,
+        marketLabel,
+        newPositionLabel: t("holdings.periodChange.newPosition"),
+        formatAccessibilityLabel: formatHoldingsAccessibilityLabel,
+        periodBaselineByAsset: holdingsPeriodBaseline,
       }),
-    [holdings, valuation?.perAsset, catalog.data, reportingCurrency, t]
+    [
+      holdings,
+      valuation?.perAsset,
+      valuation,
+      valuationFetching,
+      catalog.data,
+      reportingCurrency,
+      holdingsPeriodBaseline,
+      formatPositionLabel,
+      formatHoldingsAccessibilityLabel,
+      t,
+    ]
   );
+
+  const marketsInPortfolio = useMemo(() => {
+    const present = new Set(holdingsRows.map((r) => r.market));
+    return HOLDINGS_MARKET_ORDER.filter((m) => present.has(m));
+  }, [holdingsRows]);
+
+  const filteredHoldingsRows = useMemo(() => {
+    if (selectedMarketFilters.size === 0) return holdingsRows;
+    return holdingsRows.filter((row) => selectedMarketFilters.has(row.market));
+  }, [holdingsRows, selectedMarketFilters]);
 
   const chartPoints = useMemo(
     () => decimateChartPoints(snapshotsToChartPoints(snapshots.data ?? [])),
@@ -108,8 +187,6 @@ export default function PortfolioTab() {
       }).format(new Date(iso)),
     [i18n.language]
   );
-
-  const marketLabel = (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US");
 
   const holdingsCount = holdings.length;
   const pricedCount = valuation?.perAsset.length ?? 0;
@@ -159,66 +236,70 @@ export default function PortfolioTab() {
           }
         >
           {activePortfolio ? (
-            <PortfolioHeroSection
-              totalValueTitle={t("portfolio.totalValue")}
-              liveTotalValue={hasHoldings && valuation ? valuation.totalValue : ZERO}
-              formatMoney={(amount) => formatMoney(amount, reportingCurrency)}
-              delta={dailyDelta.data ?? null}
-              noBaselineMessage={t("dailySnapshot.noBaseline")}
-              formatChangeLine={(delta, percent) =>
-                formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))
-              }
-              formatPercent={(percent) => `${formatSignedDecimal(percent)}%`}
-              formatAssetLabel={(assetId) => parseAssetId(assetId).symbol}
-              formatAnchorTime={formatAnchorTime}
-              onMoverPress={(assetId) => {
-                const { market, symbol } = parseAssetId(assetId);
-                if (market === "CASH") return;
-                router.push(`/asset/${market}/${symbol}` as Href);
-              }}
-              chartData={chartPoints}
-              chartRange={chartRange}
-              onChartRangeChange={setChartRange}
-              chartLoading={snapshots.isFetching}
-              valuePrefix={currencySymbol(reportingCurrency)}
-              emptyChartMessage={t("portfolio.noSnapshotHistory")}
-            />
+            <View className="gap-6">
+              {hasHoldings && !holdingsPending ? (
+                <HoldingsMarketFilter
+                  markets={marketsInPortfolio}
+                  labelFor={marketLabel}
+                  selectedMarkets={selectedMarketFilters}
+                  onSelectedMarketsChange={setSelectedMarketFilters}
+                />
+              ) : null}
+              <PortfolioHeroSection
+                totalValueTitle={t("portfolio.totalValue")}
+                liveTotalValue={hasHoldings && valuation ? valuation.totalValue : ZERO}
+                formatMoney={(amount) => formatMoney(amount, reportingCurrency)}
+                delta={dailyDelta.data ?? null}
+                noBaselineMessage={t("dailySnapshot.noBaseline")}
+                formatChangeLine={(delta, percent) =>
+                  formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))
+                }
+                formatPercent={formatSignedPercent}
+                formatAssetLabel={(assetId) => parseAssetId(assetId).symbol}
+                formatAnchorTime={formatAnchorTime}
+                onMoverPress={(assetId) => {
+                  const { market, symbol } = parseAssetId(assetId);
+                  if (market === "CASH") return;
+                  router.push(`/asset/${market}/${symbol}` as Href);
+                }}
+                chartData={chartPoints}
+                chartRange={chartRange}
+                onChartRangeChange={setChartRange}
+                chartLoading={snapshots.isFetching}
+                valuePrefix={currencySymbol(reportingCurrency)}
+                emptyChartMessage={t("portfolio.noSnapshotHistory")}
+              />
+            </View>
           ) : null}
 
           {hasPartialQuotes && (
-            <Text className="text-muted text-xs -mt-2">
+            <Text className={typographyClass("caption", "-mt-2")}>
               {t("portfolio.partialQuotes", { loaded: pricedCount, total: holdingsCount })}{" "}
               {t("portfolio.partialQuotesMissing", { missing: holdingsCount - pricedCount })}
             </Text>
           )}
-          {valuationError && <Text className="text-danger text-xs -mt-2">{t("common.error")}</Text>}
+          {valuationError && (
+            <Text className={typographyClass("danger", "-mt-2")}>{t("common.error")}</Text>
+          )}
 
           {activeLoading ? (
-            <Text className="text-muted">{t("common.loading")}</Text>
+            <Text className={TYPO_LABEL}>{t("common.loading")}</Text>
           ) : !activePortfolio ? (
             <Card>
               <View className="p-6 items-center">
-                <Text className="text-muted text-center mb-2">{t("portfolio.noPortfolios")}</Text>
-                <Text className="text-muted text-xs text-center">
-                  {t("portfolio.noPortfoliosHint")}
+                <Text className={typographyClass("emptyMessage", "mb-2")}>
+                  {t("portfolio.noPortfolios")}
                 </Text>
+                <Text className={TYPO_CAPTION}>{t("portfolio.noPortfoliosHint")}</Text>
               </View>
             </Card>
           ) : null}
 
           {hasHoldings && !holdingsPending ? (
             <HoldingsTable
-              rows={holdingsRows}
-              getSectionHeader={(market) =>
-                formatMarketSectionHeader(
-                  marketLabel(market),
-                  holdingsRows.filter((r) => r.market === market),
-                  valuation?.perAsset ?? [],
-                  reportingCurrency
-                )
-              }
-              collapseLabel={t("holdings.collapse")}
-              expandLabel={t("holdings.expand")}
+              rows={filteredHoldingsRows}
+              sectionTitle={t("holdings.sectionTitle")}
+              emptyMessage={selectedMarketFilters.size > 0 ? t("holdings.filterEmpty") : undefined}
               onRowPress={handleRowPress}
             />
           ) : null}
@@ -231,16 +312,18 @@ export default function PortfolioTab() {
                 }
               >
                 <View className="p-6 items-center">
-                  <Text className="text-muted text-center mb-2">{t("portfolio.empty")}</Text>
-                  <Text className="text-foreground font-semibold">
-                    {t("portfolio.emptyAction")}
+                  <Text className={typographyClass("emptyMessage", "mb-2")}>
+                    {t("portfolio.empty")}
                   </Text>
+                  <Text className={TYPO_TITLE}>{t("portfolio.emptyAction")}</Text>
                 </View>
               </Pressable>
             </Card>
           )}
 
-          <Text className="text-muted text-xs text-center">{t("common.notInvestmentAdvice")}</Text>
+          <Text className={typographyClass("disclaimer", "text-center")}>
+            {t("common.notInvestmentAdvice")}
+          </Text>
         </ScrollView>
       </TabScrollShadow>
     </Screen>

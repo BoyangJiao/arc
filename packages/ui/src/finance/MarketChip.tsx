@@ -7,6 +7,7 @@ import { Pressable, View } from "react-native";
 import type { RebalanceMarket } from "./rebalance-types";
 
 import { Text } from "../primitives/Text";
+import { typographyClass } from "../tokens/typography";
 
 export interface MarketChipProps {
   readonly market: RebalanceMarket;
@@ -28,7 +29,7 @@ export function MarketChip({
 
   const inner = (
     <View className={`rounded-full px-3 py-1.5 border ${base}`}>
-      <Text className={`text-xs ${text}`} accessibilityLabel={label}>
+      <Text className={typographyClass("controlLabel", text)} accessibilityLabel={label}>
         {label}
       </Text>
     </View>

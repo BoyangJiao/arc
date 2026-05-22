@@ -9,6 +9,7 @@ import Decimal from "decimal.js";
 import Svg, { G, Path } from "react-native-svg";
 
 import { Text } from "../primitives/Text";
+import { TYPO_CAPTION, TYPO_CAPTION_FOREGROUND } from "../tokens/typography";
 
 export interface AllocationDonutSlice {
   readonly label: string;
@@ -84,11 +85,11 @@ export function AllocationDonut({ slices, size = 160 }: AllocationDonutProps): R
             <View key={slice.label} className="flex-row items-center justify-between gap-2">
               <View className="flex-row items-center gap-2 flex-1 min-w-0">
                 <View className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                <Text className="text-foreground text-xs" numberOfLines={1}>
+                <Text className={TYPO_CAPTION_FOREGROUND} numberOfLines={1}>
                   {slice.label}
                 </Text>
               </View>
-              <Text className="text-muted text-xs">{pct.toFixed(0)}%</Text>
+              <Text className={TYPO_CAPTION}>{pct.toFixed(0)}%</Text>
             </View>
           );
         })}

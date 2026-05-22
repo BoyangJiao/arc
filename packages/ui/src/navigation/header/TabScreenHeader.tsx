@@ -13,6 +13,7 @@ import { type ReactNode } from "react";
 import { View } from "react-native";
 
 import { Text } from "../../primitives/Text";
+import { TYPO_TITLE } from "../../tokens/typography";
 
 export interface TabScreenHeaderProps {
   title: string;
@@ -39,7 +40,7 @@ export function TabScreenHeader({ title, centerSlot, leftSlot, rightSlot }: TabS
       </View>
       <View className="flex-1 items-center px-2">
         {centerSlot ?? (
-          <Text className="text-foreground text-base font-semibold" numberOfLines={1}>
+          <Text className={TYPO_TITLE} numberOfLines={1}>
             {title}
           </Text>
         )}

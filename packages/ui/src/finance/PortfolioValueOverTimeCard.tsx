@@ -9,6 +9,14 @@ import { View } from "react-native";
 import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
 import { AreaChart, TimeRangeSelector, type ChartPoint, type TimeRange } from "../charts";
+import {
+  TYPO_CAPTION,
+  TYPO_DISPLAY_2XL,
+  TYPO_DISCLAIMER,
+  TYPO_LABEL,
+  TYPO_METRIC_SM,
+  TYPO_TITLE,
+} from "../tokens/typography";
 
 export interface PortfolioValueOverTimeCardProps {
   readonly title: string;
@@ -48,23 +56,23 @@ export function PortfolioValueOverTimeCard(props: PortfolioValueOverTimeCardProp
   return (
     <Card>
       <View className="p-4 gap-3">
-        <Text className="text-foreground font-semibold">{title}</Text>
-        <Text className="text-foreground text-2xl font-bold">{totalValueLabel}</Text>
-        <Text className="text-muted text-xs">{disclaimer}</Text>
+        <Text className={TYPO_TITLE}>{title}</Text>
+        <Text className={TYPO_DISPLAY_2XL}>{totalValueLabel}</Text>
+        <Text className={TYPO_DISCLAIMER}>{disclaimer}</Text>
         <TimeRangeSelector value={range} onChange={onRangeChange} />
         {hasChart || loading ? (
           <AreaChart data={chartData} height={192} loading={loading} valuePrefix={valuePrefix} />
         ) : (
-          <Text className="text-muted text-sm">{emptyMessage}</Text>
+          <Text className={TYPO_LABEL}>{emptyMessage}</Text>
         )}
         <View className="flex-row justify-between">
           <View>
-            <Text className="text-muted text-xs">{peakLabel}</Text>
-            <Text className="text-foreground text-sm font-medium">{peakValue}</Text>
+            <Text className={TYPO_CAPTION}>{peakLabel}</Text>
+            <Text className={TYPO_METRIC_SM}>{peakValue}</Text>
           </View>
           <View className="items-end">
-            <Text className="text-muted text-xs">{troughLabel}</Text>
-            <Text className="text-foreground text-sm font-medium">{troughValue}</Text>
+            <Text className={TYPO_CAPTION}>{troughLabel}</Text>
+            <Text className={TYPO_METRIC_SM}>{troughValue}</Text>
           </View>
         </View>
       </View>

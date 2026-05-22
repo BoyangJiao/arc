@@ -5,6 +5,13 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { Button, Card, Chip, Text } from "../primitives";
+import {
+  TYPO_CAPTION,
+  TYPO_DISPLAY_2XL,
+  TYPO_LABEL,
+  TYPO_TITLE,
+  TYPO_TITLE_LG,
+} from "../tokens/typography";
 import { DeviationDonut, type DeviationDonutProps } from "./DeviationDonut";
 
 export interface PortfolioInsightCardProps {
@@ -47,8 +54,8 @@ export function PortfolioInsightCard({
       <View className="p-4 gap-3">
         <View className="flex-row items-start justify-between">
           <View className="flex-1">
-            <Text className="text-foreground font-semibold text-lg">{portfolioName}</Text>
-            <Text className="text-muted text-xs">{reportingCurrency}</Text>
+            <Text className={TYPO_TITLE_LG}>{portfolioName}</Text>
+            <Text className={TYPO_CAPTION}>{reportingCurrency}</Text>
           </View>
           {hasTargets ? (
             <Button size="sm" variant="secondary" onPress={onViewPress}>
@@ -62,11 +69,11 @@ export function PortfolioInsightCard({
         </View>
 
         {isLoading ? (
-          <Text className="text-muted text-sm">{totalValueLabel}</Text>
+          <Text className={TYPO_LABEL}>{totalValueLabel}</Text>
         ) : (
           <>
-            <Text className="text-foreground text-2xl font-bold">{totalValueLabel}</Text>
-            <Text className="text-muted text-sm">{todayChangeLabel}</Text>
+            <Text className={TYPO_DISPLAY_2XL}>{totalValueLabel}</Text>
+            <Text className={TYPO_LABEL}>{todayChangeLabel}</Text>
           </>
         )}
 
@@ -77,11 +84,11 @@ export function PortfolioInsightCard({
               currentSegments={currentSegments}
               size={120}
             />
-            <Text className="text-muted text-sm">{deviationLabel}</Text>
-            <Text className="text-muted text-sm">{rebalanceCountLabel}</Text>
+            <Text className={TYPO_LABEL}>{deviationLabel}</Text>
+            <Text className={TYPO_LABEL}>{rebalanceCountLabel}</Text>
           </>
         ) : (
-          <Text className="text-muted text-sm">{noTargetsTitle}</Text>
+          <Text className={TYPO_LABEL}>{noTargetsTitle}</Text>
         )}
       </View>
     </Card>
@@ -103,12 +110,12 @@ export function CrossPortfolioRebalancePlaceholderCard({
     <Card className="opacity-80">
       <View className="p-4 gap-2">
         <View className="flex-row items-center gap-2">
-          <Text className="text-foreground font-semibold">{title}</Text>
+          <Text className={TYPO_TITLE}>{title}</Text>
           <Chip size="sm" variant="soft" color="default">
             <Chip.Label>{badge}</Chip.Label>
           </Chip>
         </View>
-        <Text className="text-muted text-sm">{description}</Text>
+        <Text className={TYPO_LABEL}>{description}</Text>
       </View>
     </Card>
   );

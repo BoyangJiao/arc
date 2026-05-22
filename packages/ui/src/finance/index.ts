@@ -62,14 +62,16 @@ export {
   type RebalanceActionRow,
 } from "./rebalance-types";
 
+export { AssetAvatar, type AssetAvatarProps } from "./AssetAvatar";
 export { MarketChip, type MarketChipProps } from "./MarketChip";
+export { HoldingsMarketFilter, type HoldingsMarketFilterProps } from "./HoldingsMarketFilter";
 export {
   AllocationDonut,
   type AllocationDonutProps,
   type AllocationDonutSlice,
 } from "./AllocationDonut";
 export { ChangePercentBadge, type ChangePercentBadgeProps } from "./ChangePercentBadge";
-export { HoldingRow, type HoldingRowProps } from "./HoldingRow";
+export { HoldingRow, type HoldingRowProps, type HoldingPeriodChange } from "./HoldingRow";
 export {
   HoldingsTable,
   HOLDINGS_MARKET_ORDER,
@@ -78,7 +80,12 @@ export {
 } from "./HoldingsTable";
 export { PortfolioHeroSection, type PortfolioHeroSectionProps } from "./PortfolioHeroSection";
 export { computePeriodChange, type PeriodChange } from "./compute-period-change";
-export { formatCompactChangeLine } from "./format-compact-change";
+export {
+  formatCompactChangeLine,
+  formatSignedAmount,
+  formatSignedPercent,
+  formatUnsignedPercent,
+} from "./format-compact-change";
 export { type ChartScrubState, scrubStateFromChartPoint, periodStartValue } from "./chart-scrub";
 export {
   PortfolioValueOverTimeCard,

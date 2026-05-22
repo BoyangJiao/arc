@@ -16,7 +16,22 @@ export interface PortfolioSnapshotPoint {
   readonly asOf: string;
   readonly totalValue: Decimal;
   readonly reportingCurrency: Currency;
+  /** valueReporting per assetId — used for period P&L on holdings rows. */
+  readonly perAssetReporting: ReadonlyMap<string, Decimal>;
 }
+
+const revivePerAssetReporting = (
+  rows: ReadonlyArray<{
+    assetId: string;
+    valueReporting: string;
+  }> | null
+): ReadonlyMap<string, Decimal> => {
+  const map = new Map<string, Decimal>();
+  for (const row of rows ?? []) {
+    map.set(row.assetId, new Decimal(String(row.valueReporting)));
+  }
+  return map;
+};
 
 export const usePortfolioValueSnapshots = (portfolioId: string | undefined, range: TimeRange) => {
   const { user } = useAuth();
@@ -37,7 +52,7 @@ export const usePortfolioValueSnapshots = (portfolioId: string | undefined, rang
 
       const { data, error } = await supabase
         .from("portfolio_value_snapshots")
-        .select("as_of, total_value, reporting_currency")
+        .select("as_of, total_value, reporting_currency, per_asset")
         .eq("portfolio_id", portfolioId)
         .gte("as_of", window.from.toISOString())
         .lte("as_of", window.to.toISOString())
@@ -49,9 +64,21 @@ export const usePortfolioValueSnapshots = (portfolioId: string | undefined, rang
         asOf: row.as_of as string,
         totalValue: new Decimal(String(row.total_value)),
         reportingCurrency: row.reporting_currency as Currency,
+        perAssetReporting: revivePerAssetReporting(
+          row.per_asset as ReadonlyArray<{ assetId: string; valueReporting: string }> | null
+        ),
       }));
     },
   });
+};
+
+/** Earliest snapshot in the selected chart range — period baseline for holdings P&L. */
+export const periodBaselineByAsset = (
+  points: readonly PortfolioSnapshotPoint[]
+): ReadonlyMap<string, Decimal> | null => {
+  const first = points[0];
+  if (!first) return null;
+  return first.perAssetReporting;
 };
 
 export const snapshotsToChartPoints = (

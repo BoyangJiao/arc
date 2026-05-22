@@ -1,8 +1,8 @@
 /**
- * ChangePercentBadge — daily price change with correct 红涨绿跌 colors + arrow direction.
+ * ChangePercentBadge — price / period change percent with 红涨绿跌 colors.
  *
- * HeroUI TrendChip binds color to trend (up=green, down=red) and cannot express 红涨绿跌
- * with correct arrow direction. This badge decouples arrow (actual move) from color (user pref).
+ * Label comes from `formatSignedPercent` when used standalone — no arrow prefix.
+ * HeroUI TrendChip cannot express 红涨绿跌; this badge uses business palette instead.
  */
 
 import type { ReactNode } from "react";
@@ -11,6 +11,7 @@ import type Decimal from "decimal.js";
 
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
+import { typographyClass } from "../tokens/typography";
 
 import { pnlSignFromDecimal } from "./trend-for-business";
 
@@ -20,11 +21,6 @@ export interface ChangePercentBadgeProps {
   readonly size?: "sm" | "md";
 }
 
-const arrowFor = (changePercent: Decimal): string => {
-  if (changePercent.isZero()) return "";
-  return changePercent.isPositive() ? "↑" : "↓";
-};
-
 export function ChangePercentBadge({
   changePercent,
   formatPercent,
@@ -32,15 +28,13 @@ export function ChangePercentBadge({
 }: ChangePercentBadgeProps): ReactNode {
   const classes = useBusinessClasses();
   const sign = pnlSignFromDecimal(changePercent);
-  const textSize = size === "sm" ? "text-xs" : "text-sm";
-  const label = `${arrowFor(changePercent)}${formatPercent(changePercent)}`;
+  const badgeRole = size === "sm" ? "badgeSm" : "badgeMd";
+  const label = formatPercent(changePercent);
 
   if (sign === "neutral") {
     return (
       <View className="flex-row items-center px-2 py-0.5 rounded-full">
-        <Text className={`${textSize} font-medium tabular-nums ${classes.pnlNeutral.text}`}>
-          {label}
-        </Text>
+        <Text className={typographyClass(badgeRole, classes.pnlNeutral.text)}>{label}</Text>
       </View>
     );
   }
@@ -49,7 +43,7 @@ export function ChangePercentBadge({
 
   return (
     <View className={`flex-row items-center px-2 py-0.5 rounded-full ${palette.bgSoft}`}>
-      <Text className={`${textSize} font-medium tabular-nums ${palette.textOnSoft}`}>{label}</Text>
+      <Text className={typographyClass(badgeRole, palette.textOnSoft)}>{label}</Text>
     </View>
   );
 }

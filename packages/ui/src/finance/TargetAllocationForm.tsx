@@ -9,6 +9,7 @@ import type Decimal from "decimal.js";
 import { Label, Text } from "../primitives";
 import { NumberField } from "../primitives-pro";
 import { useBusinessClasses } from "../tokens/business-context";
+import { TYPO_BODY_MEDIUM, TYPO_CAPTION, TYPO_LABEL, typographyClass } from "../tokens/typography";
 
 export interface TargetAllocationFormRow {
   readonly assetId: string;
@@ -62,9 +63,9 @@ export function TargetAllocationForm({
             className="flex-row items-center gap-3 py-2 border-b border-divider"
           >
             <View className="flex-1 min-w-0">
-              <Text className="text-foreground text-base font-medium">{row.label}</Text>
+              <Text className={TYPO_BODY_MEDIUM}>{row.label}</Text>
               {row.subtitle ? (
-                <Text className="text-muted text-xs" numberOfLines={1}>
+                <Text className={TYPO_CAPTION} numberOfLines={1}>
                   {row.subtitle}
                 </Text>
               ) : null}
@@ -88,14 +89,16 @@ export function TargetAllocationForm({
                 <NumberField.Input className="text-right" />
               </NumberField.Group>
             </NumberField>
-            <Text className="text-muted text-sm w-6">{percentSuffix}</Text>
+            <Text className={`${TYPO_LABEL} w-6`}>{percentSuffix}</Text>
           </View>
         );
       })}
 
       <View className="gap-1 pt-2">
-        <Text className={`text-base font-semibold ${sumColorClass}`}>{sumLabel}</Text>
-        {sumHint ? <Text className={`text-sm ${sumColorClass}`}>{sumHint}</Text> : null}
+        <Text className={typographyClass("title", sumColorClass)}>{sumLabel}</Text>
+        {sumHint ? (
+          <Text className={typographyClass("label", sumColorClass)}>{sumHint}</Text>
+        ) : null}
       </View>
     </View>
   );

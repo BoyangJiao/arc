@@ -19,7 +19,7 @@
  * - ProgressBar / ProgressCircle — 再平衡执行进度（Stage 3）
  * - Stepper — 多步表单
  * - SlideButton — 危险操作确认（删除 portfolio 等）
- * - ToggleButtonGroup / Rating / SocialAuthButton — 暂无场景
+ * - ToggleButtonGroup / ToggleButton — Portfolio Tab holdings market filter (Block C)
  * - LineChart / AreaChart / BarChart / ChartCrosshair / ChartIndicator — 需先装 skia
  */
 
@@ -31,3 +31,5 @@ export { ProgressButton } from "heroui-native-pro/progress-button";
 export { NumberValue } from "heroui-native-pro/number-value";
 export { Widget } from "heroui-native-pro/widget";
 export { Segment } from "heroui-native-pro/segment";
+export { ToggleButton } from "heroui-native-pro/toggle-button";
+export { ToggleButtonGroup } from "heroui-native-pro/toggle-button-group";

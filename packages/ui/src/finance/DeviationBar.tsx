@@ -8,6 +8,7 @@ import Decimal from "decimal.js";
 
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
+import { TYPO_CAPTION, TYPO_ROW_TITLE, typographyClass } from "../tokens/typography";
 
 import type { DeviationBarRow } from "./rebalance-types";
 
@@ -50,8 +51,8 @@ export function DeviationBar({
         return (
           <View key={row.assetId} className="gap-1">
             <View className="flex-row items-center justify-between">
-              <Text className="text-foreground text-sm font-medium">{row.label}</Text>
-              <Text className={`text-sm font-semibold ${textClass}`}>
+              <Text className={TYPO_ROW_TITLE}>{row.label}</Text>
+              <Text className={typographyClass("rowValue", textClass)}>
                 {formatDeviation(row.deviationPercent)}
               </Text>
             </View>
@@ -67,7 +68,7 @@ export function DeviationBar({
                 }}
               />
             </View>
-            <Text className="text-muted text-xs">
+            <Text className={TYPO_CAPTION}>
               {formatPercent(row.currentPercent)} / {formatPercent(row.targetPercent)}
             </Text>
           </View>

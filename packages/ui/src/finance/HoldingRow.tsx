@@ -1,26 +1,42 @@
 /**
- * HoldingRow — single holdings table row (dual-currency value display).
+ * HoldingRow — single holdings list row (ListGroup item body).
+ *
+ * Left: avatar + symbol / name / position quantity.
+ * Right: reporting-currency value + period change line (vs chart time range).
  */
 
 import type { ReactNode } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import type Decimal from "decimal.js";
 
-import { Card } from "../primitives";
+import { Skeleton } from "../primitives";
 import { Text } from "../primitives/Text";
+import { useBusinessClasses } from "../tokens/business-context";
+import { TYPO_CAPTION, TYPO_METRIC, TYPO_SYMBOL, typographyClass } from "../tokens/typography";
 
-import { ChangePercentBadge } from "./ChangePercentBadge";
+import { AssetAvatar } from "./AssetAvatar";
+import type { RebalanceMarket } from "./rebalance-types";
+import { pnlSignFromDecimal } from "./trend-for-business";
+
+export type HoldingPeriodChange =
+  | { readonly kind: "ok"; readonly delta: Decimal; readonly percent: Decimal | null }
+  | { readonly kind: "new-position" }
+  | { readonly kind: "unavailable" };
 
 export interface HoldingRowProps {
   readonly symbol: string;
   readonly name: string;
-  readonly sharesLabel: string;
-  readonly priceLabel: string;
-  readonly nativeValueLabel: string;
-  readonly reportingValueLabel?: string;
-  readonly changePercent: Decimal | null;
-  readonly formatPercent: (percent: Decimal) => string;
-  readonly onPress?: () => void;
+  readonly market: RebalanceMarket;
+  readonly marketLabel: string;
+  readonly imageUrl?: string | null;
+  /** e.g. "5.00 股" / "0.01 BTC" */
+  readonly positionLabel: string;
+  readonly valueLabel: string;
+  readonly valueLoading?: boolean;
+  readonly periodChange: HoldingPeriodChange;
+  readonly newPositionLabel: string;
+  /** Same shape as PortfolioHeroSection — e.g. +¥1,000.00 (+13.17%) */
+  readonly formatPeriodChangeLine: (delta: Decimal, percent: Decimal | null) => string;
   readonly accessibilityLabel?: string;
 }
 
@@ -28,58 +44,58 @@ export function HoldingRow(props: HoldingRowProps): ReactNode {
   const {
     symbol,
     name,
-    sharesLabel,
-    priceLabel,
-    nativeValueLabel,
-    reportingValueLabel,
-    changePercent,
-    formatPercent,
-    onPress,
+    market,
+    marketLabel,
+    imageUrl,
+    positionLabel,
+    valueLabel,
+    valueLoading = false,
+    periodChange,
+    newPositionLabel,
+    formatPeriodChangeLine,
     accessibilityLabel,
   } = props;
 
-  const changeLabel = changePercent !== null ? formatPercent(changePercent) : "—";
-
-  const content = (
-    <Card>
-      <View
-        className="flex-row items-center px-3 py-3 gap-3"
-        accessibilityLabel={accessibilityLabel ?? `${symbol} ${name}`}
-      >
-        <View className="flex-1 min-w-0">
-          <Text className="text-foreground font-medium">{symbol}</Text>
-          <Text className="text-muted text-xs" numberOfLines={1}>
-            {name}
-          </Text>
-          <Text className="text-muted text-xs mt-0.5">{sharesLabel}</Text>
-        </View>
-        <View className="items-end gap-0.5 shrink-0">
-          <View className="flex-row items-center gap-2">
-            <Text className="text-muted text-xs">{priceLabel}</Text>
-            {changePercent !== null ? (
-              <ChangePercentBadge
-                changePercent={changePercent}
-                formatPercent={formatPercent}
-                size="sm"
-              />
-            ) : (
-              <Text className="text-muted text-xs">{changeLabel}</Text>
-            )}
-          </View>
-          <Text className="text-foreground text-sm font-medium">{nativeValueLabel}</Text>
-          {reportingValueLabel ? (
-            <Text className="text-muted text-xs">{reportingValueLabel}</Text>
-          ) : null}
-        </View>
-      </View>
-    </Card>
-  );
-
-  if (!onPress) return content;
+  const classes = useBusinessClasses();
+  const periodDelta = periodChange.kind === "ok" ? periodChange.delta : null;
+  const periodSign = periodDelta !== null ? pnlSignFromDecimal(periodDelta) : "neutral";
+  const periodColorClass =
+    periodSign === "gain"
+      ? classes.gain.text
+      : periodSign === "loss"
+        ? classes.loss.text
+        : classes.pnlNeutral.text;
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button">
-      {content}
-    </Pressable>
+    <View className="flex-row items-center gap-3 w-full" accessibilityLabel={accessibilityLabel}>
+      <AssetAvatar symbol={symbol} market={market} marketLabel={marketLabel} imageUrl={imageUrl} />
+      <View className="flex-1 min-w-0">
+        <Text className={TYPO_SYMBOL}>{symbol}</Text>
+        <Text className={TYPO_CAPTION} numberOfLines={1}>
+          {name}
+        </Text>
+        <Text className={typographyClass("caption", "mt-0.5 tabular-nums")}>{positionLabel}</Text>
+      </View>
+      <View className="items-end gap-1 shrink-0 min-w-[120px]">
+        {valueLoading ? (
+          <Skeleton className="h-5 w-24 rounded-md" />
+        ) : (
+          <Text className={TYPO_METRIC}>{valueLabel}</Text>
+        )}
+        <View className="min-h-[20px] justify-center">
+          {periodChange.kind === "ok" ? (
+            <Text className={typographyClass("changeAmount", periodColorClass)} numberOfLines={1}>
+              {formatPeriodChangeLine(periodChange.delta, periodChange.percent)}
+            </Text>
+          ) : periodChange.kind === "new-position" ? (
+            <Text className={TYPO_CAPTION}>{newPositionLabel}</Text>
+          ) : valueLoading ? (
+            <Skeleton className="h-4 w-16 rounded-md" />
+          ) : (
+            <Text className={TYPO_CAPTION}>—</Text>
+          )}
+        </View>
+      </View>
+    </View>
   );
 }

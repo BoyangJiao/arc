@@ -5,6 +5,13 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { Button, Dialog, Input, Text, TextField } from "../primitives";
+import {
+  TYPO_BODY_MEDIUM,
+  TYPO_CAPTION,
+  TYPO_DANGER,
+  TYPO_FIELD_LABEL,
+  typographyClass,
+} from "../tokens/typography";
 
 export interface TransferDestOption {
   readonly id: string;
@@ -78,12 +85,12 @@ export function CashBalanceTransferSheet({
           <Dialog.Title>{title}</Dialog.Title>
           <View className="gap-4 mt-2">
             <View>
-              <Text className="text-muted text-xs mb-1">{sourceFieldLabel}</Text>
-              <Text className="text-foreground font-medium">{sourcePortfolioName}</Text>
+              <Text className={typographyClass("fieldLabel", "mb-1")}>{sourceFieldLabel}</Text>
+              <Text className={TYPO_BODY_MEDIUM}>{sourcePortfolioName}</Text>
             </View>
 
             <View className="gap-2">
-              <Text className="text-muted text-xs">{destLabel}</Text>
+              <Text className={TYPO_FIELD_LABEL}>{destLabel}</Text>
               {destOptions.map((opt) => (
                 <Button
                   key={opt.id}
@@ -96,7 +103,7 @@ export function CashBalanceTransferSheet({
             </View>
 
             <View className="gap-2">
-              <Text className="text-muted text-xs">{currencyLabel}</Text>
+              <Text className={TYPO_FIELD_LABEL}>{currencyLabel}</Text>
               {currencyOptions.map((opt) => (
                 <Button
                   key={opt.assetId}
@@ -111,7 +118,7 @@ export function CashBalanceTransferSheet({
             </View>
 
             <TextField>
-              <Text className="text-muted text-xs mb-1">{amountLabel}</Text>
+              <Text className={typographyClass("fieldLabel", "mb-1")}>{amountLabel}</Text>
               <Input
                 value={amount}
                 onChangeText={onAmountChange}
@@ -119,9 +126,9 @@ export function CashBalanceTransferSheet({
                 className="text-right"
               />
             </TextField>
-            <Text className="text-muted text-xs">{availableLabel}</Text>
-            {amountError ? <Text className="text-danger text-xs">{amountError}</Text> : null}
-            <Text className="text-muted text-xs">{noFxHint}</Text>
+            <Text className={TYPO_CAPTION}>{availableLabel}</Text>
+            {amountError ? <Text className={TYPO_DANGER}>{amountError}</Text> : null}
+            <Text className={TYPO_CAPTION}>{noFxHint}</Text>
 
             <View className="flex-row gap-2 justify-end">
               <Button variant="ghost" onPress={() => onOpenChange(false)}>

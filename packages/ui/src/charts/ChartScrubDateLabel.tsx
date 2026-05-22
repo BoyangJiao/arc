@@ -15,6 +15,7 @@ import Animated, {
 
 import { CHART_SCRUB_DATE_LABEL_BOTTOM_PAD } from "./chart-scrub-layout";
 import { Text } from "../primitives/Text";
+import { TYPO_CAPTION } from "../tokens/typography";
 
 export interface ChartScrubDateLabelProps {
   readonly x: SharedValue<number>;
@@ -107,7 +108,7 @@ export function ChartScrubDateLabel({
 
   return (
     <Animated.View pointerEvents="none" style={[styles.container, containerStyle]}>
-      <Text className="text-muted text-xs" onLayout={onTextLayout}>
+      <Text className={TYPO_CAPTION} onLayout={onTextLayout}>
         {labels[labelIndex] ?? ""}
       </Text>
     </Animated.View>

@@ -27,6 +27,7 @@ import { View } from "react-native";
 
 import { cn } from "../../primitives";
 import { Text } from "../../primitives/Text";
+import { TYPO_TITLE } from "../../tokens/typography";
 import { HeaderBackButton, HeaderCloseButton } from "./HeaderAtoms";
 
 export type InScreenHeaderLeftType = "back" | "close" | "none";
@@ -100,7 +101,7 @@ export function InScreenHeader({
       </View>
       <View className="flex-1 items-center justify-center px-2">
         {title ? (
-          <Text className="text-foreground text-base font-semibold" numberOfLines={1}>
+          <Text className={TYPO_TITLE} numberOfLines={1}>
             {title}
           </Text>
         ) : null}

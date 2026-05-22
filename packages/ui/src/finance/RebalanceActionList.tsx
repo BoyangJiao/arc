@@ -9,6 +9,7 @@ import type Decimal from "decimal.js";
 import { Text } from "../primitives/Text";
 import { TrendChip } from "../primitives-pro";
 import { useFinanceColorMode } from "../tokens/business-context";
+import { TYPO_BODY_SM, TYPO_CAPTION, TYPO_TITLE, typographyClass } from "../tokens/typography";
 
 import { pnlSignFromDecimal, trendDirectionForPnL } from "./trend-for-business";
 import type { RebalanceActionRow, RebalanceCurrency, RebalanceMarket } from "./rebalance-types";
@@ -50,26 +51,26 @@ export function RebalanceActionList({
 
         return (
           <View key={row.assetId} className="gap-2 py-3 border-b border-divider">
-            <Text className="text-foreground text-base font-semibold">{row.label}</Text>
+            <Text className={TYPO_TITLE}>{row.label}</Text>
             {atTarget ? (
-              <Text className="text-muted text-sm">{atTargetLabel}</Text>
+              <Text className={TYPO_BODY_SM}>{atTargetLabel}</Text>
             ) : (
               <>
                 <TrendChip trend={trend} size="md" variant="soft">
                   {sharesLabel}
                 </TrendChip>
-                <Text className="text-muted text-sm">
+                <Text className={TYPO_BODY_SM}>
                   {amountEstimateLabel} {formatAmount(row.amountNeeded)}
                 </Text>
                 {row.market !== "CASH" && row.priceHint ? (
-                  <Text className="text-muted text-xs">{row.priceHint}</Text>
+                  <Text className={TYPO_CAPTION}>{row.priceHint}</Text>
                 ) : null}
               </>
             )}
           </View>
         );
       })}
-      <Text className="text-muted text-xs pt-2">{disclaimer}</Text>
+      <Text className={typographyClass("disclaimer", "pt-2")}>{disclaimer}</Text>
     </View>
   );
 }

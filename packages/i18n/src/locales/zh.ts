@@ -41,6 +41,7 @@ export const zh = {
     trough: "区间最低",
     noSnapshotHistory: "暂无历史 — 每日快照 cron 运行后会显示曲线",
     sharesRow: "{{shares}} × {{symbol}}",
+    positionLine: "{{shares}} × {{price}}",
   },
   holdings: {
     markets: {
@@ -53,6 +54,22 @@ export const zh = {
     },
     collapse: "收起",
     expand: "展开",
+    sectionTitle: "我的持仓",
+    filterEmpty: "所选市场下暂无持仓",
+    periodChange: {
+      newPosition: "新建仓",
+    },
+    positionUnits: {
+      equity: "{{shares}} 股",
+      fund: "{{shares}} 份",
+      crypto: "{{shares}} {{symbol}}",
+      cash: "{{shares}} {{symbol}}",
+    },
+    a11y: {
+      row: "{{symbol}}，{{name}}，市值 {{value}}",
+      rowWithChange: "{{symbol}}，{{name}}，市值 {{value}}，周期变动 {{change}}",
+      rowNewPosition: "{{symbol}}，{{name}}，市值 {{value}}，所选周期内新建仓",
+    },
   },
   assetDetail: {
     myHolding: "我的持仓",
@@ -316,9 +333,13 @@ export const zh = {
         label: "转账记录",
         hint: "三组合 + CASH 转账 notes 配对",
       },
+      pfMultiMarketFull: {
+        label: "Block C 持仓 UAT",
+        hint: "多市场持仓表：周期涨跌 mix + MSFT 新建仓；含锚点快照（无 730 天曲线）",
+      },
       pf30DaysHistory: {
         label: "Block C Hero 全量 UAT",
-        hint: "多市场全持仓 + 730 天净值曲线（Portfolio Tab Hero / 图表 / 持仓表）；首选 Block C polish 场景",
+        hint: "同上持仓 + 730 天净值 + per_asset 历史（Hero / 图表 / 周期变动）",
       },
     },
   },
