@@ -6,22 +6,22 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-21 by Cursor — **Block C Hero UI/UX polish committed** + dev seed 场景整理 + UAT 提交纪律
+> **Last updated**: 2026-05-22 by Cursor — **Portfolio Tab UI polish 收尾**（soft-foreground 桥接 + 市场筛选 Hero 同步）+ checkpoint 下一模块 polish
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                         |
-| :-------------------- | :-------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block C UAT**（修 bug / 签 S3-AC-C.1–C.12；**不做** Block D / 新 feature）        |
-| **Step**              | 主链 13 commits ✅；**Hero chart polish** `7c7755b` ✅；UAT 数据/adapter 层仍有 unstaged 改动 |
-| **Branch**            | `dev/stage-3`（**ahead 22** vs `origin/dev/stage-3`）                                         |
-| **Last commit**       | `7c7755b` `feat(ui): Portfolio hero chart polish and scrub UX (ADR 013).`                     |
-| **PR**                | 未开；UAT 通过后再 push / Opus review                                                         |
-| **CI status**         | 末次 `pnpm typecheck` 6/6 ✅（Hero commit 前）                                                |
-| **Mobile dev server** | `pnpm mobile` → **8081**；改 `.env` / migration 后 **Metro `--clear`**                        |
-| **Out of scope**      | ADR 012 终版、Block D TWR、大陆 Auth 实现                                                     |
+| Field                 | Value                                                                                                                    |
+| :-------------------- | :----------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 — Block C UAT**（修 bug / 签 S3-AC-C.1–C.12；**不做** Block D / 新 feature）                                   |
+| **Step**              | Portfolio Tab UI polish ✅（`2c20863` holdings + `8adf16f` token bridge / market-filter hero）；**下一模块 polish** 待开 |
+| **Branch**            | `dev/stage-3`（**ahead 23** vs `origin/dev/stage-3`）                                                                    |
+| **Last commit**       | `8adf16f` `fix(ui): soft-foreground Tailwind bridge and market-filter hero sync`                                         |
+| **PR**                | 未开；UAT 通过后再 push / Opus review                                                                                    |
+| **CI status**         | 末次 `pnpm typecheck` 6/6 ✅（Hero commit 前）                                                                           |
+| **Mobile dev server** | `pnpm mobile` → **8081**；改 `.env` / migration 后 **Metro `--clear`**                                                   |
+| **Out of scope**      | ADR 012 终版、Block D TWR、大陆 Auth 实现                                                                                |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -268,10 +268,19 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 **UI polish 单独提交纪律（Opus Block C review 前必读）**：
 
-1. Block C **L2/L3 UI/UX polish**（`packages/ui` charts/finance、`PortfolioHeroSection`）与 Opus 审查的 **adapter / RLS / hooks / core** 层 **正交** —— 可先 commit polish slice（已验证 `7c7755b`）。
+1. Block C **L2/L3 UI/UX polish**（`packages/ui` charts/finance、`PortfolioHeroSection`）与 Opus 审查的 **adapter / RLS / hooks / core** 层 **正交** —— 可先 commit polish slice（已验证 `7c7755b`、`2c20863`、`8adf16f`）。
 2. **提交前自检**：改动是否仅 UI + 薄 wiring（`index.tsx` props、`time-range.ts` UTC、`snapshotsToChartPoints.asOf`）？是 → 可提交。
 3. **若触及** `data-sources`、`packages/core` 估值、`migration`、snapshot cron/query 契约 → **先通知用户**，由用户决定是否与 Opus review 并行或等 review 后再合。
 4. Opus review 后若只改数据层，Hero 组件 **通常无需回滚**；最多同步 `ChartPoint` / hook 字段。
+
+### Block C — Portfolio Tab polish（2026-05-22，commits `2c20863` + `8adf16f`）
+
+| 项                                      | commit    | 说明                                                                                                                 |
+| :-------------------------------------- | :-------- | :------------------------------------------------------------------------------------------------------------------- |
+| Holdings 表 + typography + theme toggle | `2c20863` | HoldingRow 涨跌格式、`HoldingsMarketFilter`、Settings `setColorMode` 修 dark 拨两次                                  |
+| soft-foreground 桥接 + 市场筛选 Hero    | `8adf16f` | `@theme inline` 整族 4 个 `*-soft-foreground` → Foundation；`portfolio-market-filter.ts` 同步 hero 总值/日涨跌/chart |
+
+**Token 根因（必读）**：HeroUI `theme.css` 的 `--color-*-soft-foreground` 不读 Arc `@layer theme` 的 `--*-soft-foreground`；className 走 `--color-*`。见 ADR 003 §双命名空间 + `DESIGN-TOKENS.md` §Tailwind 桥接清单。
 
 **工作区未 commit（UAT / Opus 仍待）**：US adapter、Finnhub/AV 历史价、migration 0012/0013 补丁、seed 扩展、`asset/[symbol]` 等 —— 见 `git status`。
 
@@ -338,12 +347,12 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Immediate next actions (next session)
 
-**Block C — 下一 UI 问题（新会话）**
+**下一模块 UI polish（用户指定）**
 
-1. 读 CLAUDE.md → 本文件 §Block C Hero polish + §UI polish 提交纪律
-2. DEV FAB → **组合** → **`portfolios:30-days-history`** → Portfolio Tab 验证
-3. 继续 Portfolio / Block C 剩余 UI polish 或 UAT 失败项修复
-4. **单独 commit UI polish 前**：对照 §UI polish 提交纪律 判断 Opus 影响
+1. 读 CLAUDE.md → 本文件 §Block C Portfolio Tab polish + ADR 003 §双命名空间
+2. 确认目标模块（Insights / Asset 详情 / Tx entry / Me 等）与 polish 范围
+3. 接新 HeroUI 组件前：grep `*.styles.*` → 对照 `theme.css` → 查 §Tailwind 桥接清单
+4. UI-only 改动可单独 commit；触及 adapter/core/migration 先与用户确认
 
 **Block C UAT / Opus（并行轨）**
 
@@ -369,6 +378,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **Resolved 2026-05-19 (ADR 010 dev cache trust)**: 四条 cache-first 读路径（`use-watchlist-quotes` / `use-portfolio-valuation` / `use-price` / `validate-us-symbol`）统一使用 `apps/mobile/src/lib/stale-quote.ts` 的 `isStaleQuoteSource`。`STALE_SOURCES = {seed-dev, fixture, alphavantage}` 或 `changePercent == null` → 不信任缓存、触发 Finnhub。`CACHE_FIRST_READ_FRESHNESS_MS` 保留 `Infinity`（24h freshness 与 dev 永不自动网络的设计冲突，收回）。DEV watchlist seed 假数据 **保留**（stale-quote 场景需要），仅加注释说明。
 - **Resolved 2026-05-20 (Block A)**: Tushare 免费版仅 A 股 daily；HK/FUND 主源 AKShare Vercel wrapper；场内 ETF（510300）用 `fund_etf_hist_em` 非 `stock_zh_a_hist`；`apps/mobile/.env` AKShare 行须落盘否则 Metro 不加载；cache-first 组合估值对 **cache miss** 自动补网拉价。
 - **Resolved 2026-05-21 (Block C Hero)**: Portfolio Tab 用 **`PortfolioHeroSection`** 替代 `DailySnapshotCard` + `PortfolioValueOverTimeCard` 叠 Card；chart polish 在 `@arc/ui/charts` L2（ADR 013）。**全局**：active portfolio 不论单/多组合均同一 Hero UI。
+- **Resolved 2026-05-22 (Token dual-namespace)**: HeroUI `@theme inline static` 的 `--color-*` 与 Arc `@layer theme` 的 `--*` 是两条通道；`*-soft-foreground` 等 Calculated Variables 须 `global.css` `@theme inline` 桥接。整族 accent/success/danger/warning 已桥接；接新组件见 DESIGN-TOKENS §Tailwind 桥接清单。
 - **Resolved 2026-05-21 (UI commit discipline)**: Block C UI/UX polish 可单独 commit，若仅 L2/L3 + 薄 wiring；触及 data-sources/core/migration 先问用户再 commit。
 
 ## Critical mental model (gotchas easy to forget)
@@ -390,6 +400,8 @@ _(Prior “uncommitted work” table superseded by the above.)_
 - **Expo SDK 55** (2026-05-19): `expo@~55`, RN **0.83.6**, React **19.2**; `app.json` 已移除 `newArchEnabled` / `edgeToEdgeEnabled`（SDK 55 默认）；monorepo 启用 `experiments.autolinkingModuleResolution`；根 `pnpm.overrides` 钉住 `react@19.2.0`。勿扫 **8082** 等非 Arc Metro 二维码（会报 SDK 54 不兼容）。
 - **AKShare wrapper (Vercel)**: 纯 Python 子项目须 `vercel.json` **`builds` + `routes`**（勿仅用 `functions` glob）；共享代码放 `lib/` 勿放 `api/_shared/`。Hobby 冷启动慢；跨市场 4 标的串行拉价 UI 全表「加载中」直到最慢一只返回。
 - **Portfolio Hero**: `import { PortfolioHeroSection } from '@arc/ui'` — 业务页不拼 chart 子组件。DEV 全量 UAT → **`portfolios:30-days-history`**（FAB **组合** → 落地 Portfolio Tab）。
+- **Market filter hero**: `selectedMarketFilters` 非空时 hero 总值/日涨跌/chart 经 `portfolio-market-filter.ts` 重算（与 holdings 表一致）。
+- **Tailwind soft-foreground**: 改 `@layer theme` 的 `--accent-soft-foreground` 不够；须 `global.css` `@theme inline` 桥接 `--color-*-soft-foreground`（见 ADR 003）。
 - **Cross-market DEV seed**: `default:cn-only|hk-only|fund-only|cross-market|crypto-only` 走 **App 内 JWT**（`run-cross-market-seed-client.ts`），非 Edge `dev-seed`。CRYPTO 资产行首次需 `pnpm seed:crypto-only`（service_role）或 Block C migration 0013。
 
 ## Active env / config snapshot
