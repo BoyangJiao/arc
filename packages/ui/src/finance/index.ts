@@ -16,6 +16,11 @@ export {
   type DailySnapshotDelta,
   type DailySnapshotAssetDelta,
 } from "./DailySnapshotCard";
+export {
+  DailySnapshotDetailView,
+  type DailySnapshotDetailViewProps,
+} from "./DailySnapshotDetailView";
+export { DailySnapshotMoverRow, type DailySnapshotMoverRowProps } from "./DailySnapshotMoverRow";
 
 export { DailyMoverChips, type DailyMoverChipsProps } from "./DailyMoverChips";
 

@@ -82,7 +82,9 @@ export const zh = {
     title: "每日盈亏",
     noBaseline: "首次启动，明日开始追踪每日变动",
     detailTitle: "每日盈亏",
-    detailPlaceholder: "详情页开发中",
+    moversSection: "资产变动",
+    staleBaseline: "对比自 {{days}} 天前",
+    disclaimer: "仅供参考，可能延迟",
   },
   portfolioDetail: {
     totalMarketValue: "总市值",

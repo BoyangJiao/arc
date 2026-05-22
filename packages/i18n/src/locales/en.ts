@@ -82,7 +82,9 @@ export const en = {
     title: "Daily P&L",
     noBaseline: "First time here — daily change starts tracking tomorrow",
     detailTitle: "Daily P&L",
-    detailPlaceholder: "Detail screen coming soon",
+    moversSection: "Asset moves",
+    staleBaseline: "Compared to {{days}} days ago",
+    disclaimer: "For reference only; may be delayed",
   },
   portfolioDetail: {
     totalMarketValue: "Total Market Value",
