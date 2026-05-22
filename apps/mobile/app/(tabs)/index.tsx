@@ -41,15 +41,22 @@ import { useAuth } from "../../src/lib/auth";
 import { currencySymbol, formatMoney } from "../../src/lib/format-money";
 import { buildHoldingsTableRows } from "../../src/lib/holdings-presenter";
 import {
+  filterPortfolioDailySnapshot,
+  filterPortfolioValuation,
+  isMarketFilterActive,
+} from "../../src/lib/portfolio-market-filter";
+import {
   useActivePortfolio,
   useAssetCatalog,
   useDailyDelta,
+  useDailySnapshot,
   usePortfolioHoldings,
   usePortfolioValuation,
   usePortfolioValueSnapshots,
   periodBaselineByAsset,
   snapshotsToChartPoints,
 } from "../../src/lib/queries";
+import { computeDailyDelta } from "@arc/core";
 import { useUserPreferences } from "../../src/lib/user-preferences";
 import { useTranslation } from "@arc/i18n";
 
@@ -77,6 +84,7 @@ export default function PortfolioTab() {
   } = usePortfolioValuation(activeId, reportingCurrency);
 
   const dailyDelta = useDailyDelta(activeId, reportingCurrency);
+  const dailySnapshot = useDailySnapshot(activeId);
   const snapshots = usePortfolioValueSnapshots(activeId, chartRange);
 
   const assetIds = useMemo(() => holdings.map((h) => h.assetId), [holdings]);
@@ -173,9 +181,44 @@ export default function PortfolioTab() {
     return holdingsRows.filter((row) => selectedMarketFilters.has(row.market));
   }, [holdingsRows, selectedMarketFilters]);
 
+  const marketFilterActive = isMarketFilterActive(selectedMarketFilters);
+
+  const holdingsCount = holdings.length;
+  const hasHoldings = holdingsCount > 0;
+
+  const heroTotalValue = useMemo(() => {
+    if (!valuation || !hasHoldings) return ZERO;
+    if (!marketFilterActive) return valuation.totalValue;
+    return filterPortfolioValuation(valuation, selectedMarketFilters).totalValue;
+  }, [valuation, hasHoldings, marketFilterActive, selectedMarketFilters]);
+
+  const heroDelta = useMemo(() => {
+    if (dailyDelta.isPending || dailyDelta.isError || !valuation) return null;
+    if (!marketFilterActive) return dailyDelta.data;
+    const filteredValuation = filterPortfolioValuation(valuation, selectedMarketFilters);
+    const filteredBaseline = dailySnapshot.data
+      ? filterPortfolioDailySnapshot(dailySnapshot.data, selectedMarketFilters)
+      : null;
+    return computeDailyDelta(filteredValuation, filteredBaseline);
+  }, [
+    dailyDelta.isPending,
+    dailyDelta.isError,
+    dailyDelta.data,
+    valuation,
+    marketFilterActive,
+    selectedMarketFilters,
+    dailySnapshot.data,
+  ]);
+
   const chartPoints = useMemo(
-    () => decimateChartPoints(snapshotsToChartPoints(snapshots.data ?? [])),
-    [snapshots.data]
+    () =>
+      decimateChartPoints(
+        snapshotsToChartPoints(
+          snapshots.data ?? [],
+          marketFilterActive ? selectedMarketFilters : undefined
+        )
+      ),
+    [snapshots.data, marketFilterActive, selectedMarketFilters]
   );
 
   const formatAnchorTime = useCallback(
@@ -188,11 +231,9 @@ export default function PortfolioTab() {
     [i18n.language]
   );
 
-  const holdingsCount = holdings.length;
   const pricedCount = valuation?.perAsset.length ?? 0;
   const hasPartialQuotes =
     holdingsCount > 0 && pricedCount > 0 && pricedCount < holdingsCount && !valuationFetching;
-  const hasHoldings = holdingsCount > 0;
 
   const handleAvatarPress = () => {
     router.push("/me" as Href);
@@ -247,9 +288,9 @@ export default function PortfolioTab() {
               ) : null}
               <PortfolioHeroSection
                 totalValueTitle={t("portfolio.totalValue")}
-                liveTotalValue={hasHoldings && valuation ? valuation.totalValue : ZERO}
+                liveTotalValue={heroTotalValue}
                 formatMoney={(amount) => formatMoney(amount, reportingCurrency)}
-                delta={dailyDelta.data ?? null}
+                delta={heroDelta}
                 noBaselineMessage={t("dailySnapshot.noBaseline")}
                 formatChangeLine={(delta, percent) =>
                   formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))

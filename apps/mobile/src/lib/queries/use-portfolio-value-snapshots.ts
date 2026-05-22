@@ -8,6 +8,9 @@ import Decimal from "decimal.js";
 import type { Currency } from "@arc/core";
 import type { TimeRange } from "@arc/ui";
 
+import type { Market } from "@arc/core";
+
+import { sumPerAssetReportingMap } from "../portfolio-market-filter";
 import { useAuth } from "../auth";
 import { supabase } from "../supabase";
 import { rangeToWindow } from "../time-range";
@@ -82,14 +85,21 @@ export const periodBaselineByAsset = (
 };
 
 export const snapshotsToChartPoints = (
-  points: readonly PortfolioSnapshotPoint[]
+  points: readonly PortfolioSnapshotPoint[],
+  marketFilter?: ReadonlySet<Market>
 ): ReadonlyArray<{ x: number; y: number; label: string; asOf: string }> =>
-  points.map((p, index) => ({
-    x: index,
-    y: p.totalValue.toNumber(),
-    label: p.asOf.slice(0, 10),
-    asOf: p.asOf,
-  }));
+  points.map((p, index) => {
+    const y =
+      marketFilter && marketFilter.size > 0
+        ? sumPerAssetReportingMap(p.perAssetReporting, marketFilter).toNumber()
+        : p.totalValue.toNumber();
+    return {
+      x: index,
+      y,
+      label: p.asOf.slice(0, 10),
+      asOf: p.asOf,
+    };
+  });
 
 export const snapshotPeakTrough = (
   points: readonly PortfolioSnapshotPoint[]
