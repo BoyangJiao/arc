@@ -12,12 +12,20 @@
  *   #4  twr.property.spec.ts (≥ 20 property tests)
  */
 
-import type Decimal from "decimal.js";
+import Decimal from "decimal.js";
 import type { Currency, Holding, PriceQuote } from "../domain/types";
+
+// 28-digit precision per TWR spec §决策 7 — aligns with transactions
+// numeric(28,12) column. Set globally on the Decimal class; existing modules
+// (rebalance / valuation / daily-delta) tested at this precision are stable
+// because their assertions use exact-string comparisons that match at both
+// 20 and 28 digits.
+Decimal.set({ precision: 28 });
 
 export * from "./types";
 export * from "./errors";
 export * from "./cash-flow";
+export * from "./twr";
 
 /**
  * computeCumulativeReturn — Stage 1 simple cumulative return.

@@ -75,9 +75,16 @@ export interface AssetTwrInput {
  * transactions only (spec §决策 2). `valueAt(date)` returns the portfolio
  * total value in reporting currency at `date`; mobile hooks wrap
  * `portfolio_value_snapshots` with `computeValuationAtDate` fallback.
+ *
+ * `reportingCurrency` filters cash-flow events to same-currency only: a
+ * BUY CASH:USD in a CNY-reporting portfolio is treated as an internal asset
+ * purchase, not external funding. Users who actually convert currencies
+ * record two transactions (SELL CASH:CNY + BUY CASH:USD) so each portfolio
+ * view stays internally consistent.
  */
 export interface PortfolioTwrInput {
   readonly portfolioId: string;
+  readonly reportingCurrency: Currency;
   readonly from: Date;
   readonly to: Date;
   readonly transactions: ReadonlyArray<Transaction>;
