@@ -6,23 +6,23 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-24 by Claude Opus 4.7 — **/checkpoint for new-Opus-session handoff**: Block D 3 spec 全 Accepted（10 OQ 全 A 锁，决策 10-14 in TWR / 7-9 in PA / 6-7 in Drawdown）；Block C UAT 进行中（用户修 polish bugs，与 Block D Phase 1 并行不冲突）；CoinGecko fix `c1af8cf` 本地未 push；ADR 012 待用户/Cursor 升「已接受」。**新 Opus 会话从 TWR spec Phase 1 commit #1 起步**（`returns/cash-flow.ts` + types + errors）。
+> **Last updated**: 2026-05-24 by Claude Opus 4.7 — **Block C UAT ✅ + Block D Phase 1 ✅** (TWR algorithm layer landed via 4 commits `1da6437`/`e2399c4`/`3b71170`/`d467b6e`; @arc/core 149/149 tests pass incl. 21 property tests; xirr damping bug discovered & fixed by property test X1 counterexample r=-0.45). Branch ahead 34 vs origin. **Next**: (1) user push → Opus Block C review of `9ffcaf7` charts / `08e86f3` fallback / `251fc11` tx entry; (2) Sonnet/Cursor session start TWR Phase 2 (mobile hooks + UI接入); (3) Opus PA + Drawdown specs Phase 1 then UI.
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                                                                            |
-| :-------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block C UAT 进行中 + Block D Phase 1 可起（两路并行）**                                                                                              |
-| **Step (Block C)**    | 用户修 UAT bugs（per session 修一个）；未来某天 UAT 全 ✅ → push 29 commits → Opus review                                                                        |
-| **Step (Block D)**    | **新 Opus 会话起步**：TWR spec § Implementation plan Phase 1 commit #1 = `@arc/core/src/returns/{cash-flow.ts, types.ts, errors.ts}`；纯 core，不依赖 Block C UI |
-| **Branch**            | `dev/stage-3`（**ahead 29** vs `origin/dev/stage-3`，本地多个 polish commits + CoinGecko fix `c1af8cf` 未 push）                                                 |
-| **Last commit**       | `c1af8cf` `fix(coingecko): drop redundant client-side window filter` (163/163 ✅)                                                                                |
-| **PR**                | 未开；Block C UAT 通过 + Block D Phase 1 完成后统一 push + 开 PR                                                                                                 |
-| **CI status**         | `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 163/163 ✅                                                                                      |
-| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                               |
-| **Out of scope**      | Block E features (Inbox/AI/订阅/脱敏/价格异动)、Block F polish redesign + CSV、大陆 Auth (ADR 012 P1) 实现                                                       |
+| Field                 | Value                                                                                                                                                                 |
+| :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅** (TWR algorithm + 21 property tests landed locally)                                                                  |
+| **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: user push → Opus review of #2/#4/#11 (charts / fallback / tx entry)                                                    |
+| **Step (Block D)**    | **Phase 1 ✅ algorithm** (`@arc/core/returns/{cash-flow,twr,xirr}.ts` + 21 property tests). **Next** = Phase 2 (mobile hooks + UI 接入 — Sonnet/Cursor route per §七) |
+| **Branch**            | `dev/stage-3` (**ahead 34** vs `origin/dev/stage-3` — incl. 4 Block D Phase 1 commits, 30 prior unpushed Block C polish + Block A/B/C feature commits)                |
+| **Last commit**       | `d467b6e` `test(core): twr.property.spec.ts (21 properties) + xirr damping fix` (149/149 ✅ @arc/core)                                                                |
+| **PR**                | 未开；建议 push 后开 `dev/stage-3 → main` PR 与 Block C review 同步进行                                                                                               |
+| **CI status**         | `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/core test` 149/149 ✅                                                                                                   |
+| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                    |
+| **Out of scope**      | Block E features (Inbox/AI/订阅/脱敏/价格异动)、Block F polish redesign + CSV、大陆 Auth (ADR 012 P1) 实现                                                            |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -285,24 +285,26 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 **工作区未 commit（UAT / Opus 仍待）**：US adapter、Finnhub/AV 历史价、migration 0012/0013 补丁、seed 扩展、`asset/[symbol]` 等 —— 见 `git status`。
 
-### Block C UAT — S3-AC-C 清单（契约：holdings-and-transactions-stage-3.md §S3-AC-C）
+### Block C UAT — S3-AC-C 清单 ✅ (user verified 2026-05-24)
 
-| AC       | 测什么                                 | DEV / 操作提示                          | 状态 |
-| :------- | :------------------------------------- | :-------------------------------------- | :--- |
-| **C.1**  | 持仓表 market 分组 + 双币种            | seed `multi-market-full`；reporting=CNY | ⏳   |
-| **C.2**  | tap 行 → `/asset/CN/600519`            | 任一行                                  | ⏳   |
-| **C.3**  | 详情 1M→1Y 重拉 historical             | CN 标的                                 | ⏳   |
-| **C.4**  | tx entry CN 搜「茅台」→ AKShare search | 需 #5 prod + env token                  | ⏳   |
-| **C.5**  | CRYPTO BUY → ensureAsset + tx          | migration **0013** 必 applied           | ⏳   |
-| **C.6**  | trade_date 可 back-date ≠ created_at   | 录 NVDA 指定日期                        | ⏳   |
-| **C.7**  | per-portfolio last-used market         | 两组合各录不同 market 再进 tx           | ⏳   |
-| **C.8**  | Insights donut 按 asset 权重           | 美股组合三标的                          | ⏳   |
-| **C.9**  | Portfolio area-chart + Hero scrub      | seed **`30-days-history`**（730 天）    | ⏳   |
-| **C.10** | search 503 限流 UI 保留旧结果          | DEV 模拟或 wrapper 限流                 | ⏳   |
-| **C.11** | Tushare CN NotImpl → AKShare fallback  | 搜 CN（主源 stub）                      | ⏳   |
-| **C.12** | 详情「我的持仓」盈亏色                 | 持有 CN:600519                          | ⏳   |
+所有 C.1–C.12 通过签 off。无回归 bug。详细 AC 契约见 `holdings-and-transactions-stage-3.md §S3-AC-C`。
 
-**UAT 记录建议**：每 AC 一行 ✅/❌ + 截图/现象；❌ 附复现步骤 → 新会话只修 listed bugs。
+| AC       | 测什么                                 | 状态 |
+| :------- | :------------------------------------- | :--- |
+| **C.1**  | 持仓表 market 分组 + 双币种            | ✅   |
+| **C.2**  | tap 行 → `/asset/CN/600519`            | ✅   |
+| **C.3**  | 详情 1M→1Y 重拉 historical             | ✅   |
+| **C.4**  | tx entry CN 搜「茅台」→ AKShare search | ✅   |
+| **C.5**  | CRYPTO BUY → ensureAsset + tx          | ✅   |
+| **C.6**  | trade_date 可 back-date ≠ created_at   | ✅   |
+| **C.7**  | per-portfolio last-used market         | ✅   |
+| **C.8**  | Insights donut 按 asset 权重           | ✅   |
+| **C.9**  | Portfolio area-chart + Hero scrub      | ✅   |
+| **C.10** | search 503 限流 UI 保留旧结果          | ✅   |
+| **C.11** | Tushare CN NotImpl → AKShare fallback  | ✅   |
+| **C.12** | 详情「我的持仓」盈亏色                 | ✅   |
+
+**Next on Block C track**: user push the 34 ahead commits → 起 Opus 会话 review `9ffcaf7` (#2 charts) / `08e86f3` (#4 fallback) / `251fc11` (#11 tx entry).
 
 ### 关键路径（修 bug 时）
 
@@ -318,22 +320,51 @@ _(Prior “uncommitted work” table superseded by the above.)_
 | Seed              | `run-portfolios-seed-client.ts`, DEV panel **`portfolios:30-days-history`**（CLI 仍可用 `pnpm seed:portfolios:multi-market-full` 轻量种子） |
 | Migrations        | `0012_portfolio_value_snapshots_user_insert_manual.sql`, `0013_assets_authenticated_insert_crypto.sql`                                      |
 
-### 给 Block C UAT 专会话的 hand-off（复制到新 Chat）
+## Stage 3 — Block D Phase 1 progress (2026-05-24) ✅
+
+TWR algorithm layer 全栈落地，纯 `@arc/core`，未碰 UI / hooks / adapters。
+
+| Commit    | Title (摘要)                                                      | Files | Tests added              |
+| :-------- | :---------------------------------------------------------------- | :---- | :----------------------- |
+| `1da6437` | `feat(core): returns/cash-flow.ts + types.ts + errors.ts`         | 5     | 19 (cash-flow detection) |
+| `e2399c4` | `feat(core): returns/twr.ts (Modified Dietz simplified)`          | 4     | 10 (twr unit)            |
+| `3b71170` | `feat(core): returns/xirr.ts (Newton-Raphson MWR)`                | 3     | 5 (xirr unit)            |
+| `d467b6e` | `test(core): twr.property.spec.ts (21 properties) + xirr damping` | 2     | 21 (property) + 1 sanity |
+
+**Total**: 14 files / +2083 / -28 ; `pnpm --filter @arc/core test` **149/149 ✅** ; `pnpm typecheck` **6/6 ✅**.
+
+### Algorithm contract (locked — Phase 2 hooks consume these signatures)
+
+- `computePortfolioTwr(input: PortfolioTwrInput): TwrResult` — `valueAt(date)` returns EOD-after-CF; chain strips CF from intermediate sub-period ends; same-currency CF filter via `reportingCurrency`
+- `computeAssetTwr(input: AssetTwrInput): TwrResult` — every BUY/SELL of asset is a CF; `valueAt` derived from `computeSharesAt × priceAt`
+- `computeMwr(cashFlows, options?): MwrResult` — Newton-Raphson with damping (next-r ≤ -1 → step halfway to -0.999); throws `ConvergenceError` on empty / zero-spread / iteration-cap / zero-derivative
+- `computeSharesAt(transactions, assetId, date)` + `getAssetFirstBuyDate(transactions, assetId)` — exported for PA spec reuse
+- `Decimal.set({ precision: 28 })` declared in `returns/index.ts` (spec §决策 7); existing 113 prior tests pass at 28-digit precision
+
+### 雪球对标准备清单 (Phase 3 — user 配合)
+
+- 3 标的 ≥ 6 个月真实持仓（建议 1 CN + 1 US + 1 ETF/FUND 覆盖跨币种）
+- 真实 transactions 在 Arc 录入（Block C tx entry 已支持）
+- Arc TWR vs 雪球 TWR 截图存档 `docs/dod-verification/twr-snowball-{ticker}-{date}.png`
+- 误差 ≤ 1.0% per 标的 (Stage 3 DoD-hard)
+
+### Phase 2 hand-off prompt (复制到新 Sonnet/Cursor Chat)
 
 ```
-接力 Arc Stage 3 Block C UAT only（修 S3-AC-C.x，不做新 feature / Block D）。
+接力 Arc Stage 3 Block D TWR Phase 2（mobile hooks + UI 接入）。
 
-必读：CLAUDE.md → .specify/session-state.md §Block C UAT → holdings-and-transactions-stage-3.md §S3-AC-C。
+必读：CLAUDE.md → .specify/session-state.md §Block D Phase 1 → twr-stage-3.md §"Implementation plan Phase 2".
 
-分支 dev/stage-3 @ `7c7755b`。前置：Supabase 0012+0013、AKShare vercel --prod、DEV seed **`portfolios:30-days-history`**。
+Phase 1 已落地 4 commits（cash-flow/twr/xirr/property tests，149/149 ✅）；
+本会话不动 @arc/core，只在 apps/mobile + packages/ui/finance 加 2 hooks + 1 内嵌组件 + 3 处页面挂数字。
 
-用户将提供 UAT 失败项；只修回归，不改 scope。Opus review #2/#4/#11 与 Block D 本阶段不做。
+commit chain：
+  #5 feat(mobile): use-asset-twr + use-portfolio-twr (TanStack hooks，wrap snapshot + computeValuationAtDate fallback；valueAt 按 spec §决策 3 优先读 portfolio_value_snapshots)
+  #6 feat(ui+mobile): TwrInlineLabel 组件 + Portfolio Tab Hero 接入 + Asset detail 接入 + Insights 卡接入 + i18n 6 strings
+
+按 spec §UI contract J15a/b/c 三处接入位置；时段联动复用 Block C `rangeToWindow` helper。
+不 push；每 commit 末 pnpm typecheck 6/6 + pnpm test 全绿。
 ```
-
-### 并行轨（不阻塞 UAT）
-
-- **Opus**（另会话）: review `9ffcaf7` / `08e86f3` / `251fc11`；ADR 012 提议 review
-- **Block D**: UAT 全绿后再 `twr-stage-3.md`
 
 ## Active blockers / waiting on user
 
@@ -348,21 +379,30 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Immediate next actions (next session)
 
-**下一模块 UI polish（用户指定）**
+**Track A — Block C 收尾（用户主导）**
 
-1. 读 CLAUDE.md → 本文件 §Block C Portfolio Tab polish + ADR 003 §双命名空间
-2. 确认目标模块（Insights / Asset 详情 / Tx entry / Me 等）与 polish 范围
-3. 接新 HeroUI 组件前：grep `*.styles.*` → 对照 `theme.css` → 查 §Tailwind 桥接清单
-4. UI-only 改动可单独 commit；触及 adapter/core/migration 先与用户确认
+1. `git push origin dev/stage-3`（34 ahead；含 Block C 主链 + Hero polish + Block D Phase 1）
+2. 起 Opus 会话 review Block C 三个 deferred commits（`9ffcaf7` charts wrapper / `08e86f3` `NotImplementedError → withFallback` / `251fc11` cross-market tx entry）+ ADR 012 提议复审
+3. 评估开 `dev/stage-3 → main` Stage 3 partial PR（Block A/B/C + Block D algorithm，Phase 2/3 后续 PR）
 
-**Block C UAT / Opus（并行轨）**
+**Track B — Block D Phase 2（Sonnet/Cursor，新会话）**
 
-1. 跑前置表（0012/0013、vercel --prod、DEV seed、Metro clear）
-2. 按 §S3-AC-C.1–C.12 签 off；失败项记 bug
-3. 全绿 → push → Opus Block C review（#2 charts / #4 fallback / #11 tx entry + 数据层）
-4. 合入 unstaged adapter/seed 改动前与用户确认
+1. 用 §Phase 2 hand-off prompt 起 Sonnet/Cursor 会话
+2. 实施 commit #5/#6（hooks + UI 挂数字）
+3. UAT：Asset detail "1Y TWR：+X.XX%" 联动 / Portfolio Tab Hero "YTD TWR" 显示 / Insights 卡 "1月 TWR"
 
-**暂缓**：ADR 012 接受、Block D、大陆 Auth 实现。
+**Track C — Block D Phase 3（用户 + Opus）**
+
+1. 用户选 3 标的 ≥ 6 月真实持仓（建议 1 CN + 1 US + 1 ETF/FUND）
+2. 雪球 TWR 截图 + Arc 录入相同 transactions
+3. 截图存档 `docs/dod-verification/twr-snowball-{ticker}-{date}.png` + 误差 ≤ 1.0%
+
+**Track D — Block D specs 余下两条（Opus）**
+
+1. PA spec implementation Phase 1 — 复用 `computeSharesAt` + sub-period contribution
+2. Drawdown spec implementation Phase 1 — 基于 `portfolio_value_snapshots` 时序
+
+**暂缓**：ADR 012 接受、大陆 Auth 实现。
 
 **Switch-back-to-Opus triggers** (Stage 3):
 
