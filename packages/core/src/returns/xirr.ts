@@ -95,6 +95,13 @@ export const computeMwr = (
     });
   }
 
+  // Damping floor — Newton-Raphson can overshoot to r ≤ -1 (singularity of
+  // (1+r)^x for fractional x). When that happens, take a damped step halfway
+  // toward DAMP_FLOOR instead, keeping r safely above -1 while still moving
+  // in the indicated direction. Discovered by property test X1: counterexample
+  // r = -0.45 from initialGuess 0.1 had its first NR step land at r = -1.0
+  // exactly, falsely triggering "derivative collapsed".
+  const DAMP_FLOOR = new Decimal("-0.999");
   let r = initialGuess;
   for (let i = 0; i < maxIterations; i++) {
     const { npv, dnpv } = npvAndDerivative(flows, r);
@@ -108,7 +115,11 @@ export const computeMwr = (
         rate: r.toString(),
       });
     }
-    r = r.minus(npv.div(dnpv));
+    let next = r.minus(npv.div(dnpv));
+    if (next.lte(-1)) {
+      next = r.plus(DAMP_FLOOR).div(2);
+    }
+    r = next;
   }
   throw new ConvergenceError(`XIRR did not converge within ${maxIterations} iterations`, {
     reason: "iteration-cap",
