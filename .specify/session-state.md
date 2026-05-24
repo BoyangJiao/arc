@@ -6,22 +6,23 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-22 by Cursor — **Portfolio Tab UI polish 收尾**（soft-foreground 桥接 + 市场筛选 Hero 同步）+ checkpoint 下一模块 polish
+> **Last updated**: 2026-05-24 by Claude Opus 4.7 — **/checkpoint for new-Opus-session handoff**: Block D 3 spec 全 Accepted（10 OQ 全 A 锁，决策 10-14 in TWR / 7-9 in PA / 6-7 in Drawdown）；Block C UAT 进行中（用户修 polish bugs，与 Block D Phase 1 并行不冲突）；CoinGecko fix `c1af8cf` 本地未 push；ADR 012 待用户/Cursor 升「已接受」。**新 Opus 会话从 TWR spec Phase 1 commit #1 起步**（`returns/cash-flow.ts` + types + errors）。
 
 ---
 
 ## You are here
 
-| Field                 | Value                                                                                                                    |
-| :-------------------- | :----------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block C UAT**（修 bug / 签 S3-AC-C.1–C.12；**不做** Block D / 新 feature）                                   |
-| **Step**              | Portfolio Tab UI polish ✅（`2c20863` holdings + `8adf16f` token bridge / market-filter hero）；**下一模块 polish** 待开 |
-| **Branch**            | `dev/stage-3`（**ahead 23** vs `origin/dev/stage-3`）                                                                    |
-| **Last commit**       | `8adf16f` `fix(ui): soft-foreground Tailwind bridge and market-filter hero sync`                                         |
-| **PR**                | 未开；UAT 通过后再 push / Opus review                                                                                    |
-| **CI status**         | 末次 `pnpm typecheck` 6/6 ✅（Hero commit 前）                                                                           |
-| **Mobile dev server** | `pnpm mobile` → **8081**；改 `.env` / migration 后 **Metro `--clear`**                                                   |
-| **Out of scope**      | ADR 012 终版、Block D TWR、大陆 Auth 实现                                                                                |
+| Field                 | Value                                                                                                                                                            |
+| :-------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 — Block C UAT 进行中 + Block D Phase 1 可起（两路并行）**                                                                                              |
+| **Step (Block C)**    | 用户修 UAT bugs（per session 修一个）；未来某天 UAT 全 ✅ → push 29 commits → Opus review                                                                        |
+| **Step (Block D)**    | **新 Opus 会话起步**：TWR spec § Implementation plan Phase 1 commit #1 = `@arc/core/src/returns/{cash-flow.ts, types.ts, errors.ts}`；纯 core，不依赖 Block C UI |
+| **Branch**            | `dev/stage-3`（**ahead 29** vs `origin/dev/stage-3`，本地多个 polish commits + CoinGecko fix `c1af8cf` 未 push）                                                 |
+| **Last commit**       | `c1af8cf` `fix(coingecko): drop redundant client-side window filter` (163/163 ✅)                                                                                |
+| **PR**                | 未开；Block C UAT 通过 + Block D Phase 1 完成后统一 push + 开 PR                                                                                                 |
+| **CI status**         | `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/data-sources test` 163/163 ✅                                                                                      |
+| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                               |
+| **Out of scope**      | Block E features (Inbox/AI/订阅/脱敏/价格异动)、Block F polish redesign + CSV、大陆 Auth (ADR 012 P1) 实现                                                       |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
@@ -98,18 +99,18 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ## Testing harness (canonical docs)
 
-| Layer           | Arc artifact                                                                                               |
-| :-------------- | :--------------------------------------------------------------------------------------------------------- |
-| Strategy        | [`docs/testing-strategy.md`](../docs/testing-strategy.md)                                                  |
-| UAT spec        | [`.specify/feature-specs/watchlist-stage-2.md`](../.specify/feature-specs/watchlist-stage-2.md) §S2-AC-2.x |
-| UAT commands    | [`docs/dev-seed-cheatsheet.md`](../docs/dev-seed-cheatsheet.md)                                            |
-| CLI watchlist   | `pnpm seed:wl:empty` / `pnpm seed:wl:3` / `pnpm seed:wl:stale`                                             |
-| **App DEV FAB** | **功能 → 场景** — 自选场景走 App 内种子；每日快照仍要 Edge `dev-seed` deploy                               |
-| Edge deploy     | `pnpm functions:deploy:dev-seed` + `pnpm functions:secrets:dev-tools` (Daily Snapshot scenarios only)      |
+| Layer           | Arc artifact                                                                                                               |
+| :-------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| Strategy        | [`docs/testing-strategy.md`](../docs/testing-strategy.md)                                                                  |
+| UAT spec        | [`.specify/feature-specs/stage-2/watchlist-stage-2.md`](../.specify/feature-specs/stage-2/watchlist-stage-2.md) §S2-AC-2.x |
+| UAT commands    | [`docs/dev-seed-cheatsheet.md`](../docs/dev-seed-cheatsheet.md)                                                            |
+| CLI watchlist   | `pnpm seed:wl:empty` / `pnpm seed:wl:3` / `pnpm seed:wl:stale`                                                             |
+| **App DEV FAB** | **功能 → 场景** — 自选场景走 App 内种子；每日快照仍要 Edge `dev-seed` deploy                                               |
+| Edge deploy     | `pnpm functions:deploy:dev-seed` + `pnpm functions:secrets:dev-tools` (Daily Snapshot scenarios only)                      |
 
 ## Stage 3 — roadmap Accepted (2026-05-19)
 
-完整路线图见 `.specify/feature-specs/stage-3-roadmap.md`。6 个 Block 依赖排序 + 14 个决策锁定。
+完整路线图见 `.specify/feature-specs/stage-3/stage-3-roadmap.md`。6 个 Block 依赖排序 + 14 个决策锁定。
 
 **Block 顺序**：A（多市场 adapters）→ B（多组合管理）→ C（详情页+图表）→ D（算法 Opus 主场）→ E（polish）→ F（CSV+P2）
 
@@ -202,10 +203,10 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 ### Specs Accepted
 
-| Spec                                                                              | 决策                                        | Commits | 估时    |
-| :-------------------------------------------------------------------------------- | :------------------------------------------ | :------ | :------ |
-| `.specify/feature-specs/coingecko-adapter-stage-3.md`（Block A 漏单）             | 6                                           | 6       | ~3-5h   |
-| `.specify/feature-specs/holdings-and-transactions-stage-3.md`（Block C expanded） | 13（8 architecture + 5 UX-level A/A/A/A/A） | 13      | ~17-22h |
+| Spec                                                                                      | 决策                                        | Commits | 估时    |
+| :---------------------------------------------------------------------------------------- | :------------------------------------------ | :------ | :------ |
+| `.specify/feature-specs/stage-3/coingecko-adapter-stage-3.md`（Block A 漏单）             | 6                                           | 6       | ~3-5h   |
+| `.specify/feature-specs/stage-3/holdings-and-transactions-stage-3.md`（Block C expanded） | 13（8 architecture + 5 UX-level A/A/A/A/A） | 13      | ~17-22h |
 
 ### Phase 1 — CoinGecko (preflight to Block C)
 
@@ -307,7 +308,7 @@ _(Prior “uncommitted work” table superseded by the above.)_
 
 | 领域              | 路径                                                                                                                                        |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
-| Spec / AC         | `.specify/feature-specs/holdings-and-transactions-stage-3.md`                                                                               |
+| Spec / AC         | `.specify/feature-specs/stage-3/holdings-and-transactions-stage-3.md`                                                                       |
 | Kickoff           | `.specify/handoffs/cursor-stage-3-block-c-kickoff.md`                                                                                       |
 | Portfolio Tab     | `apps/mobile/app/(tabs)/index.tsx`, **`PortfolioHeroSection`**, `HoldingsTable`                                                             |
 | Asset 详情        | `apps/mobile/app/asset/[market]/[symbol].tsx`, hooks `use-asset-detail`, `use-historical-quotes`                                            |
