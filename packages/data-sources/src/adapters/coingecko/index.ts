@@ -180,6 +180,8 @@ export const createCoingeckoAdapter = (config: CoingeckoAdapterConfig = {}): Pri
         });
       }
 
+      // No client-side window filter: market_chart?days=N already does API-side windowing
+      // (Block C UAT fix 2026-05-24 — filter was incompatible with mock timestamps).
       return quotes.sort((a, b) => a.asOf.localeCompare(b.asOf));
     },
 
