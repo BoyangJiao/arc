@@ -10,13 +10,13 @@ export interface TimeWindow {
   readonly to: Date;
 }
 
-const endOfUtcDay = (d: Date): Date => {
+export const endOfUtcDay = (d: Date): Date => {
   const out = new Date(d);
   out.setUTCHours(23, 59, 59, 999);
   return out;
 };
 
-const startOfUtcDay = (d: Date): Date => {
+export const startOfUtcDay = (d: Date): Date => {
   const out = new Date(d);
   out.setUTCHours(0, 0, 0, 0);
   return out;

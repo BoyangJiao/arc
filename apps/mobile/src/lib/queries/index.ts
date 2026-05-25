@@ -51,6 +51,8 @@ export {
   snapshotPeakTrough,
   type PortfolioSnapshotPoint,
 } from "./use-portfolio-value-snapshots";
+export { useAssetTwr, type UseAssetTwrInput } from "./use-asset-twr";
+export { usePortfolioTwr, type UsePortfolioTwrInput } from "./use-portfolio-twr";
 export {
   useTargetAllocations,
   useUpsertTargetAllocations,
