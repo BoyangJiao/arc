@@ -10,7 +10,7 @@ import { useTranslation } from "@arc/i18n";
 
 import { goHrefForScenario, invokeDevSeed } from "../../lib/dev-tools/invoke-dev-seed";
 import { useDevToolsFabStore } from "../../lib/dev-tools/dev-tools-fab-store";
-import { useWatchlistRateLimitSimStore } from "../../lib/dev-tools/watchlist-rate-limit-sim";
+import { useApiRateLimitSimStore } from "../../lib/dev-tools/api-rate-limit-sim";
 import {
   DEV_SEED_FEATURES,
   findFeatureForScenario,
@@ -38,8 +38,8 @@ export function DevToolsScenarioPanel({
   const [activeScenarioId, setActiveScenarioId] = useState<DevSeedScenarioId | null>(null);
   const [lastSuccessId, setLastSuccessId] = useState<DevSeedScenarioId | null>(null);
 
-  const rateLimitSimArmed = useWatchlistRateLimitSimStore((s) => s.armed);
-  const setRateLimitSimArmed = useWatchlistRateLimitSimStore((s) => s.setArmed);
+  const rateLimitSimArmed = useApiRateLimitSimStore((s) => s.armed);
+  const setRateLimitSimArmed = useApiRateLimitSimStore((s) => s.setArmed);
 
   const selectedFeature = selectedFeatureId
     ? DEV_SEED_FEATURES.find((f) => f.id === selectedFeatureId)
@@ -123,14 +123,14 @@ export function DevToolsScenarioPanel({
           <View className="p-4 flex-row items-center justify-between gap-3">
             <View className="flex-1 gap-1 pr-2">
               <Text className="text-foreground text-base font-semibold">
-                {t("devTools.watchlistRateLimitSimLabel")}
+                {t("devTools.apiRateLimitSimLabel")}
               </Text>
-              <Text className="text-muted text-xs">{t("devTools.watchlistRateLimitSimHint")}</Text>
+              <Text className="text-muted text-xs">{t("devTools.apiRateLimitSimHint")}</Text>
             </View>
             <Switch
               isSelected={rateLimitSimArmed}
               onSelectedChange={setRateLimitSimArmed}
-              accessibilityLabel={t("devTools.watchlistRateLimitSimLabel")}
+              accessibilityLabel={t("devTools.apiRateLimitSimLabel")}
             />
           </View>
         </Card>

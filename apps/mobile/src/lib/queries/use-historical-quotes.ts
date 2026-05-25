@@ -27,14 +27,22 @@ export const useHistoricalQuotes = (assetId: string | undefined, range: TimeRang
   });
 };
 
-/** Map historical quotes to chart points (sorted by asOf). */
+/** Map historical quotes to chart points (sorted by asOf, deduped). */
 export const historicalQuotesToChartPoints = (
   quotes: readonly PriceQuote[]
-): ReadonlyArray<{ x: number; y: number }> => {
+): ReadonlyArray<{ x: number; y: number; label: string }> => {
   const sorted = [...quotes].sort((a, b) => Date.parse(a.asOf) - Date.parse(b.asOf));
-  return sorted.map((q, index) => ({
+  const seen = new Set<string>();
+  const unique = sorted.filter((q) => {
+    const day = q.asOf.slice(0, 10);
+    if (seen.has(day)) return false;
+    seen.add(day);
+    return true;
+  });
+  return unique.map((q, index) => ({
     x: index,
     y: q.price.toNumber(),
+    label: q.asOf.slice(0, 10),
   }));
 };
 

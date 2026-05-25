@@ -8,6 +8,7 @@ import type { Market } from "@arc/core";
 import type { SymbolSearchResult } from "@arc/data-sources";
 import { Card, Input, Text, TextField } from "@arc/ui";
 
+import { AkshareSearchNotConfiguredError } from "../lib/market-data";
 import { useSymbolSearchCrossMarket } from "../lib/queries";
 
 export interface SymbolPickerProps {
@@ -18,6 +19,8 @@ export interface SymbolPickerProps {
   readonly placeholder: string;
   readonly emptyHint: string;
   readonly searchUnavailable: string;
+  readonly searchNoResults: string;
+  readonly searchNotConfigured: string;
 }
 
 export function SymbolPicker({
@@ -28,13 +31,19 @@ export function SymbolPicker({
   placeholder,
   emptyHint,
   searchUnavailable,
+  searchNoResults,
+  searchNotConfigured,
 }: SymbolPickerProps): ReactNode {
   const search = useSymbolSearchCrossMarket(market, query);
-  const showUnavailable =
-    query.trim().length >= 2 && !search.isFetching && (search.data?.length ?? 0) === 0;
+  const trimmed = query.trim();
+  const queryReady = trimmed.length >= 2;
+  const notConfigured = search.isError && search.error instanceof AkshareSearchNotConfiguredError;
+  const showNoResults =
+    queryReady && !search.isFetching && search.isSuccess && (search.data?.length ?? 0) === 0;
+  const showUnavailable = queryReady && !search.isFetching && search.isError && !notConfigured;
 
   return (
-    <View className="gap-3">
+    <View className="flex-1 gap-3">
       <TextField>
         <Input
           placeholder={placeholder}
@@ -44,15 +53,17 @@ export function SymbolPicker({
           autoCorrect={false}
         />
       </TextField>
-      {showUnavailable && search.isSuccess ? (
-        <Text className="text-muted text-xs">{searchUnavailable}</Text>
-      ) : null}
+      {notConfigured ? <Text className="text-muted text-xs">{searchNotConfigured}</Text> : null}
+      {showNoResults ? <Text className="text-muted text-xs">{searchNoResults}</Text> : null}
+      {showUnavailable ? <Text className="text-danger text-xs">{searchUnavailable}</Text> : null}
       <FlatList
+        className="flex-1"
         data={search.data ?? []}
         keyExtractor={(item) => item.assetId}
         keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
         ListEmptyComponent={
-          query.trim().length < 2 ? (
+          !queryReady ? (
             <Text className="text-muted text-sm">{emptyHint}</Text>
           ) : search.isFetching ? (
             <Text className="text-muted text-sm">…</Text>

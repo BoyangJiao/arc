@@ -18,7 +18,7 @@ import {
 } from "./adapters/akshare";
 import { createCashPriceAdapter } from "./adapters/cash-adapter";
 import { createCoingeckoAdapter } from "./adapters/coingecko";
-import { createFinnhubAdapter } from "./adapters/finnhub";
+import { createUsPriceAdapter } from "./adapters/us-price-adapter";
 import { createTushareClient } from "./adapters/tushare/client";
 import { createTushareCnAdapter } from "./adapters/tushare/cn";
 import { withFallback } from "./adapters/with-fallback";
@@ -39,6 +39,8 @@ export interface RegistryConfig {
 
 export interface DefaultPriceAdaptersConfig {
   finnhubApiKey: string;
+  /** US historical charts — Finnhub free tier has no candle API. */
+  alphaVantageApiKey?: string;
   tushareToken?: string;
   akshareWrapperUrl?: string;
   akshareWrapperToken?: string;
@@ -68,7 +70,10 @@ export const createDefaultPriceAdapters = (
   const cnSecondary = akshareClient ? createAkshareCnAdapter({ client: akshareClient }) : null;
 
   const adapters: Partial<Record<Market, PriceAdapter>> = {
-    US: createFinnhubAdapter({ apiKey: config.finnhubApiKey }),
+    US: createUsPriceAdapter({
+      finnhubApiKey: config.finnhubApiKey,
+      alphaVantageApiKey: config.alphaVantageApiKey,
+    }),
     CRYPTO: createCoingeckoAdapter({ apiKey: config.coingeckoApiKey }),
   };
 

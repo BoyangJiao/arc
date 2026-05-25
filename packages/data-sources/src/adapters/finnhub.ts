@@ -83,6 +83,12 @@ const parseQuoteBody = (body: FinnhubQuoteResponse, symbol: string): PriceQuote 
   };
 };
 
+interface FinnhubCandleResponse {
+  s?: string;
+  t?: number[];
+  c?: number[];
+}
+
 export const createFinnhubAdapter = (config: FinnhubAdapterConfig): PriceAdapter => {
   const { apiKey, fetcher = fetch } = config;
   if (!apiKey) {
@@ -129,6 +135,41 @@ export const createFinnhubAdapter = (config: FinnhubAdapterConfig): PriceAdapter
 
       const body = await fetchJson<FinnhubQuoteResponse>(url);
       return parseQuoteBody(body, symbol);
+    },
+
+    async fetchHistorical(symbol, from, to) {
+      const url = new URL("https://finnhub.io/api/v1/stock/candle");
+      url.searchParams.set("symbol", symbol.toUpperCase());
+      url.searchParams.set("resolution", "D");
+      url.searchParams.set("from", String(Math.floor(from.getTime() / 1000)));
+      url.searchParams.set("to", String(Math.floor(to.getTime() / 1000)));
+      url.searchParams.set("token", apiKey);
+
+      const body = await fetchJson<FinnhubCandleResponse>(url);
+      if (body.s !== "ok" || !body.t?.length || !body.c?.length) {
+        return [];
+      }
+
+      const quotes: PriceQuote[] = [];
+      for (let i = 0; i < body.t.length; i++) {
+        const close = body.c[i];
+        const ts = body.t[i];
+        if (close == null || ts == null) continue;
+        try {
+          quotes.push({
+            assetId: `US:${symbol.toUpperCase()}`,
+            price: new Decimal(close),
+            currency: "USD",
+            asOf: new Date(ts * 1000).toISOString(),
+            source: SOURCE,
+            changePercent: null,
+          });
+        } catch {
+          // skip malformed row
+        }
+      }
+
+      return quotes.sort((a, b) => a.asOf.localeCompare(b.asOf));
     },
 
     async searchSymbols(query) {

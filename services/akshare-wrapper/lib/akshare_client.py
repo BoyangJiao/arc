@@ -9,6 +9,7 @@ from typing import Any
 
 import akshare as ak
 import pandas as pd
+import requests
 
 # Module-level spot/name tables — 24h TTL to avoid re-downloading on every search.
 _DF_CACHE: dict[str, tuple[Any, float]] = {}
@@ -281,11 +282,14 @@ def _search_rows(
     if not q_stripped:
         return []
     q_lower = q_stripped.lower()
-    mask = df[code_col].astype(str).str.contains(q_stripped, case=False, na=False) | df[
-        name_col
-    ].astype(str).str.contains(q_stripped, case=False, na=False)
+    mask = (
+        df[code_col].astype(str).str.contains(q_stripped, case=False, na=False, regex=False)
+        | df[name_col].astype(str).str.contains(q_stripped, case=False, na=False, regex=False)
+    )
     if q_lower != q_stripped:
-        mask = mask | df[name_col].astype(str).str.contains(q_lower, case=False, na=False)
+        mask = mask | df[name_col].astype(str).str.contains(
+            q_lower, case=False, na=False, regex=False
+        )
     rows = df[mask].head(limit)
     out: list[dict[str, Any]] = []
     for _, row in rows.iterrows():
@@ -307,15 +311,90 @@ def _search_rows(
     return out
 
 
+def _http_get_json(url: str, params: dict[str, str], timeout: int = 8) -> Any:
+    try:
+        response = requests.get(url, params=params, timeout=timeout)
+        response.raise_for_status()
+        return response.json()
+    except (requests.RequestException, ValueError) as exc:
+        raise ConnectionError(str(exc)) from exc
+
+
+def _eastmoney_cn_suggest(q: str, limit: int = 8) -> list[dict[str, Any]]:
+    """East Money A-share suggest — fast, no full spot table download."""
+    body = _http_get_json(
+        "https://searchapi.eastmoney.com/api/suggest/get",
+        {"input": q, "count": str(limit), "type": "14", "token": "DTO"},
+    )
+    rows = (body.get("QuotationCodeTable") or {}).get("Data") or []
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        code = str(row.get("Code", "")).strip().zfill(6)
+        name = str(row.get("Name", "")).strip()
+        if not code or not name:
+            continue
+        out.append(
+            {
+                "assetId": f"CN:{code}",
+                "symbol": code,
+                "name": name,
+                "market": "CN",
+                "currency": "CNY",
+            }
+        )
+    return out[:limit]
+
+
+def _eastmoney_fund_suggest(q: str, limit: int = 8) -> list[dict[str, Any]]:
+    """East Money fund suggest — avoids loading ~26k fund names on cold start."""
+    body = _http_get_json(
+        "https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx",
+        {"m": "1", "key": q},
+    )
+    rows = body.get("Datas") or []
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        code = str(row.get("CODE", "")).strip().zfill(6)
+        name = str(row.get("NAME", "")).strip()
+        if not code or not name:
+            continue
+        out.append(
+            {
+                "assetId": f"FUND:{code}",
+                "symbol": code,
+                "name": name,
+                "market": "FUND",
+                "currency": "CNY",
+            }
+        )
+    return out[:limit]
+
+
+def _search_cn_code_name(q: str, limit: int = 8) -> list[dict[str, Any]]:
+    df = _cached_df("cn_code_name", ak.stock_info_a_code_name)
+    return _search_rows(df, "code", "name", "CN", "CNY", q, limit)
+
+
 def fetch_search(market: str, q: str) -> list[dict[str, Any]]:
     m = market.upper()
     if m == "CN":
-        df = _cached_df("cn_spot", ak.stock_zh_a_spot_em)
-        return _search_rows(df, "代码", "名称", "CN", "CNY", q)
+        try:
+            rows = _eastmoney_cn_suggest(q)
+            if rows:
+                return rows
+        except (ConnectionError, TimeoutError, OSError):
+            pass
+        return _search_cn_code_name(q)
     if m == "HK":
         df = _cached_df("hk_spot", ak.stock_hk_spot_em)
         return _search_rows(df, "代码", "名称", "HK", "HKD", q)
     if m == "FUND":
+        try:
+            rows = _eastmoney_fund_suggest(q)
+            if rows:
+                return rows
+        except (ConnectionError, TimeoutError, OSError):
+            pass
         df = _cached_df("fund_names", ak.fund_name_em)
         return _search_rows(df, "基金代码", "基金简称", "FUND", "CNY", q)
     raise ValueError(f"unsupported market: {market}")

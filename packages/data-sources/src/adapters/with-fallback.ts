@@ -66,8 +66,23 @@ export const withFallback = (
     fetchHistorical: primary.fetchHistorical
       ? (symbol, from, to) => wrap((a) => a.fetchHistorical!(symbol, from, to))()
       : undefined,
-    searchSymbols: primary.searchSymbols
-      ? (query) => wrap((a) => a.searchSymbols!(query))()
-      : undefined,
+    searchSymbols:
+      (primary.searchSymbols ?? secondary.searchSymbols)
+        ? async (query) => {
+            if (primary.searchSymbols) {
+              try {
+                return await primary.searchSymbols(query);
+              } catch (err) {
+                if (classifier(err) !== "try-secondary" || !secondary.searchSymbols) {
+                  throw err;
+                }
+              }
+            }
+            if (secondary.searchSymbols) {
+              return secondary.searchSymbols(query);
+            }
+            throw new NotImplementedError(primary.source, "searchSymbols");
+          }
+        : undefined,
   };
 };

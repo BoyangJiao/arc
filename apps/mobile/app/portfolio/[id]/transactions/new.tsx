@@ -233,9 +233,9 @@ export default function AddTransactionScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false, presentation: "formSheet" }} />
-      <Screen edges={["bottom"]}>
+      <Screen scroll={step !== 1} edges={["bottom"]}>
         <InScreenHeader title={t("transaction.addTitle")} leftType="close" />
-        <View className="gap-4">
+        <View className={step === 1 ? "flex-1 gap-4" : "gap-4"}>
           {step === 1 ? (
             <>
               <MarketSelector value={market} onChange={handleMarketChange} labelFor={marketLabel} />
@@ -247,6 +247,8 @@ export default function AddTransactionScreen() {
                 placeholder={t("transaction.assetSearchCrossMarket")}
                 emptyHint={t("transaction.searchMinChars")}
                 searchUnavailable={t("transaction.searchUnavailable")}
+                searchNoResults={t("transaction.searchNoResults")}
+                searchNotConfigured={t("transaction.searchNotConfigured")}
               />
             </>
           ) : (

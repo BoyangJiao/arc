@@ -107,6 +107,18 @@ describe("withFallback", () => {
     expect(secondary).toHaveBeenCalledOnce();
   });
 
+  test("primary without searchSymbols → secondary searchSymbols", async () => {
+    const secondary = vi.fn().mockResolvedValue([]);
+    const adapter = withFallback(
+      stubAdapter("primary", {}),
+      stubAdapter("secondary", {
+        searchSymbols: secondary,
+      })
+    );
+    await adapter.searchSymbols!("茅台");
+    expect(secondary).toHaveBeenCalledOnce();
+  });
+
   test("primary NotFoundError → bubble", async () => {
     const secondary = vi.fn();
     const adapter = withFallback(

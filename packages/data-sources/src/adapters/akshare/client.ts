@@ -172,7 +172,9 @@ export const createAkshareClient = (config: AkshareClientConfig): AkshareClient 
       if (!Array.isArray(body)) {
         throw new ParseError(`akshare-${market.toLowerCase()}`, "historical response not array");
       }
-      return body.map((row) => parseQuoteJson(row, market, symbol));
+      return body
+        .map((row) => parseQuoteJson(row, market, symbol))
+        .sort((a, b) => a.asOf.localeCompare(b.asOf));
     },
 
     async searchSymbols(market, query) {

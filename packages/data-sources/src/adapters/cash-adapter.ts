@@ -4,7 +4,7 @@
  * CASH market assets (`CASH:USD`, `CASH:CNY`, …) represent cash balances.
  * No external API; FX layer converts to reporting currency for valuation.
  *
- * 见 .specify/feature-specs/rebalance-stage-2.md § CASH asset price adapter
+ * 见 .specify/feature-specs/stage-2/rebalance-stage-2.md § CASH asset price adapter
  */
 
 import Decimal from "decimal.js";

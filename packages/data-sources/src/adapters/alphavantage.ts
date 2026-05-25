@@ -49,6 +49,23 @@ interface SymbolSearchResponse {
   "Error Message"?: string;
 }
 
+interface TimeSeriesDailyResponse {
+  "Time Series (Daily)"?: Record<string, Record<string, string>>;
+  Note?: string;
+  Information?: string;
+  "Error Message"?: string;
+}
+
+const parseDailyClose = (row: Record<string, string>): Decimal | null => {
+  const closeStr = row["4. close"];
+  if (!closeStr) return null;
+  try {
+    return new Decimal(closeStr);
+  } catch {
+    return null;
+  }
+};
+
 const parseChangePercent = (raw: string | undefined): Decimal | null => {
   if (!raw) return null;
   const cleaned = raw.replace(/%/g, "").trim();
@@ -202,6 +219,46 @@ export const createAlphaVantageAdapter = (config: AlphaVantageAdapterConfig): Pr
       }
 
       return results;
+    },
+
+    async fetchHistorical(symbol, from, to) {
+      const url = new URL(ENDPOINT);
+      url.searchParams.set("function", "TIME_SERIES_DAILY");
+      url.searchParams.set("symbol", symbol);
+      url.searchParams.set("apikey", apiKey);
+
+      const body = await fetchJson<TimeSeriesDailyResponse>(url);
+
+      inspectRateLimitBody(body);
+
+      if (body["Error Message"]) {
+        throw new NotFoundError(SOURCE, symbol);
+      }
+
+      const series = body["Time Series (Daily)"];
+      if (!series || Object.keys(series).length === 0) {
+        return [];
+      }
+
+      const fromDay = from.toISOString().slice(0, 10);
+      const toDay = to.toISOString().slice(0, 10);
+      const quotes: PriceQuote[] = [];
+
+      for (const [day, row] of Object.entries(series)) {
+        if (day < fromDay || day > toDay) continue;
+        const price = parseDailyClose(row);
+        if (!price) continue;
+        quotes.push({
+          assetId: `US:${symbol.toUpperCase()}`,
+          price,
+          currency: "USD",
+          asOf: `${day}T20:00:00Z`,
+          source: SOURCE,
+          changePercent: null,
+        });
+      }
+
+      return quotes.sort((a, b) => a.asOf.localeCompare(b.asOf));
     },
   };
 };

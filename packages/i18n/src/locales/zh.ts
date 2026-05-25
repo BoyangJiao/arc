@@ -118,6 +118,9 @@ export const zh = {
     assetSearchCrossMarket: "搜索代码或名称（至少 2 个字符）",
     searchMinChars: "输入至少 2 个字符开始搜索",
     searchUnavailable: "搜索暂不可用，请稍后再试",
+    searchNoResults: "未找到匹配标的，请换关键词或代码再试",
+    searchNotConfigured:
+      "A股/港股/基金搜索需配置 EXPO_PUBLIC_AKSHARE_WRAPPER_URL 与 TOKEN（见 apps/mobile/.env.example），保存后 Metro --clear 重启",
     dateHint: "成交日期（YYYY-MM-DD）；默认今天",
     invalidDate: "请输入有效日期（YYYY-MM-DD）",
     continueEntry: "继续录入",
@@ -211,8 +214,10 @@ export const zh = {
     applied: "已应用",
     reloadHint: "切换场景后若数字未变：⌘D 打开开发菜单 → Reload。",
     watchlistRateLimitSimLabel: "模拟自选行情限流",
-    watchlistRateLimitSimHint:
-      "打开后，在行情 Tab 下拉刷新会按行失败（验横幅）。关闭后恢复正常请求。",
+    watchlistRateLimitSimHint: "旧文案 — 请使用下方统一 API 限流开关。",
+    apiRateLimitSimLabel: "模拟 API 限流（搜索 / 行情）",
+    apiRateLimitSimHint:
+      "打开后，标的搜索与行情刷新会触发限流降级 UI（C10 / 行情横幅）。关闭后恢复正常请求。",
     features: {
       dailySnapshot: {
         label: "每日快照",

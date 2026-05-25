@@ -14,7 +14,7 @@ import {
 } from "@arc/data-sources";
 
 import { getRegistry, priceCache } from "../market-data";
-import { throwIfWatchlistRateLimitSimArmed } from "../dev-tools/watchlist-rate-limit-sim";
+import { throwIfApiRateLimitSimArmed } from "../dev-tools/api-rate-limit-sim";
 import { CACHE_FIRST_READ_FRESHNESS_MS, isCacheFirstMarketData } from "../market-data-policy";
 import { isStaleQuoteSource } from "../stale-quote";
 
@@ -54,7 +54,7 @@ export const useWatchlistQuotes = (
         const { symbol } = parseAssetId(assetId);
 
         try {
-          throwIfWatchlistRateLimitSimArmed();
+          throwIfApiRateLimitSimArmed("finnhub");
 
           if (!forceNetwork && isCacheFirstMarketData()) {
             const cached = await priceCache.get(assetId, CACHE_FIRST_READ_FRESHNESS_MS);

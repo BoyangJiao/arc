@@ -120,6 +120,9 @@ export const en = {
     assetSearchCrossMarket: "Search symbol (min. 2 characters)",
     searchMinChars: "Type at least 2 characters to search",
     searchUnavailable: "Search temporarily unavailable — try again later",
+    searchNoResults: "No matches — try a different symbol or name",
+    searchNotConfigured:
+      "CN/HK/FUND search requires EXPO_PUBLIC_AKSHARE_WRAPPER_URL and TOKEN (see apps/mobile/.env.example); save and restart Metro with --clear",
     dateHint: "Trade date (YYYY-MM-DD); defaults to today",
     invalidDate: "Enter a valid date (YYYY-MM-DD)",
     continueEntry: "Add another transaction",
@@ -216,8 +219,10 @@ export const en = {
     applied: "Applied",
     reloadHint: "If numbers look wrong: ⌘D → Dev Menu → Reload.",
     watchlistRateLimitSimLabel: "Simulate watchlist quote rate limit",
-    watchlistRateLimitSimHint:
-      "When ON, Markets pull-to-refresh fails per-row quotes like throttling (banner). Turn OFF to restore.",
+    watchlistRateLimitSimHint: "Legacy label — use unified API rate limit sim below.",
+    apiRateLimitSimLabel: "Simulate API rate limit (search & quotes)",
+    apiRateLimitSimHint:
+      "When ON, symbol search and quote refresh throw RateLimitError for C10/J8 UAT. Turn OFF to restore live requests.",
     features: {
       dailySnapshot: {
         label: "Daily Snapshot",

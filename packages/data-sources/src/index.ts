@@ -29,6 +29,9 @@ export type { AlphaVantageAdapterConfig } from "./adapters/alphavantage";
 export { createFinnhubAdapter } from "./adapters/finnhub";
 export type { FinnhubAdapterConfig } from "./adapters/finnhub";
 
+export { createUsPriceAdapter } from "./adapters/us-price-adapter";
+export type { UsPriceAdapterConfig } from "./adapters/us-price-adapter";
+
 export { createTushareClient, assertTushareRowsNonEmpty } from "./adapters/tushare/client";
 export type { TushareClient, TushareClientConfig, TushareRows } from "./adapters/tushare/client";
 export { createTushareCnAdapter } from "./adapters/tushare/cn";

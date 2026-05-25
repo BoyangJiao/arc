@@ -177,4 +177,28 @@ describe("Alpha Vantage adapter", () => {
     });
     await expect(a.fetchLatest("AAPL")).rejects.toBeInstanceOf(ParseError);
   });
+
+  test("fetchHistorical filters TIME_SERIES_DAILY by window and sorts asc", async () => {
+    const a = createAlphaVantageAdapter({
+      apiKey: "key",
+      fetcher: mockFetch({
+        "Time Series (Daily)": {
+          "2026-05-20": { "4. close": "182.00" },
+          "2026-05-19": { "4. close": "180.50" },
+          "2026-05-10": { "4. close": "175.00" },
+        },
+      }),
+    });
+
+    const quotes = await a.fetchHistorical!(
+      "AAPL",
+      new Date("2026-05-18T00:00:00Z"),
+      new Date("2026-05-21T00:00:00Z")
+    );
+
+    expect(quotes).toHaveLength(2);
+    expect(quotes[0]!.asOf).toMatch(/^2026-05-19/);
+    expect(quotes[1]!.asOf).toMatch(/^2026-05-20/);
+    expect(quotes[1]!.price.equals(new Decimal("182.00"))).toBe(true);
+  });
 });
