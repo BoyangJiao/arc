@@ -494,6 +494,12 @@ export const zh = {
     callbackTryAgain: "返回重试",
     signOut: "退出登录",
   },
+  twr: {
+    label: "TWR",
+    tooltipTitle: "时间加权收益率",
+    tooltipBody: "剔除入金时点影响",
+    unavailable: "—",
+  },
   debug: {
     heroUiTitle: "HeroUI Native",
   },

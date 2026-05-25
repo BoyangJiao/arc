@@ -10,8 +10,10 @@ import type { Transaction, TransactionType } from "@arc/core";
 import {
   collectAssetBoundaryTimestamps,
   earliestPortfolioTradeDate,
+  extendWindowForTwrPrices,
   resolveAssetTwrWindow,
   resolvePortfolioTwrWindow,
+  TWR_PRICE_LOOKBACK_DAYS,
 } from "../twr-window";
 
 let seq = 0;
@@ -33,6 +35,16 @@ const mkTx = (opts: {
 
 const NOW = new Date("2026-05-25T00:00:00.000Z");
 const dayKey = (d: Date): string => d.toISOString().slice(0, 10);
+
+describe("extendWindowForTwrPrices", () => {
+  it("extends `from` by TWR_PRICE_LOOKBACK_DAYS for forward-fill at window start", () => {
+    const window = { from: new Date("2026-04-25T00:00:00.000Z"), to: NOW };
+    const extended = extendWindowForTwrPrices(window);
+    expect(TWR_PRICE_LOOKBACK_DAYS).toBe(30);
+    expect(dayKey(extended.from)).toBe("2026-03-26");
+    expect(extended.to).toBe(window.to);
+  });
+});
 
 describe("resolveAssetTwrWindow", () => {
   it("ALL with no transactions for the asset → rangeToWindow base unchanged (no clamp)", () => {

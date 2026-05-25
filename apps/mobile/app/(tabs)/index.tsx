@@ -23,6 +23,7 @@ import {
   TabScreenHeader,
   TabScrollShadow,
   Text,
+  TwrInlineLabel,
   TYPO_CAPTION,
   TYPO_DANGER,
   TYPO_DISCLAIMER,
@@ -52,6 +53,7 @@ import {
   useDailyDelta,
   useDailySnapshot,
   usePortfolioHoldings,
+  usePortfolioTwr,
   usePortfolioValuation,
   usePortfolioValueSnapshots,
   periodBaselineByAsset,
@@ -87,6 +89,7 @@ export default function PortfolioTab() {
   const dailyDelta = useDailyDelta(activeId, reportingCurrency);
   const dailySnapshot = useDailySnapshot(activeId);
   const snapshots = usePortfolioValueSnapshots(activeId, chartRange);
+  const portfolioTwr = usePortfolioTwr({ portfolioId: activeId, range: chartRange });
 
   const assetIds = useMemo(() => holdings.map((h) => h.assetId), [holdings]);
   const catalog = useAssetCatalog(assetIds);
@@ -317,6 +320,18 @@ export default function PortfolioTab() {
                 chartLoading={snapshots.isFetching}
                 valuePrefix={currencySymbol(reportingCurrency)}
                 emptyChartMessage={t("portfolio.noSnapshotHistory")}
+                twrInline={
+                  <TwrInlineLabel
+                    range={chartRange}
+                    result={portfolioTwr.isError ? undefined : portfolioTwr.data}
+                    loading={portfolioTwr.isLoading}
+                    unavailable={t("twr.unavailable")}
+                    twrAbbrevLabel={t("twr.label")}
+                    tooltipTitle={t("twr.tooltipTitle")}
+                    tooltipBody={t("twr.tooltipBody")}
+                    closeLabel={t("common.close")}
+                  />
+                }
               />
               {heroDelta && heroDelta.status !== "empty-portfolio" ? (
                 <DailySnapshotCard

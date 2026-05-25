@@ -505,6 +505,12 @@ export const en = {
     callbackTryAgain: "Back to sign in",
     signOut: "Sign out",
   },
+  twr: {
+    label: "TWR",
+    tooltipTitle: "Time-weighted return",
+    tooltipBody: "Time-weighted return (excludes funding timing impact)",
+    unavailable: "—",
+  },
   debug: {
     heroUiTitle: "HeroUI Native",
   },

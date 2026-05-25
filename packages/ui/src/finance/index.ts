@@ -85,6 +85,11 @@ export {
 } from "./HoldingsTable";
 export { PortfolioHeroSection, type PortfolioHeroSectionProps } from "./PortfolioHeroSection";
 export { FlippingNumberText, type FlippingNumberTextProps } from "./FlippingNumberText";
+export {
+  TwrInlineLabel,
+  type TwrInlineLabelProps,
+  type TwrInlineLabelResult,
+} from "./TwrInlineLabel";
 export { computePeriodChange, type PeriodChange } from "./compute-period-change";
 export {
   formatCompactChangeLine,

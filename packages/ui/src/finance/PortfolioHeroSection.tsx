@@ -49,6 +49,8 @@ export interface PortfolioHeroSectionProps {
   readonly chartLoading?: boolean;
   readonly valuePrefix?: string;
   readonly emptyChartMessage?: string;
+  /** Optional TWR row (linked to chartRange in parent). */
+  readonly twrInline?: ReactNode;
 }
 
 const signOf = (value: Decimal): "positive" | "negative" | "zero" => {
@@ -80,6 +82,7 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
     chartLoading = false,
     valuePrefix = "",
     emptyChartMessage,
+    twrInline,
   } = props;
 
   const businessClasses = useBusinessClasses();
@@ -148,6 +151,8 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
           ) : null}
         </View>
       </View>
+
+      {twrInline ? <View>{twrInline}</View> : null}
 
       <View style={{ gap: CHART_TIME_RANGE_GAP }}>
         {hasChart || chartLoading ? (

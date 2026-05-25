@@ -5,7 +5,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter, type Href } from "expo-router";
-import Decimal from "decimal.js";
 import {
   Button,
   InScreenHeader,
@@ -13,6 +12,7 @@ import {
   Screen,
   Text,
   TimeRangeSelector,
+  TwrInlineLabel,
   computePeriodChange,
   formatCompactChangeLine,
   formatSignedPercent,
@@ -29,6 +29,7 @@ import { useActivePortfolio } from "../../../src/lib/queries/use-active-portfoli
 import {
   historicalQuotesToChartPoints,
   useAssetDetail,
+  useAssetTwr,
   useHistoricalQuotes,
 } from "../../../src/lib/queries";
 export default function AssetDetailScreen() {
@@ -42,6 +43,11 @@ export default function AssetDetailScreen() {
   const detail = useAssetDetail(market, symbol);
   const assetId = market && symbol ? composeAssetId(market as Market, symbol) : undefined;
   const historical = useHistoricalQuotes(assetId, range);
+  const assetTwr = useAssetTwr({
+    portfolioId: portfolio?.id,
+    assetId,
+    range,
+  });
   const chartData = historicalQuotesToChartPoints(historical.data ?? []);
 
   useEffect(() => {
@@ -145,6 +151,16 @@ export default function AssetDetailScreen() {
                   })}
                 </Text>
               ) : null}
+              <TwrInlineLabel
+                range={range}
+                result={assetTwr.isError ? undefined : assetTwr.data}
+                loading={assetTwr.isLoading}
+                unavailable={t("twr.unavailable")}
+                twrAbbrevLabel={t("twr.label")}
+                tooltipTitle={t("twr.tooltipTitle")}
+                tooltipBody={t("twr.tooltipBody")}
+                closeLabel={t("common.close")}
+              />
             </View>
           ) : null}
 

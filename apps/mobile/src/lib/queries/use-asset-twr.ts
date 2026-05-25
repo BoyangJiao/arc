@@ -4,13 +4,13 @@
 
 import { useMemo } from "react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { returns } from "@arc/core";
+import { parseAssetId, returns } from "@arc/core";
 import type { TimeRange } from "@arc/ui";
 
+import { getRegistry } from "../market-data";
 import { buildPriceAt } from "../twr-day-lookup";
-import { resolveAssetTwrWindow } from "../twr-window";
+import { extendWindowForTwrPrices, resolveAssetTwrWindow } from "../twr-window";
 
-import { useHistoricalQuotes } from "./use-historical-quotes";
 import { useTransactions } from "./use-transactions";
 
 type TwrResult = ReturnType<typeof returns.computeAssetTwr>;
@@ -25,7 +25,6 @@ export const useAssetTwr = (input: UseAssetTwrInput): UseQueryResult<TwrResult, 
   const { portfolioId, assetId, range } = input;
 
   const transactionsQuery = useTransactions(portfolioId);
-  const historicalQuery = useHistoricalQuotes(assetId, range);
 
   const window = useMemo(() => {
     if (!assetId || !transactionsQuery.data) {
@@ -34,18 +33,34 @@ export const useAssetTwr = (input: UseAssetTwrInput): UseQueryResult<TwrResult, 
     return resolveAssetTwrWindow(range, transactionsQuery.data, assetId);
   }, [range, assetId, transactionsQuery.data]);
 
+  const priceFetchWindow = useMemo(() => extendWindowForTwrPrices(window), [window]);
+
   return useQuery({
-    queryKey: ["twr-asset", portfolioId, assetId, range],
-    enabled:
-      !!portfolioId &&
-      !!assetId &&
-      transactionsQuery.isSuccess &&
-      historicalQuery.isSuccess &&
-      (historicalQuery.data?.length ?? 0) > 0,
+    queryKey: [
+      "twr-asset",
+      portfolioId,
+      assetId,
+      range,
+      window.from.toISOString(),
+      window.to.toISOString(),
+    ],
+    enabled: !!portfolioId && !!assetId && transactionsQuery.isSuccess,
     staleTime: 5 * 60 * 1000,
-    queryFn: (): TwrResult => {
+    queryFn: async (): Promise<TwrResult> => {
       const transactions = transactionsQuery.data!;
-      const quotes = historicalQuery.data!;
+      const adapter = getRegistry().resolvePriceAdapterByAssetId(assetId!);
+      if (!adapter.fetchHistorical) {
+        throw new Error(`no historical price adapter for ${assetId}`);
+      }
+      const { symbol } = parseAssetId(assetId!);
+      const quotes = await adapter.fetchHistorical(
+        symbol,
+        priceFetchWindow.from,
+        priceFetchWindow.to
+      );
+      if (quotes.length === 0) {
+        throw new Error(`no historical prices for ${assetId}`);
+      }
 
       const priceAt = buildPriceAt(quotes, assetId!);
 

@@ -5,13 +5,20 @@
 import { useMemo } from "react";
 import { useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
-import { PortfolioInsightCard } from "@arc/ui";
+import { PortfolioInsightCard, TwrInlineLabel } from "@arc/ui";
 import type { Portfolio } from "@arc/core";
 import { useTranslation } from "@arc/i18n";
 
 import { formatMoney } from "../lib/format-money";
 import { assetLabel, toDonutSegments } from "../lib/rebalance-format";
-import { useDailyDelta, usePortfolioValuation, useRebalance } from "../lib/queries";
+import {
+  useDailyDelta,
+  usePortfolioTwr,
+  usePortfolioValuation,
+  useRebalance,
+} from "../lib/queries";
+
+const INSIGHT_TWR_RANGE = "1M" as const;
 
 const parseCashKey = (assetId: string): string => {
   const parts = assetId.split(":");
@@ -33,6 +40,7 @@ export const PortfolioInsightCardLoader = ({ portfolio }: { portfolio: Portfolio
     isLoading: rebalanceLoading,
   } = useRebalance(portfolio.id, reportingCurrency);
   const dailyDelta = useDailyDelta(portfolio.id, reportingCurrency);
+  const portfolioTwr = usePortfolioTwr({ portfolioId: portfolio.id, range: INSIGHT_TWR_RANGE });
 
   const hasTargets = targets.length > 0;
 
@@ -98,6 +106,18 @@ export const PortfolioInsightCardLoader = ({ portfolio }: { portfolio: Portfolio
       targetSegments={targetDonut}
       currentSegments={currentDonut}
       isLoading={valuationPending || rebalanceLoading}
+      twrInline={
+        <TwrInlineLabel
+          range={INSIGHT_TWR_RANGE}
+          result={portfolioTwr.isError ? undefined : portfolioTwr.data}
+          loading={portfolioTwr.isLoading}
+          unavailable={t("twr.unavailable")}
+          twrAbbrevLabel={t("twr.label")}
+          tooltipTitle={t("twr.tooltipTitle")}
+          tooltipBody={t("twr.tooltipBody")}
+          closeLabel={t("common.close")}
+        />
+      }
       onViewPress={() => router.push(setupHref)}
       onSetupTargetsPress={() => router.push(setupHref)}
     />

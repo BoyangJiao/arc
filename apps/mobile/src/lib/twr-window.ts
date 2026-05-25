@@ -7,6 +7,19 @@ import type { TimeRange } from "@arc/ui";
 
 import { rangeToWindow, startOfUtcDay, type TimeWindow } from "./time-range";
 
+/** Extra calendar days before TWR `from` when fetching prices — enables forward-fill at window start. */
+export const TWR_PRICE_LOOKBACK_DAYS = 30;
+
+/** Widen a TWR window for historical price fetch only; computation window stays unchanged. */
+export const extendWindowForTwrPrices = (
+  window: TimeWindow,
+  lookbackDays: number = TWR_PRICE_LOOKBACK_DAYS
+): TimeWindow => {
+  const from = startOfUtcDay(window.from);
+  from.setUTCDate(from.getUTCDate() - lookbackDays);
+  return { from, to: window.to };
+};
+
 export const earliestPortfolioTradeDate = (transactions: readonly Transaction[]): Date | null => {
   if (transactions.length === 0) return null;
   let earliestMs = Infinity;

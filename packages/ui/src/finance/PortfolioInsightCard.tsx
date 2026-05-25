@@ -30,6 +30,7 @@ export interface PortfolioInsightCardProps {
   readonly onViewPress: () => void;
   readonly onSetupTargetsPress: () => void;
   readonly isLoading?: boolean;
+  readonly twrInline?: ReactNode;
 }
 
 export function PortfolioInsightCard({
@@ -48,6 +49,7 @@ export function PortfolioInsightCard({
   onViewPress,
   onSetupTargetsPress,
   isLoading = false,
+  twrInline,
 }: PortfolioInsightCardProps): ReactNode {
   return (
     <Card>
@@ -85,6 +87,7 @@ export function PortfolioInsightCard({
               size={120}
             />
             <Text className={TYPO_LABEL}>{deviationLabel}</Text>
+            {twrInline ? <View>{twrInline}</View> : null}
             <Text className={TYPO_LABEL}>{rebalanceCountLabel}</Text>
           </>
         ) : (
