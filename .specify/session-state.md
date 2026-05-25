@@ -6,7 +6,7 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-25 by Claude Opus 4.7 (Cursor) — **Real / Clean DEV 双环境上线**（Track C 6 commit chain 全部落地 `2a81c6b`…`c0c05e8` on `dev/stage-3`；typecheck 6/6 ✅ / mobile vitest 28/28 ✅ — 12 new under `apps/mobile/src/lib/dev-tools/__tests__/`）：env-mode 检测 + `app.config.ts` 桥接 → `run-reset-clean.ts`（Clean 用户 hard-gate；6 表 FK-safe order + AsyncStorage 选择性清理；保留 FAB position + Supabase session）→ FAB Environment section（Switch = signInWithOtpCode + router.replace + signOut；Reset 无确认）→ scenarios.ts `requiredEnv: 'clean' | 'any'` gating（Real / unknown env 隐藏全部 seed 按钮，§S3-AC-RE.4）+ `sign-in.tsx` 接受 `?email=&codeSent=1` 预填。spec `.specify/feature-specs/cross-stage/real-env-dev-tools.md` 升 **Implemented**。**Next**: 用户 J-RE.1 first-time setup（填两个 +alias 邮箱、Switch to Real、录入真实持仓）→ 6 月数据累积 → Phase 3 雪球对标 unblocked。Block D Phase 1 review LGTM 零 P0；ADR 012 已接受；polish-backlog 三桶 11 item。
+> **Last updated**: 2026-05-25 by Composer (Cursor) — **Real / Clean 双环境 J-RE.1 ✅ 用户 UAT 跑通**（`+arc-real` / `+arc-clean` Gmail alias；FAB Switch + OTP + 场景 gating 均 OK）。**Infra 侧一次性配置完成**：Resend `auth.boyangjiao.xyz` Verified（Vercel DNS auto-config）；Supabase Custom SMTP `noreply@auth.boyangjiao.xyz`；邮件模板 **Confirm signup + Magic Link** 均含 `{{ .Token }}`（新 alias 首次注册曾误发 confirm link — 根因是 Confirm signup 模板未改）。**Next**: Real Env dogfooding 暴露的问题修复（用户下一会话带入 bug 列表）→ 持续录入真实持仓 → ≥6 月后 Phase 3 雪球对标。代码链仍 `2a81c6b`…`53d9034` on `dev/stage-3`（ahead 7）。
 
 ---
 
@@ -14,12 +14,14 @@
 
 | Field                 | Value                                                                                                                                                                 |
 | :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅ + Cross-stage Real Env DEV ✅** (Track C 6/6 commits 落地)                                                            |
+| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅ + Real/Clean DEV ✅ J-RE.1 ✅** → **Real Env bugfix 阶段**                                                            |
 | **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: user push → Opus review of #2/#4/#11 (charts / fallback / tx entry)                                                    |
 | **Step (Block D)**    | **Phase 1 ✅ algorithm** (`@arc/core/returns/{cash-flow,twr,xirr}.ts` + 21 property tests). **Next** = Phase 2 (mobile hooks + UI 接入 — Sonnet/Cursor route per §七) |
-| **Step (Real Env)**   | **Implemented ✅** 6/6 commits — pending user J-RE.1 first-time setup (.env emails + Switch to Real + onboarding)                                                     |
-| **Branch**            | `dev/stage-3` (**ahead 40** vs `origin/dev/stage-3` — adds 6 Real Env commits on top of prior 34)                                                                     |
-| **Last commit**       | `c0c05e8` `test(mobile): reset-clean smoke + envMode unit + S3-AC-RE.4 button-guard` (28/28 ✅ @arc/mobile)                                                           |
+| **Step (Real Env)**   | **J-RE.1 ✅** 双环境 Switch + OTP 跑通；用户开始 Real 持仓录入 + **dogfooding bug 修复**（下一会话列清单）                                                            |
+| **Branch**            | `dev/stage-3` (**ahead 7** vs `origin/dev/stage-3`)                                                                                                                   |
+| **Last commit**       | `53d9034` `docs(spec+state): real-env feature ready, Phase 3 dependency unblocked`                                                                                    |
+| **Context slug**      | `holdings-and-transactions`                                                                                                                                           |
+| **Context bundle**    | `.specify/codectx/holdings-and-transactions.xml`                                                                                                                      |
 | **PR**                | 未开；建议 push 后开 `dev/stage-3 → main` PR 与 Block C review 同步进行                                                                                               |
 | **CI status**         | `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/core test` 149/149 ✅ / `pnpm --filter @arc/mobile test` 28/28 ✅                                                       |
 | **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                    |
@@ -391,6 +393,13 @@ commit chain：
 
 ## Immediate next actions (next session)
 
+**Track F — Real Env dogfooding 问题修复（当前优先 — 用户主导带入 bug 列表）**
+
+1. 用户在 Real Env（`cyberjby+arc-real@gmail.com`）录入真实持仓后继续日常使用，**逐条记录**与 Delta / 支付宝 / 预期行为的偏差。
+2. 下一会话：带 repro 步骤 + 截图/数值 → Sonnet/Cursor 修 mobile/core/data-sources（不动 schema 除非 Opus 签 off）。
+3. Clean Env（`+arc-clean`）仍用于场景 seed / 单点功能回归；Real Env **禁止** seed 按钮（§S3-AC-RE.4）。
+4. 可选自验：**S3-AC-RE.2** Metro `--clear` 重启后仍登 Real；**S3-AC-RE.5** Real ↔ Clean 来回数据隔离。
+
 **Track A — Block C 收尾（用户主导）**
 
 1. `git push origin dev/stage-3`（34 ahead；含 Block C 主链 + Hero polish + Block D Phase 1）
@@ -403,9 +412,9 @@ commit chain：
 2. 实施 commit #5/#6（hooks + UI 挂数字）
 3. UAT：Asset detail "1Y TWR：+X.XX%" 联动 / Portfolio Tab Hero "YTD TWR" 显示 / Insights 卡 "1月 TWR"
 
-**Track C — Real Env DEV 双环境 ✅ Implemented 2026-05-25**
+**Track C — Real Env DEV 双环境 ✅ Implemented + J-RE.1 ✅ 2026-05-25**
 
-cross-stage spec [`real-env-dev-tools.md`](feature-specs/cross-stage/real-env-dev-tools.md) **Implemented** — 解锁 Phase 3 雪球对标 prereq + 长期 dogfooding。3 决策已锁（+alias 双邮箱 / 完整 reset / 最小 guard）。
+cross-stage spec [`real-env-dev-tools.md`](feature-specs/cross-stage/real-env-dev-tools.md) **Implemented** — 解锁 Phase 3 雪球对标 prereq + 长期 dogfooding。
 
 | #   | Commit (short) | Title                                                                                          |
 | :-- | :------------- | :--------------------------------------------------------------------------------------------- |
@@ -414,30 +423,26 @@ cross-stage spec [`real-env-dev-tools.md`](feature-specs/cross-stage/real-env-de
 | 3   | `b697f1b`      | feat(mobile): DEV FAB Environment section + env switcher + reset button                        |
 | 4   | `5b7cd0c`      | feat(mobile): gate scenarios.ts entries by envMode === 'clean'                                 |
 | 5   | `c0c05e8`      | test(mobile): reset-clean smoke + envMode unit + S3-AC-RE.4 button-guard (12 new, 28 total ✅) |
-| 6   | _this_         | docs(spec+state): real-env feature ready, Phase 3 dependency unblocked                         |
+| 6   | `53d9034`      | docs(spec+state): real-env feature ready, Phase 3 dependency unblocked                         |
 
-Verified gates (per commit): `pnpm typecheck` 6/6 ✅, `pnpm --filter @arc/mobile test` 28/28 ✅.
+**User infra (one-off, not in repo)**：
 
-**Pending user steps (J-RE.1 first-time setup)**：
+| Item                 | Value                                                                                                 |
+| :------------------- | :---------------------------------------------------------------------------------------------------- |
+| Resend domain        | `auth.boyangjiao.xyz` **Verified**（DNS via Vercel auto-config；registrar Squarespace，NS 在 Vercel） |
+| Supabase SMTP sender | `Arc <noreply@auth.boyangjiao.xyz>` · `smtp.resend.com:465`                                           |
+| Dev emails (`.env`)  | `DEV_REAL_EMAIL=cyberjby+arc-real@gmail.com` · `DEV_CLEAN_EMAIL=cyberjby+arc-clean@gmail.com`         |
+| Email templates      | **Confirm signup** + **Magic Link** 均含 `{{ .Token }}`；dev OTP 主路径，勿依赖 confirm link          |
 
-1. 在 `apps/mobile/.env` 追加：
-
-```bash
-DEV_REAL_EMAIL=cyberjby+arc-real@gmail.com
-DEV_CLEAN_EMAIL=cyberjby+arc-clean@gmail.com
-```
-
-2. （可选）`.env.dev.local`：让 `DEV_SEED_EMAIL = DEV_CLEAN_EMAIL`，保 `tools/seed-dev-data.ts` CLI 仍写入 Clean.
-3. `pnpm mobile -- --clear`；FAB → Environment → **Switch to Real** → 8 位 OTP → 走 onboarding 录入真实持仓 (Delta / 支付宝 同步).
-4. 日常 dogfooding → Real Env 持续累积 ≥6 月真实数据 → Phase 3 雪球对标 ready.
+**J-RE.1 ✅ user verified 2026-05-25**：FAB Switch Real ↔ Clean + OTP 登录 + Clean 场景恢复；Resend 550 sandbox 问题已通过 verify 自有子域解决。
 
 UAT 验收：
 
-- **S3-AC-RE.1** First-boot Real 路径：FAB → Switch to Real → OTP → /welcome → onboarding（用户跑 J-RE.1 时验）
-- **S3-AC-RE.2** Metro restart 持久化：用户自跑（重启 `--clear` 后直进 Portfolio Tab）
-- **S3-AC-RE.3** Reset 清 Clean only：vitest `run-reset-clean.spec.ts` 4/4 ✅ + 用户跑 Real ↔ Clean 来回数据完好 (.5)
-- **S3-AC-RE.4** Real 场景按钮 guard：vitest `scenarios.spec.ts` 4/4 ✅ — Real / unknown 模式 `visibleFeaturesForEnv` 返回 `[]`
-- **S3-AC-RE.5** 数据隔离：用户自跑（switch 来回数据 byte-identical）
+- **S3-AC-RE.1** ✅ 用户：Switch to Real → OTP → onboarding 路径跑通
+- **S3-AC-RE.2** ⏳ 用户可选自验（Metro `--clear` 后 session 持久）
+- **S3-AC-RE.3** ✅ vitest `run-reset-clean.spec.ts` 4/4；Reset 手测待需要时做
+- **S3-AC-RE.4** ✅ vitest `scenarios.spec.ts` 4/4 + 用户确认 Real 无 seed 按钮
+- **S3-AC-RE.5** ✅ 用户：双环境均跑通（来回切换 OK）
 
 **Track D — Block D Phase 3 雪球对标（用户 + Opus，依赖 Track C ≥6 月数据）**
 
@@ -469,6 +474,8 @@ UAT 验收：
 - **Resolved 2026-05-21 (Block C Hero)**: Portfolio Tab 用 **`PortfolioHeroSection`** 替代 `DailySnapshotCard` + `PortfolioValueOverTimeCard` 叠 Card；chart polish 在 `@arc/ui/charts` L2（ADR 013）。**全局**：active portfolio 不论单/多组合均同一 Hero UI。
 - **Resolved 2026-05-22 (Token dual-namespace)**: HeroUI `@theme inline static` 的 `--color-*` 与 Arc `@layer theme` 的 `--*` 是两条通道；`*-soft-foreground` 等 Calculated Variables 须 `global.css` `@theme inline` 桥接。整族 accent/success/danger/warning 已桥接；接新组件见 DESIGN-TOKENS §Tailwind 桥接清单。
 - **Resolved 2026-05-21 (UI commit discipline)**: Block C UI/UX polish 可单独 commit，若仅 L2/L3 + 薄 wiring；触及 data-sources/core/migration 先问用户再 commit。
+- **Resolved 2026-05-25 (Real Env email infra)**: Resend **`noreply@resend.dev` = sandbox**，仅发往 Resend 账号邮箱；`+alias` 被当作不同收件人 → 550。Fix = verify 自有子域（`auth.boyangjiao.xyz`）+ Supabase sender 改 `@auth.boyangjiao.xyz`。`boyangjiao.xyz` 作品集在 Vercel → Resend auto-config 走 Vercel DNS，不必 Squarespace 手填。
+- **Resolved 2026-05-25 (OTP vs confirm link)**: `signInWithOtp` API 名是 OTP，**邮件内容由模板决定**。新用户走 **Confirm signup** 模板（非 Magic Link）；两模板都须 `{{ .Token }}` 且 dev 勿留 `{{ .ConfirmationURL }}` 为主 CTA。
 
 ## Critical mental model (gotchas easy to forget)
 
@@ -492,17 +499,20 @@ UAT 验收：
 - **Market filter hero**: `selectedMarketFilters` 非空时 hero 总值/日涨跌/chart 经 `portfolio-market-filter.ts` 重算（与 holdings 表一致）。
 - **Tailwind soft-foreground**: 改 `@layer theme` 的 `--accent-soft-foreground` 不够；须 `global.css` `@theme inline` 桥接 `--color-*-soft-foreground`（见 ADR 003）。
 - **Cross-market DEV seed**: `default:cn-only|hk-only|fund-only|cross-market|crypto-only` 走 **App 内 JWT**（`run-cross-market-seed-client.ts`），非 Edge `dev-seed`。CRYPTO 资产行首次需 `pnpm seed:crypto-only`（service_role）或 Block C migration 0013。
+- **Real/Clean env**: `DEV_*_EMAIL` 经 `app.config.ts` → `Constants.expoConfig.extra`；改 `.env` **必须** `pnpm mobile -- --clear`。`envMode=unknown`（如 `cyberjby@gmail.com` 无 alias）→ **全部 seed 场景隐藏**（by design）。
+- **Auth email (dev)**: 新 alias 首次注册 → **Confirm signup** 模板；Returning → **Magic Link** 模板。两模板都要有 `{{ .Token }}`。
 
 ## Active env / config snapshot
 
-| File               | Status                                                                                            |
-| :----------------- | :------------------------------------------------------------------------------------------------ |
-| `apps/mobile/.env` | Supabase + Finnhub + **Tushare + AKShare wrapper URL/token**（gitignored）                        |
-| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`                                                                |
-| Migrations         | `0001`–`0010` ✅；**0012** manual snapshot insert、**0013** CRYPTO assets — **UAT 前用户 SQL** ⏳ |
-| AKShare wrapper    | `https://arc-akshare-wrapper.vercel.app` + `AKSHARE_WRAPPER_TOKEN` on Vercel                      |
-| Supabase project   | `jdvlzkictwinkgcvgwew`                                                                            |
-| Git branch         | `dev/stage-3`                                                                                     |
+| File               | Status                                                                                                  |
+| :----------------- | :------------------------------------------------------------------------------------------------------ |
+| `apps/mobile/.env` | Supabase + Finnhub + Tushare + AKShare + **`DEV_REAL_EMAIL` / `DEV_CLEAN_EMAIL`**（+alias，gitignored） |
+| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`（建议 = Clean alias）                                                |
+| Resend / Supabase  | `auth.boyangjiao.xyz` Verified · SMTP `noreply@auth.boyangjiao.xyz`（Dashboard 配置，非 repo）          |
+| Migrations         | `0001`–`0010` ✅；**0012** manual snapshot insert、**0013** CRYPTO assets — **UAT 前用户 SQL** ⏳       |
+| AKShare wrapper    | `https://arc-akshare-wrapper.vercel.app` + `AKSHARE_WRAPPER_TOKEN` on Vercel                            |
+| Supabase project   | `jdvlzkictwinkgcvgwew`                                                                                  |
+| Git branch         | `dev/stage-3`                                                                                           |
 
 ## Recent ADRs (most relevant first)
 
