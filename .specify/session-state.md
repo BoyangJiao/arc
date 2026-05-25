@@ -6,7 +6,7 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-25 by Claude Opus 4.7 — **Block C deferred review + Block D Phase 1 review LGTM 零 P0**；**ADR 012 升「已接受」**（方案 A + 附录 C 6 项 inline + 附录 B Local dev + 状态记录）；**`.specify/polish-backlog.md` 建立** Block E/F/Stage 4 三桶 11 item（Block E/F 起手必读）；**TWR spec §Phase 2 加 `valueAt` day-rounding hint**（12:00 UTC tx vs 23:00 UTC snapshot）；**Block D Phase 2 handoff prompt 就绪** `.specify/handoffs/cursor-stage-3-block-d-phase2-kickoff.md`（2 commits Sonnet，commit #5 day-rounding = Opus review 关键点）。**Next**: 用户起 Phase 2 Cursor 会话 + Phase 3 雪球对标准备 3 标的
+> **Last updated**: 2026-05-25 by Claude Opus 4.7 (Cursor) — **Real / Clean DEV 双环境上线**（Track C 6 commit chain 全部落地 `2a81c6b`…`c0c05e8` on `dev/stage-3`；typecheck 6/6 ✅ / mobile vitest 28/28 ✅ — 12 new under `apps/mobile/src/lib/dev-tools/__tests__/`）：env-mode 检测 + `app.config.ts` 桥接 → `run-reset-clean.ts`（Clean 用户 hard-gate；6 表 FK-safe order + AsyncStorage 选择性清理；保留 FAB position + Supabase session）→ FAB Environment section（Switch = signInWithOtpCode + router.replace + signOut；Reset 无确认）→ scenarios.ts `requiredEnv: 'clean' | 'any'` gating（Real / unknown env 隐藏全部 seed 按钮，§S3-AC-RE.4）+ `sign-in.tsx` 接受 `?email=&codeSent=1` 预填。spec `.specify/feature-specs/cross-stage/real-env-dev-tools.md` 升 **Implemented**。**Next**: 用户 J-RE.1 first-time setup（填两个 +alias 邮箱、Switch to Real、录入真实持仓）→ 6 月数据累积 → Phase 3 雪球对标 unblocked。Block D Phase 1 review LGTM 零 P0；ADR 012 已接受；polish-backlog 三桶 11 item。
 
 ---
 
@@ -14,13 +14,14 @@
 
 | Field                 | Value                                                                                                                                                                 |
 | :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅** (TWR algorithm + 21 property tests landed locally)                                                                  |
+| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅ + Cross-stage Real Env DEV ✅** (Track C 6/6 commits 落地)                                                            |
 | **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: user push → Opus review of #2/#4/#11 (charts / fallback / tx entry)                                                    |
 | **Step (Block D)**    | **Phase 1 ✅ algorithm** (`@arc/core/returns/{cash-flow,twr,xirr}.ts` + 21 property tests). **Next** = Phase 2 (mobile hooks + UI 接入 — Sonnet/Cursor route per §七) |
-| **Branch**            | `dev/stage-3` (**ahead 34** vs `origin/dev/stage-3` — incl. 4 Block D Phase 1 commits, 30 prior unpushed Block C polish + Block A/B/C feature commits)                |
-| **Last commit**       | `d467b6e` `test(core): twr.property.spec.ts (21 properties) + xirr damping fix` (149/149 ✅ @arc/core)                                                                |
+| **Step (Real Env)**   | **Implemented ✅** 6/6 commits — pending user J-RE.1 first-time setup (.env emails + Switch to Real + onboarding)                                                     |
+| **Branch**            | `dev/stage-3` (**ahead 40** vs `origin/dev/stage-3` — adds 6 Real Env commits on top of prior 34)                                                                     |
+| **Last commit**       | `c0c05e8` `test(mobile): reset-clean smoke + envMode unit + S3-AC-RE.4 button-guard` (28/28 ✅ @arc/mobile)                                                           |
 | **PR**                | 未开；建议 push 后开 `dev/stage-3 → main` PR 与 Block C review 同步进行                                                                                               |
-| **CI status**         | `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/core test` 149/149 ✅                                                                                                   |
+| **CI status**         | `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/core test` 149/149 ✅ / `pnpm --filter @arc/mobile test` 28/28 ✅                                                       |
 | **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                    |
 | **Out of scope**      | Block E features (Inbox/AI/订阅/脱敏/价格异动)、Block F polish redesign + CSV、大陆 Auth (ADR 012 P1) 实现                                                            |
 
@@ -347,7 +348,7 @@ TWR algorithm layer 全栈落地，纯 `@arc/core`，未碰 UI / hooks / adapter
 - 真实 transactions 在 Arc 录入（Block C tx entry 已支持）
 - Arc TWR vs 雪球 TWR 截图存档 `docs/dod-verification/twr-snowball-{ticker}-{date}.png`
 - 误差 ≤ 1.0% per 标的 (Stage 3 DoD-hard)
-- **Prereq**: Real Env 已就位（见 `.specify/feature-specs/cross-stage/real-env-dev-tools.md`）— 双邮箱 +arc-real / +arc-clean，Sonnet/Cursor 6 commit chain 实施中
+- **Prereq**: Real Env ✅ Implemented (`.specify/feature-specs/cross-stage/real-env-dev-tools.md` 6 commits 落地)；等待用户 J-RE.1 首次填 `.env` + Switch to Real + 录入 6 个月数据
 
 ### Phase 2 follow-ups (Opus review of commits #5+#6, 2026-05-25)
 
@@ -402,13 +403,41 @@ commit chain：
 2. 实施 commit #5/#6（hooks + UI 挂数字）
 3. UAT：Asset detail "1Y TWR：+X.XX%" 联动 / Portfolio Tab Hero "YTD TWR" 显示 / Insights 卡 "1月 TWR"
 
-**Track C — Real Env DEV 双环境（Sonnet/Cursor — 2026-05-25 spec Accepted）**
+**Track C — Real Env DEV 双环境 ✅ Implemented 2026-05-25**
 
-新 cross-stage spec [`real-env-dev-tools.md`](feature-specs/cross-stage/real-env-dev-tools.md) — 解锁 Phase 3 雪球对标 prereq + 长期 dogfooding。3 决策已锁（+alias 双邮箱 / 完整 reset / 最小 guard），6 commit chain 详见 spec。
+cross-stage spec [`real-env-dev-tools.md`](feature-specs/cross-stage/real-env-dev-tools.md) **Implemented** — 解锁 Phase 3 雪球对标 prereq + 长期 dogfooding。3 决策已锁（+alias 双邮箱 / 完整 reset / 最小 guard）。
 
-1. Sonnet/Cursor 用 [`cursor-real-env-dev-tools-kickoff.md`](handoffs/cursor-real-env-dev-tools-kickoff.md) 起会话，跑 6 commits（~3-4h）
-2. 用户跑 J-RE.1 first-time setup：填 `.env` + Switch to Real + onboarding 录入真实持仓
-3. Real Env 持续累积 ≥6 月真实数据 → Phase 3 雪球对标 ready
+| #   | Commit (short) | Title                                                                                          |
+| :-- | :------------- | :--------------------------------------------------------------------------------------------- |
+| 1   | `2a81c6b`      | feat(mobile): env-mode detection + .env DEV_REAL_EMAIL / DEV_CLEAN_EMAIL                       |
+| 2   | `3e86e7c`      | feat(mobile): run-reset-clean.ts + RLS-mediated user-scoped delete script                      |
+| 3   | `b697f1b`      | feat(mobile): DEV FAB Environment section + env switcher + reset button                        |
+| 4   | `5b7cd0c`      | feat(mobile): gate scenarios.ts entries by envMode === 'clean'                                 |
+| 5   | `c0c05e8`      | test(mobile): reset-clean smoke + envMode unit + S3-AC-RE.4 button-guard (12 new, 28 total ✅) |
+| 6   | _this_         | docs(spec+state): real-env feature ready, Phase 3 dependency unblocked                         |
+
+Verified gates (per commit): `pnpm typecheck` 6/6 ✅, `pnpm --filter @arc/mobile test` 28/28 ✅.
+
+**Pending user steps (J-RE.1 first-time setup)**：
+
+1. 在 `apps/mobile/.env` 追加：
+
+```bash
+DEV_REAL_EMAIL=cyberjby+arc-real@gmail.com
+DEV_CLEAN_EMAIL=cyberjby+arc-clean@gmail.com
+```
+
+2. （可选）`.env.dev.local`：让 `DEV_SEED_EMAIL = DEV_CLEAN_EMAIL`，保 `tools/seed-dev-data.ts` CLI 仍写入 Clean.
+3. `pnpm mobile -- --clear`；FAB → Environment → **Switch to Real** → 8 位 OTP → 走 onboarding 录入真实持仓 (Delta / 支付宝 同步).
+4. 日常 dogfooding → Real Env 持续累积 ≥6 月真实数据 → Phase 3 雪球对标 ready.
+
+UAT 验收：
+
+- **S3-AC-RE.1** First-boot Real 路径：FAB → Switch to Real → OTP → /welcome → onboarding（用户跑 J-RE.1 时验）
+- **S3-AC-RE.2** Metro restart 持久化：用户自跑（重启 `--clear` 后直进 Portfolio Tab）
+- **S3-AC-RE.3** Reset 清 Clean only：vitest `run-reset-clean.spec.ts` 4/4 ✅ + 用户跑 Real ↔ Clean 来回数据完好 (.5)
+- **S3-AC-RE.4** Real 场景按钮 guard：vitest `scenarios.spec.ts` 4/4 ✅ — Real / unknown 模式 `visibleFeaturesForEnv` 返回 `[]`
+- **S3-AC-RE.5** 数据隔离：用户自跑（switch 来回数据 byte-identical）
 
 **Track D — Block D Phase 3 雪球对标（用户 + Opus，依赖 Track C ≥6 月数据）**
 

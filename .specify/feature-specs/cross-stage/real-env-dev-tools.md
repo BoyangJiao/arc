@@ -1,6 +1,6 @@
 # Feature: Real-data DEV environments (Real / Clean) — cross-stage tooling
 
-- **Status**: Accepted — 3 decisions locked 2026-05-25 BoyangJiao approved
+- **Status**: Implemented — 6/6 commits landed locally on `dev/stage-3` 2026-05-25 (typecheck 6/6 ✅, mobile tests 28/28 ✅); pending user-side first-time setup (spec §J-RE.1) before Block D Phase 3
 - **Author**: Claude Opus 4.7 (spec) — implementation owner Sonnet/Cursor
 - **Created**: 2026-05-25
 - **Implements**: dogfooding gate before Block D Phase 3 雪球对标 (S3-AC-D.1.9); satisfies constitution §核心原则 5 "scratch your own itch"
