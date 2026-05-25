@@ -1,5 +1,5 @@
 -- Stage 2 J7 — Daily Snapshot feature
--- 见 .specify/feature-specs/daily-snapshot-stage-2.md
+-- 见 .specify/feature-specs/stage-2/daily-snapshot-stage-2.md
 --
 -- Migration adds 3 columns to existing portfolio_value_snapshots (created in
 -- 0000) so it can carry enough state for Daily Snapshot rendering — top-3

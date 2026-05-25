@@ -49,6 +49,11 @@ export function LineChart({
 }: ArcLineChartProps): ReactNode {
   const renderable = useMemo(() => ensureRenderableChartPoints(data), [data]);
   const series = useMemo((): SeriesRow[] => [...toChartSeries(renderable)], [renderable]);
+  const seriesKey = useMemo(() => {
+    const first = series[0];
+    const last = series[series.length - 1];
+    return `${series.length}:${first?.value ?? ""}:${last?.value ?? ""}`;
+  }, [series]);
   const strokeColor = useChartPeriodStrokeColor(renderable);
 
   if (series.length === 0) {
@@ -63,6 +68,7 @@ export function LineChart({
     renderOverlays?: (chartBounds: ChartBounds) => ReactNode;
   }) => (
     <ProLineChartRoot
+      key={seriesKey}
       data={series}
       xKey="index"
       yKeys={["value"]}

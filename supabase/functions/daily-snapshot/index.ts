@@ -5,7 +5,7 @@
 // price_snapshots + fx_rates only (never calls Alpha Vantage / Frankfurter),
 // then upserts one row into portfolio_value_snapshots.
 //
-// Per ADR 008 §决策五 and .specify/feature-specs/daily-snapshot-stage-2.md
+// Per ADR 008 §决策五 and .specify/feature-specs/stage-2/daily-snapshot-stage-2.md
 // §"Snapshot timing":
 // - Idempotent: same (portfolio_id, as_of) primary key + ON CONFLICT DO UPDATE.
 //   Retrying the workflow on the same UTC day overwrites the row.

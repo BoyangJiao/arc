@@ -1,0 +1,33 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": ".specify/codectx/multi-portfolio.xml",
+    "style": "xml",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "showLineNumbers": true,
+    "headerText": "Arc Block B — multi-portfolio context bundle. Local only; do not commit."
+  },
+  "include": [
+    ".specify/feature-specs/stage-3/multi-portfolio-stage-3.md",
+    ".specify/data-model-invariants.md",
+    "packages/db/src/schema/portfolios.ts",
+    "packages/db/drizzle/migrations/*portfolio*",
+    "packages/core/src/domain/types.ts",
+    "apps/mobile/src/lib/store/active-portfolio*.ts",
+    "apps/mobile/src/lib/queries/use-portfolios.ts",
+    "apps/mobile/src/lib/queries/use-active-portfolio.ts",
+    "apps/mobile/app/portfolio/**",
+    "apps/mobile/src/components/PortfolioTabHeader.tsx",
+    "packages/i18n/src/locales/en.ts",
+    "packages/i18n/src/locales/zh.ts",
+    "supabase/functions/_shared/seed-portfolios-block-c.ts"
+  ],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true
+  },
+  "security": {
+    "enableSecurityCheck": true
+  }
+}

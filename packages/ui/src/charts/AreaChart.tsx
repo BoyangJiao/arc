@@ -11,6 +11,7 @@ import { memo, useMemo } from "react";
 import { View } from "react-native";
 import { AreaChart as ProAreaChart } from "heroui-native-pro/area-chart";
 import { LineChart as ProLineChart } from "heroui-native-pro/line-chart";
+import type { SharedValue } from "react-native-reanimated";
 import type { ChartBounds, PointsArray } from "victory-native";
 
 import { ChartAreaDotFill } from "./ChartAreaDotFill";
@@ -33,6 +34,10 @@ export interface ArcAreaChartProps {
   readonly showValueLabel?: boolean;
   readonly formatScrubDate?: (isoTimestamp: string) => string;
   readonly onScrubChange?: (state: ChartScrubState | null) => void;
+  /** UI-thread mirror of the current scrub price — bind to drive 60fps animations elsewhere. */
+  readonly scrubValueSv?: SharedValue<number>;
+  /** UI-thread mirror of whether the user is scrubbing. */
+  readonly scrubActiveSv?: SharedValue<boolean>;
 }
 
 type SeriesRow = { index: number; value: number };
@@ -68,8 +73,11 @@ const AreaChartCanvas = memo(function AreaChartCanvas({
   onChartBoundsChange,
   renderOverlays,
 }: AreaChartCanvasProps): ReactNode {
+  const seriesKey = `${series.length}:${series[0]?.value ?? ""}:${series[series.length - 1]?.value ?? ""}`;
+
   return (
     <ProAreaChartRoot
+      key={seriesKey}
       data={series}
       xKey="index"
       yKeys={["value"]}
@@ -112,6 +120,8 @@ export function AreaChart({
   showValueLabel = true,
   formatScrubDate,
   onScrubChange,
+  scrubValueSv,
+  scrubActiveSv,
 }: ArcAreaChartProps): ReactNode {
   const renderable = useMemo(() => ensureRenderableChartPoints(data), [data]);
   const series = useMemo((): SeriesRow[] => [...toChartSeries(renderable)], [renderable]);
@@ -143,6 +153,8 @@ export function AreaChart({
           scrubPoints={scrubPoints}
           scrubDateLabels={scrubDateLabels}
           onScrubChange={onScrubChange}
+          scrubValueSv={scrubValueSv}
+          scrubActiveSv={scrubActiveSv}
         >
           {({ chartPressState, onChartBoundsChange, renderOverlays }) => (
             <AreaChartCanvas

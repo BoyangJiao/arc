@@ -581,3 +581,14 @@ Phase 1 DoD: `pnpm --filter @arc/core test` 149/149 ✅ · `pnpm typecheck` 6/6 
 ## Next after this spec
 
 `performance-attribution-stage-3.md`（复用 TWR sub-period） + `drawdown-stage-3.md`（基于 `portfolio_value_snapshots` 时序）。两个 spec 在本 spec Accepted 之后下个回合起。
+
+---
+
+## Context bundle
+
+```bash
+pnpm ctx:feature twr
+pnpm ctx:dump twr   # timestamped snapshot for handoff
+```
+
+Config: `.specify/feature-specs/stage-3/twr.repomix.json` → output `.specify/codectx/twr.xml` (gitignored)

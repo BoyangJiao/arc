@@ -34,6 +34,7 @@ const mkAssetVal = (
     costBasisReporting: dec(valueReporting),
     unrealizedPnL: dec(0),
     unrealizedPnLPercent: dec(0),
+    dailyChangePercent: null,
     reportingCurrency: "CNY",
     fxRateUsed: dec(1),
     priceAsOf: "2026-05-17T00:00:00.000Z",

@@ -8,6 +8,12 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import {
+  isPortfoliosBlockCScenario,
+  PortfoliosBlockCSeedError,
+  runPortfoliosBlockCSeed,
+} from "./seed-portfolios-block-c.ts";
+
 // ──────────────────────────────────────────────────────────────────────────
 // Scenario registry
 
@@ -33,6 +39,8 @@ export const SCENARIOS = [
   "portfolios:single",
   "portfolios:multi-3",
   "portfolios:transfer-history",
+  "portfolios:multi-market-full",
+  "portfolios:30-days-history",
 ] as const;
 
 export type Scenario = (typeof SCENARIOS)[number];
@@ -837,6 +845,22 @@ export const runSeedForUser = async (
 ): Promise<RunSeedResult> => {
   const { userId, scenario, mode = "reset" } = options;
 
+  if (isPortfoliosBlockCScenario(scenario)) {
+    try {
+      const { portfolioId, expectedUi } = await runPortfoliosBlockCSeed(supabase, userId, scenario);
+      log(`✓ Block C portfolio seed: ${scenario}`);
+      return { scenario, portfolioId, expectedUi };
+    } catch (err) {
+      const msg =
+        err instanceof PortfoliosBlockCSeedError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      throw new SeedError(msg);
+    }
+  }
+
   if (
     scenario === "portfolios:single" ||
     scenario === "portfolios:multi-3" ||
@@ -1213,5 +1237,9 @@ export const describeExpectedUi = (scenario: Scenario): string[] => {
       ];
     case "portfolios:transfer-history":
       return ["Multi-3 + transfer notes on transactions for CASH:USD"];
+    case "portfolios:multi-market-full":
+      return ["Block C 多市场", "US/CN/HK/FUND/CRYPTO/CASH 持仓", "持仓表分组"];
+    case "portfolios:30-days-history":
+      return ["Block C 多市场", "30 天 area-chart 数据", "Portfolio Tab 曲线"];
   }
 };

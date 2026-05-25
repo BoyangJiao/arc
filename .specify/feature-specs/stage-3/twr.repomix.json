@@ -1,0 +1,40 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": ".specify/codectx/twr.xml",
+    "style": "xml",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "showLineNumbers": true,
+    "headerText": "Arc Block D — TWR/MWR context bundle. Local only; do not commit."
+  },
+  "include": [
+    ".specify/feature-specs/stage-3/twr-stage-3.md",
+    ".specify/data-model-invariants.md",
+    "docs/adr/009-daily-snapshot-timing.md",
+    "packages/core/src/returns/**",
+    "packages/core/__tests__/*twr*",
+    "packages/core/__tests__/*returns*",
+    "packages/core/__tests__/*xirr*",
+    "packages/core/__tests__/*cash-flow*",
+    "packages/ui/src/finance/TwrInlineLabel.tsx",
+    "packages/ui/src/finance/index.ts",
+    "apps/mobile/src/lib/queries/use-asset-twr.ts",
+    "apps/mobile/src/lib/queries/use-portfolio-twr.ts",
+    "apps/mobile/src/lib/time-range.ts",
+    "apps/mobile/app/asset/**",
+    "apps/mobile/app/(tabs)/index.tsx",
+    "apps/mobile/src/components/PortfolioInsightCard.tsx",
+    "apps/mobile/src/lib/queries/use-portfolio-value-snapshots.ts",
+    "apps/mobile/src/lib/queries/use-historical-quotes.ts",
+    "packages/i18n/src/locales/en.ts",
+    "packages/i18n/src/locales/zh.ts"
+  ],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true
+  },
+  "security": {
+    "enableSecurityCheck": true
+  }
+}

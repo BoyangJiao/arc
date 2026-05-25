@@ -5,7 +5,7 @@
  * Stage 2 J7 (Daily Snapshot). No I/O, no React, no Decimal-imported-from-
  * anywhere-but-decimal.js. Fully testable in isolation.
  *
- * See .specify/feature-specs/daily-snapshot-stage-2.md §"Data model" and
+ * See .specify/feature-specs/stage-2/daily-snapshot-stage-2.md §"Data model" and
  * §"Acceptance criteria" for the contract these tests pin.
  *
  * Mover sort: by absolute deltaPercent descending (per user-journeys.md

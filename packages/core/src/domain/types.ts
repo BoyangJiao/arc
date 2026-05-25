@@ -232,6 +232,8 @@ export interface MarketValuation {
   readonly unrealizedPnL: Decimal;
   /** 未实现盈亏百分比 = unrealizedPnL / costBasisReporting × 100 */
   readonly unrealizedPnLPercent: Decimal;
+  /** 相对前收 / 24h 涨跌幅（来自最新 quote；与 unrealizedPnLPercent 不同） */
+  readonly dailyChangePercent: Decimal | null;
   readonly reportingCurrency: Currency;
   /** 计算所用汇率快照（便于审计） */
   readonly fxRateUsed: Decimal;
@@ -258,7 +260,7 @@ export interface PortfolioValuation {
 
 /**
  * SnapshotAsset — 快照时点某个持仓的明细
- * 见 .specify/feature-specs/daily-snapshot-stage-2.md
+ * 见 .specify/feature-specs/stage-2/daily-snapshot-stage-2.md
  */
 export interface SnapshotAsset {
   readonly assetId: string;

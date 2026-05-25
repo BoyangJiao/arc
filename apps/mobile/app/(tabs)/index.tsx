@@ -8,6 +8,7 @@ import { useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
 import { parseAssetId, type Market } from "@arc/core";
 import {
+  Button,
   Card,
   decimateChartPoints,
   FLOATING_TAB_BAR_BOTTOM_INSET,
@@ -356,12 +357,24 @@ export default function PortfolioTab() {
           ) : null}
 
           {hasHoldings && !holdingsPending ? (
-            <HoldingsTable
-              rows={filteredHoldingsRows}
-              sectionTitle={t("holdings.sectionTitle")}
-              emptyMessage={selectedMarketFilters.size > 0 ? t("holdings.filterEmpty") : undefined}
-              onRowPress={handleRowPress}
-            />
+            <>
+              <HoldingsTable
+                rows={filteredHoldingsRows}
+                sectionTitle={t("holdings.sectionTitle")}
+                emptyMessage={
+                  selectedMarketFilters.size > 0 ? t("holdings.filterEmpty") : undefined
+                }
+                onRowPress={handleRowPress}
+              />
+              <Button
+                onPress={() => {
+                  if (!activeId) return;
+                  router.push(`/portfolio/${activeId}/transactions/new` as Href);
+                }}
+              >
+                <Button.Label>{t("portfolio.addTransaction")}</Button.Label>
+              </Button>
+            </>
           ) : null}
 
           {activePortfolio && !hasHoldings && !holdingsPending && !valuationFetching && (

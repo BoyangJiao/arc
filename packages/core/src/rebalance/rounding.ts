@@ -1,7 +1,7 @@
 /**
  * Per-market share rounding for Rebalance action list (Stage 2 J9).
  *
- * Rationale (.specify/feature-specs/rebalance-stage-2.md §Resolved decisions #2):
+ * Rationale (.specify/feature-specs/stage-2/rebalance-stage-2.md §Resolved decisions #2):
  *   - Stocks (US / CN / HK / FUND) → integer shares (floor toward zero)
  *   - Crypto → 8 decimal places (satoshi resolution)
  *   - Cash → currency minor unit (2 decimals general; JPY → 0 decimals)

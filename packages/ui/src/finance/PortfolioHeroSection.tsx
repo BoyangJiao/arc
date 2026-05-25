@@ -9,9 +9,11 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import Decimal from "decimal.js";
+import { useSharedValue } from "react-native-reanimated";
 import type { ChartScrubState } from "./chart-scrub";
 import { computePeriodChange } from "./compute-period-change";
 import type { DailySnapshotDelta } from "./DailySnapshotCard";
+import { FlippingNumberText } from "./FlippingNumberText";
 
 import {
   AreaChart,
@@ -82,6 +84,10 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
 
   const businessClasses = useBusinessClasses();
   const [scrub, setScrub] = useState<ChartScrubState | null>(null);
+  // UI-thread mirrors of the chart scrub — bypass React state so the hero
+  // number can flip at 60fps while the finger is moving.
+  const scrubValueSv = useSharedValue(0);
+  const scrubActiveSv = useSharedValue(false);
   const hasChart = chartData.length > 0;
 
   const handleScrubChange = useCallback((next: ChartScrubState | null) => {
@@ -107,6 +113,9 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
     if (scrub && periodStart !== null) {
       return computePeriodChange(scrub.value, periodStart);
     }
+    if (hasChart && periodStart !== null) {
+      return computePeriodChange(liveTotalValue.toNumber(), periodStart);
+    }
     if (delta?.status === "ok") {
       return {
         delta: delta.totalDeltaReporting,
@@ -114,7 +123,7 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
       };
     }
     return null;
-  }, [scrub, periodStart, delta]);
+  }, [scrub, periodStart, hasChart, liveTotalValue, delta]);
 
   const changeSign = heroChange ? signOf(heroChange.delta) : ("zero" as const);
   const changeColorClass = colorClassForSign(changeSign, businessClasses);
@@ -123,7 +132,12 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
     <View className="gap-3">
       <Text className={TYPO_LABEL}>{totalValueTitle}</Text>
       <View className="gap-1">
-        <Text className={TYPO_DISPLAY}>{formatMoney(heroValue)}</Text>
+        <FlippingNumberText
+          value={formatMoney(heroValue)}
+          className={TYPO_DISPLAY}
+          liveValue={scrubValueSv}
+          liveActive={scrubActiveSv}
+        />
         <View className="min-h-[24px] justify-center">
           {heroChange ? (
             <Text className={typographyClass("changeLg", changeColorClass)}>
@@ -145,6 +159,8 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
             showValueLabel={false}
             formatScrubDate={formatAnchorTime}
             onScrubChange={handleScrubChange}
+            scrubValueSv={scrubValueSv}
+            scrubActiveSv={scrubActiveSv}
           />
         ) : emptyChartMessage ? (
           <Text className={typographyClass("emptyMessage", "py-8")}>{emptyChartMessage}</Text>

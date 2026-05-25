@@ -13,6 +13,7 @@ import {
   useAnimatedReaction,
   useDerivedValue,
   useSharedValue,
+  type SharedValue,
 } from "react-native-reanimated";
 import { useChartPressState, type ChartBounds } from "victory-native";
 import { ChartCrosshair } from "heroui-native-pro/chart-crosshair";
@@ -42,6 +43,10 @@ export interface ChartPressOverlayProps {
   readonly scrubPoints?: ReadonlyArray<{ readonly asOf?: string }>;
   readonly scrubDateLabels?: ReadonlyArray<string>;
   readonly onScrubChange?: (state: ChartScrubState | null) => void;
+  /** UI-thread mirror of the current scrub price (every frame). */
+  readonly scrubValueSv?: SharedValue<number>;
+  /** UI-thread mirror of whether the user is scrubbing. */
+  readonly scrubActiveSv?: SharedValue<boolean>;
   readonly children: (ctx: {
     chartPressState: NumericChartPressState;
     isActive: boolean;
@@ -70,6 +75,8 @@ export function ChartPressOverlay({
   scrubPoints = [],
   scrubDateLabels = [],
   onScrubChange,
+  scrubValueSv,
+  scrubActiveSv,
   children,
 }: ChartPressOverlayProps): ReactNode {
   const { state, isActive } = useChartPressState<{ x: number; y: { value: number } }>({
@@ -108,12 +115,14 @@ export function ChartPressOverlay({
     () => {
       "worklet";
       const index = Math.round(readPressNumber(state.x.value.value));
+      const active = state.isActive.value;
+      const yVal = readPressNumber(state.y.value.value);
       xIndex.value = index;
-      return {
-        active: state.isActive.value,
-        xIndex: index,
-        yVal: readPressNumber(state.y.value.value),
-      };
+      // UI-thread mirrors so the hero number can flip at 60fps without
+      // routing each scrub frame through React state (JS thread).
+      if (scrubValueSv) scrubValueSv.value = yVal;
+      if (scrubActiveSv) scrubActiveSv.value = active;
+      return { active, xIndex: index, yVal };
     },
     (current, previous) => {
       "worklet";

@@ -1,5 +1,5 @@
 -- Stage 2 J8 — Watchlist feature
--- 见 .specify/feature-specs/watchlist-stage-2.md
+-- 见 .specify/feature-specs/stage-2/watchlist-stage-2.md
 --
 -- 1) Create watchlist_items
 -- 2) UNIQUE (user_id, asset_id) — dedup constraint

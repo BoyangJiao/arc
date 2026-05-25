@@ -1,7 +1,7 @@
 /**
  * rebalance — 再平衡引擎 (Stage 2 J9)
  *
- * 见 .specify/feature-specs/rebalance-stage-2.md
+ * 见 .specify/feature-specs/stage-2/rebalance-stage-2.md
  *
  * CLAUDE.md 文案铁律：
  * - 输出永不出现"建议买入/卖出/应该 ..."字样

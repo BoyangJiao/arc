@@ -54,6 +54,7 @@ export const computeMarketValue = (
     costBasisReporting,
     unrealizedPnL,
     unrealizedPnLPercent,
+    dailyChangePercent: quote.changePercent ?? null,
     reportingCurrency,
     fxRateUsed: fxRate,
     priceAsOf: quote.asOf,

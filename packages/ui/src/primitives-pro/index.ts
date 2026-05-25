@@ -11,7 +11,7 @@
  *   2026-05-16 实测踩过这个坑。
  *
  * Phase 2 batch 1（2026-05-19, audit 后扩展）：
- *   按 .specify/feature-specs/component-audit.md §1.2 P0 列表开放。
+ *   按 .specify/feature-specs/cross-stage/component-audit.md §1.2 P0 列表开放。
  *   未启用项推迟到实际场景出现再加，避免无用的打包成本。
  *
  * 还未启用（按需）：

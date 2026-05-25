@@ -2,7 +2,7 @@
  * Asset detail — /asset/[market]/[symbol]
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
@@ -13,6 +13,8 @@ import {
   Screen,
   Text,
   TimeRangeSelector,
+  computePeriodChange,
+  formatCompactChangeLine,
   formatSignedPercent,
   useBusinessClasses,
   typographyClass,
@@ -54,15 +56,28 @@ export default function AssetDetailScreen() {
 
   const quote = detail.data?.latestQuote;
   const changePercent = quote?.changePercent ?? null;
+  const currency = detail.data?.currency ?? quote?.currency ?? "CNY";
+  const currencySym = currencySymbol(currency);
+
+  const periodChange = useMemo(() => {
+    if (!quote || chartData.length === 0) return null;
+    return computePeriodChange(quote.price.toNumber(), chartData[0]!.y);
+  }, [quote, chartData, range]);
 
   const changeColorClass =
-    changePercent === null
-      ? businessClasses.pnlNeutral.text
-      : changePercent.isPositive()
+    periodChange !== null
+      ? periodChange.delta.isPositive()
         ? businessClasses.gain.text
-        : changePercent.isNegative()
+        : periodChange.delta.isNegative()
           ? businessClasses.loss.text
-          : businessClasses.pnlNeutral.text;
+          : businessClasses.pnlNeutral.text
+      : changePercent === null
+        ? businessClasses.pnlNeutral.text
+        : changePercent.isPositive()
+          ? businessClasses.gain.text
+          : changePercent.isNegative()
+            ? businessClasses.loss.text
+            : businessClasses.pnlNeutral.text;
 
   const handleAddTx = () => {
     if (!portfolio?.id || !market || !symbol) return;
@@ -86,7 +101,11 @@ export default function AssetDetailScreen() {
                 <Text className="text-foreground text-2xl font-bold">
                   {formatMoney(quote.price, quote.currency)}
                 </Text>
-                {changePercent !== null ? (
+                {periodChange ? (
+                  <Text className={typographyClass("rowValue", changeColorClass)}>
+                    {formatCompactChangeLine(periodChange.delta, periodChange.percent, currencySym)}
+                  </Text>
+                ) : changePercent !== null ? (
                   <Text className={typographyClass("rowValue", changeColorClass)}>
                     {formatSignedPercent(changePercent)}
                   </Text>
@@ -99,10 +118,11 @@ export default function AssetDetailScreen() {
 
           <TimeRangeSelector value={range} onChange={setRange} />
           <LineChart
+            key={range}
             data={chartData}
             height={224}
-            loading={historical.isFetching}
-            valuePrefix={currencySymbol(detail.data?.currency ?? quote?.currency ?? "CNY")}
+            loading={historical.isFetching && !historical.data}
+            valuePrefix={currencySym}
           />
 
           {detail.data?.holding ? (

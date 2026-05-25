@@ -90,6 +90,23 @@ Summary:
 Next session can resume by reading CLAUDE.md → session-state.md → starting work.
 ```
 
+### Step 6 — Optional: dump code context bundle (Repomix)
+
+If the session was working on a **known feature slug** (Stage 3 Block A–D), offer to dump a timestamped code snapshot for the next session:
+
+```bash
+# Ask user or infer slug from active feature spec / handoff doc
+pnpm ctx:dump <slug>
+# e.g. pnpm ctx:dump twr  →  .specify/codectx/twr-20260525-112100.xml
+```
+
+- Output is **gitignored** (`.specify/codectx/`) — never commit
+- Mention the path in your report so the user can attach it when starting the next IDE session
+- Slugs: `twr`, `performance-attribution`, `drawdown`, `tushare-adapter`, `coingecko-adapter`, `multi-portfolio`, `holdings-and-transactions`, `stage-3-roadmap`; scope shortcuts: `core`, `data-sources`, `mobile-portfolio`
+- Skip if no active feature scope or user declines — this is opt-in, not every checkpoint
+
+See `docs/HARNESS.md` Layer 6 for full Repomix workflow.
+
 ## Anti-patterns (do NOT)
 
 - ❌ Push the checkpoint commit — pollutes CI and creates noise. Let the next real commit carry it forward.

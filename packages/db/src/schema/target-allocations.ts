@@ -13,7 +13,7 @@
  * RLS:
  *   - SELECT / INSERT / UPDATE / DELETE：portfolio 属于 auth.uid()
  *
- * 见 .specify/feature-specs/rebalance-stage-2.md
+ * 见 .specify/feature-specs/stage-2/rebalance-stage-2.md
  */
 
 import { sql } from "drizzle-orm";
