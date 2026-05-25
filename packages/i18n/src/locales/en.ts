@@ -223,6 +223,27 @@ export const en = {
     apiRateLimitSimLabel: "Simulate API rate limit (search & quotes)",
     apiRateLimitSimHint:
       "When ON, symbol search and quote refresh throw RateLimitError for C10/J8 UAT. Turn OFF to restore live requests.",
+    env: {
+      sectionLabel: "Environment",
+      signedInAs: "Signed in as",
+      modeRealLabel: "Real (persistent)",
+      modeCleanLabel: "Clean (resettable)",
+      modeUnknownLabel: "Unknown — sign in as +arc-real or +arc-clean",
+      switchToReal: "Switch to Real",
+      switchToClean: "Switch to Clean",
+      reset: "Reset Clean Env",
+      noticeRealScenarios:
+        "Scenario buttons are hidden in Real env to prevent accidental data overwrite.",
+      noticeUnknown:
+        "Sign in as Clean to seed scenarios. Add DEV_REAL_EMAIL / DEV_CLEAN_EMAIL to apps/mobile/.env if missing.",
+      switchError: "Could not switch envs: {{message}}",
+      resetSuccessTitle: "Clean env reset",
+      resetSuccessBody: "Wiped {{tables}} tables + {{keys}} AsyncStorage keys.",
+      resetError: "Reset failed: {{message}}",
+      emailNotConfigured:
+        "DEV_REAL_EMAIL / DEV_CLEAN_EMAIL not set in apps/mobile/.env — see .env.example.",
+      switchingHint: "Sending OTP and signing out…",
+    },
     features: {
       dailySnapshot: {
         label: "Daily Snapshot",

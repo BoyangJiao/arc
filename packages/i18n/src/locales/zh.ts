@@ -218,6 +218,26 @@ export const zh = {
     apiRateLimitSimLabel: "模拟 API 限流（搜索 / 行情）",
     apiRateLimitSimHint:
       "打开后，标的搜索与行情刷新会触发限流降级 UI（C10 / 行情横幅）。关闭后恢复正常请求。",
+    env: {
+      sectionLabel: "环境",
+      signedInAs: "登录用户",
+      modeRealLabel: "Real（真实数据 · 持久）",
+      modeCleanLabel: "Clean（可重置）",
+      modeUnknownLabel: "未知 — 请用 +arc-real 或 +arc-clean 登录",
+      switchToReal: "切到 Real",
+      switchToClean: "切到 Clean",
+      reset: "重置 Clean 环境",
+      noticeRealScenarios: "Real 环境下场景按钮已隐藏，防止误覆盖真实数据。",
+      noticeUnknown:
+        "请用 Clean 用户登录后再使用场景；若邮箱未配置请检查 apps/mobile/.env 中 DEV_REAL_EMAIL / DEV_CLEAN_EMAIL。",
+      switchError: "切换环境失败：{{message}}",
+      resetSuccessTitle: "Clean 环境已重置",
+      resetSuccessBody: "已清空 {{tables}} 张表 + {{keys}} 个 AsyncStorage 键。",
+      resetError: "重置失败：{{message}}",
+      emailNotConfigured:
+        "apps/mobile/.env 缺少 DEV_REAL_EMAIL / DEV_CLEAN_EMAIL — 参考 .env.example。",
+      switchingHint: "正在发送验证码并退出登录…",
+    },
     features: {
       dailySnapshot: {
         label: "每日快照",
