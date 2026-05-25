@@ -347,6 +347,7 @@ TWR algorithm layer 全栈落地，纯 `@arc/core`，未碰 UI / hooks / adapter
 - 真实 transactions 在 Arc 录入（Block C tx entry 已支持）
 - Arc TWR vs 雪球 TWR 截图存档 `docs/dod-verification/twr-snowball-{ticker}-{date}.png`
 - 误差 ≤ 1.0% per 标的 (Stage 3 DoD-hard)
+- **Prereq**: Real Env 已就位（见 `.specify/feature-specs/cross-stage/real-env-dev-tools.md`）— 双邮箱 +arc-real / +arc-clean，Sonnet/Cursor 6 commit chain 实施中
 
 ### Phase 2 follow-ups (Opus review of commits #5+#6, 2026-05-25)
 
@@ -401,13 +402,21 @@ commit chain：
 2. 实施 commit #5/#6（hooks + UI 挂数字）
 3. UAT：Asset detail "1Y TWR：+X.XX%" 联动 / Portfolio Tab Hero "YTD TWR" 显示 / Insights 卡 "1月 TWR"
 
-**Track C — Block D Phase 3（用户 + Opus）**
+**Track C — Real Env DEV 双环境（Sonnet/Cursor — 2026-05-25 spec Accepted）**
+
+新 cross-stage spec [`real-env-dev-tools.md`](feature-specs/cross-stage/real-env-dev-tools.md) — 解锁 Phase 3 雪球对标 prereq + 长期 dogfooding。3 决策已锁（+alias 双邮箱 / 完整 reset / 最小 guard），6 commit chain 详见 spec。
+
+1. Sonnet/Cursor 用 [`cursor-real-env-dev-tools-kickoff.md`](handoffs/cursor-real-env-dev-tools-kickoff.md) 起会话，跑 6 commits（~3-4h）
+2. 用户跑 J-RE.1 first-time setup：填 `.env` + Switch to Real + onboarding 录入真实持仓
+3. Real Env 持续累积 ≥6 月真实数据 → Phase 3 雪球对标 ready
+
+**Track D — Block D Phase 3 雪球对标（用户 + Opus，依赖 Track C ≥6 月数据）**
 
 1. 用户选 3 标的 ≥ 6 月真实持仓（建议 1 CN + 1 US + 1 ETF/FUND）
-2. 雪球 TWR 截图 + Arc 录入相同 transactions
+2. 雪球 TWR 截图 + Arc 录入相同 transactions（已在 Track C Real Env 完成录入）
 3. 截图存档 `docs/dod-verification/twr-snowball-{ticker}-{date}.png` + 误差 ≤ 1.0%
 
-**Track D — Block D specs 余下两条（Opus）**
+**Track E — Block D specs 余下两条（Opus）**
 
 1. PA spec implementation Phase 1 — 复用 `computeSharesAt` + sub-period contribution
 2. Drawdown spec implementation Phase 1 — 基于 `portfolio_value_snapshots` 时序
