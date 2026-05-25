@@ -290,8 +290,4 @@ packages/i18n/src/locales/{en,zh}.ts            ← ~6 strings
 
 ## Context bundle
 
-```bash
-pnpm ctx:feature drawdown
-```
-
-Config: `.specify/feature-specs/stage-3/drawdown.repomix.json`
+Auto: `pnpm ctx:auto` (agent/hook). Config: `.specify/feature-specs/stage-3/drawdown.repomix.json`

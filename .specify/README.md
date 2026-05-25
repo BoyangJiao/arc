@@ -22,14 +22,15 @@ project orientation, this directory reads as **enforceable constraints**.
 
 ## How specs are enforced
 
-| Layer                               | What it enforces                                                                                       |
-| :---------------------------------- | :----------------------------------------------------------------------------------------------------- |
-| `typecheck`                         | Type constraints (Decimal types, readonly fields)                                                      |
-| `eslint`                            | Code-style constraints (no `number` for money, no hard-coded colors, no hard-coded strings) — Stage 2+ |
-| `pre-commit hook` (husky)           | Lint + format on changed files                                                                         |
-| `pre-push CI gate`                  | Typecheck + lint + property-based tests on every push                                                  |
-| Claude / Cursor session start hooks | typecheck baseline + constitution freshness reminder                                                   |
-| Human review                        | Anything machines can't enforce                                                                        |
+| Layer                               | What it enforces                                                                                            |
+| :---------------------------------- | :---------------------------------------------------------------------------------------------------------- |
+| `typecheck`                         | Type constraints (Decimal types, readonly fields)                                                           |
+| `eslint`                            | Code-style constraints (no `number` for money, no hard-coded colors, no hard-coded strings) — Stage 2+      |
+| `pre-commit hook` (husky)           | Lint + format on changed files                                                                              |
+| `pre-push CI gate`                  | Typecheck + lint + property-based tests on every push                                                       |
+| Claude / Cursor session start hooks | typecheck baseline + constitution freshness reminder                                                        |
+| Human review                        | Anything machines can't enforce                                                                             |
+| Repomix context bundles (opt-in)    | Code snapshots for LLM cold start — see `docs/HARNESS.md` Layer 6; output gitignored in `.specify/codectx/` |
 
 ## Relationship to `.claude/skills/`
 

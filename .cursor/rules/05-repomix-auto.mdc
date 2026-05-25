@@ -1,0 +1,62 @@
+---
+description: Repomix auto context — agents refresh code bundles without user commands
+globs:
+alwaysApply: true
+---
+
+# Repomix auto context (Layer 6)
+
+Arc uses Repomix for **feature-scoped code snapshots**. The developer never runs `pnpm ctx:*` manually — **agents and hooks do**.
+
+## Priority (with SDD)
+
+1. `.specify/session-state.md` + feature spec + constitution (intent)
+2. **Repomix bundle** at path in session-state `Context slug` / `.specify/codectx/.active.json` (code ground truth)
+3. Cursor search / Read (gaps only)
+
+## When YOU (the agent) must refresh context
+
+Run **`pnpm ctx:auto --ensure --json`** (no slug) when:
+
+- Starting a **new session** on feature implementation after reading session-state
+- User invokes **`/checkpoint`** (before writing session-state)
+- Task scope **changes** (e.g. Block D TWR → drawdown) — inferrer picks new slug
+- You edited files under the active feature and bundle may be stale
+
+Do **not** ask the user to run Repomix. Do **not** skip because "I'll grep instead" when a bundle exists or `--ensure` can build one.
+
+## After `ctx:auto`
+
+- Read `.specify/codectx/.active.json` for `{ slug, path, generatedAt, confidence }`
+- Prefer **Read** on `path` over grepping the same files individually
+- On checkpoint: update session-state **You are here** table:
+
+| **Context slug** | `<slug from .active.json>` |
+| **Context bundle** | `<path from .active.json>` |
+
+## Slug mismatch guardrail (accuracy > convenience)
+
+**Before trusting the bundle**, sanity-check that the slug matches your actual task:
+
+1. Read the bundle's first ~50 lines (header + directory structure)
+2. If it clearly does not cover the files you need to edit:
+   - Re-run with explicit override: `CTX_SLUG=<correct-slug> pnpm ctx:auto --ensure`
+   - Or skip the bundle entirely and use grep/Read — **never force-fit wrong context into your reasoning**
+3. If `confidence: "low"` in `.active.json` — treat the bundle as advisory, verify against grep before writing code
+4. If no slug exists and your task is genuinely cross-cutting (refactor / monorepo-wide) — skip Repomix, use targeted Read
+
+The cost of regenerating with a different slug (~2s) is far less than fixing code based on stale/wrong context.
+
+## Manual override (rare)
+
+Only if inference fails: `CTX_SLUG=twr pnpm ctx:auto --ensure` or `pnpm ctx:auto --slug=twr --ensure`.
+
+Scope shortcuts (`core` / `data-sources` / `mobile-portfolio`) are **explicit-only** — they will never be auto-inferred to avoid hijacking feature-scoped sessions.
+
+## Do not
+
+- Commit `.specify/codectx/` or add Repomix to quality-gate / husky
+- Replace feature specs or ADRs with Repomix output
+- Run full `pnpm ctx` (whole repo) unless explicitly debugging monorepo-wide
+
+See `docs/HARNESS.md` Layer 6.

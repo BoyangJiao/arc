@@ -1,0 +1,111 @@
+{
+  "slugs": {
+    "twr": {
+      "config": ".specify/feature-specs/stage-3/twr.repomix.json",
+      "output": ".specify/codectx/twr.xml",
+      "spec": "twr-stage-3.md",
+      "blocks": ["Block D", "block-d"],
+      "keywords": [
+        "twr",
+        "xirr",
+        "computePortfolioTwr",
+        "computeAssetTwr",
+        "Modified Dietz",
+        "returns/"
+      ],
+      "pathPrefixes": [
+        "packages/core/src/returns/",
+        "packages/core/__tests__/twr",
+        "packages/core/__tests__/xirr",
+        "packages/core/__tests__/cash-flow",
+        "apps/mobile/src/lib/queries/use-asset-twr",
+        "apps/mobile/src/lib/queries/use-portfolio-twr",
+        "packages/ui/src/finance/TwrInlineLabel"
+      ]
+    },
+    "performance-attribution": {
+      "config": ".specify/feature-specs/stage-3/performance-attribution.repomix.json",
+      "output": ".specify/codectx/performance-attribution.xml",
+      "spec": "performance-attribution-stage-3.md",
+      "blocks": ["Block D", "block-d"],
+      "keywords": ["performance-attribution", "performance attribution", "attribution"],
+      "pathPrefixes": ["packages/core/src/returns/attribution"]
+    },
+    "drawdown": {
+      "config": ".specify/feature-specs/stage-3/drawdown.repomix.json",
+      "output": ".specify/codectx/drawdown.xml",
+      "spec": "drawdown-stage-3.md",
+      "blocks": ["Block D", "block-d"],
+      "keywords": ["drawdown", "max drawdown", "underwater"],
+      "pathPrefixes": ["packages/core/src/returns/drawdown"]
+    },
+    "tushare-adapter": {
+      "config": ".specify/feature-specs/stage-3/tushare-adapter.repomix.json",
+      "output": ".specify/codectx/tushare-adapter.xml",
+      "spec": "tushare-adapter-stage-3.md",
+      "blocks": ["Block A", "block-a"],
+      "keywords": ["tushare", "akshare", "Block A"],
+      "pathPrefixes": [
+        "packages/data-sources/src/adapters/tushare/",
+        "packages/data-sources/src/adapters/akshare/",
+        "services/akshare-wrapper/"
+      ]
+    },
+    "coingecko-adapter": {
+      "config": ".specify/feature-specs/stage-3/coingecko-adapter.repomix.json",
+      "output": ".specify/codectx/coingecko-adapter.xml",
+      "spec": "coingecko-adapter-stage-3.md",
+      "blocks": ["Block A", "block-a"],
+      "keywords": ["coingecko", "CRYPTO adapter"],
+      "pathPrefixes": ["packages/data-sources/src/adapters/coingecko/"]
+    },
+    "multi-portfolio": {
+      "config": ".specify/feature-specs/stage-3/multi-portfolio.repomix.json",
+      "output": ".specify/codectx/multi-portfolio.xml",
+      "spec": "multi-portfolio-stage-3.md",
+      "blocks": ["Block B", "block-b"],
+      "keywords": ["multi-portfolio", "portfolio transfer", "active-portfolio", "Block B"],
+      "pathPrefixes": [
+        "apps/mobile/src/lib/store/active-portfolio",
+        "apps/mobile/src/lib/queries/use-portfolios",
+        "apps/mobile/src/lib/queries/use-active-portfolio"
+      ]
+    },
+    "holdings-and-transactions": {
+      "config": ".specify/feature-specs/stage-3/holdings-and-transactions.repomix.json",
+      "output": ".specify/codectx/holdings-and-transactions.xml",
+      "spec": "holdings-and-transactions-stage-3.md",
+      "blocks": ["Block C", "block-c"],
+      "keywords": ["holdings-and-transactions", "SymbolPicker", "asset detail", "Block C"],
+      "pathPrefixes": [
+        "apps/mobile/app/asset/",
+        "apps/mobile/src/components/SymbolPicker",
+        "packages/ui/src/charts/"
+      ]
+    },
+    "core": {
+      "config": "repomix.config.core.json",
+      "output": ".specify/codectx/core.xml",
+      "keywords": ["packages/core", "@arc/core", "data-model-invariants"],
+      "pathPrefixes": ["packages/core/"],
+      "autoInferable": false,
+      "note": "Scope shortcut — explicit only via CTX_SLUG=core or --slug=core. Not auto-picked to avoid hijacking feature-scoped sessions."
+    },
+    "data-sources": {
+      "config": "repomix.config.data-sources.json",
+      "output": ".specify/codectx/data-sources.xml",
+      "keywords": ["data-sources", "PriceAdapter", "packages/data-sources"],
+      "pathPrefixes": ["packages/data-sources/"],
+      "autoInferable": false,
+      "note": "Scope shortcut — explicit only."
+    },
+    "mobile-portfolio": {
+      "config": "repomix.config.mobile-portfolio.json",
+      "output": ".specify/codectx/mobile-portfolio.xml",
+      "keywords": ["Portfolio Tab", "PortfolioHero", "portfolio tab"],
+      "pathPrefixes": ["apps/mobile/app/(tabs)/index.tsx"],
+      "autoInferable": false,
+      "note": "Scope shortcut — explicit only."
+    }
+  }
+}

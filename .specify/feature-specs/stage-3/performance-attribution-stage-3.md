@@ -306,8 +306,4 @@ Next: `drawdown-stage-3.md`
 
 ## Context bundle
 
-```bash
-pnpm ctx:feature performance-attribution
-```
-
-Config: `.specify/feature-specs/stage-3/performance-attribution.repomix.json`
+Auto: `pnpm ctx:auto` (agent/hook). Config: `.specify/feature-specs/stage-3/performance-attribution.repomix.json`

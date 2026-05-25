@@ -477,8 +477,4 @@ Reverse mapping (`ts_code` → Arc symbol) strips the suffix.
 
 ## Context bundle
 
-```bash
-pnpm ctx:feature tushare-adapter
-```
-
-Config: `.specify/feature-specs/stage-3/tushare-adapter.repomix.json`
+Auto: `pnpm ctx:auto` (agent/hook). Config: `.specify/feature-specs/stage-3/tushare-adapter.repomix.json`

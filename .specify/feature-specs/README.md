@@ -144,21 +144,12 @@ If touching existing data: how to migrate?
 
 ## Context bundle (Repomix)
 
-Each Stage 3 spec has a sibling `<slug>.repomix.json` (e.g. `twr.repomix.json` next to `twr-stage-3.md`).
+Each Stage 3 spec has a sibling `<slug>.repomix.json`. **Agents auto-run** `pnpm ctx:auto` — developers do not run ctx commands manually.
 
-```bash
-pnpm ctx:feature twr              # stable output → .specify/codectx/twr.xml
-pnpm ctx:dump twr                 # timestamped snapshot for handoff
-```
-
-Add a `## Context bundle` section to new specs:
+Add to new specs:
 
 ```markdown
 ## Context bundle
 
-\`\`\`bash
-pnpm ctx:feature <slug>
-\`\`\`
-
-Config: `.specify/feature-specs/stage-3/<slug>.repomix.json`
+Auto: `pnpm ctx:auto` (agent/hook). Config: `.specify/feature-specs/stage-3/<slug>.repomix.json`
 ```

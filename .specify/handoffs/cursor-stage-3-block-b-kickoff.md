@@ -22,6 +22,10 @@
 4. `.specify/feature-specs/stage-3/multi-portfolio-stage-3.md` — **本任务的契约**（Status = Accepted，10 决策，12 commits）
 5. `.specify/data-model-invariants.md` (如存在) — 5 大不变性法则（资产 ID / 单一来源真相 / Adapter / 币种 / 历史≠当下）
 
+## Code context bundle（Repomix — 自动）
+
+下一 agent：`pnpm ctx:auto --ensure`（slug 推断为 `multi-portfolio`）。开发者无需手动命令。
+
 ## 关键 Block B 决策摘要（spec §Resolved decisions）
 
 | #  | 决策                                                                                          |

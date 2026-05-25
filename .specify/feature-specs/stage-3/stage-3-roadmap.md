@@ -266,8 +266,4 @@ Week 9-10: Block F (CSV + P2 + buffer)
 
 ## Context bundle
 
-```bash
-pnpm ctx:feature stage-3-roadmap
-```
-
-Config: `.specify/feature-specs/stage-3/stage-3-roadmap.repomix.json` (all Stage 3 specs + roadmap, no code)
+Auto: `pnpm ctx:auto` (agent/hook). Config: `.specify/feature-specs/stage-3/stage-3-roadmap.repomix.json`

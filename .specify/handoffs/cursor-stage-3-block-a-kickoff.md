@@ -17,6 +17,10 @@
 4. `.specify/feature-specs/stage-3/tushare-adapter-stage-3.md` — **本任务的契约**（15 决策已锁，**reshape 2026-05-20**：Phase 1A + Phase 2 拆分；HK / FUND adapters Stage 3 走 AKShare 而非 Tushare）
 5. `docs/adr/011-multi-source-fallback-and-akshare.md` — **多源 fallback ADR 已 Accepted**（决策一 fallback 表 + 决策三 classifier + 决策五 phasing；commit #10-14 实施 ADR 011 §决策五 Phase 2）
 
+## Code context bundle（Repomix — 自动）
+
+下一 agent：`pnpm ctx:auto --ensure`（slug 推断为 `tushare-adapter`）。开发者无需手动命令。
+
 ## 已就绪的工作 — commit #1 不需要再写
 
 Opus 已 fold-in QuotaError 子类到 commit #1。当前 working tree 包含：

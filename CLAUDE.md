@@ -264,6 +264,10 @@ pnpm format           # Prettier 格式化
 #   本地镜像: .qoder/skills/, .cursor/skills/ (gitignored)
 pnpm sync:skills      # 手动同步 canonical → 本地镜像
 
+# Repomix — LLM context bundles（见 docs/HARNESS.md Layer 6；agent 自动运行，开发者无感）
+pnpm ctx:auto         # infer slug + refresh bundle
+pnpm ctx:infer        # debug inference only
+
 # packages/db 就绪后：
 pnpm --filter @arc/db generate   # 生成 Drizzle migration
 pnpm --filter @arc/db push       # 推送 schema 到 Supabase

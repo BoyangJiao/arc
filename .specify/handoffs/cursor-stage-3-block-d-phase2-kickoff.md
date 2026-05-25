@@ -23,14 +23,9 @@
 4. .specify/feature-specs/stage-3/twr-stage-3.md — 本任务契约（14 决策 + Phase 2 实施 hint）
 5. .specify/polish-backlog.md — UI 微调 backlog（确认本 Phase 不踩 backlog item；不要顺手 polish backlog 里的东西）
 
-## Code context bundle（Repomix — 冷启动推荐）
+## Code context bundle（Repomix — 自动，无需人工命令）
 
-```bash
-pnpm ctx:feature twr
-# → .specify/codectx/twr.xml（gitignored；attach 到 chat 或 pnpm ctx:feature twr --stdout | pbcopy）
-```
-
-Spec = intent；Repomix = 相关代码全文。两者互补，不互相替代。Config：`.specify/feature-specs/stage-3/twr.repomix.json`
+下一 agent：`pnpm ctx:auto --ensure` → Read `session-state.md` 的 **Context bundle** 或 `.specify/codectx/.active.json`（slug 应为 `twr`）。开发者不需要运行任何 ctx 命令。
 
 ## Phase 1 落地状态（不要重做）
 

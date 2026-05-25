@@ -655,8 +655,4 @@ Block D `twr-stage-3.md` / `performance-attribution-stage-3.md` / `drawdown-stag
 
 ## Context bundle
 
-```bash
-pnpm ctx:feature holdings-and-transactions
-```
-
-Config: `.specify/feature-specs/stage-3/holdings-and-transactions.repomix.json`
+Auto: `pnpm ctx:auto` (agent/hook). Config: `.specify/feature-specs/stage-3/holdings-and-transactions.repomix.json`

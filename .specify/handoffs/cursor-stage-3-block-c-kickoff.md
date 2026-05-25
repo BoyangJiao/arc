@@ -23,6 +23,10 @@
 4. `.specify/feature-specs/stage-3/holdings-and-transactions-stage-3.md` — **本任务契约**（Status = Accepted，13 决策，13 commits 分 4 phase）
 5. `docs/adr/011-multi-source-fallback-and-akshare.md` — 决策三 classifier 本 spec 要扩 `NotImplementedError → try-secondary`
 
+## Code context bundle（Repomix — 自动）
+
+下一 agent：`pnpm ctx:auto --ensure`（slug 推断为 `holdings-and-transactions`）。开发者无需手动命令。
+
 ## 关键 Block C 决策摘要（spec §Resolved decisions）
 
 | #  | 决策                                                                                             |

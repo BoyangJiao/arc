@@ -119,28 +119,39 @@ See `.specify/README.md` for full workflow.
 
 ---
 
-## Layer 6 — Context packaging (Repomix, opt-in)
+## Layer 6 — Context packaging (Repomix, agent-automated)
 
 [Repomix](https://github.com/yamadashy/repomix) packs selected source files into one LLM-friendly XML bundle. Arc uses it to **reduce cold-start grep cost** when switching IDE, model, or feature scope. It complements SDD (intent in specs) — it does **not** replace `session-state.md`, ADRs, or feature specs.
 
-| Command                     | Purpose                                               |
-| :-------------------------- | :---------------------------------------------------- |
-| `pnpm ctx`                  | Full monorepo snapshot (heavy; use sparingly)         |
-| `pnpm ctx:core`             | `@arc/core` + data-model invariants                   |
-| `pnpm ctx:data-sources`     | Adapters + akshare-wrapper                            |
-| `pnpm ctx:mobile-portfolio` | Portfolio Tab mobile + charts UI                      |
-| `pnpm ctx:feature <slug>`   | Feature-scoped bundle (see slugs below)               |
-| `pnpm ctx:dump <slug>`      | Timestamped dump to `.specify/codectx/` (for handoff) |
+**Developer experience: zero manual commands.** Agents and hooks run Repomix; the developer only reads session-state as today.
 
-**Stage 3 feature slugs** (config: `.specify/feature-specs/stage-3/<slug>.repomix.json`):
+| Trigger                              | Who runs                           | Command                                                |
+| :----------------------------------- | :--------------------------------- | :----------------------------------------------------- |
+| Session start (Cursor / Claude Code) | `session-start.sh` hook            | `node tools/repomix-auto-context.mjs --ensure --quiet` |
+| New feature implementation session   | Agent (rule `05-repomix-auto.mdc`) | `pnpm ctx:auto --ensure`                               |
+| `/checkpoint`                        | Agent (checkpoint skill Step 3)    | `pnpm ctx:auto --ensure` + optional `--dump`           |
+| Slug inference debug                 | Agent / maintainer                 | `pnpm ctx:infer --json`                                |
 
-`twr` · `performance-attribution` · `drawdown` · `tushare-adapter` · `coingecko-adapter` · `multi-portfolio` · `holdings-and-transactions` · `stage-3-roadmap`
+**Machine pointers** (gitignored):
 
-**Typical workflow**
+- `.specify/codectx/.active.json` — `{ slug, path, generatedAt }` written on every auto run
+- `session-state.md` §You are here — **Context slug** + **Context bundle** rows (checkpoint maintains)
 
-1. New session on a feature → read spec + `session-state.md` (SDD, unchanged)
-2. Run `pnpm ctx:feature twr` → attach `.specify/codectx/twr.xml` to chat (or `pnpm ctx:feature twr --stdout | pbcopy`)
-3. Before handoff → `/checkpoint` + optional `pnpm ctx:dump twr` for a timestamped snapshot
+| Command                   | Purpose                                                              |
+| :------------------------ | :------------------------------------------------------------------- |
+| `pnpm ctx:auto`           | **Default** — infer slug from session-state/git, ensure bundle fresh |
+| `pnpm ctx:auto --dump`    | Timestamped snapshot (handoff history)                               |
+| `pnpm ctx:infer`          | Debug slug inference only                                            |
+| `pnpm ctx:feature <slug>` | Manual override (legacy; agents prefer `ctx:auto`)                   |
+| `pnpm ctx`                | Full monorepo snapshot (heavy; rare)                                 |
+
+**Slug inference** (`tools/repomix-infer-slug.mjs` + `tools/repomix-slug-registry.json`): scores session-state, handoffs, and recent git paths against Stage 3 feature slugs. Explicit `**Context slug**` in session-state wins.
+
+**Typical workflow (no user steps)**
+
+1. Agent reads `session-state.md` + feature spec
+2. Hook or agent runs `ctx:auto` → Read `.specify/codectx/twr.xml` (example)
+3. Checkpoint writes slug + path back to session-state for next session
 
 **Rules (do not violate SDD)**
 
@@ -162,8 +173,8 @@ pnpm test                     # all property tests
 pnpm test:watch               # interactive
 pnpm format                   # prettier on full repo (rare; lint-staged handles per-commit)
 pnpm sync:skills              # manual skill sync (post-checkout/merge auto-runs this)
-pnpm ctx:feature twr          # feature context bundle for LLM cold start
-pnpm ctx:dump twr             # timestamped snapshot for handoff (gitignored)
+pnpm ctx:auto                 # agent/hook: infer slug + refresh bundle (developer: no-op)
+pnpm ctx:infer                # debug slug inference
 ```
 
 ### Adding a new test

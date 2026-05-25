@@ -44,6 +44,8 @@
     "ctx:mobile-portfolio": "repomix -c repomix.config.mobile-portfolio.json",
     "ctx:feature": "bash tools/repomix-feature-context.sh",
     "ctx:dump": "bash tools/repomix-dump-feature-context.sh",
+    "ctx:auto": "node tools/repomix-auto-context.mjs",
+    "ctx:infer": "node tools/repomix-infer-slug.mjs",
     "lint:copy": "node tools/lint-copy.mjs",
     "postinstall:supabase-cli": "node node_modules/supabase/scripts/postinstall.js",
     "supabase": "node_modules/supabase/bin/supabase",

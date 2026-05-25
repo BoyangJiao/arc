@@ -17,6 +17,10 @@
 4. `.specify/feature-specs/stage-3/coingecko-adapter-stage-3.md` — **本任务契约**（Status = Accepted，6 决策，0 open questions，6 commits）
 5. `docs/adr/011-multi-source-fallback-and-akshare.md` — 多源 fallback；CRYPTO 单源 CoinGecko，无 secondary
 
+## Code context bundle（Repomix — 自动）
+
+下一 agent：`pnpm ctx:auto --ensure`（slug 推断为 `coingecko-adapter`）。开发者无需手动命令。
+
 ## 模板（必读 + 必照搬模式）
 
 - `packages/data-sources/src/adapters/finnhub.ts` + `__tests__/finnhub.spec.ts` —— 形态 ~80% 一致：GET REST + 行式 JSON + 单市场 + searchSymbols + AdapterError 子类

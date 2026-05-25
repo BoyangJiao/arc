@@ -638,8 +638,4 @@ Block C `holdings-table-stage-3.md`（持仓表 + 详情页 + 多时段图表，
 
 ## Context bundle
 
-```bash
-pnpm ctx:feature multi-portfolio
-```
-
-Config: `.specify/feature-specs/stage-3/multi-portfolio.repomix.json`
+Auto: `pnpm ctx:auto` (agent/hook). Config: `.specify/feature-specs/stage-3/multi-portfolio.repomix.json`
