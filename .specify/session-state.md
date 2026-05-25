@@ -348,6 +348,16 @@ TWR algorithm layer 全栈落地，纯 `@arc/core`，未碰 UI / hooks / adapter
 - Arc TWR vs 雪球 TWR 截图存档 `docs/dod-verification/twr-snowball-{ticker}-{date}.png`
 - 误差 ≤ 1.0% per 标的 (Stage 3 DoD-hard)
 
+### Phase 2 follow-ups (Opus review of commits #5+#6, 2026-05-25)
+
+P0/P1 fixes folded into the review pass (commit #5 FX historical-rate violation + missing `twr-window.spec.ts`; commit #6 B1 Insights TWR hidden in no-targets branch). Remaining follow-ups (non-blocking, see `twr-stage-3.md §Known limitations`):
+
+- **FU-1** Batch fallback adapter fetches when ≥ 10 holdings × ≥ 5 fallback days
+- **FU-2** Reroute `console.warn` → Sentry (Stage 4 observability)
+- **FU-3** Clamp non-ALL `from` to `earliestPortfolioTradeDate`; surface evaluated period in UI label
+- **FU-4** Revisit `FX_LOOKBACK_DAYS=7` if long bank-holiday stretches start triggering "—" in practice
+- **FU-5** Unify `useAssetTwr` price fetch with `useHistoricalQuotes` via a `lookbackDays` option (currently two parallel adapter calls per Asset detail mount)
+
 ### Phase 2 hand-off prompt (复制到新 Sonnet/Cursor Chat)
 
 ```

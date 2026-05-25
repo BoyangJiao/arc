@@ -584,11 +584,23 @@ Phase 1 DoD: `pnpm --filter @arc/core test` 149/149 ✅ · `pnpm typecheck` 6/6 
 
 ---
 
+## Known limitations / follow-ups (after Phase 2 commit #5 — Opus review 2026-05-25)
+
+Surfaced during Opus review of `use-portfolio-twr` / `use-asset-twr` hooks. Not P0 blockers — TWR contract holds — but worth tracking before Stage 3 closes.
+
+- **FU-1 Fallback adapter fan-out** (`apps/mobile/src/lib/compute-valuation-at-date.ts`)
+  For each holding × each boundary day needing fallback, the hook performs one `adapter.fetchHistorical(symbol, from, to)` call with a 30-day lookback. Consecutive boundary days within the same lookback window refetch overlapping ranges. Acceptable for self-use; revisit batching when portfolio size + boundary density grow (e.g. ≥ 10 holdings × ≥ 5 fallback days).
+- **FU-2 Sentry telemetry** (`compute-valuation-at-date.ts`)
+  Diagnostic logs currently use `console.warn`. Reroute to Sentry as part of Stage 4 observability pass.
+- **FU-3 Range floor for non-ALL windows** (UX nuance)
+  Ranges like `1Y` on a 6-month-old portfolio yield `valueAt(from) = 0` (degenerate skip), so TWR effectively runs from first transaction. The UI still labels it "1Y" which can mislead. Consider clamping `from = MAX(from, earliestPortfolioTradeDate)` and surfacing the actual evaluated period (e.g. "Since 2026-01-15"). Affects commit #6 UI labels.
+- **FU-4 FX forward-fill window** (`compute-valuation-at-date.ts:fetchFxRateOnDay`)
+  Historical FX forward-fills up to 7 days back (covers ECB weekends / holidays). Past 7 days the function throws and the TWR query surfaces error → UI "—". If long bank-holiday stretches start triggering "—" in practice, raise `FX_LOOKBACK_DAYS` or surface a distinct warning state.
+- **FU-5 Asset-detail duplicate price fetch** (`apps/mobile/src/lib/queries/use-asset-twr.ts` vs `use-historical-quotes.ts`)
+  Phase 2 commit #6 refactored `useAssetTwr` to call `adapter.fetchHistorical` directly with a 30-day-extended window, so the chart and the TWR hook now hit the adapter twice with overlapping ranges. Adapter-level request caches absorb most of the cost, but unifying via a `useHistoricalQuotes({ lookbackDays })` option would halve round-trips and share a TanStack cache. Surface during Stage 3 polish pass or when adding range-bound asset-level features.
+
+---
+
 ## Context bundle
 
-```bash
-pnpm ctx:feature twr
-pnpm ctx:dump twr   # timestamped snapshot for handoff
-```
-
-Config: `.specify/feature-specs/stage-3/twr.repomix.json` → output `.specify/codectx/twr.xml` (gitignored)
+Auto: `pnpm ctx:auto` (agent/hook — infer slug from session-state). Config: `.specify/feature-specs/stage-3/twr.repomix.json`

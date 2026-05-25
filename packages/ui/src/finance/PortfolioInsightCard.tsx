@@ -79,6 +79,9 @@ export function PortfolioInsightCard({
           </>
         )}
 
+        {/* TWR is portfolio-wide — appears regardless of target setup (spec J15c). */}
+        {twrInline ? <View>{twrInline}</View> : null}
+
         {hasTargets ? (
           <>
             <DeviationDonut
@@ -87,7 +90,6 @@ export function PortfolioInsightCard({
               size={120}
             />
             <Text className={TYPO_LABEL}>{deviationLabel}</Text>
-            {twrInline ? <View>{twrInline}</View> : null}
             <Text className={TYPO_LABEL}>{rebalanceCountLabel}</Text>
           </>
         ) : (
