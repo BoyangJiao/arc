@@ -3,15 +3,29 @@
  *
  * Scenario ids must stay in sync with `supabase/functions/_shared/seed-core.ts`.
  * Metro cannot import from supabase/functions; duplicate the registry here.
+ *
+ * Env gating (cross-stage spec
+ * `.specify/feature-specs/cross-stage/real-env-dev-tools.md` §S3-AC-RE.4):
+ *   `requiredEnv` controls whether a feature group is rendered in the FAB.
+ *   - `"clean"` (default): only shown when signed in as Clean +alias.
+ *     All existing seed scenarios fall here — they wipe / overwrite
+ *     user-scoped data and would corrupt the Real Env dataset.
+ *   - `"any"`: rendered regardless of env (no current usage; reserved for
+ *     read-only smoke scenarios like a future "live quote diagnostic").
  */
 
 import type { Href } from "expo-router";
+
+import type { DevEnvMode } from "./env-mode";
+
+export type DevFeatureEnvRequirement = "clean" | "any";
 
 export const DEV_SEED_FEATURES = [
   {
     id: "dailySnapshot",
     labelKey: "dailySnapshot",
     goHref: "/(tabs)" as Href,
+    requiredEnv: "clean" as DevFeatureEnvRequirement,
     scenarios: [
       { id: "default", labelKey: "default" },
       { id: "daily-snapshot:big-gain", labelKey: "bigGain" },
@@ -25,6 +39,7 @@ export const DEV_SEED_FEATURES = [
     id: "watchlist",
     labelKey: "watchlist",
     goHref: "/(tabs)/markets" as Href,
+    requiredEnv: "clean" as DevFeatureEnvRequirement,
     scenarios: [
       { id: "watchlist:empty", labelKey: "wlEmpty" },
       { id: "watchlist:3-items", labelKey: "wl3Items" },
@@ -35,6 +50,7 @@ export const DEV_SEED_FEATURES = [
     id: "rebalance",
     labelKey: "rebalance",
     goHref: "/(tabs)/insights" as Href,
+    requiredEnv: "clean" as DevFeatureEnvRequirement,
     scenarios: [
       { id: "rebalance:empty-target", labelKey: "rbEmpty" },
       { id: "rebalance:aligned", labelKey: "rbAligned" },
@@ -46,6 +62,7 @@ export const DEV_SEED_FEATURES = [
     id: "welcome",
     labelKey: "welcome",
     goHref: "/welcome" as Href,
+    requiredEnv: "clean" as DevFeatureEnvRequirement,
     scenarios: [
       { id: "welcome:fresh", labelKey: "welFresh", goHref: "/welcome" as Href },
       { id: "welcome:seen", labelKey: "welSeen", goHref: "/(tabs)" as Href },
@@ -55,6 +72,7 @@ export const DEV_SEED_FEATURES = [
     id: "crossMarket",
     labelKey: "crossMarket",
     goHref: "/(tabs)" as Href,
+    requiredEnv: "clean" as DevFeatureEnvRequirement,
     scenarios: [
       { id: "default:cn-only", labelKey: "cnOnly" },
       { id: "default:hk-only", labelKey: "hkOnly" },
@@ -67,6 +85,7 @@ export const DEV_SEED_FEATURES = [
     id: "portfolios",
     labelKey: "portfolios",
     goHref: "/(tabs)" as Href,
+    requiredEnv: "clean" as DevFeatureEnvRequirement,
     scenarios: [
       { id: "portfolios:single", labelKey: "pfSingle" },
       { id: "portfolios:multi-3", labelKey: "pfMulti3" },
@@ -168,4 +187,18 @@ export const goHrefForScenario = (scenarioId: DevSeedScenarioId): Href => {
     }
   }
   return DEV_SEED_FEATURES[0].goHref;
+};
+
+/**
+ * Returns the feature groups visible in the current DEV env (spec §S3-AC-RE.4).
+ *
+ * - `envMode === "clean"`  → all features (every group is `requiredEnv: "clean"` today)
+ * - `envMode === "real"`   → only features marked `requiredEnv: "any"` (none today,
+ *                            so the picker effectively disappears in Real env)
+ * - `envMode === "unknown"`→ same as Real — refuse to seed anything until the
+ *                            user signs in to a recognised +alias account
+ */
+export const visibleFeaturesForEnv = (envMode: DevEnvMode): ReadonlyArray<DevSeedFeatureGroup> => {
+  if (envMode === "clean") return DEV_SEED_FEATURES;
+  return DEV_SEED_FEATURES.filter((feature) => feature.requiredEnv === "any");
 };

@@ -27,6 +27,7 @@ import { resetCleanEnv } from "../../lib/dev-tools/run-reset-clean";
 import {
   DEV_SEED_FEATURES,
   findFeatureForScenario,
+  visibleFeaturesForEnv,
   type DevSeedFeatureId,
   type DevSeedScenarioId,
   type DevSeedScenarioLabelKey,
@@ -45,6 +46,7 @@ export function DevToolsScenarioPanel({
 }: DevToolsScenarioPanelProps): React.ReactNode {
   const { t } = useTranslation();
   const router = useRouter();
+  const { user } = useAuth();
   const setPanelOpen = useDevToolsFabStore((s) => s.setPanelOpen);
 
   const [selectedFeatureId, setSelectedFeatureId] = useState<DevSeedFeatureId | null>(null);
@@ -53,6 +55,11 @@ export function DevToolsScenarioPanel({
 
   const rateLimitSimArmed = useApiRateLimitSimStore((s) => s.armed);
   const setRateLimitSimArmed = useApiRateLimitSimStore((s) => s.setArmed);
+
+  // Spec §S3-AC-RE.4 — scenario seeds are Clean-only by default; real env hides them.
+  const envMode = detectEnvMode(user?.email);
+  const visibleFeatures = visibleFeaturesForEnv(envMode);
+  const scenariosVisible = visibleFeatures.length > 0;
 
   const selectedFeature = selectedFeatureId
     ? DEV_SEED_FEATURES.find((f) => f.id === selectedFeatureId)
@@ -132,48 +139,52 @@ export function DevToolsScenarioPanel({
       <View className="gap-4">
         <EnvSwitcherSection />
 
-        <Text className="text-muted text-sm">{t("devTools.pickFeature")}</Text>
+        {scenariosVisible ? (
+          <>
+            <Text className="text-muted text-sm">{t("devTools.pickFeature")}</Text>
 
-        <Card>
-          <View className="p-4 flex-row items-center justify-between gap-3">
-            <View className="flex-1 gap-1 pr-2">
-              <Text className="text-foreground text-base font-semibold">
-                {t("devTools.apiRateLimitSimLabel")}
-              </Text>
-              <Text className="text-muted text-xs">{t("devTools.apiRateLimitSimHint")}</Text>
-            </View>
-            <Switch
-              isSelected={rateLimitSimArmed}
-              onSelectedChange={setRateLimitSimArmed}
-              accessibilityLabel={t("devTools.apiRateLimitSimLabel")}
-            />
-          </View>
-        </Card>
-
-        {DEV_SEED_FEATURES.map((feature) => (
-          <Pressable
-            key={feature.id}
-            disabled={activeScenarioId !== null}
-            onPress={() => setSelectedFeatureId(feature.id)}
-            className="active:opacity-70"
-          >
             <Card>
-              <View className="p-4 gap-1">
-                <Text className="text-foreground text-base font-semibold">
-                  {t(`devTools.features.${feature.labelKey}.label` as const)}
-                </Text>
-                <Text className="text-muted text-xs">
-                  {t(`devTools.features.${feature.labelKey}.description` as const)}
-                </Text>
-                <Text className="text-muted text-xs mt-1">
-                  {t("devTools.scenarioCount", { count: feature.scenarios.length })}
-                </Text>
+              <View className="p-4 flex-row items-center justify-between gap-3">
+                <View className="flex-1 gap-1 pr-2">
+                  <Text className="text-foreground text-base font-semibold">
+                    {t("devTools.apiRateLimitSimLabel")}
+                  </Text>
+                  <Text className="text-muted text-xs">{t("devTools.apiRateLimitSimHint")}</Text>
+                </View>
+                <Switch
+                  isSelected={rateLimitSimArmed}
+                  onSelectedChange={setRateLimitSimArmed}
+                  accessibilityLabel={t("devTools.apiRateLimitSimLabel")}
+                />
               </View>
             </Card>
-          </Pressable>
-        ))}
 
-        <Text className="text-muted text-xs text-center">{t("devTools.reloadHint")}</Text>
+            {visibleFeatures.map((feature) => (
+              <Pressable
+                key={feature.id}
+                disabled={activeScenarioId !== null}
+                onPress={() => setSelectedFeatureId(feature.id)}
+                className="active:opacity-70"
+              >
+                <Card>
+                  <View className="p-4 gap-1">
+                    <Text className="text-foreground text-base font-semibold">
+                      {t(`devTools.features.${feature.labelKey}.label` as const)}
+                    </Text>
+                    <Text className="text-muted text-xs">
+                      {t(`devTools.features.${feature.labelKey}.description` as const)}
+                    </Text>
+                    <Text className="text-muted text-xs mt-1">
+                      {t("devTools.scenarioCount", { count: feature.scenarios.length })}
+                    </Text>
+                  </View>
+                </Card>
+              </Pressable>
+            ))}
+
+            <Text className="text-muted text-xs text-center">{t("devTools.reloadHint")}</Text>
+          </>
+        ) : null}
       </View>
     );
   }
