@@ -511,7 +511,25 @@ Phase 1 DoD: `pnpm --filter @arc/core test` 149/149 ✅ · `pnpm typecheck` 6/6 
 ### Phase 2 — Mobile hooks (Sonnet/Cursor)
 
 5. **`feat(mobile): use-asset-twr + use-portfolio-twr`** — TanStack hooks + valueAt/priceAt injection 从 Block C 已有 cache
+
+   > **⚠️ Phase 2 实施关键 hint（Opus review 2026-05-25 落地）**：
+   >
+   > Phase 1 `cash-flow.ts` 用真实 `tradeDate` timestamp 作 boundary（tx entry 写入 `T12:00:00Z`，spec §决策 8）。`portfolio_value_snapshots` 写入时间 `T23:00:00Z`（per ADR 009）。两者**不直接对齐**。
+   >
+   > **Phase 2 `valueAt(date)` / `priceAt(date)` hook 必须做 day-rounding**：
+   >
+   > - 接受任意时分秒 timestamp
+   > - 内部 floor 到当日（`date.toISOString().slice(0, 10)` 或 `Date.UTC(y, m, d)` 0 点）
+   > - 用 day key 查 snapshot 表 / price_snapshots 表
+   > - 返回该日 EOD value（含当日 CF；`twr.ts` header 注释已说明 boundary semantics）
+   >
+   > **不要**用 timestamp `>=` / `<=` 直接比较 snapshot.snapshot_date —— 12:00 UTC vs 23:00 UTC 会落到错误的 sub-period。
+   >
+   > 单测建议：mock `valueAt` 接收 `T12:00:00Z` / `T23:00:00Z` / `T00:00:00Z` 三种 timestamp，验证返回同一 EOD value。
+
 6. **`feat(ui+mobile): TwrInlineLabel + Portfolio Tab 接入 + Asset detail 接入 + Insights 卡接入`** — 3 处 UI 挂数字
+
+   > **错误处理**：`ConvergenceError` 从 `computeMwr` / 未来 attribution / drawdown 抛上来 → TwrInlineLabel 显示 "—"（**不**让 `NaN` 透到 UI；spec §S3-AC-D.1.8）。
 
 ### Phase 3 — 雪球对标验证（Opus + 用户）
 

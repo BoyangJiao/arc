@@ -6,7 +6,7 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-24 by Claude Opus 4.7 — **Block C UAT ✅ + Block D Phase 1 ✅** (TWR algorithm layer landed via 4 commits `1da6437`/`e2399c4`/`3b71170`/`d467b6e`; @arc/core 149/149 tests pass incl. 21 property tests; xirr damping bug discovered & fixed by property test X1 counterexample r=-0.45). Branch ahead 34 vs origin. **Next**: (1) user push → Opus Block C review of `9ffcaf7` charts / `08e86f3` fallback / `251fc11` tx entry; (2) Sonnet/Cursor session start TWR Phase 2 (mobile hooks + UI接入); (3) Opus PA + Drawdown specs Phase 1 then UI.
+> **Last updated**: 2026-05-25 by Claude Opus 4.7 — **Block C deferred review + Block D Phase 1 review LGTM 零 P0**；**ADR 012 升「已接受」**（方案 A + 附录 C 6 项 inline + 附录 B Local dev + 状态记录）；**`.specify/polish-backlog.md` 建立** Block E/F/Stage 4 三桶 11 item（Block E/F 起手必读）；**TWR spec §Phase 2 加 `valueAt` day-rounding hint**（12:00 UTC tx vs 23:00 UTC snapshot）；**Block D Phase 2 handoff prompt 就绪** `.specify/handoffs/cursor-stage-3-block-d-phase2-kickoff.md`（2 commits Sonnet，commit #5 day-rounding = Opus review 关键点）。**Next**: 用户起 Phase 2 Cursor 会话 + Phase 3 雪球对标准备 3 标的
 
 ---
 
