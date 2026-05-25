@@ -1,6 +1,6 @@
 # Feature Spec — @arc/ui 组件四方 Audit + Phase 2 重建计划
 
-- **目标**: 在 [ADR 008](../../docs/adr/008-token-discipline-and-polish.md) token 纪律基础上，全面 audit @arc/ui 组件覆盖 vs HeroUI OSS / Pro / crypto-wallet 参考实现，识别"重复造轮子"与"未利用 HeroUI 能力"，定 Phase 2 重建计划
+- **目标**: 在 [ADR 008](../../../docs/adr/008-token-discipline-and-polish.md) token 纪律基础上，全面 audit @arc/ui 组件覆盖 vs HeroUI OSS / Pro / crypto-wallet 参考实现，识别"重复造轮子"与"未利用 HeroUI 能力"，定 Phase 2 重建计划
 - **触发**: 2026-05-19 真机走查反馈 3 个组件级 bug（dark mode 主 CTA / 二级页 header / light tab bar）+ 用户指示"全面检查项目能复用 HeroUI 的就复用，不要完全自建"
 - **架构决策**（本次确认）:
   - **Header**：混合方案——Tab 顶层页保留 React Navigation stack header；modal screens 改 in-screen header（crypto-wallet/Robinhood/Wise 主流方案）
@@ -15,7 +15,7 @@
 
 ### 1.1 HeroUI Native OSS（39 个）
 
-**已在 [primitives/index.ts](../../packages/ui/src/primitives/index.ts) re-export 的 14 个**：
+**已在 [primitives/index.ts](../../../packages/ui/src/primitives/index.ts) re-export 的 14 个**：
 `Button`、`Card`、`Switch`、`Surface`、`PressableFeedback`、`TextField`、`Label`、`Input`、`Description`、`FieldError`、`cn`、`HeroUINativeProvider`、`Text`(自建)、`Screen`(自建)
 
 **P0 待 re-export（业务即将用 / 已自建可替换）**：
@@ -40,7 +40,7 @@
 
 **已 re-export 的 1 个**：`EmptyState` (subpath import 模式)
 
-⚠️ **subpath import 强制纪律**（[primitives-pro/index.ts:8-13](../../packages/ui/src/primitives-pro/index.ts#L8)）：
+⚠️ **subpath import 强制纪律**（[primitives-pro/index.ts:8-13](../../../packages/ui/src/primitives-pro/index.ts#L8)）：
 chart-indicator 依赖 skia → 顶层 `import` 会让 Metro 贪婪解析所有 transitive imports 导致 bundle 失败。新增任何 Pro 组件**必须**走 `heroui-native-pro/<component>` 形式。
 
 **P0 立即可启用（无 skia 依赖）**：
@@ -144,7 +144,7 @@ bg-surface-secondary  ← 微深灰，与白底有对比
 
 ### Track A — Expand HeroUI Pro re-exports（1-2h）
 
-新增 [primitives-pro/index.ts](../../packages/ui/src/primitives-pro/index.ts) subpath exports：
+新增 [primitives-pro/index.ts](../../../packages/ui/src/primitives-pro/index.ts) subpath exports：
 
 ```ts
 export { EmptyState } from "heroui-native-pro/empty-state"; // 已有
@@ -161,7 +161,7 @@ export { Segment } from "heroui-native-pro/segment";
 
 ### Track B — Expand HeroUI OSS re-exports（1h）
 
-新增 [primitives/index.ts](../../packages/ui/src/primitives/index.ts) exports：
+新增 [primitives/index.ts](../../../packages/ui/src/primitives/index.ts) exports：
 
 ```ts
 export {
@@ -187,7 +187,7 @@ export {
 
 #### C1: HeaderAtoms 重写
 
-替换 [HeaderAtoms.tsx](../../packages/ui/src/navigation/header/HeaderAtoms.tsx)：
+替换 [HeaderAtoms.tsx](../../../packages/ui/src/navigation/header/HeaderAtoms.tsx)：
 
 - `HeaderBackButton` → 用 OSS `LinkButton variant="ghost"` + lucide ChevronLeft
 - `HeaderCloseButton` → 用 OSS `CloseButton`
@@ -214,7 +214,7 @@ Modal screens（setup.tsx、actions.tsx）改 `headerShown: false` + 在 screen 
 
 #### C3: FloatingTabBar 改造
 
-[FloatingTabBar.tsx:140-143](../../packages/ui/src/navigation/FloatingTabBar.tsx#L140) active className 替换：
+[FloatingTabBar.tsx:140-143](../../../packages/ui/src/navigation/FloatingTabBar.tsx#L140) active className 替换：
 
 ```tsx
 isFocused
@@ -262,7 +262,7 @@ C 重写过程中顺手处理 ADR-008 §决策一/二/三 残留：
 放 Phase 2 末：
 
 1. 装 `awesome-skills/mobile-app-design` skill
-2. 在 [constitution.md](../../.specify/constitution.md) §"UI styling" 加入 a11y 红线：
+2. 在 [constitution.md](../../../.specify/constitution.md) §"UI styling" 加入 a11y 红线：
    - 颜色 contrast 必须 ≥ WCAG AA（normal text 4.5:1, large text 3:1）
    - 触控目标 ≥ 44×44 pt
    - 所有交互元素必须有 accessibilityLabel

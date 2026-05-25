@@ -4,7 +4,7 @@
 - **日期**: 2026-05-19 起草；2026-05-20 reshape（确认 Tushare 免费版仅覆盖 A 股 daily，HK 需单独审批，公募基金接口 2000 积分起）
 - **作者**: Claude (Opus 4.7) + BoyangJiao (approved A/A/A/A/A + HK=b)
 - **相关 ADR**: 001（技术栈 — 数据源约束），007（Dev Auth & 种子数据 — real-flow integrity），008/008a（fixture 已退役），009（Daily Snapshot 时点），010（Dev 缓存信任）
-- **相关 spec**: `.specify/feature-specs/tushare-adapter-stage-3.md`（单源 Tushare 契约已锁定 + 2026-05-20 reshape），`stage-3-roadmap.md` §决策 8
+- **相关 spec**: `.specify/feature-specs/stage-3/tushare-adapter-stage-3.md`（单源 Tushare 契约已锁定 + 2026-05-20 reshape），`.specify/feature-specs/stage-3/stage-3-roadmap.md` §决策 8
 - **触发**: `tushare-adapter-stage-3.md` §决策 12 把 Tushare `code 40203`（频率超限）/ `code 40002`（积分不足）的兜底显式留给本 ADR；用户 2026-05-20 注册 Tushare 时发现免费版（20 积分起）仅覆盖 A 股 daily —— **HK / FUND / `stock_basic` 全部不可访问**（实证：`fund_basic` `fund_nav` 需 2000 积分 / `fund_daily` 需 5000 积分 / `hk_daily` 单独审批）。这把 AKShare 从"可选候补"翻转为 Stage 3 Block A 主路径之一。
 
 ---

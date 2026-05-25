@@ -44,7 +44,7 @@ project orientation, this directory reads as **enforceable constraints**.
 - **Adding a new project-wide rule** → `constitution.md`
 - **Adding / changing data model** → `data-model-invariants.md` + update `packages/core/src/domain/types.ts` to match
 - **Stage gate adjustments** → `stage-acceptance-criteria.md` + sync with `docs/development-plan.md`
-- **Writing a new feature** → Create `feature-specs/<name>.md` BEFORE writing code
+- **Writing a new feature** → Create `feature-specs/<stage-dir>/<name>.md` BEFORE writing code（目录索引见 `feature-specs/README.md`）
 
 ## Inspiration
 

@@ -3,7 +3,7 @@
 - **Status**: Accepted — 5 inherited decisions (roadmap §决策 10–14) + 5 adapter-level locked 2026-05-20 (BoyangJiao approved A + hard-delete refinement / **B + card-per-portfolio Insights** / A / A / A)
 - **Author**: Claude Opus 4.7 (draft) + BoyangJiao (review)
 - **Created**: 2026-05-20
-- **Implements**: `.specify/feature-specs/stage-3-roadmap.md` §Block B；`docs/development-plan.md` §Stage 3 多组合管理
+- **Implements**: `.specify/feature-specs/stage-3/stage-3-roadmap.md` §Block B；`docs/development-plan.md` §Stage 3 多组合管理
 - **Conforms to**: `.specify/constitution.md` (Decimal everywhere, immutability of transactions, real-flow integrity), ADR 006 (`@arc/ui` layering), ADR 007 (dev seed SQL injection), Block A 路径（CN/HK/FUND adapters 已 live）
 - **Touches**: `packages/db` (1 migration — `portfolios.archived_at`), `packages/core` (extend `Portfolio` type + add transfer compute helper), `apps/mobile` (active portfolio store + CRUD UI + switcher + transfer modal), seed data (3 new scenarios), i18n (~30 new strings)
 - **Does NOT touch**: `transactions` schema, `assets` schema, RLS policies (CASCADE 已支持), Block A adapters, business compute（rebalance / daily-snapshot 已多 portfolio-aware）
@@ -633,3 +633,13 @@ Block C `holdings-table-stage-3.md`（持仓表 + 详情页 + 多时段图表，
 
 - AKShare wrapper `historical.py` 日期窗口（Block A code review §P1-1）—— Block C 多时段图表的硬依赖
 - Pro chart subpath import 套路 + `@arc/ui/charts/` 封装层 ADR 必要性
+
+---
+
+## Context bundle
+
+```bash
+pnpm ctx:feature multi-portfolio
+```
+
+Config: `.specify/feature-specs/stage-3/multi-portfolio.repomix.json`

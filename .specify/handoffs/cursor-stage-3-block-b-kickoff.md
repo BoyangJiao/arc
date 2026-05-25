@@ -7,7 +7,7 @@
 > - Block A 已 merged 到 `dev/stage-3` (commits eee7997 → 2756fd9)
 > - ADR 011 Accepted；AKShare wrapper Vercel prod 已部署
 > - P1 fixes 已 Opus 修完 (`historical.py` 日期窗口 / 503-500 拆分 / fail-closed token)
-> - Block B spec Accepted (10 决策；详见 `.specify/feature-specs/multi-portfolio-stage-3.md`)
+> - Block B spec Accepted (10 决策；详见 `.specify/feature-specs/stage-3/multi-portfolio-stage-3.md`)
 
 ---
 
@@ -19,7 +19,7 @@
 1. `CLAUDE.md` — 项目铁律（§三 工程铁律 + §五 monorepo 结构 + §七 模型分工 + §十二 自我路由）
 2. `.specify/constitution.md` — P0 约束（Decimal everywhere / Immutability of transactions / Adapter 抽象边界）
 3. `.specify/session-state.md` — Stage 3 Block B 进度 + Active blockers
-4. `.specify/feature-specs/multi-portfolio-stage-3.md` — **本任务的契约**（Status = Accepted，10 决策，12 commits）
+4. `.specify/feature-specs/stage-3/multi-portfolio-stage-3.md` — **本任务的契约**（Status = Accepted，10 决策，12 commits）
 5. `.specify/data-model-invariants.md` (如存在) — 5 大不变性法则（资产 ID / 单一来源真相 / Adapter / 币种 / 历史≠当下）
 
 ## 关键 Block B 决策摘要（spec §Resolved decisions）

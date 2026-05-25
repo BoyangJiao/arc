@@ -14,7 +14,7 @@
 1. `CLAUDE.md` — 项目铁律（§三 工程铁律 + §五 monorepo 结构 + §七 模型分工 + §十二 自我路由）
 2. `.specify/constitution.md` — P0 约束（Decimal everywhere / Real-flow integrity / Adapter 抽象边界）
 3. `.specify/session-state.md` — Stage 3 当前进度
-4. `.specify/feature-specs/coingecko-adapter-stage-3.md` — **本任务契约**（Status = Accepted，6 决策，0 open questions，6 commits）
+4. `.specify/feature-specs/stage-3/coingecko-adapter-stage-3.md` — **本任务契约**（Status = Accepted，6 决策，0 open questions，6 commits）
 5. `docs/adr/011-multi-source-fallback-and-akshare.md` — 多源 fallback；CRYPTO 单源 CoinGecko，无 secondary
 
 ## 模板（必读 + 必照搬模式）

@@ -4,7 +4,7 @@
 - **日期**: 2026-05-18
 - **作者**: BoyangJiao + Claude (Opus 4.7)
 - **相关 ADR**: 001（Tech Stack — Supabase），007（Dev Auth + Heartbeat 外部触发模式），008（Dev 行情策略）
-- **关联 spec**: `.specify/feature-specs/daily-snapshot-stage-2.md`（J7 实施合同）
+- **关联 spec**: `.specify/feature-specs/stage-2/daily-snapshot-stage-2.md`（J7 实施合同）
 - **触发**: Stage 2 J7 Daily Snapshot 实施期间需要冻结 3 个跨阶段决策——快照时点、触发机制、复用 vs 新拉取报价——否则 Stage 3+ 会反复回头讨论。
 
 ---

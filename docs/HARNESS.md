@@ -107,15 +107,46 @@ pnpm --filter @arc/core test:watch       # interactive watch mode
 
 Not a runtime mechanism but a **read-time contract** for AI agents and humans. Every Claude session reads `constitution.md` (surfaced via SessionStart hook); every PR honors `data-model-invariants.md`.
 
-| File                           | Read by                                    | Purpose                                                          |
-| :----------------------------- | :----------------------------------------- | :--------------------------------------------------------------- |
-| `README.md`                    | New contributors                           | What is `.specify/`, when to update each file                    |
-| `constitution.md`              | All AI sessions, all PR reviewers          | Project-wide invariants (P0 + P1 constraints, forbidden phrases) |
-| `data-model-invariants.md`     | When changing domain types or computations | The 5 immutability laws (formal version of CLAUDE.md §3.2)       |
-| `stage-acceptance-criteria.md` | At Stage gates / PR review                 | Per-Stage DoD in BDD format, tied to user-journeys.md            |
-| `feature-specs/<name>.md`      | Before implementing a non-trivial feature  | Spec-first development — write the contract before the code      |
+| File                                  | Read by                                    | Purpose                                                                                         |
+| :------------------------------------ | :----------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| `README.md`                           | New contributors                           | What is `.specify/`, when to update each file                                                   |
+| `constitution.md`                     | All AI sessions, all PR reviewers          | Project-wide invariants (P0 + P1 constraints, forbidden phrases)                                |
+| `data-model-invariants.md`            | When changing domain types or computations | The 5 immutability laws (formal version of CLAUDE.md §3.2)                                      |
+| `stage-acceptance-criteria.md`        | At Stage gates / PR review                 | Per-Stage DoD in BDD format, tied to user-journeys.md                                           |
+| `feature-specs/<stage-dir>/<name>.md` | Before implementing a non-trivial feature  | Spec-first development — write the contract before the code（索引见 `feature-specs/README.md`） |
 
 See `.specify/README.md` for full workflow.
+
+---
+
+## Layer 6 — Context packaging (Repomix, opt-in)
+
+[Repomix](https://github.com/yamadashy/repomix) packs selected source files into one LLM-friendly XML bundle. Arc uses it to **reduce cold-start grep cost** when switching IDE, model, or feature scope. It complements SDD (intent in specs) — it does **not** replace `session-state.md`, ADRs, or feature specs.
+
+| Command                     | Purpose                                               |
+| :-------------------------- | :---------------------------------------------------- |
+| `pnpm ctx`                  | Full monorepo snapshot (heavy; use sparingly)         |
+| `pnpm ctx:core`             | `@arc/core` + data-model invariants                   |
+| `pnpm ctx:data-sources`     | Adapters + akshare-wrapper                            |
+| `pnpm ctx:mobile-portfolio` | Portfolio Tab mobile + charts UI                      |
+| `pnpm ctx:feature <slug>`   | Feature-scoped bundle (see slugs below)               |
+| `pnpm ctx:dump <slug>`      | Timestamped dump to `.specify/codectx/` (for handoff) |
+
+**Stage 3 feature slugs** (config: `.specify/feature-specs/stage-3/<slug>.repomix.json`):
+
+`twr` · `performance-attribution` · `drawdown` · `tushare-adapter` · `coingecko-adapter` · `multi-portfolio` · `holdings-and-transactions` · `stage-3-roadmap`
+
+**Typical workflow**
+
+1. New session on a feature → read spec + `session-state.md` (SDD, unchanged)
+2. Run `pnpm ctx:feature twr` → attach `.specify/codectx/twr.xml` to chat (or `pnpm ctx:feature twr --stdout | pbcopy`)
+3. Before handoff → `/checkpoint` + optional `pnpm ctx:dump twr` for a timestamped snapshot
+
+**Rules (do not violate SDD)**
+
+- Output lives in `.specify/codectx/` — **gitignored**, never commit
+- Repomix is **not** a quality gate — do not add to husky or `quality-gate.sh`
+- Generated code context ≠ design rationale — keep ADRs and feature specs as source of truth for _why_
 
 ---
 
@@ -131,6 +162,8 @@ pnpm test                     # all property tests
 pnpm test:watch               # interactive
 pnpm format                   # prettier on full repo (rare; lint-staged handles per-commit)
 pnpm sync:skills              # manual skill sync (post-checkout/merge auto-runs this)
+pnpm ctx:feature twr          # feature context bundle for LLM cold start
+pnpm ctx:dump twr             # timestamped snapshot for handoff (gitignored)
 ```
 
 ### Adding a new test
@@ -163,6 +196,7 @@ git commit -m "test(core): cover X invariant"
 
 - **E2E tests** (Detox/Playwright) — Stage 4 P0
 - **LLM eval harness** (promptfoo / inspect_ai) — Stage 4+ when AI features ship
+- **Persistent code graph DB** (GitNexus / CodeGraph) — Repomix covers Arc's solo cold-start need
 - **Dev container** — solo dev, not needed
 - **Pre-push hook** locally — CI gate is sufficient; husky `pre-push` would slow local workflow
 - **Branch protection rules** on `main` — single contributor, low value vs friction

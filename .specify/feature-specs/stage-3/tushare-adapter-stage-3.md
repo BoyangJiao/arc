@@ -3,7 +3,7 @@
 - **Status**: Accepted — 14 resolved decisions; **reshaped 2026-05-20** after Tushare 免费版 实证（仅 A 股 daily 可访问；HK 单独审批；FUND 接口 ≥ 2000 积分）→ Block A 拆为 Phase 1A (Tushare CN) + Phase 2 (AKShare wrapper for HK/FUND) — 见 ADR 011 决策一 / 五
 - **Author**: Claude Opus 4.7 (draft + reshape) + BoyangJiao (review, HK=b 锁定)
 - **Created**: 2026-05-19；reshape 2026-05-20
-- **Implements**: `.specify/feature-specs/stage-3-roadmap.md` §Block A 第一项；`docs/development-plan.md` §Stage 3 多市场 adapters
+- **Implements**: `.specify/feature-specs/stage-3/stage-3-roadmap.md` §Block A 第一项；`docs/development-plan.md` §Stage 3 多市场 adapters
 - **Conforms to**: `.specify/constitution.md` (Decimal everywhere, real-flow integrity, ADR 007), ADR 001 §数据源约束（adapter 唯一抽象边界），`packages/data-sources/src/adapters/finnhub.ts` 接口契约
 - **Touches**: `packages/data-sources` (3 new adapter factories + 1 shared client + symbol normalization + static metadata snapshots), `packages/core` (no domain change; reuses `Market = "CN" | "HK" | "FUND" | "US" | "CRYPTO" | "CASH"`), `apps/mobile` (registry config additions only), seed data (CN/HK/FUND fixture rows for dev panel)
 - **Does NOT touch**: UI components, RLS policies, DB migrations, business compute. Adapter is invisible to consumers — they keep doing `registry.resolvePriceAdapterByAssetId(assetId)` and the new markets light up.
@@ -472,3 +472,13 @@ Reverse mapping (`ts_code` → Arc symbol) strips the suffix.
   - 用户 Vercel 账号 + Vercel CLI 本地登录（commit #10 部署 AKShare wrapper）
   - 用户复读 `docs/legal-risk-map.md` L3 / L6 / §六.6 — AKShare TOS 自用阶段评估
 - **Blocking ADR**: ADR 011 已 Accepted（2026-05-20）；Phase 2 实施直接走 commit chain
+
+---
+
+## Context bundle
+
+```bash
+pnpm ctx:feature tushare-adapter
+```
+
+Config: `.specify/feature-specs/stage-3/tushare-adapter.repomix.json`

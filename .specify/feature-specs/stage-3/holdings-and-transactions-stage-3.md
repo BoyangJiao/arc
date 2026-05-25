@@ -3,7 +3,7 @@
 - **Status**: Accepted — 13 resolved decisions (8 architecture + 5 UX-level locked 2026-05-20 BoyangJiao approved A/A/A/A/A)
 - **Author**: Claude Opus 4.7 (draft) + BoyangJiao (review)
 - **Created**: 2026-05-20
-- **Implements**: `.specify/feature-specs/stage-3-roadmap.md` §Block C；扩展原 Block C 范围（chart UI）加入跨市场 transaction entry + AKShare wrapper search 扩展
+- **Implements**: `.specify/feature-specs/stage-3/stage-3-roadmap.md` §Block C；扩展原 Block C 范围（chart UI）加入跨市场 transaction entry + AKShare wrapper search 扩展
 - **Conforms to**: `.specify/constitution.md` (Decimal everywhere, immutability of transactions, real-flow integrity), ADR 003 v3.1 (Business tokens), ADR 006 (`@arc/ui` layering), ADR 008 (accent discipline), ADR 011 (multi-source fallback)
 - **Touches**: `packages/ui` (new `charts/` layer + finance components + market chip), `apps/mobile` (asset detail route + tx entry rewrite + symbol picker + hooks), `services/akshare-wrapper` (1 new endpoint `/api/search`), `packages/data-sources` (AKShare client add `searchSymbols`), seed (holdings + tx fixtures), i18n (~50 strings)
 - **Does NOT touch**: `transactions` / `assets` / `portfolios` schema (Stage 2 已足够), Block A/B adapter contracts, business compute (rebalance / daily-snapshot 已自动按 portfolio 维度)
@@ -650,3 +650,13 @@ Tap "Apple Inc." 后跳到 step 2 表单：
 ## Next after Block C
 
 Block D `twr-stage-3.md` / `performance-attribution-stage-3.md` / `drawdown-stage-3.md` —— **Opus 主场**，property tests ≥ 20，依赖 Block C 真实多市场持仓 + 真实历史数据。
+
+---
+
+## Context bundle
+
+```bash
+pnpm ctx:feature holdings-and-transactions
+```
+
+Config: `.specify/feature-specs/stage-3/holdings-and-transactions.repomix.json`

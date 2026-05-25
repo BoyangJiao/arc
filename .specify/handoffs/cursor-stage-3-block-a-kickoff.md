@@ -14,7 +14,7 @@
 1. `CLAUDE.md` — 项目铁律（§三 工程铁律 + §五 monorepo 结构 + §七 模型分工 + §十二 自我路由）
 2. `.specify/constitution.md` — P0 约束（Decimal everywhere / Real-flow integrity / Adapter 抽象边界）
 3. `.specify/session-state.md` — 当前 Stage 3 Block A 进度表 + Active blockers
-4. `.specify/feature-specs/tushare-adapter-stage-3.md` — **本任务的契约**（15 决策已锁，**reshape 2026-05-20**：Phase 1A + Phase 2 拆分；HK / FUND adapters Stage 3 走 AKShare 而非 Tushare）
+4. `.specify/feature-specs/stage-3/tushare-adapter-stage-3.md` — **本任务的契约**（15 决策已锁，**reshape 2026-05-20**：Phase 1A + Phase 2 拆分；HK / FUND adapters Stage 3 走 AKShare 而非 Tushare）
 5. `docs/adr/011-multi-source-fallback-and-akshare.md` — **多源 fallback ADR 已 Accepted**（决策一 fallback 表 + 决策三 classifier + 决策五 phasing；commit #10-14 实施 ADR 011 §决策五 Phase 2）
 
 ## 已就绪的工作 — commit #1 不需要再写

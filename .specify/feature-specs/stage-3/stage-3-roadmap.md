@@ -2,7 +2,7 @@
 
 - **Status**: Accepted — 3 modifications + 5 tactical decisions locked (BoyangJiao approved 2026-05-19)
 - **Author**: Claude Opus 4.7 (draft) + BoyangJiao (review)
-- **Scope**: 不是一个 feature spec —— 是 Stage 3 全部 P0/P1/P2 工作项的**依赖排序 + 模型路由 + 风险登记**。每个具体 feature 自己再写 `.specify/feature-specs/<name>-stage-3.md`。
+- **Scope**: 不是一个 feature spec —— 是 Stage 3 全部 P0/P1/P2 工作项的**依赖排序 + 模型路由 + 风险登记**。每个具体 feature 自己再写 `.specify/feature-specs/stage-3/<name>-stage-3.md`。
 - **目标**: 在 Stage 2 已交付的"骨架 + Daily Snapshot + Watchlist + Rebalance + Welcome"基础上，完成 MVP-1 —— **你自己每天能用、能管理真实持仓**。
 - **预算**: 60-100h，8-10 周（兼职 6-12h/周）。
 - **来源**: 内容主体取自 `docs/development-plan.md §Stage 3`，本文件加序、加路由、加风险、加 spec 落点。
@@ -258,6 +258,16 @@ Week 9-10: Block F (CSV + P2 + buffer)
 ## 八、下一步
 
 1. ✅ 路线图 Status = Accepted（本次会话完成）
-2. **新 Opus 会话接力**起 **Block A 第一个 spec**: `.specify/feature-specs/tushare-adapter-stage-3.md` —— Sonnet/Cursor 起草，Opus review
+2. **新 Opus 会话接力**起 **Block A 第一个 spec**: `.specify/feature-specs/stage-3/tushare-adapter-stage-3.md` —— Sonnet/Cursor 起草，Opus review
 3. **用户**：注册 Tushare Pro 账号 + 复读 `docs/legal-risk-map.md`（AKShare 是潜在的法务复审点）
 4. Block A 期间持续 commit 到 `dev/stage-3`，每个 adapter 一个 PR
+
+---
+
+## Context bundle
+
+```bash
+pnpm ctx:feature stage-3-roadmap
+```
+
+Config: `.specify/feature-specs/stage-3/stage-3-roadmap.repomix.json` (all Stage 3 specs + roadmap, no code)

@@ -112,7 +112,7 @@ pnpm seed:dev --help
 | 首日占位         | `pnpm seed:dev --email YOUR_EMAIL --scenario daily-snapshot:first-day`    | 「首次启动，明日开始追踪…」，无大数字                                  |
 | 空仓             | `pnpm seed:dev --email YOUR_EMAIL --scenario daily-snapshot:empty`        | **无**今日变动卡，空持仓引导                                           |
 
-验收后对照： [`.specify/feature-specs/daily-snapshot-stage-2.md`](../.specify/feature-specs/daily-snapshot-stage-2.md) §Test plan
+验收后对照： [`.specify/feature-specs/stage-2/daily-snapshot-stage-2.md`](../.specify/feature-specs/stage-2/daily-snapshot-stage-2.md) §Test plan
 
 ```bash
 pnpm seed:dev --help   # 终端里列出所有 scenario

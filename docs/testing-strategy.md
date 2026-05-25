@@ -171,5 +171,5 @@
 - ADR 008a：Dev 行情数据策略（FixtureAdapter — retired by ADR 010）
 - ADR 010：Dev 缓存信任策略（source 兜底 + Infinity freshness）
 - ADR 009：Daily Snapshot 时点
-- `.specify/feature-specs/daily-snapshot-stage-2.md` — Test plan 模板的参考实现
+- `.specify/feature-specs/stage-2/daily-snapshot-stage-2.md` — Test plan 模板的参考实现
 - `tools/seed-dev-data.ts` — Layer 4 scenario 实现

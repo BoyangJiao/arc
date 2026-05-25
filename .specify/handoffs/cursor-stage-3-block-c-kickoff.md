@@ -8,7 +8,7 @@
 > - Block B ✅（multi-portfolio + transfer + Insights 卡片仪表盘）
 > - CoinGecko adapter ✅（commits b0a913c → 63ba43d；159/159 tests）
 > - Block B UAT 5 sessions（用户跑中 / 已通过 / 阻塞 — Cursor 启动时 git status 看是否有未 commit 的 0012 portfolio_value_snapshots_user_insert_manual.sql）
-> - Block C spec Accepted (13 决策；详见 `.specify/feature-specs/holdings-and-transactions-stage-3.md`)
+> - Block C spec Accepted (13 决策；详见 `.specify/feature-specs/stage-3/holdings-and-transactions-stage-3.md`)
 
 ---
 
@@ -20,7 +20,7 @@
 1. `CLAUDE.md` — 项目铁律（§三 工程铁律 + §五 monorepo 结构 + §七 模型分工 + §十二 自我路由）
 2. `.specify/constitution.md` — P0 约束（Decimal everywhere / Immutability of transactions / Adapter 抽象边界 / Accent discipline ADR 008）
 3. `.specify/session-state.md` — Stage 3 Block C 进度 + Active blockers
-4. `.specify/feature-specs/holdings-and-transactions-stage-3.md` — **本任务契约**（Status = Accepted，13 决策，13 commits 分 4 phase）
+4. `.specify/feature-specs/stage-3/holdings-and-transactions-stage-3.md` — **本任务契约**（Status = Accepted，13 决策，13 commits 分 4 phase）
 5. `docs/adr/011-multi-source-fallback-and-akshare.md` — 决策三 classifier 本 spec 要扩 `NotImplementedError → try-secondary`
 
 ## 关键 Block C 决策摘要（spec §Resolved decisions）

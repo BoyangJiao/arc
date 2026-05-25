@@ -144,7 +144,7 @@
 - **每周一次 demo**（哪怕一个按钮）— Stage 1+
 - **每两周写一篇 ADR** 总结当周重大决策 — Stage 2+
 - **每月看一次成本** — Stage 2+ 必做（API 调用、Vercel 流量、Supabase 用量）
-- **每个非 trivial feature 写 spec**: `.specify/feature-specs/<name>.md`，**先写 spec 再写代码**
+- **每个非 trivial feature 写 spec**: `.specify/feature-specs/<stage-dir>/<name>.md`（索引见 `feature-specs/README.md`），**先写 spec 再写代码**
 
 ---
 

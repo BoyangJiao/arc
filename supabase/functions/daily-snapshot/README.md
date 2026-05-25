@@ -1,6 +1,6 @@
 # Edge Function: `daily-snapshot`
 
-Per Stage 2 J7 feature spec ([.specify/feature-specs/daily-snapshot-stage-2.md](../../../.specify/feature-specs/daily-snapshot-stage-2.md)).
+Per Stage 2 J7 feature spec ([.specify/feature-specs/stage-2/daily-snapshot-stage-2.md](../../../.specify/feature-specs/stage-2/daily-snapshot-stage-2.md)).
 
 Reads cached `price_snapshots` + `fx_rates`, computes each portfolio's current valuation, upserts one row per portfolio into `portfolio_value_snapshots` with `as_of` = today 23:00:00Z.
 
