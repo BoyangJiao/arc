@@ -29,6 +29,21 @@ describe("Domain type readonly invariants", () => {
     expect(asset.id).toBe("US:AAPL");
   });
 
+  test("OPENING_SNAPSHOT is a valid TransactionType", () => {
+    const tx: Transaction = {
+      id: "tx-snap",
+      portfolioId: "p-1",
+      assetId: "FUND:000216",
+      type: "OPENING_SNAPSHOT",
+      shares: new Decimal("20569.48"),
+      pricePerShare: new Decimal("2.913"),
+      currency: "CNY",
+      fee: new Decimal(0),
+      tradeDate: "2025-09-19T10:00:00Z",
+    };
+    expect(tx.type).toBe("OPENING_SNAPSHOT");
+  });
+
   test("Transaction shares + pricePerShare are Decimal (no number)", () => {
     const tx: Transaction = {
       id: "tx-1",

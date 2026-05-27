@@ -21,7 +21,13 @@ export type Market = "CN" | "HK" | "US" | "CRYPTO" | "FUND" | "CASH";
 export type Currency = "CNY" | "HKD" | "USD" | "JPY" | "BTC" | "ETH";
 
 /** 交易类型 — Stage 1 仅 BUY；Stage 2+ 扩展其余 */
-export type TransactionType = "BUY" | "SELL" | "DIVIDEND" | "SPLIT" | "ADJUSTMENT";
+export type TransactionType =
+  | "BUY"
+  | "SELL"
+  | "DIVIDEND"
+  | "SPLIT"
+  | "ADJUSTMENT"
+  | "OPENING_SNAPSHOT";
 
 /** 涨跌色偏好 — 见 ADR 003 §决策五 */
 export type FinanceColorMode = "redUpGreenDown" | "greenUpRedDown";

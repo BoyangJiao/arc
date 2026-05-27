@@ -20,6 +20,7 @@ export const transactionTypeEnum = pgEnum("transaction_type", [
   "DIVIDEND",
   "SPLIT",
   "ADJUSTMENT",
+  "OPENING_SNAPSHOT",
 ]);
 
 /** 涨跌色偏好（ADR 003 §决策五）*/
