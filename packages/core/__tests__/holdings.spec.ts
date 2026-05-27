@@ -179,6 +179,21 @@ describe("computeHoldings", () => {
     expect(h.averageCost.equals(new Decimal(100))).toBe(true);
   });
 
+  test("OPENING_SNAPSHOT accumulates cost basis like BUY (ADR 016)", () => {
+    const txs = [
+      {
+        ...makeBuy(1000, "2"),
+        type: "OPENING_SNAPSHOT" as const,
+        tradeDate: "2026-05-01T10:00:00Z",
+      },
+      makeBuy(5000, "2.5", { tradeDate: "2026-05-15T10:00:00Z" }),
+    ];
+    const [h] = computeHoldings(txs);
+    expect(h.shares.equals(new Decimal(6000))).toBe(true);
+    expect(h.totalCostBasis.equals(new Decimal("14500"))).toBe(true);
+    expect(h.averageCost.equals(new Decimal("14500").div(6000))).toBe(true);
+  });
+
   test("multiple assets in one portfolio", () => {
     const txs = [
       makeBuy(10, "150", { assetId: "US:AAPL" }),

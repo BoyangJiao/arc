@@ -357,6 +357,68 @@ describe("computeAssetTwr", () => {
     expect(result.value.minus("0.125").abs().lt("0.000001")).toBe(true);
     expect(result.netCashFlow.toString()).toBe("-15000"); // -30 × 500
   });
+
+  it("OPENING_SNAPSHOT is not an asset-level cash flow (ADR 016)", () => {
+    const txs = [
+      mkTx({
+        type: "OPENING_SNAPSHOT",
+        assetId: "FUND:000216",
+        shares: 1000,
+        pricePerShare: 2,
+        currency: "CNY",
+        tradeDate: "2026-05-01T00:00:00.000Z",
+      }),
+    ];
+    const result = computeAssetTwr({
+      assetId: "FUND:000216",
+      portfolioId: "p1",
+      from: d("2026-05-02T00:00:00.000Z"),
+      to: d("2026-12-31T00:00:00.000Z"),
+      transactions: txs,
+      priceAt: mockPriceAt([
+        ["2026-05-02T00:00:00.000Z", 2],
+        ["2026-12-31T00:00:00.000Z", 3],
+      ]),
+    });
+    expect(result.subPeriods).toBe(1);
+    expect(result.value.toString()).toBe("0.5");
+    expect(result.netCashFlow.toString()).toBe("0");
+  });
+
+  it("OPENING_SNAPSHOT + later BUY splits TWR only on real BUY", () => {
+    const txs = [
+      mkTx({
+        type: "OPENING_SNAPSHOT",
+        assetId: "FUND:000216",
+        shares: 1000,
+        pricePerShare: 2,
+        currency: "CNY",
+        tradeDate: "2026-05-01T00:00:00.000Z",
+      }),
+      mkTx({
+        type: "BUY",
+        assetId: "FUND:000216",
+        shares: 5000,
+        pricePerShare: 2.5,
+        currency: "CNY",
+        tradeDate: "2026-05-15T00:00:00.000Z",
+      }),
+    ];
+    const result = computeAssetTwr({
+      assetId: "FUND:000216",
+      portfolioId: "p1",
+      from: d("2026-05-02T00:00:00.000Z"),
+      to: d("2026-12-31T00:00:00.000Z"),
+      transactions: txs,
+      priceAt: mockPriceAt([
+        ["2026-05-02T00:00:00.000Z", 2],
+        ["2026-05-15T00:00:00.000Z", 2.5],
+        ["2026-12-31T00:00:00.000Z", 3],
+      ]),
+    });
+    expect(result.subPeriods).toBe(2);
+    expect(result.netCashFlow.toString()).toBe("12500");
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────────────
