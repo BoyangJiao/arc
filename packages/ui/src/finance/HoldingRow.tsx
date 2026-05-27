@@ -37,6 +37,8 @@ export interface HoldingRowProps {
   readonly newPositionLabel: string;
   /** Same shape as PortfolioHeroSection — e.g. +¥1,000.00 (+13.17%) */
   readonly formatPeriodChangeLine: (delta: Decimal, percent: Decimal | null) => string;
+  /** e.g. 「快照 · 2025-09-19」when asset has OPENING_SNAPSHOT (ADR 016). */
+  readonly snapshotBadgeLabel?: string;
   readonly accessibilityLabel?: string;
 }
 
@@ -53,6 +55,7 @@ export function HoldingRow(props: HoldingRowProps): ReactNode {
     periodChange,
     newPositionLabel,
     formatPeriodChangeLine,
+    snapshotBadgeLabel,
     accessibilityLabel,
   } = props;
 
@@ -75,6 +78,11 @@ export function HoldingRow(props: HoldingRowProps): ReactNode {
           {name}
         </Text>
         <Text className={typographyClass("caption", "mt-0.5 tabular-nums")}>{positionLabel}</Text>
+        {snapshotBadgeLabel ? (
+          <Text className={typographyClass("caption", "text-muted mt-0.5")}>
+            {snapshotBadgeLabel}
+          </Text>
+        ) : null}
       </View>
       <View className="items-end gap-1 shrink-0 min-w-[120px]">
         {valueLoading ? (

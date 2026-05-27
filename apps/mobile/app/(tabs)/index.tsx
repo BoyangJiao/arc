@@ -171,9 +171,12 @@ export default function PortfolioTab() {
         marketLabel,
         newPositionLabel: t("holdings.periodChange.newPosition"),
         formatAccessibilityLabel: formatHoldingsAccessibilityLabel,
+        transactions,
+        formatSnapshotBadge: (date) => t("holdings.badge.snapshot", { date }),
       }),
     [
       holdings,
+      transactions,
       valuation?.perAsset,
       valuation,
       valuationFetching,

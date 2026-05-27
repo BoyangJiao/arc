@@ -60,6 +60,9 @@ export const en = {
     periodChange: {
       newPosition: "New position",
     },
+    badge: {
+      snapshot: "Snapshot · {{date}}",
+    },
     positionUnits: {
       equity: "{{shares}} shares",
       fund: "{{shares}} units",
@@ -80,6 +83,17 @@ export const en = {
     addTransactionCta: "Record a transaction for this asset",
     more: "More",
     removeFromPortfolio: "Remove from portfolio",
+    twr: {
+      hidden: {
+        reason:
+          "This holding includes an opening snapshot, so time-weighted return cannot be computed precisely. See unrealized P&L above for your account return.",
+      },
+      tooltip:
+        "Assumes you invested today's equivalent amount on day one. GIPS-style time-weighted return, excluding your buy/sell timing.",
+    },
+    costBasis: {
+      tooltip: "Current value minus all cash you invested. This is your true account return.",
+    },
   },
   dailySnapshot: {
     title: "Daily P&L",

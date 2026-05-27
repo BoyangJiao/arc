@@ -2,11 +2,13 @@
  * Asset detail — /asset/[market]/[symbol]
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import {
   Button,
+  DotsThreeVerticalIcon,
+  HeaderActionButton,
   InScreenHeader,
   LineChart,
   Screen,
@@ -26,12 +28,16 @@ import { composeAssetId, type Market } from "@arc/core";
 
 import { formatMoney, currencySymbol } from "../../../src/lib/format-money";
 import { useActivePortfolio } from "../../../src/lib/queries/use-active-portfolio";
+import { openingSnapshotDateByAsset } from "../../../src/lib/holdings-presenter";
 import {
   historicalQuotesToChartPoints,
   useAssetDetail,
   useAssetTwr,
+  useDeleteAssetTransactions,
   useHistoricalQuotes,
+  usePortfolioHoldings,
 } from "../../../src/lib/queries";
+
 export default function AssetDetailScreen() {
   const { t } = useTranslation();
   const businessClasses = useBusinessClasses();
@@ -39,9 +45,16 @@ export default function AssetDetailScreen() {
   const { market, symbol } = useLocalSearchParams<{ market: string; symbol: string }>();
   const [range, setRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
   const { portfolio } = useActivePortfolio();
+  const deleteAssetTransactions = useDeleteAssetTransactions();
 
   const detail = useAssetDetail(market, symbol);
   const assetId = market && symbol ? composeAssetId(market as Market, symbol) : undefined;
+  const { transactions } = usePortfolioHoldings(portfolio?.id);
+  const openingSnapshotDate = useMemo(() => {
+    if (!assetId || !transactions) return null;
+    return openingSnapshotDateByAsset(transactions).get(assetId) ?? null;
+  }, [assetId, transactions]);
+  const hasOpeningSnapshot = openingSnapshotDate !== null;
   const historical = useHistoricalQuotes(assetId, range);
   const assetTwr = useAssetTwr({
     portfolioId: portfolio?.id,
@@ -56,6 +69,49 @@ export default function AssetDetailScreen() {
     }
   }, [market, router]);
 
+  const holdingLabel = useMemo(() => {
+    const name = detail.data?.name ?? symbol ?? "";
+    return name !== symbol ? `${name} (${symbol})` : name;
+  }, [detail.data?.name, symbol]);
+
+  const handleConfirmRemove = useCallback(() => {
+    if (!portfolio?.id || !assetId) return;
+    Alert.alert(
+      t("portfolioDetail.removeHoldingTitle"),
+      t("portfolioDetail.removeHoldingMessage", { symbol: holdingLabel }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("portfolioDetail.removeHolding"),
+          style: "destructive",
+          onPress: () => {
+            void deleteAssetTransactions
+              .mutateAsync({ portfolioId: portfolio.id, assetId })
+              .then(() => {
+                router.back();
+              })
+              .catch(() => {
+                Alert.alert(t("common.error"), t("portfolioDetail.removeHoldingFailed"));
+              });
+          },
+        },
+      ]
+    );
+  }, [assetId, deleteAssetTransactions, holdingLabel, portfolio?.id, router, t]);
+
+  // ActionSheet 风格的 more 菜单 — 使用 Alert（iOS 上自动呈现为 ActionSheet 风格的多按钮弹层）。
+  // 避免 BottomSheet 依赖 @gorhom/bottom-sheet（未安装 → 运行时 undefined）。
+  const handleOpenMore = useCallback(() => {
+    Alert.alert(t("assetDetail.more"), undefined, [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("assetDetail.removeFromPortfolio"),
+        style: "destructive",
+        onPress: handleConfirmRemove,
+      },
+    ]);
+  }, [handleConfirmRemove, t]);
+
   if (market === "CASH") {
     return null;
   }
@@ -64,11 +120,12 @@ export default function AssetDetailScreen() {
   const changePercent = quote?.changePercent ?? null;
   const currency = detail.data?.currency ?? quote?.currency ?? "CNY";
   const currencySym = currencySymbol(currency);
+  const hasHolding = !!detail.data?.holding;
 
   const periodChange = useMemo(() => {
     if (!quote || chartData.length === 0) return null;
     return computePeriodChange(quote.price.toNumber(), chartData[0]!.y);
-  }, [quote, chartData, range]);
+  }, [quote, chartData]);
 
   const changeColorClass =
     periodChange !== null
@@ -96,7 +153,19 @@ export default function AssetDetailScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <Screen>
-        <InScreenHeader title={detail.data?.name ?? symbol ?? ""} leftType="back" />
+        <InScreenHeader
+          title={detail.data?.name ?? symbol ?? ""}
+          leftType="back"
+          rightSlot={
+            hasHolding ? (
+              <HeaderActionButton
+                icon={DotsThreeVerticalIcon}
+                onPress={handleOpenMore}
+                accessibilityLabel={t("assetDetail.more")}
+              />
+            ) : null
+          }
+        />
         <View className="gap-4">
           <View>
             <Text className="text-muted text-sm">
@@ -133,7 +202,14 @@ export default function AssetDetailScreen() {
 
           {detail.data?.holding ? (
             <View className="gap-2 border-t border-border pt-4">
-              <Text className="text-foreground font-semibold">{t("assetDetail.myHolding")}</Text>
+              <View className="flex-row items-center justify-between gap-2">
+                <Text className="text-foreground font-semibold">{t("assetDetail.myHolding")}</Text>
+                {hasOpeningSnapshot && openingSnapshotDate ? (
+                  <Text className="text-muted text-xs">
+                    {t("holdings.badge.snapshot", { date: openingSnapshotDate })}
+                  </Text>
+                ) : null}
+              </View>
               <Text className="text-muted text-sm">
                 {t("assetDetail.shares", {
                   shares: detail.data.holding.shares.toFixed(4),
@@ -151,16 +227,21 @@ export default function AssetDetailScreen() {
                   })}
                 </Text>
               ) : null}
-              <TwrInlineLabel
-                range={range}
-                result={assetTwr.isError ? undefined : assetTwr.data}
-                loading={assetTwr.isLoading}
-                unavailable={t("twr.unavailable")}
-                twrAbbrevLabel={t("twr.label")}
-                tooltipTitle={t("twr.tooltipTitle")}
-                tooltipBody={t("twr.tooltipBody")}
-                closeLabel={t("common.close")}
-              />
+              {hasOpeningSnapshot ? (
+                <Text className="text-muted text-sm">{t("assetDetail.twr.hidden.reason")}</Text>
+              ) : (
+                <TwrInlineLabel
+                  range={range}
+                  result={assetTwr.isError ? undefined : assetTwr.data}
+                  loading={assetTwr.isLoading}
+                  unavailable={t("twr.unavailable")}
+                  twrAbbrevLabel={t("twr.label")}
+                  tooltipTitle={t("twr.tooltipTitle")}
+                  tooltipBody={t("assetDetail.twr.tooltip")}
+                  closeLabel={t("common.close")}
+                />
+              )}
+              <Text className="text-muted text-xs">{t("assetDetail.costBasis.tooltip")}</Text>
             </View>
           ) : null}
 

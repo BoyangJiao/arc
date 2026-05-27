@@ -60,6 +60,9 @@ export const zh = {
     periodChange: {
       newPosition: "新建仓",
     },
+    badge: {
+      snapshot: "快照 · {{date}}",
+    },
     positionUnits: {
       equity: "{{shares}} 股",
       fund: "{{shares}} 份",
@@ -80,6 +83,17 @@ export const zh = {
     addTransactionCta: "录入此资产交易",
     more: "更多",
     removeFromPortfolio: "从投资组合删除",
+    twr: {
+      hidden: {
+        reason:
+          "本资产含持仓快照，无法精准计算时间加权收益率。请参考上方「未实现盈亏」反映你的真实持有回报。",
+      },
+      tooltip:
+        "假设你在期初一次性投入今天等额资金，市场涨幅。GIPS 标准的「时间加权收益率」，剔除你的加仓/减仓节奏。",
+    },
+    costBasis: {
+      tooltip: "今日市值减去你所有买入投入。这是你的真实账户回报。",
+    },
   },
   dailySnapshot: {
     title: "每日盈亏",
