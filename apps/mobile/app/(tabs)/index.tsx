@@ -56,7 +56,6 @@ import {
   usePortfolioTwr,
   usePortfolioValuation,
   usePortfolioValueSnapshots,
-  periodBaselineByAsset,
   snapshotsToChartPoints,
 } from "../../src/lib/queries";
 import { computeDailyDelta } from "@arc/core";
@@ -140,11 +139,6 @@ export default function PortfolioTab() {
     [t, reportingCurrency]
   );
 
-  const holdingsPeriodBaseline = useMemo(
-    () => periodBaselineByAsset(snapshots.data ?? []),
-    [snapshots.data]
-  );
-
   const holdingsRows = useMemo(
     () =>
       buildHoldingsTableRows({
@@ -159,7 +153,6 @@ export default function PortfolioTab() {
         marketLabel,
         newPositionLabel: t("holdings.periodChange.newPosition"),
         formatAccessibilityLabel: formatHoldingsAccessibilityLabel,
-        periodBaselineByAsset: holdingsPeriodBaseline,
       }),
     [
       holdings,
@@ -168,7 +161,6 @@ export default function PortfolioTab() {
       valuationFetching,
       catalog.data,
       reportingCurrency,
-      holdingsPeriodBaseline,
       formatPositionLabel,
       formatHoldingsAccessibilityLabel,
       t,

@@ -46,7 +46,6 @@ export { useHistoricalQuotes, historicalQuotesToChartPoints } from "./use-histor
 export { useAssetDetail, type AssetDetailView } from "./use-asset-detail";
 export {
   usePortfolioValueSnapshots,
-  periodBaselineByAsset,
   snapshotsToChartPoints,
   snapshotPeakTrough,
   type PortfolioSnapshotPoint,

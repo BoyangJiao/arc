@@ -6,7 +6,6 @@ import Decimal from "decimal.js";
 import { parseAssetId, type Currency, type Holding, type Market } from "@arc/core";
 import type { MarketValuation } from "@arc/core";
 import type { HoldingPeriodChange, HoldingsTableRow } from "@arc/ui";
-import { computePeriodChange } from "@arc/ui";
 
 import type { AssetCatalogRow } from "./queries/use-asset-catalog";
 import { resolveAssetLogoUrl } from "./asset-logo-url";
@@ -14,24 +13,21 @@ import { formatMoney } from "./format-money";
 
 const MARKET_ORDER: readonly Market[] = ["US", "CN", "HK", "FUND", "CRYPTO", "CASH"];
 
+/**
+ * Holdings row period change — cost-basis since open (ADR 016).
+ *
+ * Fixed for all time ranges; does not use chart baseline (ADR 015 superseded).
+ */
 const resolvePeriodChange = (
-  assetId: string,
   valueReporting: Decimal,
-  periodBaselineByAsset: ReadonlyMap<string, Decimal> | null
+  costBasisReporting: Decimal | undefined
 ): HoldingPeriodChange => {
-  if (!periodBaselineByAsset) {
-    return { kind: "unavailable" };
-  }
-  if (!periodBaselineByAsset.has(assetId)) {
+  if (costBasisReporting === undefined || costBasisReporting.isZero()) {
     return { kind: "new-position" };
   }
-  const baselineReporting = periodBaselineByAsset.get(assetId)!;
-  const computed = computePeriodChange(valueReporting.toNumber(), baselineReporting.toNumber());
-  return {
-    kind: "ok",
-    delta: computed.delta,
-    percent: computed.percent,
-  };
+  const delta = valueReporting.minus(costBasisReporting);
+  const percent = delta.dividedBy(costBasisReporting).times(100);
+  return { kind: "ok", delta, percent };
 };
 
 export const buildHoldingsTableRows = (input: {
@@ -50,8 +46,6 @@ export const buildHoldingsTableRows = (input: {
     valueLabel: string;
     periodChange: HoldingPeriodChange;
   }) => string;
-  /** Earliest snapshot in chart range — per-asset valueReporting baseline. */
-  periodBaselineByAsset: ReadonlyMap<string, Decimal> | null;
 }): HoldingsTableRow[] => {
   const valByAsset = new Map(input.perAsset.map((v) => [v.assetId, v]));
 
@@ -64,11 +58,7 @@ export const buildHoldingsTableRows = (input: {
     const name = cat?.name ?? symbol;
     const valueReporting = val?.valueReporting ?? holding.shares.times(holding.averageCost);
     const valueLabel = formatMoney(valueReporting, input.reportingCurrency);
-    const periodChange = resolvePeriodChange(
-      holding.assetId,
-      valueReporting,
-      input.periodBaselineByAsset
-    );
+    const periodChange = resolvePeriodChange(valueReporting, val?.costBasisReporting);
 
     rows.push({
       assetId: holding.assetId,

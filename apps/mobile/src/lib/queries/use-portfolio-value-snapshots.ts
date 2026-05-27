@@ -75,15 +75,6 @@ export const usePortfolioValueSnapshots = (portfolioId: string | undefined, rang
   });
 };
 
-/** Earliest snapshot in the selected chart range — period baseline for holdings P&L. */
-export const periodBaselineByAsset = (
-  points: readonly PortfolioSnapshotPoint[]
-): ReadonlyMap<string, Decimal> | null => {
-  const first = points[0];
-  if (!first) return null;
-  return first.perAssetReporting;
-};
-
 export const snapshotsToChartPoints = (
   points: readonly PortfolioSnapshotPoint[],
   marketFilter?: ReadonlySet<Market>
