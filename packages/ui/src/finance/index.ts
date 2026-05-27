@@ -97,6 +97,11 @@ export {
   type PeriodChange,
 } from "./compute-period-change";
 export {
+  TransactionAmountModeToggle,
+  type TransactionAmountMode,
+  type TransactionAmountModeToggleProps,
+} from "./TransactionAmountModeToggle";
+export {
   formatCompactChangeLine,
   formatSignedAmount,
   formatSignedPercent,

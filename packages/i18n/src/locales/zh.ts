@@ -110,6 +110,31 @@ export const zh = {
     removeHoldingFailed: "删除失败，请稍后重试",
   },
   transaction: {
+    entry: {
+      modePicker: {
+        title: "选择录入方式",
+      },
+      modeA: {
+        label: "完整交易",
+        hint: "我刚买入 / 卖出 / 收到分红",
+      },
+      modeD: {
+        label: "录入持仓快照",
+        hint: "我已经持有一段时间，作为对账起点",
+      },
+    },
+    amount: {
+      toggle: {
+        shares: "数量",
+        total: "成交金额",
+      },
+    },
+    snapshot: {
+      unitPrice: {
+        label: "持仓成本价",
+        hint: "= 累计投入金额 ÷ 当前持仓份额（支付宝/天天「持有成本」对账金额）",
+      },
+    },
     addTitle: "添加交易",
     assetSearch: "如 AAPL、GOOGL、TSLA",
     marketUsHint: "Stage 1 仅支持美股；须为有效代码（如 AAPL、GOOGL），错误代码将无法显示行情",

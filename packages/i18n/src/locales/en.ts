@@ -111,6 +111,31 @@ export const en = {
     removeHoldingFailed: "Could not delete — try again",
   },
   transaction: {
+    entry: {
+      modePicker: {
+        title: "How would you like to enter this?",
+      },
+      modeA: {
+        label: "Full transaction",
+        hint: "I just bought, sold, or received a dividend",
+      },
+      modeD: {
+        label: "Opening position snapshot",
+        hint: "I've held this for a while — use as a reconciliation starting point",
+      },
+    },
+    amount: {
+      toggle: {
+        shares: "Quantity",
+        total: "Total amount",
+      },
+    },
+    snapshot: {
+      unitPrice: {
+        label: "Position cost per unit",
+        hint: "= Total invested ÷ current shares (matches fund app “holding cost”)",
+      },
+    },
     addTitle: "Add Transaction",
     assetSearch: "e.g. AAPL, GOOGL, TSLA",
     marketUsHint:
