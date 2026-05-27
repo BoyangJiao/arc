@@ -39,7 +39,8 @@ export const en = {
     navOverTime: "Portfolio value over time",
     peak: "Peak",
     trough: "Trough",
-    noSnapshotHistory: "No history yet — daily snapshots will appear after the cron runs",
+    noSnapshotHistory: "No NAV history yet — estimating from your recorded trades",
+    periodChangeLabel: "Period market value change",
     sharesRow: "{{shares}} × {{symbol}}",
     positionLine: "{{shares}} × {{price}}",
   },
@@ -77,6 +78,8 @@ export const en = {
     avgCost: "Avg. cost: {{cost}}",
     unrealizedPnL: "Unrealized P&L: {{pnl}}",
     addTransactionCta: "Record a transaction for this asset",
+    more: "More",
+    removeFromPortfolio: "Remove from portfolio",
   },
   dailySnapshot: {
     title: "Daily P&L",

@@ -42,6 +42,35 @@ export const lookupByUtcDayWithForwardFill = <T extends AsOfRow>(
   return bestKey === null ? undefined : index.get(bestKey);
 };
 
+/**
+ * Prefer prior day (forward-fill); if none, fall back to the earliest future day.
+ *
+ * Use this for "current-shares projection" charts where the user may scrub to
+ * a date BEFORE the asset's first historical quote (e.g., scrubbing 1Y back on
+ * a newly listed crypto). Forward-fill alone would return undefined; this
+ * helper substitutes the earliest known price so the curve doesn't collapse.
+ */
+export const lookupByUtcDayBidirectional = <T extends AsOfRow>(
+  dayKey: string,
+  index: ReadonlyMap<string, T>
+): T | undefined => {
+  const exact = index.get(dayKey);
+  if (exact) return exact;
+
+  let bestPrior: string | null = null;
+  let earliestFuture: string | null = null;
+  for (const key of index.keys()) {
+    if (key < dayKey) {
+      if (bestPrior === null || key > bestPrior) bestPrior = key;
+    } else if (key > dayKey) {
+      if (earliestFuture === null || key < earliestFuture) earliestFuture = key;
+    }
+  }
+  if (bestPrior !== null) return index.get(bestPrior);
+  if (earliestFuture !== null) return index.get(earliestFuture);
+  return undefined;
+};
+
 /** Unique UTC day keys for TWR boundary timestamps (from, to, cash-flow dates). */
 export const collectBoundaryDayKeys = (
   from: Date,

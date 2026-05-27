@@ -39,7 +39,8 @@ export const zh = {
     navOverTime: "累计净值",
     peak: "区间最高",
     trough: "区间最低",
-    noSnapshotHistory: "暂无历史 — 每日快照 cron 运行后会显示曲线",
+    noSnapshotHistory: "暂无净值历史 — 正在根据录入交易估算",
+    periodChangeLabel: "本期市值变化",
     sharesRow: "{{shares}} × {{symbol}}",
     positionLine: "{{shares}} × {{price}}",
   },
@@ -77,6 +78,8 @@ export const zh = {
     avgCost: "平均成本：{{cost}}",
     unrealizedPnL: "未实现盈亏：{{pnl}}",
     addTransactionCta: "录入此资产交易",
+    more: "更多",
+    removeFromPortfolio: "从投资组合删除",
   },
   dailySnapshot: {
     title: "每日盈亏",

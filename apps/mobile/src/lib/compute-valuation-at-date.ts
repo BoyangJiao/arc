@@ -159,6 +159,51 @@ const fetchFxForHoldings = async (
   return rates;
 };
 
+const COST_BASIS_SOURCE = "cost-basis";
+
+const costBasisQuotesForHoldings = (holdings: readonly Holding[], dayKey: string): PriceQuote[] =>
+  holdings.map((holding) => ({
+    assetId: holding.assetId,
+    price: holding.averageCost,
+    currency: holding.currency,
+    asOf: `${dayKey}T23:00:00.000Z`,
+    source: COST_BASIS_SOURCE,
+  }));
+
+/** Cost-basis portfolio value on `dayKey` — no market quotes (entry anchor for new portfolios). */
+export const computeCostBasisAtDate = async (input: {
+  readonly portfolioId: string;
+  readonly dayKey: string;
+  readonly transactions: readonly Transaction[];
+  readonly reportingCurrency: Currency;
+}) => {
+  const txsUpTo = transactionsUpToDay(input.transactions, input.dayKey);
+  const holdings = computeHoldings(txsUpTo);
+  if (holdings.length === 0) {
+    return {
+      totalValue: new Decimal(0),
+      perAssetReporting: new Map<string, Decimal>(),
+    };
+  }
+
+  const quotes = costBasisQuotesForHoldings(holdings, input.dayKey);
+  const fxRates = await fetchFxForHoldings(holdings, input.reportingCurrency, input.dayKey);
+  const valuation = computePortfolioValuation(
+    input.portfolioId,
+    holdings,
+    quotes,
+    fxRates,
+    input.reportingCurrency
+  );
+
+  const perAssetReporting = new Map<string, Decimal>();
+  for (const row of valuation.perAsset) {
+    perAssetReporting.set(row.assetId, row.valueReporting);
+  }
+
+  return { totalValue: valuation.totalValue, perAssetReporting };
+};
+
 /** Recompute portfolio total value on `dayKey` from transactions + historical prices/FX. */
 export const computeValuationAtDate = async (input: {
   readonly portfolioId: string;
@@ -166,9 +211,25 @@ export const computeValuationAtDate = async (input: {
   readonly transactions: readonly Transaction[];
   readonly reportingCurrency: Currency;
 }): Promise<Decimal> => {
+  const full = await computeFullValuationAtDate(input);
+  return full.totalValue;
+};
+
+/** Full valuation on `dayKey` — total + per-asset reporting map for chart bootstrap. */
+export const computeFullValuationAtDate = async (input: {
+  readonly portfolioId: string;
+  readonly dayKey: string;
+  readonly transactions: readonly Transaction[];
+  readonly reportingCurrency: Currency;
+}) => {
   const txsUpTo = transactionsUpToDay(input.transactions, input.dayKey);
   const holdings = computeHoldings(txsUpTo);
-  if (holdings.length === 0) return new Decimal(0);
+  if (holdings.length === 0) {
+    return {
+      totalValue: new Decimal(0),
+      perAssetReporting: new Map<string, Decimal>(),
+    };
+  }
 
   const quotes = await fetchQuotesForHoldings(holdings, input.dayKey);
   const fxRates = await fetchFxForHoldings(holdings, input.reportingCurrency, input.dayKey);
@@ -181,5 +242,10 @@ export const computeValuationAtDate = async (input: {
     input.reportingCurrency
   );
 
-  return valuation.totalValue;
+  const perAssetReporting = new Map<string, Decimal>();
+  for (const row of valuation.perAsset) {
+    perAssetReporting.set(row.assetId, row.valueReporting);
+  }
+
+  return { totalValue: valuation.totalValue, perAssetReporting };
 };

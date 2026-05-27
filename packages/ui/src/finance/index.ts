@@ -90,7 +90,12 @@ export {
   type TwrInlineLabelProps,
   type TwrInlineLabelResult,
 } from "./TwrInlineLabel";
-export { computePeriodChange, type PeriodChange } from "./compute-period-change";
+export {
+  computePeriodChange,
+  computePeriodChangeFromBaseline,
+  firstNonZeroChartY,
+  type PeriodChange,
+} from "./compute-period-change";
 export {
   formatCompactChangeLine,
   formatSignedAmount,

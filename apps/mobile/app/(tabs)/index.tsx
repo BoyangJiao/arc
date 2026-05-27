@@ -2,7 +2,7 @@
  * (tabs)/index.tsx — Portfolio Tab (Home)
  */
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
@@ -23,7 +23,6 @@ import {
   TabScreenHeader,
   TabScrollShadow,
   Text,
-  TwrInlineLabel,
   TYPO_CAPTION,
   TYPO_DANGER,
   TYPO_DISCLAIMER,
@@ -40,6 +39,7 @@ import {
   PortfolioTabHeaderManageButton,
 } from "../../src/components/PortfolioTabHeader";
 import { useAuth } from "../../src/lib/auth";
+import { pickDefaultRangeForTransactions } from "../../src/lib/default-chart-range";
 import { currencySymbol, formatMoney } from "../../src/lib/format-money";
 import { buildHoldingsTableRows } from "../../src/lib/holdings-presenter";
 import {
@@ -53,9 +53,8 @@ import {
   useDailyDelta,
   useDailySnapshot,
   usePortfolioHoldings,
-  usePortfolioTwr,
+  usePortfolioChartSeries,
   usePortfolioValuation,
-  usePortfolioValueSnapshots,
   snapshotsToChartPoints,
 } from "../../src/lib/queries";
 import { computeDailyDelta } from "@arc/core";
@@ -69,6 +68,11 @@ export default function PortfolioTab() {
   const router = useRouter();
   const { user } = useAuth();
   const [chartRange, setChartRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
+  const userPickedRangeRef = useRef(false);
+  const handleChartRangeChange = useCallback((range: TimeRange) => {
+    userPickedRangeRef.current = true;
+    setChartRange(range);
+  }, []);
   const [selectedMarketFilters, setSelectedMarketFilters] = useState<Set<Market>>(() => new Set());
 
   const { prefs } = useUserPreferences();
@@ -77,7 +81,17 @@ export default function PortfolioTab() {
 
   const activeId = activePortfolio?.id;
   const reportingCurrency = activePortfolio?.reportingCurrency ?? prefs?.reportingCurrency ?? "CNY";
-  const { holdings, isPending: holdingsPending } = usePortfolioHoldings(activeId);
+  const { holdings, transactions, isPending: holdingsPending } = usePortfolioHoldings(activeId);
+
+  useEffect(() => {
+    userPickedRangeRef.current = false;
+  }, [activeId]);
+  useEffect(() => {
+    if (userPickedRangeRef.current) return;
+    const next = pickDefaultRangeForTransactions(transactions);
+    if (next) setChartRange(next);
+  }, [activeId, transactions]);
+
   const {
     data: valuation,
     isFetching: valuationFetching,
@@ -87,8 +101,12 @@ export default function PortfolioTab() {
 
   const dailyDelta = useDailyDelta(activeId, reportingCurrency);
   const dailySnapshot = useDailySnapshot(activeId);
-  const snapshots = usePortfolioValueSnapshots(activeId, chartRange);
-  const portfolioTwr = usePortfolioTwr({ portfolioId: activeId, range: chartRange });
+  const chartSeries = usePortfolioChartSeries({
+    portfolioId: activeId,
+    range: chartRange,
+    reportingCurrency,
+    liveValuation: valuation ?? undefined,
+  });
 
   const assetIds = useMemo(() => holdings.map((h) => h.assetId), [holdings]);
   const catalog = useAssetCatalog(assetIds);
@@ -210,11 +228,11 @@ export default function PortfolioTab() {
     () =>
       decimateChartPoints(
         snapshotsToChartPoints(
-          snapshots.data ?? [],
+          chartSeries.data ?? [],
           marketFilterActive ? selectedMarketFilters : undefined
         )
       ),
-    [snapshots.data, marketFilterActive, selectedMarketFilters]
+    [chartSeries.data, marketFilterActive, selectedMarketFilters]
   );
 
   const formatAnchorTime = useCallback(
@@ -302,28 +320,17 @@ export default function PortfolioTab() {
                 formatMoney={(amount) => formatMoney(amount, reportingCurrency)}
                 delta={heroDelta}
                 noBaselineMessage={t("dailySnapshot.noBaseline")}
+                periodChangeLabel={t("portfolio.periodChangeLabel")}
                 formatChangeLine={(delta, percent) =>
                   formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))
                 }
                 formatAnchorTime={formatAnchorTime}
                 chartData={chartPoints}
                 chartRange={chartRange}
-                onChartRangeChange={setChartRange}
-                chartLoading={snapshots.isFetching}
+                onChartRangeChange={handleChartRangeChange}
+                chartLoading={chartSeries.isFetching}
                 valuePrefix={currencySymbol(reportingCurrency)}
                 emptyChartMessage={t("portfolio.noSnapshotHistory")}
-                twrInline={
-                  <TwrInlineLabel
-                    range={chartRange}
-                    result={portfolioTwr.isError ? undefined : portfolioTwr.data}
-                    loading={portfolioTwr.isLoading}
-                    unavailable={t("twr.unavailable")}
-                    twrAbbrevLabel={t("twr.label")}
-                    tooltipTitle={t("twr.tooltipTitle")}
-                    tooltipBody={t("twr.tooltipBody")}
-                    closeLabel={t("common.close")}
-                  />
-                }
               />
               {heroDelta && heroDelta.status !== "empty-portfolio" ? (
                 <DailySnapshotCard

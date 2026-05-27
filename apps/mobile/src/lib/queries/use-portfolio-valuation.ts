@@ -19,7 +19,13 @@ import {
   type PortfolioValuation,
   type PriceQuote,
 } from "@arc/core";
-import { fetchFxWithCache, fetchPriceWithCache, RateLimitError } from "@arc/data-sources";
+import {
+  fetchFxWithCache,
+  fetchPriceWithCache,
+  NetworkError,
+  NotFoundError,
+  RateLimitError,
+} from "@arc/data-sources";
 import type { Holding } from "@arc/core";
 
 import {
@@ -36,10 +42,33 @@ import { usePortfolioHoldings } from "./use-portfolio-holdings";
 /** Finnhub free tier: 60 req/min — wait between retries when throttled. */
 const PRICE_RATE_LIMIT_BACKOFF_MS = 12_500;
 
-/** Small gap between symbols to keep per-minute load smooth on pull-to-refresh. */
+/** Parallel live fetches — stay under Finnhub 60/min while avoiding serial 350ms gaps. */
+const PRICE_FETCH_CONCURRENCY = 5;
+
+/** Small gap between symbols when throttling background cache-miss fetches. */
 const PRICE_INTER_SYMBOL_GAP_MS = 350;
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const mapWithConcurrency = async <T, R>(
+  items: readonly T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> => {
+  if (items.length === 0) return [];
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+
+  const worker = async (): Promise<void> => {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      results[index] = await fn(items[index]!, index);
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
+  return results;
+};
 
 const fetchQuoteForHolding = async (
   holding: Holding,
@@ -60,6 +89,17 @@ const fetchQuoteForHolding = async (
     } catch (err) {
       if (err instanceof RateLimitError && attempt < maxAttempts - 1) {
         await sleep(err.retryAfterMs ?? PRICE_RATE_LIMIT_BACKOFF_MS);
+        continue;
+      }
+      // Network / not-found won't heal on retry — fail fast (e.g. AKShare wrapper timeout).
+      if (err instanceof NetworkError || err instanceof NotFoundError) {
+        console.warn(
+          `[portfolio-valuation] price fetch failed for ${holding.assetId}:`,
+          err instanceof Error ? err.message : err
+        );
+        return null;
+      }
+      if (attempt < maxAttempts - 1) {
         continue;
       }
       console.warn(
@@ -109,10 +149,19 @@ const fillStaleQuotes = async (
 
 const fetchQuotesForHoldings = async (
   holdings: readonly Holding[],
-  freshnessMs: number
+  freshnessMs: number,
+  options?: { readonly parallel?: boolean }
 ): Promise<PriceQuote[]> => {
-  const quotes: PriceQuote[] = [];
+  const parallel = options?.parallel ?? freshnessMs === 0;
 
+  if (parallel) {
+    const results = await mapWithConcurrency(holdings, PRICE_FETCH_CONCURRENCY, (holding) =>
+      fetchQuoteForHolding(holding, freshnessMs)
+    );
+    return results.filter((quote): quote is PriceQuote => quote !== null);
+  }
+
+  const quotes: PriceQuote[] = [];
   for (let i = 0; i < holdings.length; i++) {
     if (i > 0) {
       const prevMarket = parseAssetId(holdings[i - 1]!.assetId).market;
@@ -162,34 +211,34 @@ const fetchAllQuotes = async (
 
 const fetchFxRates = async (pairs: readonly string[], forceNetwork: boolean): Promise<FxRate[]> => {
   const freshnessMs = readFxFreshnessMs(forceNetwork);
-  const rates: FxRate[] = [];
 
-  for (const pair of pairs) {
+  const results = await mapWithConcurrency(pairs, 4, async (pair) => {
     const [from, to] = pair.split("->") as [Currency, Currency];
     if (!forceNetwork && isCacheFirstMarketData()) {
       const cached = await fxCache.get(from, to, CACHE_FIRST_READ_FRESHNESS_MS);
-      if (cached) rates.push(cached);
-      continue;
+      if (cached) return cached;
+      return null;
     }
 
     try {
-      const rate = await fetchFxWithCache({
+      return await fetchFxWithCache({
         adapter: getRegistry().fxAdapter,
         from,
         to,
         cache: fxCache,
         freshnessMs,
       });
-      rates.push(rate);
     } catch (err) {
       console.warn(
         `[portfolio-valuation] FX fetch failed for ${pair}:`,
         err instanceof Error ? err.message : err
       );
       const stale = await fxCache.get(from, to, CACHE_FIRST_READ_FRESHNESS_MS);
-      if (stale) rates.push(stale);
+      return stale ?? null;
     }
-  }
+  });
+
+  const rates = results.filter((rate): rate is FxRate => rate !== null);
 
   if (rates.length === 0 && pairs.length > 0) {
     for (const pair of pairs) {

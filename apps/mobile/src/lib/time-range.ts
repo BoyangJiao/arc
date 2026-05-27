@@ -28,6 +28,10 @@ export const rangeToWindow = (range: TimeRange, now: Date = new Date()): TimeWin
 
   switch (range) {
     case "1D":
+      // Include yesterday so the chart shows yesterday's EOD → today (one
+      // full day of movement). Without this, the window collapses to a single
+      // UTC day and the chart has only one data point.
+      from.setUTCDate(from.getUTCDate() - 1);
       break;
     case "1W":
       from.setUTCDate(from.getUTCDate() - 7);

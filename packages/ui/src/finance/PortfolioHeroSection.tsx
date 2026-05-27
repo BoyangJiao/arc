@@ -11,7 +11,7 @@ import { View } from "react-native";
 import Decimal from "decimal.js";
 import { useSharedValue } from "react-native-reanimated";
 import type { ChartScrubState } from "./chart-scrub";
-import { computePeriodChange } from "./compute-period-change";
+import { computePeriodChange, firstNonZeroChartY } from "./compute-period-change";
 import type { DailySnapshotDelta } from "./DailySnapshotCard";
 import { FlippingNumberText } from "./FlippingNumberText";
 
@@ -41,6 +41,8 @@ export interface PortfolioHeroSectionProps {
   readonly delta: DailySnapshotDelta | null;
   readonly noBaselineMessage: string;
   /** Coinbase-style single line: ↑¥1,234.56 (+8.15%). */
+  /** e.g. 「本期市值变化」— ADR 016 */
+  readonly periodChangeLabel?: string;
   readonly formatChangeLine: (delta: Decimal, percent: Decimal | null) => string;
   readonly formatAnchorTime: (isoTimestamp: string) => string;
   readonly chartData: ReadonlyArray<ChartPoint>;
@@ -74,6 +76,7 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
     formatMoney,
     delta,
     noBaselineMessage,
+    periodChangeLabel,
     formatChangeLine,
     formatAnchorTime,
     chartData,
@@ -105,7 +108,7 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
     setScrub(null);
   }, [chartData, chartRange]);
 
-  const periodStart = chartData[0]?.y ?? null;
+  const periodStart = useMemo(() => firstNonZeroChartY(chartData), [chartData]);
 
   const heroValue = useMemo(() => {
     if (scrub) return new Decimal(scrub.value);
@@ -141,11 +144,14 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
           liveValue={scrubValueSv}
           liveActive={scrubActiveSv}
         />
-        <View className="min-h-[24px] justify-center">
+        <View className="min-h-[24px] justify-center gap-0.5">
           {heroChange ? (
-            <Text className={typographyClass("changeLg", changeColorClass)}>
-              {formatChangeLine(heroChange.delta, heroChange.percent)}
-            </Text>
+            <>
+              {periodChangeLabel ? <Text className={TYPO_CAPTION}>{periodChangeLabel}</Text> : null}
+              <Text className={typographyClass("changeLg", changeColorClass)}>
+                {formatChangeLine(heroChange.delta, heroChange.percent)}
+              </Text>
+            </>
           ) : delta?.status === "no-baseline" ? (
             <Text className={TYPO_CAPTION}>{noBaselineMessage}</Text>
           ) : null}

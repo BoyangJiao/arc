@@ -20,6 +20,7 @@ import {
   createDefaultPriceAdapters,
   createSupabaseFxCache,
   createSupabasePriceCache,
+  searchSymbolsWithFallback,
   type AdapterRegistry,
   type AkshareClient,
   type FxCache,
@@ -105,6 +106,9 @@ export const searchSymbolsForMarket = async (
     return akshareSearchClient.searchSymbols(market, query);
   }
   const adapter = getRegistry().resolvePriceAdapter(market);
+  if (market === "US") {
+    return searchSymbolsWithFallback({ query, adapter });
+  }
   if (!adapter.searchSymbols) return [];
   return adapter.searchSymbols(query);
 };
