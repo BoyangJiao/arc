@@ -6,7 +6,7 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-27 by Opus 4.7 — **ADR 016 定稿 + BoyangJiao confirm**。Opus 多轮 review（钱往 / Delta / IBKR / 钱迹 / 支付宝 横向对标 + dogfooding 数据反推）后产出 [ADR 016 持仓收益率口径 + 录入分级](../docs/adr/016-holdings-return-and-entry-tiers.md)。核心决策：Hero 保持 True Historical balance 曲线（含现金）+ 「本期市值变化」label（default/scrub 共享 first-non-zero baseline），持仓行 % = cost-basis since-open 固定，新增 `OPENING_SNAPSHOT` type + 统一录入表单，业绩分析（TWR/MWR/收益率曲线）独立到 Insights/盈亏分析 模块。ADR 014（hero label）/ ADR 015（全文）被 supersede。Commit 链 #1-8 主线 + #9+ 独立 stream 待 Sonnet/Cursor 实施。**未动代码**。
+> **Last updated**: 2026-05-27 by Composer (Cursor) — **ADR 016 主线 commit #1–#8 已落地**（`4cc4a77`…`66cfa53` on `dev/stage-3`）。`pnpm typecheck` 6/6 ✅ · `@arc/core` 155 tests ✅ · `@arc/mobile` 31 tests ✅。**待你**：Supabase 执行 `packages/db/drizzle/migrations/0014_opening_snapshot_tx_type.sql` 后 Real Env dogfooding（000216 对账、快照录入、Hero scrub）。**#9+ Insights/盈亏分析** 独立 stream 未动。
 >
 > **2026-05-26 by Sonnet 4.6 (Cursor)** — Dogfooding 发现 ALL 视图持仓收益率算法漏洞（对照支付宝实测 000216 黄金 ETF 联接 A 显示 +23.99% vs 支付宝 +18.66%，差 5.33pp，含算法侧 +800% 极端反例 + 录入摩擦 ¥2,574 量级双重根因）。讨论产物：[`.specify/handoffs/opus-review-holdings-return-algorithm.md`](handoffs/opus-review-holdings-return-algorithm.md)（已被 ADR 016 解决）。
 >
@@ -18,16 +18,16 @@
 
 | Field                 | Value                                                                                                                                                                 |
 | :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅ + Real/Clean DEV ✅ J-RE.1 ✅** → **Real Env bugfix 阶段** + **Opus review pending（标的收益率算法 + 录入分级）**     |
+| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅ + Real/Clean DEV ✅ J-RE.1 ✅** → **ADR 016 主线 ✅** → Real Env dogfooding + migration 0014 + **#9+ 盈亏分析 spec**  |
 | **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: user push → Opus review of #2/#4/#11 (charts / fallback / tx entry)                                                    |
 | **Step (Block D)**    | **Phase 1 ✅ algorithm** (`@arc/core/returns/{cash-flow,twr,xirr}.ts` + 21 property tests). **Next** = Phase 2 (mobile hooks + UI 接入 — Sonnet/Cursor route per §七) |
 | **Step (Real Env)**   | **J-RE.1 ✅** 双环境 Switch + OTP 跑通；用户开始 Real 持仓录入 + **dogfooding bug 修复**（下一会话列清单）                                                            |
-| **Branch**            | `dev/stage-3` (**ahead 7** vs `origin/dev/stage-3`)                                                                                                                   |
-| **Last commit**       | `53d9034` `docs(spec+state): real-env feature ready, Phase 3 dependency unblocked`                                                                                    |
+| **Branch**            | `dev/stage-3` (**ahead 16+** vs `origin/dev/stage-3`)                                                                                                                 |
+| **Last commit**       | `66cfa53` `feat(ui,mobile): holding-snapshot badge + asset detail gating (adr-016)`                                                                                   |
 | **Context slug**      | `holdings-and-transactions`                                                                                                                                           |
 | **Context bundle**    | `.specify/codectx/holdings-and-transactions.xml`                                                                                                                      |
 | **PR**                | 未开；建议 push 后开 `dev/stage-3 → main` PR 与 Block C review 同步进行                                                                                               |
-| **CI status**         | `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/core test` 149/149 ✅ / `pnpm --filter @arc/mobile test` 28/28 ✅                                                       |
+| **CI status**         | `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/core test` 155/155 ✅ / `pnpm --filter @arc/mobile test` 31/31 ✅                                                       |
 | **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                    |
 | **Out of scope**      | Block E features (Inbox/AI/订阅/脱敏/价格异动)、Block F polish redesign + CSV、大陆 Auth (ADR 012 P1) 实现                                                            |
 
