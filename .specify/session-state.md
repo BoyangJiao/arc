@@ -6,7 +6,11 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-25 by Composer (Cursor) — **Real / Clean 双环境 J-RE.1 ✅ 用户 UAT 跑通**（`+arc-real` / `+arc-clean` Gmail alias；FAB Switch + OTP + 场景 gating 均 OK）。**Infra 侧一次性配置完成**：Resend `auth.boyangjiao.xyz` Verified（Vercel DNS auto-config）；Supabase Custom SMTP `noreply@auth.boyangjiao.xyz`；邮件模板 **Confirm signup + Magic Link** 均含 `{{ .Token }}`（新 alias 首次注册曾误发 confirm link — 根因是 Confirm signup 模板未改）。**Next**: Real Env dogfooding 暴露的问题修复（用户下一会话带入 bug 列表）→ 持续录入真实持仓 → ≥6 月后 Phase 3 雪球对标。代码链仍 `2a81c6b`…`53d9034` on `dev/stage-3`（ahead 7）。
+> **Last updated**: 2026-05-27 by Opus 4.7 — **ADR 016 定稿 + BoyangJiao confirm**。Opus 多轮 review（钱往 / Delta / IBKR / 钱迹 / 支付宝 横向对标 + dogfooding 数据反推）后产出 [ADR 016 持仓收益率口径 + 录入分级](../docs/adr/016-holdings-return-and-entry-tiers.md)。核心决策：Hero 保持 True Historical balance 曲线（含现金）+ 「本期市值变化」label（default/scrub 共享 first-non-zero baseline），持仓行 % = cost-basis since-open 固定，新增 `OPENING_SNAPSHOT` type + 统一录入表单，业绩分析（TWR/MWR/收益率曲线）独立到 Insights/盈亏分析 模块。ADR 014（hero label）/ ADR 015（全文）被 supersede。Commit 链 #1-8 主线 + #9+ 独立 stream 待 Sonnet/Cursor 实施。**未动代码**。
+>
+> **2026-05-26 by Sonnet 4.6 (Cursor)** — Dogfooding 发现 ALL 视图持仓收益率算法漏洞（对照支付宝实测 000216 黄金 ETF 联接 A 显示 +23.99% vs 支付宝 +18.66%，差 5.33pp，含算法侧 +800% 极端反例 + 录入摩擦 ¥2,574 量级双重根因）。讨论产物：[`.specify/handoffs/opus-review-holdings-return-algorithm.md`](handoffs/opus-review-holdings-return-algorithm.md)（已被 ADR 016 解决）。
+>
+> **2026-05-25 by Composer (Cursor)**: Real / Clean 双环境 J-RE.1 ✅ 用户 UAT 跑通；Resend `auth.boyangjiao.xyz` Verified；Supabase Custom SMTP `noreply@auth.boyangjiao.xyz`。代码链 `2a81c6b`…`53d9034` on `dev/stage-3`（ahead 7+，含未 commit 的 ADR 014/015 + holdings-presenter / portfolio-chart-bootstrap / use-portfolio-chart-series 等改动）。
 
 ---
 
@@ -14,7 +18,7 @@
 
 | Field                 | Value                                                                                                                                                                 |
 | :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅ + Real/Clean DEV ✅ J-RE.1 ✅** → **Real Env bugfix 阶段**                                                            |
+| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅ + Real/Clean DEV ✅ J-RE.1 ✅** → **Real Env bugfix 阶段** + **Opus review pending（标的收益率算法 + 录入分级）**     |
 | **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: user push → Opus review of #2/#4/#11 (charts / fallback / tx entry)                                                    |
 | **Step (Block D)**    | **Phase 1 ✅ algorithm** (`@arc/core/returns/{cash-flow,twr,xirr}.ts` + 21 property tests). **Next** = Phase 2 (mobile hooks + UI 接入 — Sonnet/Cursor route per §七) |
 | **Step (Real Env)**   | **J-RE.1 ✅** 双环境 Switch + OTP 跑通；用户开始 Real 持仓录入 + **dogfooding bug 修复**（下一会话列清单）                                                            |
@@ -406,6 +410,17 @@ commit chain：
 2. 起 Opus 会话 review Block C 三个 deferred commits（`9ffcaf7` charts wrapper / `08e86f3` `NotImplementedError → withFallback` / `251fc11` cross-market tx entry）+ ADR 012 提议复审
 3. 评估开 `dev/stage-3 → main` Stage 3 partial PR（Block A/B/C + Block D algorithm，Phase 2/3 后续 PR）
 
+**Track G — 标的收益率口径 + 录入分级 Opus review（2026-05-26 dogfooding 起点）**
+
+1. **Opus 必读**：[`.specify/handoffs/opus-review-holdings-return-algorithm.md`](handoffs/opus-review-holdings-return-algorithm.md) → [ADR 014](../docs/adr/014-portfolio-chart-algorithm.md) → [ADR 015](../docs/adr/015-holdings-row-period-change.md)
+2. **决策点**：
+   - Q1 算法方案（A 全 cost-basis / B 持仓级 TWR / **C 混合 — 会话倾向** / D 双数 / E 现状）
+   - Q2 快照录入字段集（最少 / **+ 可选累计投入金额 — 会话倾向** / 反向推算）
+   - Q3 `OPENING_SNAPSHOT` 新增 type vs 复用 `ADJUSTMENT + metadata`
+   - Q4 CSV 导入是否插队 Stage 3 排期
+3. **产出预期**：ADR 016 草案 + spec 增补（`holdings-and-transactions-stage-3.md` 加快照录入子契约）+ commit 链拆分（migration / algorithm / UI / docs）
+4. **不动代码**：本议题等 Opus 决策后再交 Sonnet/Cursor 实施；当前工作区 `holdings-presenter.ts` 等改动仍是 ADR 015 v4 实现
+
 **Track B — Block D Phase 2（Sonnet/Cursor，新会话）**
 
 1. 用 §Phase 2 hand-off prompt 起 Sonnet/Cursor 会话
@@ -476,6 +491,7 @@ UAT 验收：
 - **Resolved 2026-05-21 (UI commit discipline)**: Block C UI/UX polish 可单独 commit，若仅 L2/L3 + 薄 wiring；触及 data-sources/core/migration 先问用户再 commit。
 - **Resolved 2026-05-25 (Real Env email infra)**: Resend **`noreply@resend.dev` = sandbox**，仅发往 Resend 账号邮箱；`+alias` 被当作不同收件人 → 550。Fix = verify 自有子域（`auth.boyangjiao.xyz`）+ Supabase sender 改 `@auth.boyangjiao.xyz`。`boyangjiao.xyz` 作品集在 Vercel → Resend auto-config 走 Vercel DNS，不必 Squarespace 手填。
 - **Resolved 2026-05-25 (OTP vs confirm link)**: `signInWithOtp` API 名是 OTP，**邮件内容由模板决定**。新用户走 **Confirm signup** 模板（非 Magic Link）；两模板都须 `{{ .Token }}` 且 dev 勿留 `{{ .ConfirmationURL }}` 为主 CTA。
+- **Resolved 2026-05-27 (Holdings return algorithm + entry tiers)**: Opus 4.7 多轮 review（钱往 / Delta / IBKR / 钱迹 / 支付宝 横向对标）+ BoyangJiao confirm，定稿 **[ADR 016](../docs/adr/016-holdings-return-and-entry-tiers.md)**。核心：(1) Portfolio Tab Hero 保留 True Historical balance 曲线 + 「本期市值变化」label，default/scrub 共享 first-non-zero baseline（杜绝 Delta scrub +1358% 翻车）；(2) **持仓行 % = cost-basis since-open 固定值**，不随时间范围切换，跟支付宝/钱往 100% 对账；(3) 新增 `OPENING_SNAPSHOT` transaction type + 统一录入表单（mode 入口分流，「数量 / 金额」toggle，snapshot 走「累计投入金额」根除录入摩擦 A）；(4) 业绩 / TWR / MWR / 收益率曲线 = 独立 **Insights/盈亏分析** 模块（仿 IBKR 业绩 tab + 钱往 详情页），独立 feature spec，**不阻塞**主链。ADR 014/015 部分被 supersede（详见各自顶部注释）。Commit 链 #1-8 主线（~2 周）+ #9+ 独立 stream（盈亏分析模块）。下一步：Sonnet/Cursor 按 commit chain 实施。
 
 ## Critical mental model (gotchas easy to forget)
 
