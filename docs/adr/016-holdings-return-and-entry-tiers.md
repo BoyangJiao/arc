@@ -1,23 +1,38 @@
-# ADR 016 — 持仓收益率口径 + 录入分级（最终版）
+# ADR 016 — 持仓收益率口径 + 录入分级（最终版 v2）
 
-- **状态**: ✅ Accepted（2026-05-27，BoyangJiao 确认 → 待 Sonnet/Cursor 实施）
-- **作者**: BoyangJiao + Sonnet 4.6（discovery）+ Claude Opus 4.7（multi-round refinement）
+- **状态**: ✅ Accepted（v1: 2026-05-27；**v2 修订: 2026-05-28**，BoyangJiao 确认）
+- **作者**: BoyangJiao + Sonnet 4.6（discovery）+ Claude Opus 4.7（multi-round refinement, v1 + v2）
 - **Supersedes**: ADR 015 全文（持仓行算法）；ADR 014 中 hero 数字 label 部分
 - **相关 ADR**: 014 portfolio-chart-algorithm（曲线算法保留）· 015 holdings-row-period-change（被本 ADR 取代）· 009 daily-snapshot · 011 multi-source fallback · 013 ui-wrapper-ownership
 - **相关法则**: `.specify/data-model-invariants.md` Law 5（历史 ≠ 当下）
 - **触发文档**: [`.specify/handoffs/opus-review-holdings-return-algorithm.md`](../../.specify/handoffs/opus-review-holdings-return-algorithm.md)
 
+> **v2 修订要点（2026-05-28）— 完全移除 `OPENING_SNAPSHOT`**：
+>
+> - **数据**：现有 `OPENING_SNAPSHOT` 记录 **全部 UPDATE 为 BUY**（migration 0015）
+> - **Schema**：从 `transactions.type` check constraint 中 **drop** `OPENING_SNAPSHOT`
+> - **TypeScript**：从 `TransactionType` union 中**移除** `'OPENING_SNAPSHOT'`
+> - **代码**：`computeHoldings` / `twr.ts` / `cash-flow.ts` 等所有 OPENING_SNAPSHOT 分支**全部删除**
+> - **Mobile**：录入 mode picker / 持仓行快照 badge / Asset Detail TWR gating **全部删除**
+> - **ADR 文档**：本 ADR v1 + v2 的决策过程**完整保留**作为历史 record（包括决策 5 / 6 的 v1 原文 + v2 修订）
+>
+> **执行原则**：「就当代码中从未写过 OPENING_SNAPSHOT」。但 ADR 留档让未来读者能复盘"为什么短暂引入、又为什么撤掉"。Migration 0014 在 history 中保留（已 applied，不能 retroactively 撤），新增 0015 反向 migration。
+>
+> **理由**：钱往实证不需要区分快照 vs BUY，统一入口 + cost-basis 正确即可对账。`OPENING_SNAPSHOT` 引入的录入分流是用户认知成本，但 cost-basis 算法本身不依赖类型区分。长期路线（OCR / CSV）会让 (C) 类用户消失，临时的 TWR 失真用 disclosure 文案而非 UI 分流处理。**代码层面清零比"保留 enum + 兼容分支"更干净**，因为留着 enum 长期会让新贡献者疑惑"这个 type 是干啥的"。
+
 ---
 
-## TL;DR
+## TL;DR (v2)
 
 三件事，一次性锁定：
 
 1. **Portfolio Tab Hero**：保持 True Historical balance 曲线（含现金），数字下方显示「本期市值变化 +¥X (+Y%)」，baseline = chart 首个非零点（默认状态与 scrub 状态共享同一 baseline，无翻车）。
 2. **持仓行**：cost-basis since-open **固定值**，**不**随时间范围切换。彻底消除 ADR 014/015 在多次加仓下 baseline 现金流污染（极端 +800% 反例）+ 跟支付宝/钱往/雪球对账 100% 一致。
-3. **新增 `OPENING_SNAPSHOT` transaction type + 统一录入表单**：用「份额 + 累计投入金额」（不是平均持仓价）根除录入摩擦 A（¥2,574 量级偏差），按 mode 入口（"我刚买入" vs "录入持仓快照"）分流。
+3. **统一录入表单（单一入口）**：用「份额 + 单价 / 数量 + 累计投入金额」toggle 根除录入摩擦 A（¥2,574 量级偏差）。**所有交易都是 `BUY`** ——`OPENING_SNAPSHOT` 类型从代码与数据中完全清除（v2 修订）。
 
 「业绩 / Return 分析」（TWR / MWR / cost-basis 累计回报曲线）**独立到 Insights Tab 的"盈亏分析"模块**，参照 IBKR 业绩 tab 设计（详见 §六），单独 feature spec，**不阻塞**本 ADR 主链落地。
+
+**(C) 类用户的 TWR 不准** 通过 Asset Detail disclosure 文案明示（"成本基线始终准确，TWR 依赖完整交易记录"），不通过录入入口分流。
 
 ---
 
@@ -128,59 +143,82 @@ const resolvePeriodChange = (
 | Asset Detail page chart + TWR / 回报曲线 |        ✅        | Block D Phase 2 接入        |
 | Insights/盈亏分析 整页                   |        ✅        | 决策 7                      |
 
-### 决策 4 — Asset Detail Page 周期分析
+### 决策 4 — Asset Detail Page 周期分析（v2 修订）
 
 `computeAssetTwr`（Block D Phase 1 已实现，property-tested）落地到 `apps/mobile/app/asset/[market]/[symbol].tsx`：
 
-- **(B) 类资产**（无 OPENING_SNAPSHOT）：显示 asset-level TWR + cost-basis，**双数字**，tooltip 解释差异
-- **(C) 类资产**（含 OPENING_SNAPSHOT）：**隐藏 TWR**，只显示 cost-basis + 价值曲线（起点 = snapshot 日期）
-- TWR 显示文案模板：
+- **所有资产统一显示 asset-level TWR + cost-basis 双数字**，不再因 OPENING_SNAPSHOT 存在而 gating
+- **顶部 disclosure** 明示数据完整度依赖：
 
 ```
-时段收益率: +40.0%       (大字)
-  └ ⓘ 「假设你在 5/1 一次性投入今天等额资金，市场涨幅 +40%。GIPS 标准的『时间加权收益率』，剔除你的加仓/减仓节奏。」
-实际盈亏:   +¥3,500 / +23.5%   (小字)
-  └ ⓘ 「今日市值减去你所有买入投入。这是你的真实账户回报。」
+⚠️ 收益分析基于您录入的交易记录。
+   若历史录入不完整（例如仅录入当前持仓快照），
+   TWR 可能与实际有偏差。
+   持仓盈亏（成本基线）始终准确。
 ```
 
-(C) 类资产隐藏 TWR 时的文案：
+- TWR + cost-basis 双数字 tooltip 模板：
 
 ```
-本资产含持仓快照，无法精准计算时间加权收益率（TWR）。请参考「累计盈亏」反映你的真实持有回报。
+时段收益率(TWR): +40.0%       (大字)
+  └ ⓘ 「假设你在期初一次性投入今天等额资金，市场涨幅 +40%。
+        GIPS 标准的『时间加权收益率』，剔除你的加仓/减仓节奏。
+        依赖完整交易历史；若仅录入持仓快照，此数字仅供参考。」
+持仓盈亏:        +¥3,500 / +23.5%   (小字)
+  └ ⓘ 「今日市值减去你录入的累计成本。这是你的真实账户回报，
+        无论交易历史是否完整都准确。」
 ```
 
-### 决策 5 — 新增 `OPENING_SNAPSHOT` transaction type
+**v1 → v2 变化**：v1 用 `OPENING_SNAPSHOT` 检测 gating TWR（含快照即隐藏）；v2 改为**所有资产都显示**，通过文案 + disclosure 让用户自己判断"哪个数字可信"。**减少 UI 分支 + 给用户更完整信息**。
 
-**Schema 变更**（migration 0014）：
+### 决策 5 — `OPENING_SNAPSHOT` transaction type（v2 修订：完全移除）
+
+**v1 历史记录**（保留供未来读者复盘）：v1 曾引入 `OPENING_SNAPSHOT` 作为新 enum 值，目的是让 (C) 用户的 Asset Detail TWR 能基于"这是快照不是真实买入"的语义来 gating。Migration 0014 + Drizzle schema + TypeScript types 都已落地。
+
+**v2 撤销原因**：
+
+- 钱往等竞品实证不区分快照 vs BUY 也能跟支付宝 100% 对账
+- 录入 mode picker 增加用户认知成本，违背"reconciliation-first"产品定位
+- TWR 失真用 disclosure 文案处理更克制（决策 4 v2 修订）
+- "保留 enum + 兼容分支"长期会让新贡献者疑惑 enum 用途，**清零比留尾巴干净**
+
+**v2 完全清除清单**：
+
+| 层                                                                                                    | v1 状态                   | **v2 行动**                                                                  |
+| :---------------------------------------------------------------------------------------------------- | :------------------------ | :--------------------------------------------------------------------------- |
+| `transactions.type` check constraint                                                                  | 含 `OPENING_SNAPSHOT`     | **drop**（migration 0015）                                                   |
+| 现有 `OPENING_SNAPSHOT` 记录                                                                          | 兼容保留                  | **UPDATE → BUY**（migration 0015 第一步，先转再 drop constraint 值）         |
+| Drizzle schema enum                                                                                   | 含 `OPENING_SNAPSHOT`     | **移除**                                                                     |
+| `TransactionType` TypeScript union                                                                    | 含 `'OPENING_SNAPSHOT'`   | **移除**                                                                     |
+| `computeHoldings()` case                                                                              | 同 BUY 分支               | **删除 case，BUY 单独 case 即可**                                            |
+| `detectAssetCashFlowEvents()`                                                                         | 排除 OPENING_SNAPSHOT     | **删除整段排除逻辑**                                                         |
+| `getAssetFirstBuyDate()`                                                                              | 包含 OPENING_SNAPSHOT     | **删除 OPENING_SNAPSHOT 分支**（只看 BUY）                                   |
+| `isAssetTwrCashFlowTransaction()`                                                                     | 排除 OPENING_SNAPSHOT     | **删除整个 helper**（直接用 type==='BUY'/'SELL' 判定）                       |
+| Asset Detail page TWR gating                                                                          | `hasOpeningSnapshot` 检测 | **删除 gating + 替换为 disclosure**                                          |
+| 持仓行 snapshot badge                                                                                 | 显示                      | **删除（HoldingRow + presenter）**                                           |
+| 录入 mode picker                                                                                      | 双入口                    | **删除（\_layout.tsx）**                                                     |
+| `transactions/new/snapshot.tsx`                                                                       | 快照表单                  | **删除文件**                                                                 |
+| `openingSnapshotDateByAsset()` helper                                                                 | 暴露 export               | **删除整个 export**                                                          |
+| i18n 文案 `holdings.badge.snapshot.*` / `transaction.entry.modeD.*` / `assetDetail.twr.hidden.reason` | 存在                      | **删除**                                                                     |
+| Migration 0014 文件                                                                                   | 已 applied                | **保留**（PG migration 不可 retroactive 删；0015 反向 migration 把状态归零） |
+| 测试中 OPENING_SNAPSHOT 相关 case                                                                     | 多处                      | **删除 / 调整**                                                              |
+
+**Migration 0015 SQL**：
 
 ```sql
+-- ADR 016 v2: completely remove OPENING_SNAPSHOT.
+-- Step 1: convert existing snapshots to BUY (semantically equivalent in computeHoldings).
+UPDATE transactions SET type = 'BUY' WHERE type = 'OPENING_SNAPSHOT';
+
+-- Step 2: drop and re-add check constraint without OPENING_SNAPSHOT.
 ALTER TABLE transactions DROP CONSTRAINT transactions_type_check;
 ALTER TABLE transactions ADD CONSTRAINT transactions_type_check
-  CHECK (type IN ('BUY', 'SELL', 'DIVIDEND', 'SPLIT', 'ADJUSTMENT', 'OPENING_SNAPSHOT'));
+  CHECK (type IN ('BUY', 'SELL', 'DIVIDEND', 'SPLIT', 'ADJUSTMENT'));
 ```
 
-**Drizzle schema + TypeScript types** 同步加 `OPENING_SNAPSHOT` enum 值。
+**ADR 文档保留原则**：本 §决策 5 + §决策 6 v1 原文段保留作历史 record，让未来读者能看到"为什么短暂引入、又为什么撤掉"的完整决策路径。
 
-**核心代码行为**：
-
-| 函数                                            | 对 `OPENING_SNAPSHOT` 的处理                                 |
-| :---------------------------------------------- | :----------------------------------------------------------- |
-| `computeHoldings()`                             | 同 BUY：shares 累加、加权成本计算、totalCostBasis 累加       |
-| `detectCashFlowEvents()` (portfolio-level)      | 不算 CF（非 CASH:\* 资产，本来就不算）                       |
-| `detectAssetCashFlowEvents()` (asset-level TWR) | **排除**（避免污染 TWR startValue）                          |
-| Asset Detail page UI 判断"是否含 snapshot"      | 用 `transactions.some(tx => tx.type === 'OPENING_SNAPSHOT')` |
-
-**为什么必须新建 type，不复用 ADJUSTMENT + metadata**：
-
-| 维度                | 复用 ADJUSTMENT | 新建 OPENING_SNAPSHOT                                                  |
-| :------------------ | :-------------- | :--------------------------------------------------------------------- |
-| 数据模型清晰度      | 语义混杂        | 明确                                                                   |
-| Asset TWR 检测      | 读 metadata     | enum switch                                                            |
-| Audit trail         | 边界模糊        | 干净                                                                   |
-| UI badge / 列表显示 | 字段检查复杂    | 一行                                                                   |
-| Migration 成本      | 0               | 1 enum + 1 check constraint（dogfooding 期，用户基数 = 1，最便宜窗口） |
-
-### 决策 6 — 录入表单：统一字段 + mode 入口分流
+### 决策 6 — 录入表单：统一字段 + 单一入口（v2 修订）
 
 **统一表单字段**（参考 钱迹 / Delta / IBKR / 钱往 通用模式）：
 
@@ -192,25 +230,20 @@ ALTER TABLE transactions ADD CONSTRAINT transactions_type_check
 + 手续费 + 投资账户 + (可选) 从账户扣除现金
 ```
 
-**ABC 三种模式共用同一个表单 component**，差异在入口 + 写入 `type`：
+**v2 变化**：**取消 mode picker**（删除 v1 的"完整交易 / 录入快照"分流）。所有 BUY 类型交易共用同一入口，**永远写入 `type='BUY'`**。
 
-```
-"+" 添加交易：
-  ┌─ 我刚买入 / 卖出 / 分红                  → 写入 type=BUY/SELL/DIVIDEND
-  └─ 录入持仓快照（已有持仓，要对账起点）    → 写入 type=OPENING_SNAPSHOT
-                                                 单价 label 改为「持仓成本价」
-                                                 hint：「= 累计投入 ÷ 份额」
-                                                 默认不预填现价
-```
+**为什么 toggle 是 UX 改进，mode picker 不是**：
 
-**为什么 snapshot 收「累计投入金额」（金额 toggle）而不是「平均持仓价」**：
+| 维度           | 数量/金额 toggle                           | mode picker（已删）                        |
+| :------------- | :----------------------------------------- | :----------------------------------------- |
+| 用户决定的事   | 「我手头有的数据是什么形态」               | 「这次录入的语义是什么」                   |
+| 认知负担       | 低（看数字格式即可决定）                   | **高**（用户要理解快照 vs 完整交易的差异） |
+| 数据正确性影响 | 高（toggle 影响存储字段，决定 cost-basis） | 低（type 只影响 UI label）                 |
+| 钱往做了吗     | ✅ 做了                                    | ❌ 没做                                    |
 
-| 字段                     | 用户认知歧义                      | 误差源                |
-| :----------------------- | :-------------------------------- | :-------------------- |
-| 平均持仓价（"持仓单价"） | 跟"持有成本/份额"长得像、用户易混 | 误差 A（¥2,574 量级） |
-| 累计投入金额             | 支付宝/天天有专门栏目，无歧义     | 无                    |
+**(C) 用户在 v2 中的体验**：单一入口 → 选择「金额」toggle → 填累计投入 + 当前份额 → 系统反算单价 → 写入 BUY。无需理解"快照"概念。
 
-引导 (C) 用户使用「金额」toggle 填累计投入 → 根除误差 A。
+**Asset Detail 的 TWR 可能不准** 通过 disclosure 文案明示（决策 4），**不通过录入分流**。长期由 OCR / CSV（决策 8）让 (C) 类用户自然消失。
 
 ### 决策 7 — 「业绩 / Return 分析」独立到 Insights/盈亏分析模块
 
@@ -299,6 +332,55 @@ computeHoldings 输出:
 
 - **ADR 014（chart True Historical）**：保持 ✅ Accepted。在文档顶部追加：「**hero 数字 label 在 ADR 016 中被 supersede**；曲线算法不变」
 - **ADR 015（持仓行 chart→cost fallback）**：状态改为 ⛔ **Superseded by ADR 016**。在 TL;DR 后追加完整 supersede 说明 + 跳转链接
+
+### 决策 10（v2 新增）— US 历史价 AV `outputsize=full` 修复
+
+**根因**：[packages/data-sources/src/adapters/alphavantage.ts](../../packages/data-sources/src/adapters/alphavantage.ts) 的 `fetchHistorical` 没传 `outputsize` 参数 → AV 默认 compact = 仅返回最近 ~100 个交易日。对 1Y / ALL 视图，~60% 的 US 历史数据缺失 → bootstrap chart 的早期点不含 US 资产 → first-non-zero baseline 偏低 → Hero `%` 高估。
+
+**修复**：
+
+```ts
+async fetchHistorical(symbol, from, to) {
+  const url = new URL(ENDPOINT);
+  url.searchParams.set("function", "TIME_SERIES_DAILY");
+  url.searchParams.set("symbol", symbol);
+  url.searchParams.set("apikey", apiKey);
+  // ADR 016 决策 10：> 3M 范围需要 ~25 年数据，free tier 同样可用
+  const rangeDays = (to.getTime() - from.getTime()) / 86_400_000;
+  if (rangeDays > 100) {
+    url.searchParams.set("outputsize", "full");
+  }
+  ...
+}
+```
+
+**注**：
+
+- US 资产 **live quote** 仍走 Finnhub `/quote`（不受影响）
+- 仅 **historical candle** 走 AV（本修复目标）
+- Free tier `TIME_SERIES_DAILY` 不会因 outputsize=full 多扣配额（一次调用算一次）
+- Response 体积从 ~50KB（compact）增加到 ~500KB（full）—— 可接受
+
+### 决策 11（v2 新增）— Bootstrap 的 last-point swap 跳变兜底
+
+**问题**：`use-portfolio-chart-series.ts` 把 chart 最后一点替换为 live valuation。当 bootstrap 倒数第二点因 AV 失败不含 US 资产时，live 点（含 US）会突然跳升一截 —— 用户看到曲线右端"凭空涨起" 视觉误导。
+
+**修复**：
+
+```ts
+// 仅在 bootstrap 倒数第二点已经包含所有 live 资产时才 swap
+const lastBootstrapPoint = boot?.at(-2);
+const liveAssetIds = new Set(scopedLiveValuation.perAsset.map((p) => p.assetId));
+const bootstrapHasAllLiveAssets =
+  lastBootstrapPoint &&
+  Array.from(liveAssetIds).every((id) => lastBootstrapPoint.perAssetReporting.has(id));
+
+if (bootstrapHasAllLiveAssets) {
+  // 安全 swap
+} else {
+  // 保留 bootstrap 最后一点（视觉一致）+ 接受 live 跟最后一点之间 1-day 的小误差
+}
+```
 
 ---
 
@@ -393,6 +475,88 @@ test(mobile,docs): adr-016 e2e smoke + session-state seal
   .specify/session-state.md                                          (M: Resolved 标记完毕)
 ```
 
+### v2 cleanup（2026-05-28 修订 — 在 commit #1-8 主线已落地后进行）
+
+**执行顺序铁律**：migration 0015 **必须在** code 移除 enum 之前应用到 dev DB（否则 PG check constraint 会拒绝新代码尝试写入仅含 5 个 type 的事务，旧代码反过来会拒绝读取已被 v2.3 转 BUY 的"OPENING_SNAPSHOT"列）。建议 v2.3 落 dev DB → v2.4 同 commit 之内更新 schema/types → 立刻 deploy 一次。
+
+#### Commit v2.1 — docs（先固化 v2 决策）
+
+```
+docs(adr): adr-016 v2 — fully remove OPENING_SNAPSHOT + AV outputsize fix
+  docs/adr/016-holdings-return-and-entry-tiers.md                    (本文档 v2 已落)
+  .specify/session-state.md                                          (M: Last updated 注释 v2 修订)
+```
+
+#### Commit v2.2 — AV outputsize=full（独立 hotfix，可立即 ship）
+
+```
+fix(data-sources): alphavantage fetchHistorical outputsize=full for range > 100 days
+  packages/data-sources/src/adapters/alphavantage.ts                 (M: outputsize 条件判断 — range > 100d → full)
+  packages/data-sources/__tests__/alphavantage.spec.ts               (M: 新 case — outputsize 注入断言)
+```
+
+> 这一 commit **无需**等 OPENING_SNAPSHOT 清理完成，建议立刻独立 ship。
+
+#### Commit v2.3 — db: migration 0015 反向（先转 BUY，后 drop enum 值）
+
+```
+feat(db): migration 0015 — drop OPENING_SNAPSHOT, convert existing to BUY (adr-016 v2)
+  packages/db/drizzle/migrations/0015_drop_opening_snapshot.sql      (新 — UPDATE + ALTER CONSTRAINT)
+  packages/db/src/schema/transactions.ts                             (M: enum 移除 OPENING_SNAPSHOT)
+```
+
+> ⚠️ **执行步骤**（dogfooding 一人即可）：
+>
+> 1. Sonnet 提交 SQL 文件
+> 2. **BoyangJiao 在 Supabase SQL Editor 手工执行**（与现有 migration 流程一致）
+> 3. 确认所有 transactions.type 已经无 OPENING_SNAPSHOT 后，merge 同 commit 内的 Drizzle schema 改动
+
+#### Commit v2.4 — core: 完全清除 OPENING_SNAPSHOT 代码
+
+```
+refactor(core): fully remove OPENING_SNAPSHOT from types/holdings/twr/cash-flow (adr-016 v2)
+  packages/core/src/domain/types.ts                                  (M: TransactionType union 移除)
+  packages/core/src/domain/holdings.ts                               (M: 删除 OPENING_SNAPSHOT case)
+  packages/core/src/returns/twr.ts                                   (M: getAssetFirstBuyDate 删除 OPENING_SNAPSHOT 分支；删除 isAssetTwrCashFlowTransaction 中的特判)
+  packages/core/src/returns/cash-flow.ts                             (M: 若有引用一并删)
+  packages/core/__tests__/types-readonly.spec.ts                     (M: enum 范围更新)
+  packages/core/__tests__/holdings.spec.ts                           (M: 删除 OPENING_SNAPSHOT case；保留 BUY 等价测试)
+  packages/core/__tests__/twr.spec.ts                                (M: 删除 OPENING_SNAPSHOT 相关 case)
+  packages/core/__tests__/cash-flow.spec.ts                          (M: 同上)
+```
+
+#### Commit v2.5 — mobile: 删除录入 mode picker + 持仓行 badge + Asset Detail gating
+
+```
+refactor(mobile): drop OPENING_SNAPSHOT UI surfaces + add data-completeness disclosure (adr-016 v2)
+  apps/mobile/app/portfolio/[id]/transactions/new/_layout.tsx        (M: 删 mode picker，单一入口)
+  apps/mobile/app/portfolio/[id]/transactions/new/snapshot.tsx       (D: 删除文件)
+  apps/mobile/src/lib/holdings-presenter.ts                          (M: 删除 openingSnapshotDateByAsset export + snapshotBadgeLabel)
+  apps/mobile/src/lib/__tests__/holdings-presenter.spec.ts           (M: 删除 snapshot badge 测试)
+  apps/mobile/app/asset/[market]/[symbol].tsx                        (M: 删除 hasOpeningSnapshot + gating；加 disclosure 文案)
+  apps/mobile/src/lib/transaction-form-presenter.ts                  (M: 删除 mode 相关分支)
+  packages/ui/src/finance/HoldingRow.tsx                             (M: 删除 snapshotBadgeLabel prop)
+  packages/i18n/src/locales/{en,zh}.ts                               (M: 删除 holdings.badge.snapshot / transaction.entry.modeD / assetDetail.twr.hidden.reason；加新 disclosure)
+```
+
+#### Commit v2.6 — mobile: chart last-point swap 兜底（按用户建议，先看 v2.2 ship 效果再决定是否做）
+
+```
+fix(mobile): only swap last chart point when bootstrap covers all live assets (adr-016 §11 — deferred)
+  apps/mobile/src/lib/queries/use-portfolio-chart-series.ts          (M: 检测 lastBootstrapPoint 是否覆盖 live 资产)
+  apps/mobile/src/lib/__tests__/use-portfolio-chart-series.spec.ts   (新)
+```
+
+> **执行条件**：v2.2 落地后，BoyangJiao Real Env 1Y / ALL 视图 dogfood 一周，若仍有可见跳变再做 v2.6；否则 skip。
+
+#### Commit v2.7 — UAT smoke 收尾
+
+```
+test(mobile,docs): adr-016 v2 smoke + session-state seal
+  .specify/session-state.md                                          (M: v2 cleanup ✅ 标记)
+  apps/mobile/__tests__/...                                          (M: 删除 snapshot / mode picker 相关 e2e — 改为单一入口 case)
+```
+
 ### 独立 stream（Insights/盈亏分析模块，~2-3 周，不阻塞主线）
 
 #### Commit 9 — feature spec
@@ -435,31 +599,33 @@ docs(spec): pnl-analysis-insights feature spec (adr-016 §7)
 - [ ] (C) 用户首日录入快照后，1M 视图 Hero 显示「+¥0 (0%)」，**不**显示「+∞%」/「+1358%」之类
 - [ ] (B) 用户 1M 视图 Hero 显示真实期间 balance 变化（非零）
 
-### S016-AC.4 — 快照录入
+### S016-AC.4 — 录入表单（v2 修订）
 
-- [ ] 录入流程入口区分「完整买入 / 卖出 / 分红」vs「录入持仓快照」
-- [ ] 快照表单收「份额 + 累计投入金额」（数量 / 金额 toggle），**不**收「平均持仓价」
-- [ ] 提交后 transactions 表写入 `type='OPENING_SNAPSHOT'`，`shares` 和 `pricePerShare` 按 toggle 模式反推
-- [ ] computeHoldings 对 `OPENING_SNAPSHOT` 累加 totalCostBasis
+- [ ] **单一入口**：「+」添加交易 = 一个表单，不再有 mode picker
+- [ ] 数量 / 金额 toggle 完整工作（数量模式存 shares + pricePerShare；金额模式 shares = total/price）
+- [ ] (C) 用户用「金额」toggle 填 累计投入 → 写入 `type='BUY'`，cost-basis 正确
+- [ ] 表单中**不再出现**「持仓快照 / opening snapshot / 录入起点」等 v1 字样
 
-### S016-AC.5 — UI 标识
+### S016-AC.5 — OPENING_SNAPSHOT 清除验收（v2 新增）
 
-- [ ] 持仓行右下角显示「快照 · YYYY-MM-DD」badge（如该资产有 OPENING_SNAPSHOT tx）
-- [ ] Asset Detail 顶部「持仓快照 · YYYY-MM-DD」badge + tap tooltip
-- [ ] 完整历史录入的资产 **不显示** badge
+- [ ] Migration 0015 applied：`SELECT COUNT(*) FROM transactions WHERE type='OPENING_SNAPSHOT'` = **0**
+- [ ] 现有 dev DB 中所有原 `OPENING_SNAPSHOT` 记录 → `type='BUY'`，shares + pricePerShare 不变（cost-basis 数学不变）
+- [ ] `transactions.type` check constraint 仅包含 5 个值（BUY / SELL / DIVIDEND / SPLIT / ADJUSTMENT）
+- [ ] Code 全仓库 grep `OPENING_SNAPSHOT` 仅命中 ADR 文档（`docs/adr/016*.md` + `015*.md` + `014*.md`）和 migration 历史文件（0014 / 0015）；**业务代码 / 测试 / i18n / Drizzle schema 0 命中**
+- [ ] TypeScript `TransactionType` union 不含 `'OPENING_SNAPSHOT'`，强制 typecheck 兜底
 
-### S016-AC.6 — TWR 独立性
+### S016-AC.6 — Asset Detail（v2 修订）
 
-- [ ] `computeAssetTwr` 不把 `OPENING_SNAPSHOT` 计入 cash flow events
-- [ ] (C) 类资产 Asset Detail 隐藏 TWR，显示文案"含持仓快照，无法精准计算..."
-- [ ] (B) 类资产 Asset Detail 显示 TWR + cost-basis 双数字 + tooltip 解释差异
-- [ ] property test：含 OPENING_SNAPSHOT 的 transactions 列表，asset TWR 不变（snapshot 不污染）
+- [ ] 所有资产 Asset Detail 都显示 TWR + cost-basis 双数字（不再因含快照而 gating）
+- [ ] 顶部显示数据完整度 disclosure 文案（决策 4 v2 模板）
+- [ ] 持仓行**不再**显示「快照」badge
 
-### S016-AC.7 — 混合录入
+### S016-AC.7 — 历史数据兼容
 
-- [ ] (C) 类资产后续追加真实 BUY，cost-basis P&L 正确累加
-- [ ] OPENING_SNAPSHOT 可单独删除（标准 tx delete 流程）
-- [ ] 删除 OPENING_SNAPSHOT 后该资产从混合态恢复纯 BUY 态，badge 消失、TWR 自动显示
+- [ ] BoyangJiao 的 Real Env 持仓数据（华安黄金 ETF 000216 等）在 migration 0015 后：
+  - 持仓行 cost-basis % 与 migration 前**完全一致**（应等于 +18.66% 对账数）
+  - Hero「本期市值变化」继续 work
+  - Asset Detail TWR 显示（可能跟支付宝有偏差，但 disclosure 文案明示）
 
 ---
 

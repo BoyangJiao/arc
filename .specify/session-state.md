@@ -6,7 +6,9 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-27 by Composer (Cursor) — **ADR 016 主线 commit #1–#8 已落地**（`4cc4a77`…`66cfa53` on `dev/stage-3`）。`pnpm typecheck` 6/6 ✅ · `@arc/core` 155 tests ✅ · `@arc/mobile` 31 tests ✅。**待你**：Supabase 执行 `packages/db/drizzle/migrations/0014_opening_snapshot_tx_type.sql` 后 Real Env dogfooding（000216 对账、快照录入、Hero scrub）。**#9+ Insights/盈亏分析** 独立 stream 未动。
+> **Last updated**: 2026-05-28 by Opus 4.7 — **ADR 016 v2 修订定稿**（BoyangJiao confirm）：**完全移除 `OPENING_SNAPSHOT`**（数据 UPDATE → BUY + drop enum + 全代码 grep 清零 + ADR 留档），同时新增 **AV `outputsize=full` hotfix**（修 US 1Y/ALL chart 缺数据）。v1 已上 ship 的 commit #2-7 即将由 v2.1–v2.7 cleanup 序列推翻并重新落地。**待你**：Sonnet/Cursor 按 commit chain v2.1 → v2.7 顺序实施；v2.2（AV hotfix）可独立先 ship。
+>
+> **2026-05-27 by Composer (Cursor)** — **ADR 016 v1 主线 commit #1–#8 已落地**（`4cc4a77`…`66cfa53` on `dev/stage-3`）。`pnpm typecheck` 6/6 ✅ · `@arc/core` 155 tests ✅ · `@arc/mobile` 31 tests ✅。**v1 OPENING_SNAPSHOT 部分将由 v2 全面清除**（钱往实证不需要分流；用户认知成本 > 价值）。
 >
 > **2026-05-26 by Sonnet 4.6 (Cursor)** — Dogfooding 发现 ALL 视图持仓收益率算法漏洞（对照支付宝实测 000216 黄金 ETF 联接 A 显示 +23.99% vs 支付宝 +18.66%，差 5.33pp，含算法侧 +800% 极端反例 + 录入摩擦 ¥2,574 量级双重根因）。讨论产物：[`.specify/handoffs/opus-review-holdings-return-algorithm.md`](handoffs/opus-review-holdings-return-algorithm.md)（已被 ADR 016 解决）。
 >
@@ -16,20 +18,20 @@
 
 ## You are here
 
-| Field                 | Value                                                                                                                                                                 |
-| :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅ + Real/Clean DEV ✅ J-RE.1 ✅** → **ADR 016 主线 ✅** → Real Env dogfooding + migration 0014 + **#9+ 盈亏分析 spec**  |
-| **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: user push → Opus review of #2/#4/#11 (charts / fallback / tx entry)                                                    |
-| **Step (Block D)**    | **Phase 1 ✅ algorithm** (`@arc/core/returns/{cash-flow,twr,xirr}.ts` + 21 property tests). **Next** = Phase 2 (mobile hooks + UI 接入 — Sonnet/Cursor route per §七) |
-| **Step (Real Env)**   | **J-RE.1 ✅** 双环境 Switch + OTP 跑通；用户开始 Real 持仓录入 + **dogfooding bug 修复**（下一会话列清单）                                                            |
-| **Branch**            | `dev/stage-3` (**ahead 16+** vs `origin/dev/stage-3`)                                                                                                                 |
-| **Last commit**       | `66cfa53` `feat(ui,mobile): holding-snapshot badge + asset detail gating (adr-016)`                                                                                   |
-| **Context slug**      | `holdings-and-transactions`                                                                                                                                           |
-| **Context bundle**    | `.specify/codectx/holdings-and-transactions.xml`                                                                                                                      |
-| **PR**                | 未开；建议 push 后开 `dev/stage-3 → main` PR 与 Block C review 同步进行                                                                                               |
-| **CI status**         | `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/core test` 155/155 ✅ / `pnpm --filter @arc/mobile test` 31/31 ✅                                                       |
-| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                    |
-| **Out of scope**      | Block E features (Inbox/AI/订阅/脱敏/价格异动)、Block F polish redesign + CSV、大陆 Auth (ADR 012 P1) 实现                                                            |
+| Field                 | Value                                                                                                                                                                                                            |
+| :-------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 — Block C UAT ✅ + Block D Phase 1 ✅ + Real/Clean DEV ✅ J-RE.1 ✅ + ADR 016 v1 主线 ✅** → **ADR 016 v2 cleanup（清除 OPENING_SNAPSHOT + AV hotfix）** → Real Env dogfooding + **#9+ 盈亏分析 spec** |
+| **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: user push → Opus review of #2/#4/#11 (charts / fallback / tx entry)                                                                                               |
+| **Step (Block D)**    | **Phase 1 ✅ algorithm** (`@arc/core/returns/{cash-flow,twr,xirr}.ts` + 21 property tests). **Next** = Phase 2 (mobile hooks + UI 接入 — Sonnet/Cursor route per §七)                                            |
+| **Step (Real Env)**   | **J-RE.1 ✅** 双环境 Switch + OTP 跑通；用户开始 Real 持仓录入 + **dogfooding bug 修复**（下一会话列清单）                                                                                                       |
+| **Branch**            | `dev/stage-3` (**ahead 16+** vs `origin/dev/stage-3`)                                                                                                                                                            |
+| **Last commit**       | `66cfa53` `feat(ui,mobile): holding-snapshot badge + asset detail gating (adr-016)`                                                                                                                              |
+| **Context slug**      | `holdings-and-transactions`                                                                                                                                                                                      |
+| **Context bundle**    | `.specify/codectx/holdings-and-transactions.xml`                                                                                                                                                                 |
+| **PR**                | 未开；建议 push 后开 `dev/stage-3 → main` PR 与 Block C review 同步进行                                                                                                                                          |
+| **CI status**         | `pnpm typecheck` 6/6 ✅ / `pnpm --filter @arc/core test` 155/155 ✅ / `pnpm --filter @arc/mobile test` 31/31 ✅                                                                                                  |
+| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                                                               |
+| **Out of scope**      | Block E features (Inbox/AI/订阅/脱敏/价格异动)、Block F polish redesign + CSV、大陆 Auth (ADR 012 P1) 实现                                                                                                       |
 
 ## Stage 2 — J7 Daily Snapshot progress
 
