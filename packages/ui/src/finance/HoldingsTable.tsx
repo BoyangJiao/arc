@@ -72,7 +72,6 @@ export function HoldingsTable({
                       periodChange={row.periodChange}
                       newPositionLabel={row.newPositionLabel}
                       formatPeriodChangeLine={row.formatPeriodChangeLine}
-                      snapshotBadgeLabel={row.snapshotBadgeLabel}
                       accessibilityLabel={row.accessibilityLabel}
                     />
                   </ListGroup.ItemContent>

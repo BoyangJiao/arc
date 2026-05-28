@@ -43,21 +43,19 @@ import { pickDefaultRangeForTransactions } from "../../src/lib/default-chart-ran
 import { currencySymbol, formatMoney } from "../../src/lib/format-money";
 import { buildHoldingsTableRows } from "../../src/lib/holdings-presenter";
 import {
-  filterPortfolioDailySnapshot,
   filterPortfolioValuation,
   isMarketFilterActive,
+  serializeMarketFilters,
 } from "../../src/lib/portfolio-market-filter";
 import {
   useActivePortfolio,
   useAssetCatalog,
   useDailyDelta,
-  useDailySnapshot,
   usePortfolioHoldings,
   usePortfolioChartSeries,
   usePortfolioValuation,
   snapshotsToChartPoints,
 } from "../../src/lib/queries";
-import { computeDailyDelta } from "@arc/core";
 import { useUserPreferences } from "../../src/lib/user-preferences";
 import { useTranslation } from "@arc/i18n";
 
@@ -74,6 +72,7 @@ export default function PortfolioTab() {
     setChartRange(range);
   }, []);
   const [selectedMarketFilters, setSelectedMarketFilters] = useState<Set<Market>>(() => new Set());
+  const marketFilterActive = isMarketFilterActive(selectedMarketFilters);
 
   const { prefs } = useUserPreferences();
 
@@ -99,13 +98,17 @@ export default function PortfolioTab() {
     refreshFromLive,
   } = usePortfolioValuation(activeId, reportingCurrency);
 
-  const dailyDelta = useDailyDelta(activeId, reportingCurrency);
-  const dailySnapshot = useDailySnapshot(activeId);
+  const dailyDelta = useDailyDelta(
+    activeId,
+    reportingCurrency,
+    marketFilterActive ? selectedMarketFilters : undefined
+  );
   const chartSeries = usePortfolioChartSeries({
     portfolioId: activeId,
     range: chartRange,
     reportingCurrency,
     liveValuation: valuation ?? undefined,
+    marketFilters: marketFilterActive ? selectedMarketFilters : undefined,
   });
 
   const assetIds = useMemo(() => holdings.map((h) => h.assetId), [holdings]);
@@ -171,12 +174,9 @@ export default function PortfolioTab() {
         marketLabel,
         newPositionLabel: t("holdings.periodChange.newPosition"),
         formatAccessibilityLabel: formatHoldingsAccessibilityLabel,
-        transactions,
-        formatSnapshotBadge: (date) => t("holdings.badge.snapshot", { date }),
       }),
     [
       holdings,
-      transactions,
       valuation?.perAsset,
       valuation,
       valuationFetching,
@@ -198,8 +198,6 @@ export default function PortfolioTab() {
     return holdingsRows.filter((row) => selectedMarketFilters.has(row.market));
   }, [holdingsRows, selectedMarketFilters]);
 
-  const marketFilterActive = isMarketFilterActive(selectedMarketFilters);
-
   const holdingsCount = holdings.length;
   const hasHoldings = holdingsCount > 0;
 
@@ -209,34 +207,17 @@ export default function PortfolioTab() {
     return filterPortfolioValuation(valuation, selectedMarketFilters).totalValue;
   }, [valuation, hasHoldings, marketFilterActive, selectedMarketFilters]);
 
-  const heroDelta = useMemo(() => {
-    if (dailyDelta.isPending || dailyDelta.isError || !valuation) return null;
-    if (!marketFilterActive) return dailyDelta.data;
-    const filteredValuation = filterPortfolioValuation(valuation, selectedMarketFilters);
-    const filteredBaseline = dailySnapshot.data
-      ? filterPortfolioDailySnapshot(dailySnapshot.data, selectedMarketFilters)
-      : null;
-    return computeDailyDelta(filteredValuation, filteredBaseline);
-  }, [
-    dailyDelta.isPending,
-    dailyDelta.isError,
-    dailyDelta.data,
-    valuation,
-    marketFilterActive,
-    selectedMarketFilters,
-    dailySnapshot.data,
-  ]);
+  const heroDelta =
+    dailyDelta.isPending || dailyDelta.isError || !valuation ? null : dailyDelta.data;
 
-  const chartPoints = useMemo(
-    () =>
-      decimateChartPoints(
-        snapshotsToChartPoints(
-          chartSeries.data ?? [],
-          marketFilterActive ? selectedMarketFilters : undefined
-        )
-      ),
-    [chartSeries.data, marketFilterActive, selectedMarketFilters]
-  );
+  const chartPoints = useMemo(() => {
+    return decimateChartPoints(
+      snapshotsToChartPoints(
+        chartSeries.data ?? [],
+        marketFilterActive ? selectedMarketFilters : undefined
+      )
+    );
+  }, [chartSeries.data, marketFilterActive, selectedMarketFilters]);
 
   const formatAnchorTime = useCallback(
     (iso: string) =>
@@ -259,8 +240,12 @@ export default function PortfolioTab() {
 
   const handleDailySnapshotPress = useCallback(() => {
     if (!activeId) return;
-    router.push(`/portfolio/${activeId}/daily-snapshot` as Href);
-  }, [activeId, router]);
+    const markets = marketFilterActive ? serializeMarketFilters(selectedMarketFilters) : undefined;
+    router.push({
+      pathname: "/portfolio/[id]/daily-snapshot",
+      params: markets ? { id: activeId, markets } : { id: activeId },
+    } as Href);
+  }, [activeId, router, marketFilterActive, selectedMarketFilters]);
 
   const pricedCount = valuation?.perAsset.length ?? 0;
   const hasPartialQuotes =
@@ -321,9 +306,7 @@ export default function PortfolioTab() {
                 totalValueTitle={t("portfolio.totalValue")}
                 liveTotalValue={heroTotalValue}
                 formatMoney={(amount) => formatMoney(amount, reportingCurrency)}
-                delta={heroDelta}
-                noBaselineMessage={t("dailySnapshot.noBaseline")}
-                periodChangeLabel={t("portfolio.periodChangeLabel")}
+                periodChangeLabel={t(`portfolio.periodChangeByRange.${chartRange}`)}
                 formatChangeLine={(delta, percent) =>
                   formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))
                 }

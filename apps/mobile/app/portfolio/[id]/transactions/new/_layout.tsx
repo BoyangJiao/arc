@@ -1,5 +1,5 @@
 /**
- * Transaction entry stack — mode picker → trade | snapshot (ADR 016).
+ * Transaction entry stack — single unified trade form (ADR 016 v2).
  */
 
 import { Stack } from "expo-router";
@@ -9,7 +9,6 @@ export default function TransactionEntryLayout() {
     <Stack screenOptions={{ headerShown: false, presentation: "formSheet" }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="trade" />
-      <Stack.Screen name="snapshot" />
     </Stack>
   );
 }

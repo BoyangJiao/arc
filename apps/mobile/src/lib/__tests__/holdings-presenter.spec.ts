@@ -6,8 +6,7 @@ import { describe, expect, it } from "vitest";
 import Decimal from "decimal.js";
 import type { Holding, MarketValuation } from "@arc/core";
 
-import { buildHoldingsTableRows, openingSnapshotDateByAsset } from "../holdings-presenter";
-import type { Transaction } from "@arc/core";
+import { buildHoldingsTableRows } from "../holdings-presenter";
 
 const holding: Holding = {
   assetId: "FUND:000216",
@@ -38,37 +37,6 @@ const perAsset: MarketValuation[] = [
     fxAsOf: "2026-05-27T00:00:00Z",
   },
 ];
-
-describe("openingSnapshotDateByAsset", () => {
-  it("returns earliest snapshot date per asset", () => {
-    const txs = [
-      {
-        id: "1",
-        portfolioId: "p",
-        assetId: "FUND:X",
-        type: "OPENING_SNAPSHOT",
-        shares: new Decimal(1),
-        pricePerShare: new Decimal(1),
-        currency: "CNY",
-        fee: new Decimal(0),
-        tradeDate: "2025-09-19T00:00:00Z",
-      },
-      {
-        id: "2",
-        portfolioId: "p",
-        assetId: "FUND:X",
-        type: "OPENING_SNAPSHOT",
-        shares: new Decimal(1),
-        pricePerShare: new Decimal(1),
-        currency: "CNY",
-        fee: new Decimal(0),
-        tradeDate: "2025-08-01T00:00:00Z",
-      },
-    ] as Transaction[];
-    const map = openingSnapshotDateByAsset(txs);
-    expect(map.get("FUND:X")).toBe("2025-08-01");
-  });
-});
 
 describe("buildHoldingsTableRows / resolvePeriodChange", () => {
   it("uses cost-basis since open — ADR 016 extreme example +24.1%", () => {

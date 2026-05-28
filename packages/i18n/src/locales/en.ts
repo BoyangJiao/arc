@@ -40,7 +40,15 @@ export const en = {
     peak: "Peak",
     trough: "Trough",
     noSnapshotHistory: "No NAV history yet — estimating from your recorded trades",
-    periodChangeLabel: "Period market value change",
+    periodChangeByRange: {
+      "1D": "Past 1 day",
+      "1W": "Past 1 week",
+      "1M": "Past 1 month",
+      "3M": "Past 3 months",
+      YTD: "Year to date",
+      "1Y": "Past 1 year",
+      ALL: "All time",
+    },
     sharesRow: "{{shares}} × {{symbol}}",
     positionLine: "{{shares}} × {{price}}",
   },
@@ -59,9 +67,6 @@ export const en = {
     filterEmpty: "No holdings match the selected markets",
     periodChange: {
       newPosition: "New position",
-    },
-    badge: {
-      snapshot: "Snapshot · {{date}}",
     },
     positionUnits: {
       equity: "{{shares}} shares",
@@ -83,11 +88,11 @@ export const en = {
     addTransactionCta: "Record a transaction for this asset",
     more: "More",
     removeFromPortfolio: "Remove from portfolio",
+    dataCompleteness: {
+      disclosure:
+        "Return analysis is based on transactions you entered. If history is incomplete, TWR may differ from reality. Cost-basis P&L stays accurate.",
+    },
     twr: {
-      hidden: {
-        reason:
-          "This holding includes an opening snapshot, so time-weighted return cannot be computed precisely. See unrealized P&L above for your account return.",
-      },
       tooltip:
         "Assumes you invested today's equivalent amount on day one. GIPS-style time-weighted return, excluding your buy/sell timing.",
     },
@@ -125,19 +130,6 @@ export const en = {
     removeHoldingFailed: "Could not delete — try again",
   },
   transaction: {
-    entry: {
-      modePicker: {
-        title: "How would you like to enter this?",
-      },
-      modeA: {
-        label: "Full transaction",
-        hint: "I just bought, sold, or received a dividend",
-      },
-      modeD: {
-        label: "Opening position snapshot",
-        hint: "I've held this for a while — use as a reconciliation starting point",
-      },
-    },
     amount: {
       toggle: {
         shares: "Quantity",
@@ -148,6 +140,10 @@ export const en = {
       unitPrice: {
         label: "Position cost per unit",
         hint: "= Total invested ÷ current shares (matches fund app “holding cost”)",
+      },
+      totalInvested: {
+        label: "Total invested ({{currency}})",
+        hint: "Fund app “holding cost” / total invested — not average cost per unit",
       },
     },
     addTitle: "Add Transaction",

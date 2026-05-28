@@ -28,14 +28,12 @@ import { composeAssetId, type Market } from "@arc/core";
 
 import { formatMoney, currencySymbol } from "../../../src/lib/format-money";
 import { useActivePortfolio } from "../../../src/lib/queries/use-active-portfolio";
-import { openingSnapshotDateByAsset } from "../../../src/lib/holdings-presenter";
 import {
   historicalQuotesToChartPoints,
   useAssetDetail,
   useAssetTwr,
   useDeleteAssetTransactions,
   useHistoricalQuotes,
-  usePortfolioHoldings,
 } from "../../../src/lib/queries";
 
 export default function AssetDetailScreen() {
@@ -49,12 +47,6 @@ export default function AssetDetailScreen() {
 
   const detail = useAssetDetail(market, symbol);
   const assetId = market && symbol ? composeAssetId(market as Market, symbol) : undefined;
-  const { transactions } = usePortfolioHoldings(portfolio?.id);
-  const openingSnapshotDate = useMemo(() => {
-    if (!assetId || !transactions) return null;
-    return openingSnapshotDateByAsset(transactions).get(assetId) ?? null;
-  }, [assetId, transactions]);
-  const hasOpeningSnapshot = openingSnapshotDate !== null;
   const historical = useHistoricalQuotes(assetId, range);
   const assetTwr = useAssetTwr({
     portfolioId: portfolio?.id,
@@ -202,14 +194,10 @@ export default function AssetDetailScreen() {
 
           {detail.data?.holding ? (
             <View className="gap-2 border-t border-border pt-4">
-              <View className="flex-row items-center justify-between gap-2">
-                <Text className="text-foreground font-semibold">{t("assetDetail.myHolding")}</Text>
-                {hasOpeningSnapshot && openingSnapshotDate ? (
-                  <Text className="text-muted text-xs">
-                    {t("holdings.badge.snapshot", { date: openingSnapshotDate })}
-                  </Text>
-                ) : null}
-              </View>
+              <Text className="text-muted text-sm">
+                {t("assetDetail.dataCompleteness.disclosure")}
+              </Text>
+              <Text className="text-foreground font-semibold">{t("assetDetail.myHolding")}</Text>
               <Text className="text-muted text-sm">
                 {t("assetDetail.shares", {
                   shares: detail.data.holding.shares.toFixed(4),
@@ -227,20 +215,16 @@ export default function AssetDetailScreen() {
                   })}
                 </Text>
               ) : null}
-              {hasOpeningSnapshot ? (
-                <Text className="text-muted text-sm">{t("assetDetail.twr.hidden.reason")}</Text>
-              ) : (
-                <TwrInlineLabel
-                  range={range}
-                  result={assetTwr.isError ? undefined : assetTwr.data}
-                  loading={assetTwr.isLoading}
-                  unavailable={t("twr.unavailable")}
-                  twrAbbrevLabel={t("twr.label")}
-                  tooltipTitle={t("twr.tooltipTitle")}
-                  tooltipBody={t("assetDetail.twr.tooltip")}
-                  closeLabel={t("common.close")}
-                />
-              )}
+              <TwrInlineLabel
+                range={range}
+                result={assetTwr.isError ? undefined : assetTwr.data}
+                loading={assetTwr.isLoading}
+                unavailable={t("twr.unavailable")}
+                twrAbbrevLabel={t("twr.label")}
+                tooltipTitle={t("twr.tooltipTitle")}
+                tooltipBody={t("assetDetail.twr.tooltip")}
+                closeLabel={t("common.close")}
+              />
               <Text className="text-muted text-xs">{t("assetDetail.costBasis.tooltip")}</Text>
             </View>
           ) : null}

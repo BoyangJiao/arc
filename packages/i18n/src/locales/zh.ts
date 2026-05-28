@@ -40,7 +40,15 @@ export const zh = {
     peak: "区间最高",
     trough: "区间最低",
     noSnapshotHistory: "暂无净值历史 — 正在根据录入交易估算",
-    periodChangeLabel: "本期市值变化",
+    periodChangeByRange: {
+      "1D": "过去1天",
+      "1W": "过去1周",
+      "1M": "过去1个月",
+      "3M": "过去3个月",
+      YTD: "年初至今",
+      "1Y": "过去1年",
+      ALL: "全部时间",
+    },
     sharesRow: "{{shares}} × {{symbol}}",
     positionLine: "{{shares}} × {{price}}",
   },
@@ -59,9 +67,6 @@ export const zh = {
     filterEmpty: "所选市场下暂无持仓",
     periodChange: {
       newPosition: "新建仓",
-    },
-    badge: {
-      snapshot: "快照 · {{date}}",
     },
     positionUnits: {
       equity: "{{shares}} 股",
@@ -83,11 +88,11 @@ export const zh = {
     addTransactionCta: "录入此资产交易",
     more: "更多",
     removeFromPortfolio: "从投资组合删除",
+    dataCompleteness: {
+      disclosure:
+        "收益分析基于您录入的交易记录。若历史录入不完整，TWR 可能与实际有偏差。持仓盈亏（成本基线）始终准确。",
+    },
     twr: {
-      hidden: {
-        reason:
-          "本资产含持仓快照，无法精准计算时间加权收益率。请参考上方「未实现盈亏」反映你的真实持有回报。",
-      },
       tooltip:
         "假设你在期初一次性投入今天等额资金，市场涨幅。GIPS 标准的「时间加权收益率」，剔除你的加仓/减仓节奏。",
     },
@@ -124,19 +129,6 @@ export const zh = {
     removeHoldingFailed: "删除失败，请稍后重试",
   },
   transaction: {
-    entry: {
-      modePicker: {
-        title: "选择录入方式",
-      },
-      modeA: {
-        label: "完整交易",
-        hint: "我刚买入 / 卖出 / 收到分红",
-      },
-      modeD: {
-        label: "录入持仓快照",
-        hint: "我已经持有一段时间，作为对账起点",
-      },
-    },
     amount: {
       toggle: {
         shares: "数量",
@@ -147,6 +139,10 @@ export const zh = {
       unitPrice: {
         label: "持仓成本价",
         hint: "= 累计投入金额 ÷ 当前持仓份额（支付宝/天天「持有成本」对账金额）",
+      },
+      totalInvested: {
+        label: "累计投入（{{currency}}）",
+        hint: "支付宝资产详情「持有成本」或「累计投入」总额，勿填平均持仓价",
       },
     },
     addTitle: "添加交易",

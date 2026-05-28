@@ -11,7 +11,7 @@ export interface ResolvedAmountFields {
   readonly pricePerShare: Decimal;
 }
 
-/** Map UI fields to persisted shares + pricePerShare. */
+/** Map UI fields to persisted shares + pricePerShare (BUY / SELL trade entry). */
 export const resolveSharesAndUnitPrice = (
   mode: AmountEntryMode,
   sharesRaw: Decimal | null,
@@ -27,5 +27,21 @@ export const resolveSharesAndUnitPrice = (
   return {
     shares: totalAmountRaw.dividedBy(unitPriceRaw),
     pricePerShare: unitPriceRaw,
+  };
+};
+
+/**
+ * Total-invested entry — shares + cumulative cost (ADR 016 v2).
+ * Used when user knows total invested but not per-share price.
+ */
+export const resolveTotalInvestedAmount = (
+  sharesRaw: Decimal | null,
+  totalAmountRaw: Decimal | null
+): ResolvedAmountFields | null => {
+  if (sharesRaw === null || sharesRaw.lte(0)) return null;
+  if (totalAmountRaw === null || totalAmountRaw.lte(0)) return null;
+  return {
+    shares: sharesRaw,
+    pricePerShare: totalAmountRaw.dividedBy(sharesRaw),
   };
 };

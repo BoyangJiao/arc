@@ -16,6 +16,8 @@ import {
   Screen,
   Text,
   TextField,
+  TransactionAmountModeToggle,
+  type TransactionAmountMode,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import { composeAssetId, type Currency, type Market, type TransactionType } from "@arc/core";
@@ -31,6 +33,11 @@ import {
   getLastUsedMarket,
   setLastUsedMarket,
 } from "../../../../../src/lib/store/last-used-market";
+import {
+  resolveSharesAndUnitPrice,
+  resolveTotalInvestedAmount,
+  type AmountEntryMode,
+} from "../../../../../src/lib/transaction-form-presenter";
 
 const TX_TYPES: readonly TransactionType[] = ["BUY", "SELL", "DIVIDEND", "SPLIT"];
 
@@ -58,6 +65,7 @@ const todayIsoDate = (): string => new Date().toISOString().slice(0, 10);
 interface FormErrors {
   shares?: string;
   pricePerShare?: string;
+  amount?: string;
   fee?: string;
   tradeDate?: string;
 }
@@ -103,8 +111,10 @@ export default function AddTransactionScreen() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [txType, setTxType] = useState<TransactionType>("BUY");
+  const [amountMode, setAmountMode] = useState<AmountEntryMode>("shares");
   const [shares, setShares] = useState("");
   const [pricePerShare, setPricePerShare] = useState("");
+  const [totalAmount, setTotalAmount] = useState("");
   const [fee, setFee] = useState("0");
   const [tradeDate, setTradeDate] = useState(todayIsoDate);
   const [notes, setNotes] = useState("");
@@ -140,12 +150,39 @@ export default function AddTransactionScreen() {
     setStep(2);
   };
 
+  const resolveAmountFields = (): { shares: Decimal; pricePerShare: Decimal } | null => {
+    if (txType === "BUY" && amountMode === "total") {
+      return resolveTotalInvestedAmount(tryDecimal(shares), tryDecimal(totalAmount));
+    }
+    if (txType !== "BUY") {
+      const sharesD = tryDecimal(shares);
+      const priceD = tryDecimal(pricePerShare);
+      if (!sharesD || sharesD.lte(0) || !priceD || priceD.lte(0)) return null;
+      return { shares: sharesD, pricePerShare: priceD };
+    }
+    return resolveSharesAndUnitPrice(
+      amountMode,
+      tryDecimal(shares),
+      tryDecimal(pricePerShare),
+      tryDecimal(totalAmount)
+    );
+  };
+
   const validateStep2 = (): boolean => {
     const next: FormErrors = {};
-    const sharesD = tryDecimal(shares);
-    if (!sharesD || sharesD.lte(0)) next.shares = t("transaction.invalidNumber");
-    const priceD = tryDecimal(pricePerShare);
-    if (!priceD || priceD.lte(0)) next.pricePerShare = t("transaction.invalidNumber");
+    const resolved = resolveAmountFields();
+    if (!resolved) {
+      if (txType === "BUY" && amountMode === "total") {
+        next.amount = t("transaction.invalidNumber");
+      } else {
+        if (!tryDecimal(shares) || tryDecimal(shares)!.lte(0)) {
+          next.shares = t("transaction.invalidNumber");
+        }
+        if (!tryDecimal(pricePerShare) || tryDecimal(pricePerShare)!.lte(0)) {
+          next.pricePerShare = t("transaction.invalidNumber");
+        }
+      }
+    }
     const feeD = fee.trim() ? tryDecimal(fee) : new Decimal(0);
     if (!feeD || feeD.lt(0)) next.fee = t("transaction.invalidNumber");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(tradeDate.trim())) {
@@ -171,8 +208,10 @@ export default function AddTransactionScreen() {
     if (!portfolioId || !selected) return;
     if (!validateStep2()) return;
 
-    const sharesD = tryDecimal(shares)!;
-    const priceD = tryDecimal(pricePerShare)!;
+    const resolved = resolveAmountFields();
+    if (!resolved) return;
+
+    const { shares: sharesD, pricePerShare: priceD } = resolved;
     const feeD = fee.trim() ? tryDecimal(fee)! : new Decimal(0);
 
     const assetMeta: CreateTransactionAssetMeta = {
@@ -208,6 +247,8 @@ export default function AddTransactionScreen() {
     setSearchQuery("");
     setShares("");
     setPricePerShare("");
+    setTotalAmount("");
+    setAmountMode("shares");
     setFee("0");
     setTradeDate(todayIsoDate());
     setNotes("");
@@ -285,7 +326,15 @@ export default function AddTransactionScreen() {
                   );
                 })}
               </View>
-              <TextField isRequired isInvalid={!!errors.shares}>
+              {txType === "BUY" ? (
+                <TransactionAmountModeToggle
+                  mode={amountMode as TransactionAmountMode}
+                  onModeChange={setAmountMode}
+                  sharesLabel={t("transaction.amount.toggle.shares")}
+                  totalLabel={t("transaction.amount.toggle.total")}
+                />
+              ) : null}
+              <TextField isRequired isInvalid={!!errors.shares || !!errors.amount}>
                 <Label>{t("transaction.shares")}</Label>
                 <Input
                   value={shares}
@@ -293,20 +342,35 @@ export default function AddTransactionScreen() {
                   keyboardType="decimal-pad"
                   editable={!isSubmitting}
                 />
-                {errors.shares && <FieldError>{errors.shares}</FieldError>}
+                {errors.shares ? <FieldError>{errors.shares}</FieldError> : null}
+                {errors.amount ? <FieldError>{errors.amount}</FieldError> : null}
               </TextField>
-              <TextField isRequired isInvalid={!!errors.pricePerShare}>
-                <Label>
-                  {t("transaction.pricePerShare")} ({currency})
-                </Label>
-                <Input
-                  value={pricePerShare}
-                  onChangeText={setPricePerShare}
-                  keyboardType="decimal-pad"
-                  editable={!isSubmitting}
-                />
-                {errors.pricePerShare && <FieldError>{errors.pricePerShare}</FieldError>}
-              </TextField>
+              {txType === "BUY" && amountMode === "total" ? (
+                <TextField isRequired isInvalid={!!errors.amount}>
+                  <Label>{t("transaction.snapshot.totalInvested.label", { currency })}</Label>
+                  <Input
+                    value={totalAmount}
+                    onChangeText={setTotalAmount}
+                    keyboardType="decimal-pad"
+                    editable={!isSubmitting}
+                  />
+                  <Description>{t("transaction.snapshot.totalInvested.hint")}</Description>
+                  {errors.amount ? <FieldError>{errors.amount}</FieldError> : null}
+                </TextField>
+              ) : (
+                <TextField isRequired isInvalid={!!errors.pricePerShare}>
+                  <Label>
+                    {t("transaction.pricePerShare")} ({currency})
+                  </Label>
+                  <Input
+                    value={pricePerShare}
+                    onChangeText={setPricePerShare}
+                    keyboardType="decimal-pad"
+                    editable={!isSubmitting}
+                  />
+                  {errors.pricePerShare ? <FieldError>{errors.pricePerShare}</FieldError> : null}
+                </TextField>
+              )}
               <TextField isInvalid={!!errors.fee}>
                 <Label>
                   {t("transaction.fee")} ({currency})

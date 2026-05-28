@@ -3,13 +3,7 @@
  */
 
 import Decimal from "decimal.js";
-import {
-  parseAssetId,
-  type Currency,
-  type Holding,
-  type Market,
-  type Transaction,
-} from "@arc/core";
+import { parseAssetId, type Currency, type Holding, type Market } from "@arc/core";
 import type { MarketValuation } from "@arc/core";
 import type { HoldingPeriodChange, HoldingsTableRow } from "@arc/ui";
 
@@ -18,20 +12,6 @@ import { resolveAssetLogoUrl } from "./asset-logo-url";
 import { formatMoney } from "./format-money";
 
 const MARKET_ORDER: readonly Market[] = ["US", "CN", "HK", "FUND", "CRYPTO", "CASH"];
-
-/** Earliest OPENING_SNAPSHOT trade date per asset (YYYY-MM-DD). */
-export const openingSnapshotDateByAsset = (
-  transactions: readonly Transaction[]
-): ReadonlyMap<string, string> => {
-  const map = new Map<string, string>();
-  for (const tx of transactions) {
-    if (tx.type !== "OPENING_SNAPSHOT") continue;
-    const date = tx.tradeDate.slice(0, 10);
-    const prev = map.get(tx.assetId);
-    if (!prev || date < prev) map.set(tx.assetId, date);
-  }
-  return map;
-};
 
 /**
  * Holdings row period change — cost-basis since open (ADR 016).
@@ -55,8 +35,6 @@ export const buildHoldingsTableRows = (input: {
   perAsset: readonly MarketValuation[];
   catalog: ReadonlyMap<string, AssetCatalogRow> | undefined;
   reportingCurrency: Currency;
-  transactions?: readonly Transaction[];
-  formatSnapshotBadge?: (date: string) => string;
   quoteLoading: boolean;
   formatPeriodChangeLine: (delta: Decimal, percent: Decimal | null) => string;
   positionLabel: (shares: Decimal, market: Market, symbol: string) => string;
@@ -70,10 +48,6 @@ export const buildHoldingsTableRows = (input: {
   }) => string;
 }): HoldingsTableRow[] => {
   const valByAsset = new Map(input.perAsset.map((v) => [v.assetId, v]));
-  const snapshotDates = input.transactions
-    ? openingSnapshotDateByAsset(input.transactions)
-    : new Map<string, string>();
-
   const rows: HoldingsTableRow[] = [];
 
   for (const holding of input.holdings) {
@@ -84,9 +58,6 @@ export const buildHoldingsTableRows = (input: {
     const valueReporting = val?.valueReporting ?? holding.shares.times(holding.averageCost);
     const valueLabel = formatMoney(valueReporting, input.reportingCurrency);
     const periodChange = resolvePeriodChange(valueReporting, val?.costBasisReporting);
-    const snapDate = snapshotDates.get(holding.assetId);
-    const snapshotBadgeLabel =
-      snapDate && input.formatSnapshotBadge ? input.formatSnapshotBadge(snapDate) : undefined;
 
     rows.push({
       assetId: holding.assetId,
@@ -99,7 +70,6 @@ export const buildHoldingsTableRows = (input: {
       valueLabel,
       valueLoading: input.quoteLoading && !val,
       periodChange,
-      snapshotBadgeLabel,
       newPositionLabel: input.newPositionLabel,
       formatPeriodChangeLine: input.formatPeriodChangeLine,
       accessibilityLabel: input.formatAccessibilityLabel({
