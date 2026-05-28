@@ -226,6 +226,11 @@ export const createAlphaVantageAdapter = (config: AlphaVantageAdapterConfig): Pr
       url.searchParams.set("function", "TIME_SERIES_DAILY");
       url.searchParams.set("symbol", symbol);
       url.searchParams.set("apikey", apiKey);
+      // ADR 016 §决策 10: compact ≈ 100 trading days; 1Y/ALL need full history.
+      const rangeDays = (to.getTime() - from.getTime()) / 86_400_000;
+      if (rangeDays > 100) {
+        url.searchParams.set("outputsize", "full");
+      }
 
       const body = await fetchJson<TimeSeriesDailyResponse>(url);
 
