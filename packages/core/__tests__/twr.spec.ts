@@ -358,10 +358,10 @@ describe("computeAssetTwr", () => {
     expect(result.netCashFlow.toString()).toBe("-15000"); // -30 × 500
   });
 
-  it("OPENING_SNAPSHOT is not an asset-level cash flow (ADR 016)", () => {
+  it("initial BUY before window is not an in-window cash flow", () => {
     const txs = [
       mkTx({
-        type: "OPENING_SNAPSHOT",
+        type: "BUY",
         assetId: "FUND:000216",
         shares: 1000,
         pricePerShare: 2,
@@ -385,10 +385,10 @@ describe("computeAssetTwr", () => {
     expect(result.netCashFlow.toString()).toBe("0");
   });
 
-  it("OPENING_SNAPSHOT + later BUY splits TWR only on real BUY", () => {
+  it("later BUY in window splits TWR sub-periods", () => {
     const txs = [
       mkTx({
-        type: "OPENING_SNAPSHOT",
+        type: "BUY",
         assetId: "FUND:000216",
         shares: 1000,
         pricePerShare: 2,

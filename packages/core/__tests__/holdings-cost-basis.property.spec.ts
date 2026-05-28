@@ -1,5 +1,5 @@
 /**
- * Property tests — cost-basis return vs OPENING_SNAPSHOT TWR isolation (ADR 016).
+ * Property tests — cost-basis return (ADR 016 appendix A).
  */
 
 import { describe, expect, it } from "vitest";
@@ -7,7 +7,6 @@ import fc from "fast-check";
 import Decimal from "decimal.js";
 
 import { computeHoldings } from "../src/domain/holdings";
-import { computeAssetTwr } from "../src/returns/twr";
 import type { Currency, Transaction } from "../src/domain/types";
 
 const dec = (n: number): Decimal => new Decimal(n);
@@ -56,39 +55,5 @@ describe("cost-basis return property (ADR 016 appendix A)", () => {
         }
       )
     );
-  });
-});
-
-describe("OPENING_SNAPSHOT TWR isolation", () => {
-  it("snapshot-only path: TWR equals price return with zero net cash flow", () => {
-    const txs: Transaction[] = [
-      {
-        id: "snap-1",
-        portfolioId: "p-1",
-        assetId: "FUND:TEST",
-        type: "OPENING_SNAPSHOT",
-        shares: dec(100),
-        pricePerShare: dec(10),
-        currency: "CNY",
-        fee: dec(0),
-        tradeDate: "2026-01-01T00:00:00.000Z",
-      },
-    ];
-    const result = computeAssetTwr({
-      assetId: "FUND:TEST",
-      portfolioId: "p-1",
-      from: new Date("2026-01-02T00:00:00.000Z"),
-      to: new Date("2026-06-01T00:00:00.000Z"),
-      transactions: txs,
-      priceAt: (date) => {
-        const ms = date.getTime();
-        if (ms === new Date("2026-01-02T00:00:00.000Z").getTime()) return dec(10);
-        if (ms === new Date("2026-06-01T00:00:00.000Z").getTime()) return dec(12);
-        throw new Error("unmapped");
-      },
-    });
-    expect(result.subPeriods).toBe(1);
-    expect(result.netCashFlow.isZero()).toBe(true);
-    expect(result.value.toString()).toBe("0.2");
   });
 });

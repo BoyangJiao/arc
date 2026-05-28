@@ -25,8 +25,7 @@ interface HoldingAccumulator {
  * computeHoldings — 由 portfolio 内所有 transactions 重算当前持仓
  *
  * 行为：
- * - BUY / OPENING_SNAPSHOT: shares += t.shares；totalCostBasis += t.shares × t.pricePerShare + t.fee
- *   (OPENING_SNAPSHOT = position entry snapshot for reconciliation — ADR 016)
+ * - BUY: shares += t.shares；totalCostBasis += t.shares × t.pricePerShare + t.fee
  * - SELL: shares -= t.shares；totalCostBasis 按平均成本比例扣减；记录已实现盈亏
  * - DIVIDEND: 不影响 shares，不进 cost basis（按现金股息处理；股票股息走 SPLIT）
  * - SPLIT: shares 按拆分比例放大或缩小，averageCost 按比例反向调整
@@ -59,8 +58,7 @@ export const computeHoldings = (
     }
 
     switch (tx.type) {
-      case "BUY":
-      case "OPENING_SNAPSHOT": {
+      case "BUY": {
         const newShares = acc.shares.plus(tx.shares);
         // 加权平均成本 = (oldShares × oldAvgCost + newShares × price) / totalShares
         if (newShares.isZero()) {
@@ -161,7 +159,6 @@ export const validateTransactions = (
 
     switch (tx.type) {
       case "BUY":
-      case "OPENING_SNAPSHOT":
         sharesMap.set(tx.assetId, current.plus(tx.shares));
         break;
       case "SELL":

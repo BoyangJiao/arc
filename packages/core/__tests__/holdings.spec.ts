@@ -179,11 +179,10 @@ describe("computeHoldings", () => {
     expect(h.averageCost.equals(new Decimal(100))).toBe(true);
   });
 
-  test("OPENING_SNAPSHOT accumulates cost basis like BUY (ADR 016)", () => {
+  test("multiple BUY accumulates cost basis (ADR 016 extreme example)", () => {
     const txs = [
       {
         ...makeBuy(1000, "2"),
-        type: "OPENING_SNAPSHOT" as const,
         tradeDate: "2026-05-01T10:00:00Z",
       },
       makeBuy(5000, "2.5", { tradeDate: "2026-05-15T10:00:00Z" }),

@@ -82,46 +82,102 @@ interface SnapshotAssetRow {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Holding computation (mirrors @arc/core computeHoldings, simplified for
-// edge runtime — only handles BUY for Stage 2; Stage 3 adds SELL/DIVIDEND/SPLIT)
+// Holding computation — mirrors @arc/core computeHoldings (packages/core/src/domain/holdings.ts).
+// Keep in sync when transaction types or cost-basis rules change (@arc/core computeHoldings).
+
+interface HoldingAccumulator {
+  shares: Decimal;
+  averageCost: Decimal;
+  totalCostBasis: Decimal;
+  portfolioId: string;
+  assetId: string;
+  currency: Currency;
+}
 
 const computeHoldings = (txs: DBTransaction[]): DBHolding[] => {
-  const byKey = new Map<
-    string,
-    {
-      shares: Decimal;
-      totalCost: Decimal;
-      currency: Currency;
-      portfolioId: string;
-      assetId: string;
-    }
-  >();
+  const byKey = new Map<string, HoldingAccumulator>();
+
   for (const tx of txs) {
-    if (tx.type !== "BUY") continue; // Stage 2 simplification
     const key = `${tx.portfolio_id}|${tx.asset_id}`;
-    const shares = new Decimal(tx.shares);
-    const grossCost = shares.times(tx.price_per_share).plus(tx.fee);
-    const existing = byKey.get(key);
-    if (existing) {
-      existing.shares = existing.shares.plus(shares);
-      existing.totalCost = existing.totalCost.plus(grossCost);
-    } else {
-      byKey.set(key, {
+    let acc = byKey.get(key);
+    if (!acc) {
+      acc = {
+        shares: new Decimal(0),
+        averageCost: new Decimal(0),
+        totalCostBasis: new Decimal(0),
         portfolioId: tx.portfolio_id,
         assetId: tx.asset_id,
-        shares,
-        totalCost: grossCost,
         currency: tx.currency,
-      });
+      };
+      byKey.set(key, acc);
+    }
+
+    const txShares = new Decimal(tx.shares);
+    const txPrice = new Decimal(tx.price_per_share);
+    const txFee = new Decimal(tx.fee);
+
+    switch (tx.type) {
+      case "BUY": {
+        const newShares = acc.shares.plus(txShares);
+        if (newShares.isZero()) {
+          acc.averageCost = new Decimal(0);
+        } else {
+          acc.averageCost = acc.shares
+            .times(acc.averageCost)
+            .plus(txShares.times(txPrice))
+            .dividedBy(newShares);
+        }
+        acc.shares = newShares;
+        acc.totalCostBasis = acc.totalCostBasis.plus(txShares.times(txPrice).plus(txFee));
+        break;
+      }
+      case "SELL": {
+        if (txShares.greaterThan(acc.shares)) {
+          console.warn(
+            `daily-snapshot: SELL ${txShares.toString()} exceeds holding ${acc.shares.toString()} for ${tx.asset_id}; skipping tx`
+          );
+          break;
+        }
+        acc.shares = acc.shares.minus(txShares);
+        acc.totalCostBasis = acc.totalCostBasis.minus(txShares.times(acc.averageCost));
+        break;
+      }
+      case "DIVIDEND":
+        // Cash dividend — does not change shares or cost basis.
+        break;
+      case "SPLIT": {
+        const splitRatio = txPrice;
+        acc.shares = acc.shares.times(splitRatio);
+        if (!splitRatio.isZero()) {
+          acc.averageCost = acc.averageCost.dividedBy(splitRatio);
+        }
+        break;
+      }
+      case "ADJUSTMENT": {
+        acc.shares = acc.shares.plus(txShares);
+        acc.totalCostBasis = acc.totalCostBasis.plus(txShares.times(txPrice));
+        if (!acc.shares.isZero()) {
+          acc.averageCost = acc.totalCostBasis.dividedBy(acc.shares);
+        }
+        break;
+      }
+      default:
+        console.warn(`daily-snapshot: unknown transaction type ${tx.type}; skipping`);
     }
   }
-  return [...byKey.values()].map((h) => ({
-    portfolioId: h.portfolioId,
-    assetId: h.assetId,
-    shares: h.shares.toString(),
-    averageCost: h.shares.isZero() ? "0" : h.totalCost.dividedBy(h.shares).toString(),
-    currency: h.currency,
-  }));
+
+  const out: DBHolding[] = [];
+  for (const acc of byKey.values()) {
+    if (acc.shares.isZero()) continue;
+    out.push({
+      portfolioId: acc.portfolioId,
+      assetId: acc.assetId,
+      shares: acc.shares.toString(),
+      averageCost: acc.averageCost.toString(),
+      currency: acc.currency,
+    });
+  }
+  return out;
 };
 
 // ──────────────────────────────────────────────────────────────────────────

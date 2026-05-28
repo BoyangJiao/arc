@@ -51,7 +51,7 @@ export const computeSharesAt = (
   for (const tx of transactions) {
     if (tx.assetId !== assetId) continue;
     if (new Date(tx.tradeDate).getTime() > ms) continue;
-    if (tx.type === "BUY" || tx.type === "OPENING_SNAPSHOT") {
+    if (tx.type === "BUY") {
       shares = shares.plus(tx.shares);
     } else if (tx.type === "SELL") {
       shares = shares.minus(tx.shares);
@@ -74,17 +74,11 @@ export const getAssetFirstBuyDate = (
   let earliest: number | null = null;
   for (const tx of transactions) {
     if (tx.assetId !== assetId) continue;
-    if (tx.type !== "BUY" && tx.type !== "OPENING_SNAPSHOT") continue;
+    if (tx.type !== "BUY") continue;
     const ms = new Date(tx.tradeDate).getTime();
     if (earliest === null || ms < earliest) earliest = ms;
   }
   return earliest === null ? null : new Date(earliest);
-};
-
-/** Asset-level cash flows for TWR — excludes OPENING_SNAPSHOT (ADR 016). */
-export const isAssetTwrCashFlowTransaction = (tx: Transaction): boolean => {
-  if (tx.type !== "BUY" && tx.type !== "SELL") return false;
-  return true;
 };
 
 const detectAssetCashFlowEvents = (
@@ -98,7 +92,7 @@ const detectAssetCashFlowEvents = (
   const events: CashFlowEvent[] = [];
   for (const tx of transactions) {
     if (tx.assetId !== assetId) continue;
-    if (!isAssetTwrCashFlowTransaction(tx)) continue;
+    if (tx.type !== "BUY" && tx.type !== "SELL") continue;
     const date = new Date(tx.tradeDate);
     const ms = date.getTime();
     if (ms <= fromMs || ms >= toMs) continue;
