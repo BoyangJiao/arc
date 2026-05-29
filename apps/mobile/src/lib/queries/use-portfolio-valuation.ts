@@ -42,6 +42,15 @@ import { usePortfolioHoldings } from "./use-portfolio-holdings";
 /** Finnhub free tier: 60 req/min — wait between retries when throttled. */
 const PRICE_RATE_LIMIT_BACKOFF_MS = 12_500;
 
+/**
+ * NetworkError backoff for intermittent failures (CN ↔ Finnhub flakiness).
+ * Exponential: 500ms → 1.5s → 4.5s. Total worst-case ~6.5s before fall-through
+ * to stale cache. Targets transient TCP / DNS errors; not RateLimit (handled
+ * above with its own constant).
+ */
+const PRICE_NETWORK_BACKOFF_MS = 500;
+const PRICE_NETWORK_BACKOFF_FACTOR = 3;
+
 /** Parallel live fetches — stay under Finnhub 60/min while avoiding serial 350ms gaps. */
 const PRICE_FETCH_CONCURRENCY = 5;
 
@@ -91,13 +100,19 @@ const fetchQuoteForHolding = async (
         await sleep(err.retryAfterMs ?? PRICE_RATE_LIMIT_BACKOFF_MS);
         continue;
       }
-      // Network / not-found won't heal on retry — fail fast (e.g. AKShare wrapper timeout).
-      if (err instanceof NetworkError || err instanceof NotFoundError) {
+      // NotFoundError is permanent (404 / invalid symbol) — no retry.
+      if (err instanceof NotFoundError) {
         console.warn(
           `[portfolio-valuation] price fetch failed for ${holding.assetId}:`,
           err instanceof Error ? err.message : err
         );
         return null;
+      }
+      // NetworkError = intermittent (CN ↔ Finnhub flakiness). Exponential
+      // backoff per ADR 016 v2 follow-up: 500ms → 1.5s → 4.5s.
+      if (err instanceof NetworkError && attempt < maxAttempts - 1) {
+        await sleep(PRICE_NETWORK_BACKOFF_MS * PRICE_NETWORK_BACKOFF_FACTOR ** attempt);
+        continue;
       }
       if (attempt < maxAttempts - 1) {
         continue;
