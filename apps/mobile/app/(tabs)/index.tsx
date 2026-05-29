@@ -44,6 +44,7 @@ import { currencySymbol, formatMoney } from "../../src/lib/format-money";
 import { buildHoldingsTableRows } from "../../src/lib/holdings-presenter";
 import {
   filterPortfolioValuation,
+  filterTransactionsByMarket,
   isMarketFilterActive,
   serializeMarketFilters,
 } from "../../src/lib/portfolio-market-filter";
@@ -73,6 +74,10 @@ export default function PortfolioTab() {
   }, []);
   const [selectedMarketFilters, setSelectedMarketFilters] = useState<Set<Market>>(() => new Set());
   const marketFilterActive = isMarketFilterActive(selectedMarketFilters);
+  const marketFilterKey = useMemo(
+    () => serializeMarketFilters(selectedMarketFilters),
+    [selectedMarketFilters]
+  );
 
   const { prefs } = useUserPreferences();
 
@@ -84,12 +89,15 @@ export default function PortfolioTab() {
 
   useEffect(() => {
     userPickedRangeRef.current = false;
-  }, [activeId]);
+  }, [activeId, marketFilterKey]);
   useEffect(() => {
     if (userPickedRangeRef.current) return;
-    const next = pickDefaultRangeForTransactions(transactions);
+    const scopedTx = marketFilterActive
+      ? filterTransactionsByMarket(transactions ?? [], selectedMarketFilters)
+      : transactions;
+    const next = pickDefaultRangeForTransactions(scopedTx);
     if (next) setChartRange(next);
-  }, [activeId, transactions]);
+  }, [activeId, transactions, marketFilterActive, marketFilterKey, selectedMarketFilters]);
 
   const {
     data: valuation,
