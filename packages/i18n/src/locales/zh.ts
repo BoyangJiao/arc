@@ -22,6 +22,8 @@ export const zh = {
     empty: "暂无持仓，添加你的第一笔资产。",
     emptyAction: "添加第一笔交易",
     totalValue: "总价值",
+    hideAmounts: "隐藏金额",
+    showAmounts: "显示金额",
     dayChange: "今日涨跌",
     unrealizedPnL: "未实现盈亏",
     holdings: "持仓",
@@ -65,6 +67,12 @@ export const zh = {
     expand: "展开",
     sectionTitle: "我的持仓",
     filterEmpty: "所选市场下暂无持仓",
+    sort: {
+      value_desc: "按市值",
+      gain_pct_desc: "按涨幅 ↑",
+      gain_pct_asc: "按涨幅 ↓",
+      market: "按市场",
+    },
     periodChange: {
       newPosition: "新建仓",
     },
@@ -88,6 +96,10 @@ export const zh = {
     addTransactionCta: "录入此资产交易",
     more: "更多",
     removeFromPortfolio: "从投资组合删除",
+    addToWatchlist: "加入自选",
+    removeFromWatchlist: "从自选移除",
+    watchlistAddFailed: "加入自选失败，请稍后再试",
+    watchlistRemoveFailed: "从自选移除失败，请稍后再试",
     dataCompleteness: {
       disclosure:
         "收益分析基于您录入的交易记录。若历史录入不完整，TWR 可能与实际有偏差。持仓盈亏（成本基线）始终准确。",
@@ -98,6 +110,12 @@ export const zh = {
     },
     costBasis: {
       tooltip: "今日市值减去你所有买入投入。这是你的真实账户回报。",
+    },
+    chart: {
+      loadErrorTitle: "走势加载失败",
+      loadErrorDescription: "网络或行情服务暂时不可用，请稍后重试或切换时间范围",
+      noDataTitle: "暂无历史走势",
+      noDataDescription: "该资产在所选时段暂无历史行情数据",
     },
   },
   dailySnapshot: {

@@ -22,6 +22,8 @@ export const en = {
     empty: "No holdings yet. Add your first asset.",
     emptyAction: "Add your first transaction",
     totalValue: "Total Value",
+    hideAmounts: "Hide amounts",
+    showAmounts: "Show amounts",
     dayChange: "Day Change",
     unrealizedPnL: "Unrealized P&L",
     holdings: "Holdings",
@@ -65,6 +67,12 @@ export const en = {
     expand: "Expand",
     sectionTitle: "My holdings",
     filterEmpty: "No holdings match the selected markets",
+    sort: {
+      value_desc: "By value",
+      gain_pct_desc: "Gain % ↑",
+      gain_pct_asc: "Gain % ↓",
+      market: "By market",
+    },
     periodChange: {
       newPosition: "New position",
     },
@@ -88,6 +96,10 @@ export const en = {
     addTransactionCta: "Record a transaction for this asset",
     more: "More",
     removeFromPortfolio: "Remove from portfolio",
+    addToWatchlist: "Add to watchlist",
+    removeFromWatchlist: "Remove from watchlist",
+    watchlistAddFailed: "Could not add to watchlist, please try again",
+    watchlistRemoveFailed: "Could not remove from watchlist, please try again",
     dataCompleteness: {
       disclosure:
         "Return analysis is based on transactions you entered. If history is incomplete, TWR may differ from reality. Cost-basis P&L stays accurate.",
@@ -98,6 +110,13 @@ export const en = {
     },
     costBasis: {
       tooltip: "Current value minus all cash you invested. This is your true account return.",
+    },
+    chart: {
+      loadErrorTitle: "Chart unavailable",
+      loadErrorDescription:
+        "Network or market data is temporarily unavailable. Try again or switch the time range.",
+      noDataTitle: "No history for this range",
+      noDataDescription: "There is no historical price data for this asset in the selected period.",
     },
   },
   dailySnapshot: {

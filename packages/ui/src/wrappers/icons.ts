@@ -9,14 +9,20 @@
 
 import type { Icon } from "phosphor-react-native";
 import {
+  ArrowsDownUpIcon,
   BriefcaseIcon,
   CaretLeftIcon,
   CaretRightIcon,
+  ChartLineIcon,
   ChartPieIcon,
+  CloudWarningIcon,
   DotsThreeVerticalIcon,
+  EyeIcon,
+  EyeSlashIcon,
   LightbulbIcon,
   MagnifyingGlassIcon,
   SparkleIcon,
+  StarIcon,
   TrashIcon,
   TrendDownIcon,
   TrendUpIcon,
@@ -30,14 +36,20 @@ export type LucideIcon = Icon;
 
 // ── Canonical Phosphor exports ──────────────────────────────────────────────
 export {
+  ArrowsDownUpIcon,
   BriefcaseIcon,
   CaretLeftIcon,
   CaretRightIcon,
+  ChartLineIcon,
   ChartPieIcon,
+  CloudWarningIcon,
   DotsThreeVerticalIcon,
+  EyeIcon,
+  EyeSlashIcon,
   LightbulbIcon,
   MagnifyingGlassIcon,
   SparkleIcon,
+  StarIcon,
   TrashIcon,
   TrendDownIcon,
   TrendUpIcon,

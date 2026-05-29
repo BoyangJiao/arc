@@ -10,39 +10,41 @@ import {
   DotsThreeVerticalIcon,
   HeaderActionButton,
   InScreenHeader,
-  LineChart,
   Screen,
+  StarIcon,
   Text,
-  TimeRangeSelector,
   TwrInlineLabel,
-  computePeriodChange,
-  formatCompactChangeLine,
-  formatSignedPercent,
-  useBusinessClasses,
-  typographyClass,
   type TimeRange,
   DEFAULT_TIME_RANGE,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 import { composeAssetId, type Market } from "@arc/core";
 
+import { AssetDetailChartSection } from "../../../src/components/AssetDetailChartSection";
+import { AssetDetailPriceHeader } from "../../../src/components/AssetDetailPriceHeader";
+import { resolveAssetDetailChartStatus } from "../../../src/lib/asset-detail-chart-status";
 import { formatMoney, currencySymbol } from "../../../src/lib/format-money";
+import { useAmountRedacted } from "../../../src/lib/use-amount-redacted";
 import { useActivePortfolio } from "../../../src/lib/queries/use-active-portfolio";
 import {
   historicalQuotesToChartPoints,
+  useAddWatchlistItem,
   useAssetDetail,
   useAssetTwr,
   useDeleteAssetTransactions,
   useHistoricalQuotes,
+  useRemoveWatchlistItem,
+  useWatchlistBase,
 } from "../../../src/lib/queries";
 
 export default function AssetDetailScreen() {
-  const { t } = useTranslation();
-  const businessClasses = useBusinessClasses();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { market, symbol } = useLocalSearchParams<{ market: string; symbol: string }>();
   const [range, setRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
+  const [chartScrubbing, setChartScrubbing] = useState(false);
   const { portfolio } = useActivePortfolio();
+  const { amountsHidden } = useAmountRedacted();
   const deleteAssetTransactions = useDeleteAssetTransactions();
 
   const detail = useAssetDetail(market, symbol);
@@ -53,13 +55,25 @@ export default function AssetDetailScreen() {
     assetId,
     range,
   });
-  const chartData = historicalQuotesToChartPoints(historical.data ?? []);
+  const chartData = useMemo(
+    () => historicalQuotesToChartPoints(historical.data ?? []),
+    [historical.data]
+  );
 
   useEffect(() => {
     if (market === "CASH") {
       router.back();
     }
   }, [market, router]);
+
+  const formatScrubDate = useCallback(
+    (iso: string) =>
+      new Intl.DateTimeFormat(i18n.language.startsWith("zh") ? "zh-CN" : "en-US", {
+        dateStyle: "medium",
+        timeZone: "UTC",
+      }).format(new Date(iso)),
+    [i18n.language]
+  );
 
   const holdingLabel = useMemo(() => {
     const name = detail.data?.name ?? symbol ?? "";
@@ -91,8 +105,6 @@ export default function AssetDetailScreen() {
     );
   }, [assetId, deleteAssetTransactions, holdingLabel, portfolio?.id, router, t]);
 
-  // ActionSheet 风格的 more 菜单 — 使用 Alert（iOS 上自动呈现为 ActionSheet 风格的多按钮弹层）。
-  // 避免 BottomSheet 依赖 @gorhom/bottom-sheet（未安装 → 运行时 undefined）。
   const handleOpenMore = useCallback(() => {
     Alert.alert(t("assetDetail.more"), undefined, [
       { text: t("common.cancel"), style: "cancel" },
@@ -104,35 +116,63 @@ export default function AssetDetailScreen() {
     ]);
   }, [handleConfirmRemove, t]);
 
+  // Watchlist toggle — star icon in header. Filled = in watchlist, outline = not.
+  const watchlist = useWatchlistBase();
+  const addWatchlist = useAddWatchlistItem();
+  const removeWatchlist = useRemoveWatchlistItem();
+  const watchlistEntry = useMemo(
+    () => (assetId ? (watchlist.data?.find((row) => row.asset.id === assetId) ?? null) : null),
+    [assetId, watchlist.data]
+  );
+  const isInWatchlist = !!watchlistEntry;
+  const watchlistPending = addWatchlist.isPending || removeWatchlist.isPending;
+
+  const handleToggleWatchlist = useCallback(() => {
+    if (!assetId || !market || !symbol || watchlistPending) return;
+    if (watchlistEntry) {
+      removeWatchlist.mutate(watchlistEntry.id, {
+        onError: () => {
+          Alert.alert(t("common.error"), t("assetDetail.watchlistRemoveFailed"));
+        },
+      });
+    } else {
+      addWatchlist.mutate(
+        {
+          symbol,
+          name: detail.data?.name ?? symbol,
+          market: market as Market,
+          currency: detail.data?.currency,
+        },
+        {
+          onError: () => {
+            Alert.alert(t("common.error"), t("assetDetail.watchlistAddFailed"));
+          },
+        }
+      );
+    }
+  }, [
+    assetId,
+    market,
+    symbol,
+    watchlistPending,
+    watchlistEntry,
+    removeWatchlist,
+    addWatchlist,
+    detail.data?.name,
+    detail.data?.currency,
+    t,
+  ]);
+
   if (market === "CASH") {
     return null;
   }
 
   const quote = detail.data?.latestQuote;
-  const changePercent = quote?.changePercent ?? null;
   const currency = detail.data?.currency ?? quote?.currency ?? "CNY";
   const currencySym = currencySymbol(currency);
   const hasHolding = !!detail.data?.holding;
-
-  const periodChange = useMemo(() => {
-    if (!quote || chartData.length === 0) return null;
-    return computePeriodChange(quote.price.toNumber(), chartData[0]!.y);
-  }, [quote, chartData]);
-
-  const changeColorClass =
-    periodChange !== null
-      ? periodChange.delta.isPositive()
-        ? businessClasses.gain.text
-        : periodChange.delta.isNegative()
-          ? businessClasses.loss.text
-          : businessClasses.pnlNeutral.text
-      : changePercent === null
-        ? businessClasses.pnlNeutral.text
-        : changePercent.isPositive()
-          ? businessClasses.gain.text
-          : changePercent.isNegative()
-            ? businessClasses.loss.text
-            : businessClasses.pnlNeutral.text;
+  const chartPeriodLoading = historical.isFetching && chartData.length === 0;
+  const chartStatus = resolveAssetDetailChartStatus(historical, chartData.length);
 
   const handleAddTx = () => {
     if (!portfolio?.id || !market || !symbol) return;
@@ -144,56 +184,71 @@ export default function AssetDetailScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <Screen>
+      <Screen scrollEnabled={!chartScrubbing}>
         <InScreenHeader
           title={detail.data?.name ?? symbol ?? ""}
           leftType="back"
           rightSlot={
-            hasHolding ? (
+            <View className="flex-row items-center gap-1">
               <HeaderActionButton
-                icon={DotsThreeVerticalIcon}
-                onPress={handleOpenMore}
-                accessibilityLabel={t("assetDetail.more")}
+                icon={StarIcon}
+                weight={isInWatchlist ? "fill" : "regular"}
+                colorToken={isInWatchlist ? "accent" : "foreground"}
+                onPress={handleToggleWatchlist}
+                accessibilityLabel={t(
+                  isInWatchlist ? "assetDetail.removeFromWatchlist" : "assetDetail.addToWatchlist"
+                )}
               />
-            ) : null
+              {hasHolding ? (
+                <HeaderActionButton
+                  icon={DotsThreeVerticalIcon}
+                  onPress={handleOpenMore}
+                  accessibilityLabel={t("assetDetail.more")}
+                />
+              ) : null}
+            </View>
           }
         />
-        <View className="gap-4">
-          <View>
-            <Text className="text-muted text-sm">
-              {assetId} · {t("common.disclaimer")}
-            </Text>
-            {quote ? (
-              <View className="flex-row items-center gap-2 mt-2">
-                <Text className="text-foreground text-2xl font-bold">
-                  {formatMoney(quote.price, quote.currency)}
-                </Text>
-                {periodChange ? (
-                  <Text className={typographyClass("rowValue", changeColorClass)}>
-                    {formatCompactChangeLine(periodChange.delta, periodChange.percent, currencySym)}
-                  </Text>
-                ) : changePercent !== null ? (
-                  <Text className={typographyClass("rowValue", changeColorClass)}>
-                    {formatSignedPercent(changePercent)}
-                  </Text>
-                ) : null}
-              </View>
-            ) : (
-              <Text className="text-muted mt-2">{t("common.loading")}</Text>
-            )}
-          </View>
+        <View>
+          <AssetDetailPriceHeader
+            assetId={assetId}
+            disclaimer={t("common.disclaimer")}
+            quote={
+              quote
+                ? {
+                    price: quote.price,
+                    currency: quote.currency,
+                    changePercent: quote.changePercent ?? null,
+                  }
+                : undefined
+            }
+            chartData={chartData}
+            range={range}
+            periodChangeLabel={t(`portfolio.periodChangeByRange.${range}`)}
+            chartPeriodLoading={chartPeriodLoading}
+            chartPeriodUnavailable={chartStatus === "error"}
+            unavailableLabel={t("twr.unavailable")}
+            detailPending={detail.isPending}
+            loadingLabel={t("common.loading")}
+            amountsHidden={amountsHidden}
+          />
 
-          <TimeRangeSelector value={range} onChange={setRange} />
-          <LineChart
-            key={range}
-            data={chartData}
-            height={224}
-            loading={historical.isFetching && !historical.data}
+          <AssetDetailChartSection
+            range={range}
+            onRangeChange={setRange}
+            chartData={chartData}
+            chartStatus={chartStatus}
+            chartErrorTitle={t("assetDetail.chart.loadErrorTitle")}
+            chartErrorDescription={t("assetDetail.chart.loadErrorDescription")}
+            chartEmptyTitle={t("assetDetail.chart.noDataTitle")}
+            chartEmptyDescription={t("assetDetail.chart.noDataDescription")}
             valuePrefix={currencySym}
+            formatScrubDate={formatScrubDate}
+            onScrubbingChange={setChartScrubbing}
           />
 
           {detail.data?.holding ? (
-            <View className="gap-2 border-t border-border pt-4">
+            <View className="mt-4 gap-2 border-t border-border pt-4">
               <Text className="text-muted text-sm">
                 {t("assetDetail.dataCompleteness.disclosure")}
               </Text>
@@ -205,13 +260,17 @@ export default function AssetDetailScreen() {
               </Text>
               <Text className="text-muted text-sm">
                 {t("assetDetail.avgCost", {
-                  cost: formatMoney(detail.data.holding.averageCost, detail.data.currency),
+                  cost: formatMoney(detail.data.holding.averageCost, detail.data.currency, {
+                    redact: amountsHidden,
+                  }),
                 })}
               </Text>
               {detail.data.unrealizedPnL !== null ? (
                 <Text className="text-foreground text-sm">
                   {t("assetDetail.unrealizedPnL", {
-                    pnl: formatMoney(detail.data.unrealizedPnL, detail.data.currency),
+                    pnl: formatMoney(detail.data.unrealizedPnL, detail.data.currency, {
+                      redact: amountsHidden,
+                    }),
                   })}
                 </Text>
               ) : null}
@@ -229,9 +288,11 @@ export default function AssetDetailScreen() {
             </View>
           ) : null}
 
-          <Button onPress={handleAddTx}>
-            <Button.Label>{t("assetDetail.addTransactionCta")}</Button.Label>
-          </Button>
+          <View className="mt-4">
+            <Button onPress={handleAddTx}>
+              <Button.Label>{t("assetDetail.addTransactionCta")}</Button.Label>
+            </Button>
+          </View>
         </View>
       </Screen>
     </>
