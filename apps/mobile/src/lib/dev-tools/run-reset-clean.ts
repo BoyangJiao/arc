@@ -50,6 +50,7 @@ export class ResetCleanEnvError extends Error {
  *
  * Deliberately NOT cleared:
  *   - `arc:dev-tools-fab:v1`       — FAB position is UI prefs, not user data
+ *   - `arc.colorMode`              — light/dark app theme (device UI pref)
  *   - `sb-*-auth-token` etc.       — Supabase session; clearing would force re-login
  */
 const STATIC_KEYS_TO_CLEAR = ["arc.activePortfolioId"] as const;

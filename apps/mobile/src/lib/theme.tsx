@@ -5,13 +5,31 @@
  * Uniwind automatically listens for Appearance changes and re-renders
  * all className-based styles with the correct dark: variant tokens.
  *
- * Stage 1: state only (no persistence). Stage 2+ can add AsyncStorage/MMKV.
+ * Persists the user's explicit choice in AsyncStorage (`arc.colorMode`) so
+ * restarts keep light/dark; first launch (no key) follows system appearance.
  */
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Appearance } from "react-native";
 
 export type ColorMode = "light" | "dark";
+
+/** AsyncStorage — keep in sync with `run-reset-clean.ts` doc comment. */
+export const COLOR_MODE_STORAGE_KEY = "arc.colorMode";
+
+function parseStoredColorMode(raw: string | null): ColorMode | null {
+  if (raw === "light" || raw === "dark") return raw;
+  return null;
+}
 
 interface ThemeContextValue {
   colorMode: ColorMode;
@@ -28,25 +46,52 @@ const ThemeContext = createContext<ThemeContextValue>({
 /**
  * ThemeProvider — wrap at root to provide color mode switching.
  *
- * On mount, reads system preference via Appearance.getColorScheme().
- * Toggle programmatically sets Appearance.setColorScheme() which
- * Uniwind's runtime picks up to resolve dark: prefix classes.
+ * First paint uses system `Appearance`; then hydrates from AsyncStorage when
+ * the user has previously chosen light/dark. `setColorMode` / `toggleColorMode`
+ * persist to storage and call `Appearance.setColorScheme` so Uniwind resolves
+ * `dark:` classes.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  const userChoseModeRef = useRef(false);
+
   const [colorMode, setColorModeState] = useState<ColorMode>(() => {
     const system = Appearance.getColorScheme();
     return system === "dark" ? "dark" : "light";
   });
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(COLOR_MODE_STORAGE_KEY);
+        if (cancelled || userChoseModeRef.current) return;
+        const stored = parseStoredColorMode(raw);
+        if (stored) {
+          setColorModeState(stored);
+          Appearance.setColorScheme(stored);
+        }
+      } catch {
+        // Unavailable storage — keep system-derived initial state.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const setColorMode = useCallback((mode: ColorMode) => {
+    userChoseModeRef.current = true;
     setColorModeState(mode);
     Appearance.setColorScheme(mode);
+    void AsyncStorage.setItem(COLOR_MODE_STORAGE_KEY, mode).catch(() => {});
   }, []);
 
   const toggleColorMode = useCallback(() => {
+    userChoseModeRef.current = true;
     setColorModeState((prev) => {
       const next: ColorMode = prev === "light" ? "dark" : "light";
       Appearance.setColorScheme(next);
+      void AsyncStorage.setItem(COLOR_MODE_STORAGE_KEY, next).catch(() => {});
       return next;
     });
   }, []);
