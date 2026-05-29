@@ -106,6 +106,7 @@ export const en = {
     detailTitle: "Daily P&L",
     moversSection: "Asset moves",
     staleBaseline: "Compared to {{days}} days ago",
+    allNewPositions: "No overnight holdings under this filter",
     disclaimer: "For reference only; may be delayed",
   },
   portfolioDetail: {

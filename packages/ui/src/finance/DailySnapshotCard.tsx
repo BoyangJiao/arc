@@ -18,6 +18,8 @@ import {
   typographyClass,
 } from "../tokens/typography";
 
+import { shouldShowAllNewPositionsHeadline } from "./daily-snapshot-headline";
+
 // ──────────────────────────────────────────────────────────────────────────
 // Public types — kept structurally compatible with @arc/core DailyDelta so
 // the page can pass through without mapping. We avoid importing from
@@ -45,6 +47,7 @@ export interface DailySnapshotCardProps {
   readonly noBaselineMessage: string;
   readonly formatChangeLine: (delta: Decimal, percent: Decimal | null) => string;
   readonly formatFooterDate: (isoTimestamp: string) => string;
+  readonly allNewPositionsMessage: string;
   readonly onPress?: () => void;
   readonly accessibilityLabel?: string;
 }
@@ -78,6 +81,7 @@ export function DailySnapshotCard(props: DailySnapshotCardProps): ReactNode {
     noBaselineMessage,
     formatChangeLine,
     formatFooterDate,
+    allNewPositionsMessage,
     onPress,
     accessibilityLabel,
   } = props;
@@ -105,15 +109,26 @@ export function DailySnapshotCard(props: DailySnapshotCardProps): ReactNode {
         ? businessClasses.loss.text
         : businessClasses.pnlNeutral.text;
 
+  const allNewPositions = shouldShowAllNewPositionsHeadline(delta);
+
   const body = (
     <DailySnapshotCardFrame accessibilityLabel={accessibilityLabel ?? title}>
       <Text className={TYPO_SNAPSHOT_CARD_TITLE}>{title}</Text>
-      <Text
-        className={typographyClass("bodySm", "tabular-nums", totalColorClass)}
-        numberOfLines={2}
-      >
-        {formatChangeLine(delta.totalDeltaReporting, delta.totalDeltaPercent)}
-      </Text>
+      {allNewPositions ? (
+        <Text
+          className={typographyClass("bodySm", businessClasses.pnlNeutral.text)}
+          numberOfLines={2}
+        >
+          {allNewPositionsMessage}
+        </Text>
+      ) : (
+        <Text
+          className={typographyClass("bodySm", "tabular-nums", totalColorClass)}
+          numberOfLines={2}
+        >
+          {formatChangeLine(delta.totalDeltaReporting, delta.totalDeltaPercent)}
+        </Text>
+      )}
       {delta.baselineAsOf ? (
         <Text className={TYPO_CAPTION}>{formatFooterDate(delta.baselineAsOf)}</Text>
       ) : null}

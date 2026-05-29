@@ -106,6 +106,7 @@ export const zh = {
     detailTitle: "每日盈亏",
     moversSection: "资产变动",
     staleBaseline: "对比自 {{days}} 天前",
+    allNewPositions: "本筛选下暂无隔夜持仓",
     disclaimer: "仅供参考，可能延迟",
   },
   portfolioDetail: {

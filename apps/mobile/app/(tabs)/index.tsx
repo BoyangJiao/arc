@@ -323,6 +323,7 @@ export default function PortfolioTab() {
                   delta={heroDelta}
                   title={t("dailySnapshot.title")}
                   noBaselineMessage={t("dailySnapshot.noBaseline")}
+                  allNewPositionsMessage={t("dailySnapshot.allNewPositions")}
                   formatChangeLine={(delta, percent) =>
                     formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))
                   }

@@ -20,6 +20,10 @@ import {
 
 import type { DailySnapshotDelta } from "./DailySnapshotCard";
 import { DailySnapshotMoverRow } from "./DailySnapshotMoverRow";
+import {
+  shouldShowAllNewPositionsHeadline,
+  visibleDailySnapshotMovers,
+} from "./daily-snapshot-headline";
 
 export interface DailySnapshotDetailViewProps {
   readonly delta: DailySnapshotDelta;
@@ -34,6 +38,8 @@ export interface DailySnapshotDetailViewProps {
   readonly formatFooterDate: (isoTimestamp: string) => string;
   /** e.g. "对比自 3 天前" — omit when baseline is yesterday. */
   readonly staleBaselineLabel?: string;
+  /** When filter/scope has no overnight movers — e.g. all positions opened today. */
+  readonly allNewPositionsMessage: string;
   readonly onMoverPress?: (assetId: string) => void;
 }
 
@@ -55,6 +61,7 @@ export function DailySnapshotDetailView(props: DailySnapshotDetailViewProps): Re
     formatAssetLabel,
     formatFooterDate,
     staleBaselineLabel,
+    allNewPositionsMessage,
     onMoverPress,
   } = props;
 
@@ -81,15 +88,22 @@ export function DailySnapshotDetailView(props: DailySnapshotDetailViewProps): Re
         ? businessClasses.loss.text
         : businessClasses.pnlNeutral.text;
 
-  const movers = delta.movers.filter((m) => !m.deltaReporting.isZero() || !m.deltaPercent.isZero());
+  const movers = visibleDailySnapshotMovers(delta);
+  const allNewPositions = shouldShowAllNewPositionsHeadline(delta);
 
   return (
     <View className="gap-6">
       <View className="gap-1">
         <Text className={TYPO_SNAPSHOT_CARD_TITLE}>{title}</Text>
-        <Text className={typographyClass("display2xl", totalColorClass)}>
-          {formatChangeLine(delta.totalDeltaReporting, delta.totalDeltaPercent)}
-        </Text>
+        {allNewPositions ? (
+          <Text className={typographyClass("display2xl", businessClasses.pnlNeutral.text)}>
+            {allNewPositionsMessage}
+          </Text>
+        ) : (
+          <Text className={typographyClass("display2xl", totalColorClass)}>
+            {formatChangeLine(delta.totalDeltaReporting, delta.totalDeltaPercent)}
+          </Text>
+        )}
         {delta.baselineAsOf ? (
           <Text className={TYPO_CAPTION}>{formatFooterDate(delta.baselineAsOf)}</Text>
         ) : null}

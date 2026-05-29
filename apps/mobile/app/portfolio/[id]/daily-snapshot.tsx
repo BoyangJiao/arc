@@ -20,6 +20,10 @@ import { parseAssetId } from "@arc/core";
 import Decimal from "decimal.js";
 
 import { currencySymbol, formatMoney } from "../../../src/lib/format-money";
+import {
+  isMarketFilterActive,
+  parseMarketFiltersParam,
+} from "../../../src/lib/portfolio-market-filter";
 import { useDailyDelta, usePortfolio } from "../../../src/lib/queries";
 import { useUserPreferences } from "../../../src/lib/user-preferences";
 
@@ -33,12 +37,22 @@ const staleBaselineDayCount = (baselineAsOf: string): number => {
 export default function DailySnapshotDetailScreen() {
   const { i18n, t } = useTranslation();
   const router = useRouter();
-  const { id: portfolioId } = useLocalSearchParams<{ id: string }>();
+  const { id: portfolioId, markets: marketsParam } = useLocalSearchParams<{
+    id: string;
+    markets?: string;
+  }>();
   const { prefs } = useUserPreferences();
   const { data: portfolio } = usePortfolio(portfolioId);
 
+  const marketFilters = useMemo(() => parseMarketFiltersParam(marketsParam), [marketsParam]);
+  const marketFilterActive = isMarketFilterActive(marketFilters);
+
   const reportingCurrency = portfolio?.reportingCurrency ?? prefs?.reportingCurrency ?? "CNY";
-  const { data: delta, isPending, isError } = useDailyDelta(portfolioId, reportingCurrency);
+  const {
+    data: delta,
+    isPending,
+    isError,
+  } = useDailyDelta(portfolioId, reportingCurrency, marketFilterActive ? marketFilters : undefined);
 
   const formatFooterDate = useCallback(
     (iso: string) =>
@@ -85,6 +99,7 @@ export default function DailySnapshotDetailScreen() {
               delta={delta}
               title={t("dailySnapshot.title")}
               noBaselineMessage={t("dailySnapshot.noBaseline")}
+              allNewPositionsMessage={t("dailySnapshot.allNewPositions")}
               moversSectionTitle={t("dailySnapshot.moversSection")}
               disclaimer={t("dailySnapshot.disclaimer")}
               formatChangeLine={(d, p) =>
