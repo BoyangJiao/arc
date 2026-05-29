@@ -14,18 +14,28 @@ import { formatMoney } from "./format-money";
 const MARKET_ORDER: readonly Market[] = ["US", "CN", "HK", "FUND", "CRYPTO", "CASH"];
 
 /**
- * Holdings row period change — cost-basis since open (ADR 016).
+ * Holdings row period change — cost-basis since open + cumulative cash dividends.
+ *
+ * Aligns with 支付宝 / 雪球「持有收益」semantic:
+ *   delta   = (current_value − totalCostBasis) + totalDividends_in_reporting
+ *   percent = delta / totalCostBasis × 100
+ *
+ * Cash dividends already realised count as gain (the user received that money).
+ * For most CN funds (currency = reporting), `fxRate ≈ 1` so the conversion is
+ * a no-op; for cross-currency cases we apply current FX (the same approximation
+ * `costBasisReporting` uses).
  *
  * Fixed for all time ranges; does not use chart baseline (ADR 015 superseded).
  */
 const resolvePeriodChange = (
   valueReporting: Decimal,
-  costBasisReporting: Decimal | undefined
+  costBasisReporting: Decimal | undefined,
+  dividendsReporting: Decimal
 ): HoldingPeriodChange => {
   if (costBasisReporting === undefined || costBasisReporting.isZero()) {
     return { kind: "new-position" };
   }
-  const delta = valueReporting.minus(costBasisReporting);
+  const delta = valueReporting.minus(costBasisReporting).plus(dividendsReporting);
   const percent = delta.dividedBy(costBasisReporting).times(100);
   return { kind: "ok", delta, percent };
 };
@@ -57,7 +67,12 @@ export const buildHoldingsTableRows = (input: {
     const name = cat?.name ?? symbol;
     const valueReporting = val?.valueReporting ?? holding.shares.times(holding.averageCost);
     const valueLabel = formatMoney(valueReporting, input.reportingCurrency);
-    const periodChange = resolvePeriodChange(valueReporting, val?.costBasisReporting);
+    const dividendsReporting = holding.totalDividends.times(val?.fxRateUsed ?? new Decimal(1));
+    const periodChange = resolvePeriodChange(
+      valueReporting,
+      val?.costBasisReporting,
+      dividendsReporting
+    );
 
     rows.push({
       assetId: holding.assetId,

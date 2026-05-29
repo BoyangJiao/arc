@@ -58,4 +58,34 @@ describe("buildHoldingsTableRows / resolvePeriodChange", () => {
     expect(change.delta.toString()).toBe("3500");
     expect(change.percent?.toFixed(1)).toBe("24.1");
   });
+
+  it("includes cumulative cash dividends in return — 支付宝 持有收益 semantic", () => {
+    // 506002 scenario: 持有成本 ¥30,055, 当前市值 ¥71,260, 累计分红 ¥3,920.31
+    // → 支付宝 持有收益 = ¥45,125.11 / +150.14%
+    const rows = buildHoldingsTableRows({
+      holdings: [{ ...holding, totalDividends: new Decimal("3920.31") }],
+      perAsset: [
+        {
+          ...perAsset[0]!,
+          valueReporting: new Decimal("71260"),
+          costBasisReporting: new Decimal("30055"),
+        },
+      ],
+      catalog: undefined,
+      reportingCurrency: "CNY",
+      quoteLoading: false,
+      formatPeriodChangeLine: (d, p) => `${d.toString()} (${p?.toString() ?? "—"}%)`,
+      positionLabel: () => "29699.30 份",
+      marketLabel: () => "基金",
+      newPositionLabel: "新持仓",
+      formatAccessibilityLabel: ({ symbol }) => symbol,
+    });
+    const change = rows[0]!.periodChange;
+    expect(change.kind).toBe("ok");
+    if (change.kind !== "ok") return;
+    // delta = (71260 - 30055) + 3920.31 = 45125.31
+    expect(change.delta.toFixed(2)).toBe("45125.31");
+    // percent = 45125.31 / 30055 × 100 ≈ 150.14%
+    expect(change.percent?.toFixed(2)).toBe("150.14");
+  });
 });
