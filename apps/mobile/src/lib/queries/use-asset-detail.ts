@@ -45,10 +45,13 @@ export const useAssetDetail = (market: string | undefined, symbol: string | unde
     const name = row?.name ?? symbol;
     const quote = priceQuery.data;
 
+    // 持有收益 semantic (支付宝 / 雪球 / 钱迹): includes cumulative cash dividends.
+    // Same formula as holdings-presenter row delta (07f9c5d), in native currency
+    // — no FX conversion needed (all three terms come from `holding` accumulators).
     let unrealizedPnL: Decimal | null = null;
     if (holding && quote) {
       const marketValue = holding.shares.times(quote.price);
-      unrealizedPnL = marketValue.minus(holding.totalCostBasis);
+      unrealizedPnL = marketValue.minus(holding.totalCostBasis).plus(holding.totalDividends);
     }
 
     return {

@@ -92,7 +92,7 @@ export const zh = {
     myHolding: "我的持仓",
     shares: "份额：{{shares}}",
     avgCost: "平均成本：{{cost}}",
-    unrealizedPnL: "未实现盈亏：{{pnl}}",
+    unrealizedPnL: "持有收益：{{pnl}}",
     addTransactionCta: "录入此资产交易",
     more: "更多",
     removeFromPortfolio: "从投资组合删除",
