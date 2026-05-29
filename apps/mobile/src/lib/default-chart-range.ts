@@ -31,8 +31,9 @@ export const pickDefaultRangeForFirstTrade = (firstTradeMs: number, nowMs: numbe
   if (days < 1) return "1D";
   if (days < 7) return "1W";
   if (days < 30) return "1M";
-  if (days < 90) return "3M";
-  return "1Y";
+  // Default 3M for any portfolio with ≥ 30d of history — aligns with quarterly
+  // rebalance cadence + matches the global DEFAULT_TIME_RANGE.
+  return "3M";
 };
 
 /**

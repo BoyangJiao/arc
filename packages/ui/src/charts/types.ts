@@ -11,7 +11,18 @@ export const TIME_RANGE_OPTIONS: readonly TimeRange[] = [
   "ALL",
 ] as const;
 
-export const DEFAULT_TIME_RANGE: TimeRange = "1M";
+/**
+ * Default time range for Portfolio Hero + Asset Detail.
+ *
+ * 3M balances:
+ *   - Long enough to show meaningful market movement past intraday noise
+ *   - Aligns with quarterly rebalance cadence (Arc's core differentiation)
+ *   - Short enough to keep chart density high (true historical bootstrap)
+ *
+ * Smart default in `pickDefaultRangeForFirstTrade` narrows this for new
+ * portfolios (< 90d of history) so the chart isn't a long flat lead-in.
+ */
+export const DEFAULT_TIME_RANGE: TimeRange = "3M";
 
 export interface ChartPoint {
   readonly x: number;

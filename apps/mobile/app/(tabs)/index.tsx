@@ -44,7 +44,6 @@ import { currencySymbol, formatMoney } from "../../src/lib/format-money";
 import { buildHoldingsTableRows } from "../../src/lib/holdings-presenter";
 import {
   filterPortfolioValuation,
-  filterTransactionsByMarket,
   isMarketFilterActive,
   serializeMarketFilters,
 } from "../../src/lib/portfolio-market-filter";
@@ -74,10 +73,6 @@ export default function PortfolioTab() {
   }, []);
   const [selectedMarketFilters, setSelectedMarketFilters] = useState<Set<Market>>(() => new Set());
   const marketFilterActive = isMarketFilterActive(selectedMarketFilters);
-  const marketFilterKey = useMemo(
-    () => serializeMarketFilters(selectedMarketFilters),
-    [selectedMarketFilters]
-  );
 
   const { prefs } = useUserPreferences();
 
@@ -87,17 +82,17 @@ export default function PortfolioTab() {
   const reportingCurrency = activePortfolio?.reportingCurrency ?? prefs?.reportingCurrency ?? "CNY";
   const { holdings, transactions, isPending: holdingsPending } = usePortfolioHoldings(activeId);
 
+  // Smart default fires ONCE per portfolio context (not per filter switch).
+  // Filter toggles must preserve the user's current range — bouncing 1M ↔ 1Y
+  // on every chip tap is jarring (dogfooding 2026-05-29).
   useEffect(() => {
     userPickedRangeRef.current = false;
-  }, [activeId, marketFilterKey]);
+  }, [activeId]);
   useEffect(() => {
     if (userPickedRangeRef.current) return;
-    const scopedTx = marketFilterActive
-      ? filterTransactionsByMarket(transactions ?? [], selectedMarketFilters)
-      : transactions;
-    const next = pickDefaultRangeForTransactions(scopedTx);
+    const next = pickDefaultRangeForTransactions(transactions);
     if (next) setChartRange(next);
-  }, [activeId, transactions, marketFilterActive, marketFilterKey, selectedMarketFilters]);
+  }, [activeId, transactions]);
 
   const {
     data: valuation,
