@@ -35,8 +35,8 @@ export const computeMarketValue = (
   const valueNative = holding.shares.times(quote.price);
   // 报告币种市值
   const valueReporting = valueNative.times(fxRate);
-  // 报告币种成本
-  const costBasisReporting = holding.shares.times(holding.averageCost).times(fxRate);
+  // 报告币种成本（含手续费 — 对齐 totalCostBasis / 支付宝「持有成本」）
+  const costBasisReporting = holding.totalCostBasis.times(fxRate);
   // 未实现盈亏
   const unrealizedPnL = valueReporting.minus(costBasisReporting);
   // 未实现盈亏百分比

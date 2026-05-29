@@ -192,7 +192,10 @@ export const createFinnhubAdapter = (config: FinnhubAdapterConfig): PriceAdapter
         const type = row.type;
 
         if (!sym || !name) continue;
-        if (type !== "Common Stock") continue;
+        // Finnhub labels US ETFs/ETNs as ETP/ETF — exclude only non-equity products we cannot price.
+        if (type !== "Common Stock" && type !== "ETP" && type !== "ETF" && type !== "ADR") {
+          continue;
+        }
         if (displaySymbol?.includes(".")) continue;
 
         results.push({

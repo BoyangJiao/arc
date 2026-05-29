@@ -90,6 +90,16 @@ describe("computeMarketValue", () => {
     expect(v.fxRateUsed.equals(new Decimal("7.2"))).toBe(true);
   });
 
+  test("cost basis uses totalCostBasis (includes fees), not shares × averageCost", () => {
+    const holding = makeHolding(10, 100, {
+      totalCostBasis: new Decimal("1009.99"),
+    });
+    const quote = makeQuote(120);
+    const v = computeMarketValue(holding, quote, null, "USD");
+    expect(v.costBasisReporting.equals(new Decimal("1009.99"))).toBe(true);
+    expect(v.unrealizedPnL.equals(new Decimal("1200").minus("1009.99"))).toBe(true);
+  });
+
   test("zero cost basis → unrealizedPnLPercent = 0", () => {
     const holding = makeHolding(0, "0", {
       shares: new Decimal(10),
