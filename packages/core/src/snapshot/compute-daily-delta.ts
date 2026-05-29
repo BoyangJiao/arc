@@ -34,10 +34,15 @@ const ZERO = new Decimal(0);
  *   - baseline.totalValue is 0 (degenerate)    → totalDeltaPercent = 0
  *   - an asset appears in current but not baseline (new buy)
  *                                              → deltaPercent = 0 (avoid Inf)
- *   - an asset appears in baseline but not current (sold off)
- *                                              → NOT included in movers
- *                                                 (realized P&L is a different concept,
- *                                                  out of scope per spec)
+ *   - an asset appears in baseline but not current (sold off / deleted)
+ *                                              → NOT included in movers or totals
+ *                                                 (realized P&L / portfolio edits are separate)
+ *   - an asset appears in current but not baseline (new buy today)
+ *                                              → deltaReporting = 0 (not full market value);
+ *                                                 listed in movers; excluded from headline total
+ *
+ * Headline total = Σ (current − baseline) for **currently held** assets that existed in
+ * the baseline snapshot with value > 0 — NOT `current.totalValue − baseline.totalValue`.
  */
 export const computeDailyDelta = (
   current: PortfolioValuation,
@@ -67,12 +72,6 @@ export const computeDailyDelta = (
     };
   }
 
-  // 3) Normal path — compute totals + per-asset deltas
-  const totalDeltaReporting = current.totalValue.minus(baseline.totalValue);
-  const totalDeltaPercent = baseline.totalValue.isZero()
-    ? ZERO
-    : totalDeltaReporting.dividedBy(baseline.totalValue).times(100);
-
   // Index baseline per-asset by assetId for O(1) lookup
   const baselineByAsset = new Map<string, SnapshotAsset>();
   for (const a of baseline.perAsset) {
@@ -80,12 +79,17 @@ export const computeDailyDelta = (
   }
 
   const movers: AssetDelta[] = [];
+  let totalDeltaReporting = ZERO;
+  let heldBaselineTotal = ZERO;
+
   for (const asset of current.perAsset) {
     const baselineAsset = baselineByAsset.get(asset.assetId);
     const baselineValue = baselineAsset?.valueReporting ?? ZERO;
-    const deltaReporting = asset.valueReporting.minus(baselineValue);
+    const deltaReporting = baselineValue.isZero()
+      ? ZERO
+      : asset.valueReporting.minus(baselineValue);
 
-    // baseline value 0 (new buy in current) → percent 0 instead of Infinity/NaN
+    // baseline value 0 (new buy in current) → reporting + percent both 0 (avoid Inf / misleading ¥)
     const deltaPercent = baselineValue.isZero()
       ? ZERO
       : deltaReporting.dividedBy(baselineValue).times(100);
@@ -96,7 +100,17 @@ export const computeDailyDelta = (
       deltaPercent,
       currentValueReporting: asset.valueReporting,
     });
+
+    // Headline total: overnight-held assets only (exclude new buys + sold-off).
+    if (!baselineValue.isZero()) {
+      totalDeltaReporting = totalDeltaReporting.plus(deltaReporting);
+      heldBaselineTotal = heldBaselineTotal.plus(baselineValue);
+    }
   }
+
+  const totalDeltaPercent = heldBaselineTotal.isZero()
+    ? ZERO
+    : totalDeltaReporting.dividedBy(heldBaselineTotal).times(100);
 
   // Sort movers by abs(deltaPercent) descending. Stable sort:
   // ties broken by assetId so test/render output is deterministic.
