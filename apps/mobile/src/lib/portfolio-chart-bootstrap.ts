@@ -28,14 +28,20 @@ import {
   type PortfolioValuation,
   type PriceQuote,
   type Transaction,
+  type Market,
 } from "@arc/core";
 import type { TimeRange } from "@arc/ui";
 
 import { fetchFxRateOnDay } from "./compute-valuation-at-date";
 import { getRegistry } from "./market-data";
 import type { PortfolioSnapshotPoint } from "./queries/use-portfolio-value-snapshots";
-import { rangeToWindow } from "./time-range";
 import { indexByUtcDay, lookupByUtcDayWithForwardFill, toUtcDayKey } from "./twr-day-lookup";
+import {
+  assetMatchesMarketFilter,
+  filterHoldingsByMarket,
+  filterTransactionsByMarket,
+} from "./portfolio-market-filter";
+import { chartSampleIntervalCount } from "./portfolio-chart-density";
 import { resolvePortfolioTwrWindow } from "./twr-window";
 
 const toSnapshotPoint = (input: {
@@ -76,25 +82,6 @@ export const liveValuationToChartPoint = (
  * Higher sample density on shorter ranges lets the per-asset baseline scan
  * find real historical prices (instead of falling to cost-basis fallback).
  */
-const DAY_MS = 86_400_000;
-const sampleCountForRange = (range: TimeRange, windowFrom: Date, windowTo: Date): number => {
-  switch (range) {
-    case "1D":
-      return 1;
-    case "1W":
-      return 7;
-    case "1M":
-      return 30;
-    case "3M":
-    case "YTD":
-    case "1Y":
-    case "ALL": {
-      const days = Math.max(0, (windowTo.getTime() - windowFrom.getTime()) / DAY_MS);
-      return Math.max(7, Math.round(days / 7));
-    }
-  }
-};
-
 const buildSampleDayKeys = (input: {
   readonly windowFrom: Date;
   readonly windowTo: Date;
@@ -261,15 +248,22 @@ const buildSampledChartPoints = async (input: {
   readonly transactions: readonly Transaction[];
   readonly reportingCurrency: Currency;
   readonly liveValuation: PortfolioValuation | null | undefined;
+  /** When set, True Historical is scoped to these markets (ADR 014 extension). */
+  readonly marketFilters?: ReadonlySet<Market>;
 }): Promise<readonly PortfolioSnapshotPoint[]> => {
   if (input.transactions.length === 0) return [];
 
+  const marketScoped =
+    input.marketFilters != null && input.marketFilters.size > 0
+      ? filterTransactionsByMarket(input.transactions, input.marketFilters)
+      : input.transactions;
+
   // Window: ALL clamps to first trade; others are pure calendar.
-  const window = resolvePortfolioTwrWindow(input.range, input.transactions);
+  const window = resolvePortfolioTwrWindow(input.range, marketScoped);
   const sampleDays = buildSampleDayKeys({
     windowFrom: window.from,
     windowTo: window.to,
-    sampleCount: sampleCountForRange(input.range, window.from, window.to),
+    sampleCount: chartSampleIntervalCount(input.range, window.from, window.to),
   });
   if (sampleDays.length === 0) return [];
 
@@ -277,24 +271,38 @@ const buildSampledChartPoints = async (input: {
   // bought-then-sold in the window). Widen start by 30 days for forward-fill.
   const lookupFrom = new Date(`${sampleDays[0]!}T00:00:00.000Z`);
   lookupFrom.setUTCDate(lookupFrom.getUTCDate() - 30);
-  const allAssetIds = collectAssetIdsFromTransactions(input.transactions);
+  const allAssetIds = (() => {
+    const ids = new Set(collectAssetIdsFromTransactions(marketScoped));
+    if (input.liveValuation && input.marketFilters != null && input.marketFilters.size > 0) {
+      for (const row of input.liveValuation.perAsset) {
+        if (assetMatchesMarketFilter(row.assetId, input.marketFilters)) {
+          ids.add(row.assetId);
+        }
+      }
+    }
+    return Array.from(ids);
+  })();
   const priceLookups = await prefetchHistoricalPriceLookups(allAssetIds, lookupFrom, window.to);
 
   // FX pairs from all tx currencies (covers closed positions whose currency
   // is no longer in current holdings).
   const fxPairs = collectFxPairsFromTransactions(input.transactions, input.reportingCurrency);
 
-  // Fetch FX once per sample day, serially (adapter caches absorb duplicates).
+  // Fetch FX once per sample day; forward-fill last good rates across weekends/holidays.
   const fxByDay = new Map<string, FxRate[]>();
+  let lastGoodFxRates: FxRate[] | undefined;
   for (const dayKey of sampleDays) {
-    const rates: FxRate[] = [];
     try {
+      const rates: FxRate[] = [];
       for (const pair of fxPairs) {
         rates.push(await fetchFxRateOnDay(pair.from, pair.to, dayKey));
       }
+      lastGoodFxRates = rates;
       fxByDay.set(dayKey, rates);
     } catch {
-      // Skip day if FX unresolvable — chart will interpolate visually.
+      if (lastGoodFxRates) {
+        fxByDay.set(dayKey, lastGoodFxRates);
+      }
     }
   }
 
@@ -303,7 +311,10 @@ const buildSampledChartPoints = async (input: {
   // the last day so the hero card and right-most chart point match exactly).
   const bootstrapDays = sampleDays.slice(0, -1);
   for (const dayKey of bootstrapDays) {
-    const holdingsOnDay = computeHoldings(transactionsUpToDayKey(input.transactions, dayKey));
+    let holdingsOnDay = computeHoldings(transactionsUpToDayKey(input.transactions, dayKey));
+    if (input.marketFilters != null && input.marketFilters.size > 0) {
+      holdingsOnDay = filterHoldingsByMarket(holdingsOnDay, input.marketFilters);
+    }
 
     // Empty-portfolio days still emit a point (totalValue = 0) so the
     // stair-step at first cash flow renders correctly.
@@ -340,7 +351,10 @@ const buildSampledChartPoints = async (input: {
   } else {
     // Fallback: bootstrap the last sample day too.
     const lastDay = sampleDays[sampleDays.length - 1]!;
-    const holdingsOnLast = computeHoldings(transactionsUpToDayKey(input.transactions, lastDay));
+    let holdingsOnLast = computeHoldings(transactionsUpToDayKey(input.transactions, lastDay));
+    if (input.marketFilters != null && input.marketFilters.size > 0) {
+      holdingsOnLast = filterHoldingsByMarket(holdingsOnLast, input.marketFilters);
+    }
     const fxRates = fxByDay.get(lastDay);
     if (holdingsOnLast.length === 0) {
       points.push(
@@ -378,25 +392,10 @@ export const buildBootstrapChartPoints = async (input: {
   readonly transactions: readonly Transaction[];
   readonly reportingCurrency: Currency;
   readonly liveValuation: PortfolioValuation | null | undefined;
+  readonly marketFilters?: ReadonlySet<Market>;
 }): Promise<readonly PortfolioSnapshotPoint[]> => {
   if (input.transactions.length === 0) return [];
   return buildSampledChartPoints(input);
 };
 
-/** True when DB snapshots alone cannot render a chart for the selected range. */
-export const needsChartBootstrap = (
-  snapshots: readonly PortfolioSnapshotPoint[],
-  range: TimeRange,
-  transactions: readonly Transaction[]
-): boolean => {
-  if (snapshots.length >= 2) return false;
-  if (transactions.length === 0) return false;
-  const window = rangeToWindow(range);
-  return (
-    snapshots.length === 0 ||
-    transactions.some((tx) => {
-      const ms = new Date(tx.tradeDate).getTime();
-      return ms >= window.from.getTime() && ms <= window.to.getTime();
-    })
-  );
-};
+export { expectedBootstrapPointCount, needsChartBootstrap } from "./portfolio-chart-density";

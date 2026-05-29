@@ -7,6 +7,7 @@
 export { LineChart, type ArcLineChartProps, type ArcLineChartColor } from "./LineChart";
 export { AreaChart, type ArcAreaChartProps } from "./AreaChart";
 export { ChartCrosshair } from "./ChartCrosshair";
+export { ChartDrawLoading, type ChartDrawLoadingProps } from "./ChartDrawLoading";
 export { ChartSkeleton, type ChartSkeletonProps } from "./ChartSkeleton";
 export { TimeRangeSelector, type TimeRangeSelectorProps } from "./TimeRangeSelector";
 export { CHART_TIME_RANGE_GAP } from "./chart-scrub-layout";

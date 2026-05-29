@@ -1,4 +1,5 @@
 import type { ChartPoint } from "./types";
+import { firstNonZeroChartY } from "../finance/compute-period-change";
 
 /** Map chart points to victory-native series rows (sorted by x). */
 export const toChartSeries = (
@@ -11,13 +12,19 @@ export const toChartSeries = (
   }));
 };
 
-/** Period return sign for chart stroke / fill coloring. */
+/**
+ * Period return sign for stroke / dot fill — matches PortfolioHeroSection headline.
+ *
+ * Baseline = first non-zero Y (not data[0]; bootstrap charts may lead with totalValue = 0).
+ * Industry default: sign(last − periodStart) tints the whole line for the selected range.
+ */
 export const chartPeriodSign = (data: ReadonlyArray<ChartPoint>): "gain" | "loss" | "neutral" => {
   if (data.length < 2) return "neutral";
-  const first = data[0]!.y;
+  const periodStart = firstNonZeroChartY(data);
   const last = data[data.length - 1]!.y;
-  if (last > first) return "gain";
-  if (last < first) return "loss";
+  if (periodStart === null) return "neutral";
+  if (last > periodStart) return "gain";
+  if (last < periodStart) return "loss";
   return "neutral";
 };
 

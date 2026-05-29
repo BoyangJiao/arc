@@ -1,5 +1,5 @@
 /**
- * PortfolioHeroSection — Portfolio Tab hero: total value, daily delta, NAV chart.
+ * PortfolioHeroSection — Portfolio Tab hero: total value, period change, NAV chart.
  *
  * Scrub: header value + period change mirror chart anchor (Coinbase-style); date on chart.
  * Daily P&L card lives below this section (`DailySnapshotCard`).
@@ -12,7 +12,6 @@ import Decimal from "decimal.js";
 import { useSharedValue } from "react-native-reanimated";
 import type { ChartScrubState } from "./chart-scrub";
 import { computePeriodChange, firstNonZeroChartY } from "./compute-period-change";
-import type { DailySnapshotDelta } from "./DailySnapshotCard";
 import { FlippingNumberText } from "./FlippingNumberText";
 
 import {
@@ -22,7 +21,7 @@ import {
   type ChartPoint,
   type TimeRange,
 } from "../charts";
-import { Text } from "../primitives/Text";
+import { Skeleton, Text } from "../primitives";
 import { useBusinessClasses } from "../tokens/business-context";
 import {
   TYPO_CAPTION,
@@ -38,11 +37,8 @@ export interface PortfolioHeroSectionProps {
   /** Live portfolio total (valuation) — shown when chart is not scrubbed. */
   readonly liveTotalValue: Decimal;
   readonly formatMoney: (amount: Decimal) => string;
-  readonly delta: DailySnapshotDelta | null;
-  readonly noBaselineMessage: string;
-  /** Coinbase-style single line: ↑¥1,234.56 (+8.15%). */
-  /** e.g. 「本期市值变化」— ADR 016 */
-  readonly periodChangeLabel?: string;
+  /** e.g. 「过去1个月」— matches selected chart time range (ADR 016). */
+  readonly periodChangeLabel: string;
   readonly formatChangeLine: (delta: Decimal, percent: Decimal | null) => string;
   readonly formatAnchorTime: (isoTimestamp: string) => string;
   readonly chartData: ReadonlyArray<ChartPoint>;
@@ -74,8 +70,6 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
     totalValueTitle,
     liveTotalValue,
     formatMoney,
-    delta,
-    noBaselineMessage,
     periodChangeLabel,
     formatChangeLine,
     formatAnchorTime,
@@ -90,8 +84,6 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
 
   const businessClasses = useBusinessClasses();
   const [scrub, setScrub] = useState<ChartScrubState | null>(null);
-  // UI-thread mirrors of the chart scrub — bypass React state so the hero
-  // number can flip at 60fps while the finger is moving.
   const scrubValueSv = useSharedValue(0);
   const scrubActiveSv = useSharedValue(false);
   const hasChart = chartData.length > 0;
@@ -116,20 +108,15 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
   }, [scrub, liveTotalValue]);
 
   const heroChange = useMemo(() => {
+    if (chartLoading) return null;
     if (scrub && periodStart !== null) {
       return computePeriodChange(scrub.value, periodStart);
     }
     if (hasChart && periodStart !== null) {
       return computePeriodChange(liveTotalValue.toNumber(), periodStart);
     }
-    if (delta?.status === "ok") {
-      return {
-        delta: delta.totalDeltaReporting,
-        percent: delta.totalDeltaPercent,
-      };
-    }
     return null;
-  }, [scrub, periodStart, hasChart, liveTotalValue, delta]);
+  }, [chartLoading, scrub, periodStart, hasChart, liveTotalValue]);
 
   const changeSign = heroChange ? signOf(heroChange.delta) : ("zero" as const);
   const changeColorClass = colorClassForSign(changeSign, businessClasses);
@@ -144,16 +131,21 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
           liveValue={scrubValueSv}
           liveActive={scrubActiveSv}
         />
-        <View className="min-h-[24px] justify-center gap-0.5">
-          {heroChange ? (
+        <View className="min-h-[40px] justify-center gap-0.5">
+          {chartLoading ? (
             <>
-              {periodChangeLabel ? <Text className={TYPO_CAPTION}>{periodChangeLabel}</Text> : null}
+              <Skeleton className="h-3.5 w-20 rounded-md" />
+              <Skeleton className="h-6 w-40 rounded-md" />
+            </>
+          ) : heroChange ? (
+            <>
+              <Text className={TYPO_CAPTION}>{periodChangeLabel}</Text>
               <Text className={typographyClass("changeLg", changeColorClass)}>
                 {formatChangeLine(heroChange.delta, heroChange.percent)}
               </Text>
             </>
-          ) : delta?.status === "no-baseline" ? (
-            <Text className={TYPO_CAPTION}>{noBaselineMessage}</Text>
+          ) : hasChart ? (
+            <Text className={TYPO_CAPTION}>{periodChangeLabel}</Text>
           ) : null}
         </View>
       </View>
@@ -163,6 +155,7 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
       <View style={{ gap: CHART_TIME_RANGE_GAP }}>
         {hasChart || chartLoading ? (
           <AreaChart
+            key={chartRange}
             data={chartData}
             height={208}
             loading={chartLoading}

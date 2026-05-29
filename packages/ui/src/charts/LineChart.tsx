@@ -14,7 +14,7 @@ import { LineChart as ProLineChart } from "heroui-native-pro/line-chart";
 import type { ChartBounds, PointsArray } from "victory-native";
 
 import { ChartPressOverlay, type NumericChartPressState } from "./ChartPressOverlay";
-import { ChartSkeleton } from "./ChartSkeleton";
+import { ChartDrawLoading } from "./ChartDrawLoading";
 import { HIDDEN_CARTESIAN_AXIS_PROPS } from "./chart-axis-props";
 import { ensureRenderableChartPoints, toChartSeries } from "./chart-series";
 import type { ChartPoint } from "./types";
@@ -56,8 +56,12 @@ export function LineChart({
   }, [series]);
   const strokeColor = useChartPeriodStrokeColor(renderable);
 
+  if (loading) {
+    return <ChartDrawLoading height={height} />;
+  }
+
   if (series.length === 0) {
-    return loading ? <ChartSkeleton height={height} /> : null;
+    return null;
   }
 
   const heightClass = heightClassFor(height);
@@ -97,11 +101,6 @@ export function LineChart({
       ) : (
         chartBody()
       )}
-      {loading ? (
-        <View className="absolute inset-0 bg-background/80 justify-center">
-          <ChartSkeleton height={height} />
-        </View>
-      ) : null}
     </View>
   );
 }

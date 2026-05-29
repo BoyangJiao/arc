@@ -1,5 +1,8 @@
 /**
- * Resolve Skia stroke/fill color from chart period sign + user finance color mode.
+ * Resolve Skia stroke/fill color from selected-range period sign + finance color mode.
+ *
+ * Industry default (Coinbase / Robinhood): whole line = sign(last − periodStart),
+ * aligned with PortfolioHeroSection headline — not the tail segment slope.
  */
 
 import { useMemo } from "react";
