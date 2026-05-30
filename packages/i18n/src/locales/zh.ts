@@ -572,6 +572,8 @@ export const zh = {
     sumShort: "还差 {{delta}}%",
     sumOver: "超出 {{delta}}%",
     actionsTitle: "再平衡行动单",
+    driftSectionTitle: "配置漂移",
+    actionsSectionTitle: "调整份额",
     amountEstimateLabel: "约",
     units: {
       share: "股",

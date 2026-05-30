@@ -31,6 +31,10 @@ export type RebalanceCurrency = "CNY" | "HKD" | "USD" | "JPY" | "BTC" | "ETH";
 export interface RebalanceActionRow {
   readonly assetId: string;
   readonly label: string;
+  /** Leading asset avatar. */
+  readonly symbol: string;
+  readonly marketLabel: string;
+  readonly imageUrl?: string | null;
   readonly sharesNeeded: Decimal;
   readonly amountNeeded: Decimal;
   readonly market: RebalanceMarket;

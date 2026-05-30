@@ -586,6 +586,8 @@ export const en = {
     sumShort: "{{delta}}% below 100",
     sumOver: "{{delta}}% above 100",
     actionsTitle: "Rebalance action list",
+    driftSectionTitle: "Allocation drift",
+    actionsSectionTitle: "Adjustments",
     amountEstimateLabel: "Approx.",
     units: {
       share: "shares",
