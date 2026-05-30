@@ -126,3 +126,13 @@ export {
   PortfolioValueOverTimeCard,
   type PortfolioValueOverTimeCardProps,
 } from "./PortfolioValueOverTimeCard";
+export { type PnlSign, pnlTextClass } from "./pnl-types";
+export { RankingRow, type RankingRowProps } from "./RankingRow";
+export { PnlPeriodCard, type PnlPeriodCardProps, type PnlMetricRow } from "./PnlPeriodCard";
+export { PnlCumulativeCard, type PnlCumulativeCardProps } from "./PnlCumulativeCard";
+export {
+  PnlRankingCard,
+  type PnlRankingCardProps,
+  type PnlRankingRowData,
+  type PnlRankingTab,
+} from "./PnlRankingCard";
