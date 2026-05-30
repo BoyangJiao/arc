@@ -80,7 +80,7 @@ export default function SignInScreen() {
       setFlow(prefillCodeSent ? "awaitingCode" : "start");
     }
     // intentionally narrow deps — we only want to react to URL-provided email
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // (react-hooks/exhaustive-deps is not enforced in this flat config)
   }, [prefilledEmail, prefillCodeSent]);
 
   // ── Actions ──────────────────────────────────────────────────────────────

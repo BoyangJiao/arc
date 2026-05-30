@@ -2,6 +2,7 @@
  * Deterministic monogram + gradient helpers for AssetAvatar.
  */
 
+import { AVATAR_GRADIENT_PAIRS } from "../tokens/avatar-gradients";
 import type { RebalanceMarket } from "./rebalance-types";
 
 /** Short market code for corner badge (max ~2 chars). */
@@ -13,15 +14,6 @@ export const MARKET_BADGE_CODE: Readonly<Record<RebalanceMarket, string>> = {
   CRYPTO: "₿",
   CASH: "$",
 };
-
-const GRADIENT_PAIRS: readonly (readonly [string, string])[] = [
-  ["#6366f1", "#8b5cf6"],
-  ["#0ea5e9", "#06b6d4"],
-  ["#10b981", "#059669"],
-  ["#f59e0b", "#d97706"],
-  ["#ec4899", "#db2777"],
-  ["#64748b", "#475569"],
-];
 
 const hashString = (input: string): number => {
   let hash = 0;
@@ -35,6 +27,6 @@ export const monogramFromSymbol = (symbol: string): string =>
   symbol.trim().slice(0, 2).toUpperCase() || "?";
 
 export const gradientForSeed = (seed: string): readonly [string, string] => {
-  const index = hashString(seed) % GRADIENT_PAIRS.length;
-  return GRADIENT_PAIRS[index] ?? GRADIENT_PAIRS[0]!;
+  const index = hashString(seed) % AVATAR_GRADIENT_PAIRS.length;
+  return AVATAR_GRADIENT_PAIRS[index] ?? AVATAR_GRADIENT_PAIRS[0]!;
 };
