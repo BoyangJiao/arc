@@ -118,7 +118,7 @@ export function DeviationDonut({
                 {seg.label}
               </Text>
             </View>
-            <Text className={TYPO_CAPTION}>{seg.percent.toFixed(0)}%</Text>
+            <Text className={`${TYPO_CAPTION} tabular-nums`}>{seg.percent.toFixed(0)}%</Text>
           </View>
         ))}
       </View>

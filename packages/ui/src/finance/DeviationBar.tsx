@@ -68,7 +68,7 @@ export function DeviationBar({
                 }}
               />
             </View>
-            <Text className={TYPO_CAPTION}>
+            <Text className={`${TYPO_CAPTION} tabular-nums`}>
               {formatPercent(row.currentPercent)} / {formatPercent(row.targetPercent)}
             </Text>
           </View>
