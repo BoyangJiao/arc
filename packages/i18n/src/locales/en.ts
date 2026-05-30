@@ -109,7 +109,8 @@ export const en = {
         "Assumes you invested today's equivalent amount on day one. GIPS-style time-weighted return, excluding your buy/sell timing.",
     },
     costBasis: {
-      tooltip: "Current value minus all cash you invested. This is your true account return.",
+      tooltip:
+        "Current value minus all cash invested, plus dividends received. Aligned with Alipay's holding-return metric. Accurate regardless of transaction history completeness.",
     },
     chart: {
       loadErrorTitle: "Chart unavailable",

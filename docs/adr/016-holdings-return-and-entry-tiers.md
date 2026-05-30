@@ -1,12 +1,23 @@
-# ADR 016 — 持仓收益率口径 + 录入分级（最终版 v2）
+# ADR 016 — 持仓收益率口径 + 录入分级（最终版 v3）
 
-- **状态**: ✅ Accepted（v1: 2026-05-27；**v2 修订: 2026-05-28**，BoyangJiao 确认）
+- **状态**: ✅ Accepted（v1: 2026-05-27；v2 修订: 2026-05-28；**v3 修订: 2026-05-30**，BoyangJiao 确认）
 - **作者**: BoyangJiao + Sonnet 4.6（discovery）+ Claude Opus 4.7（multi-round refinement, v1 + v2）
 - **Supersedes**: ADR 015 全文（持仓行算法）；ADR 014 中 hero 数字 label 部分
 - **相关 ADR**: 014 portfolio-chart-algorithm（曲线算法保留）· 015 holdings-row-period-change（被本 ADR 取代）· 009 daily-snapshot · 011 multi-source fallback · 013 ui-wrapper-ownership
 - **相关法则**: `.specify/data-model-invariants.md` Law 5（历史 ≠ 当下）
 - **触发文档**: [`.specify/handoffs/opus-review-holdings-return-algorithm.md`](../../.specify/handoffs/opus-review-holdings-return-algorithm.md)
 
+> **v3 修订要点（2026-05-30）— 持有收益语义含分红**：
+>
+> Real Env dogfooding 实证（506002 易方达科创板两年定开 3 笔现金分红 ¥3,920），发现原版"持仓盈亏 = current − cost"与支付宝「持有收益」有系统性偏差。
+>
+> - **算法**：`delta = (currentValue − costBasis) + totalDividends（换算为报告货币）`；与支付宝/钱往「持有收益」口径 100% 对齐（commit `07f9c5d` + `9ee81d5`）
+> - **UI label**：i18n key `assetDetail.unrealizedPnL` 值改为 "持有收益 / Holding return"（key 名不变，向后兼容）
+> - **§决策 2**：`resolvePeriodChange` 签名扩展 `dividendsReporting` 参数，delta 含分红
+> - **§决策 4**："持仓盈亏" label 与 tooltip 更新为含分红的「持有收益」语义
+>
+> ---
+>
 > **v2 修订要点（2026-05-28）— 完全移除 `OPENING_SNAPSHOT`**：
 >
 > - **数据**：现有 `OPENING_SNAPSHOT` 记录 **全部 UPDATE 为 BUY**（migration 0015）
@@ -110,19 +121,24 @@ C. 历史持有，只录入持仓快照      → OPENING_SNAPSHOT       → cost
 - (B) 用户 1M 视图：chart 左端 = 30 天前余额，hero 显示真实期间 balance 变化 ✅
 - 任意 scrub：用同一 baseline 算 → 跟默认状态数学一致，永远不会跳变
 
-### 决策 2 — 持仓行 `%` 算法
+### 决策 2 — 持仓行 / Asset Detail 持有收益算法（v3 修订）
 
-**统一改为 cost-basis since-open 固定值，不随时间范围切换变化。**
+**持有收益 = (current value − cost basis) + 累计分红（换算为报告货币）；固定不随时间范围切换。**
+
+口径对齐支付宝 / 钱往「持有收益」：现金分红已实现的收益计入分子；分母仍为原始成本。
 
 ```ts
+// apps/mobile/src/lib/holdings-presenter.ts
 const resolvePeriodChange = (
   valueReporting: Decimal,
-  costBasisReporting: Decimal
+  costBasisReporting: Decimal | undefined,
+  dividendsReporting: Decimal // Σ(dividend × fxRateAtCurrentDate) in reporting currency
 ): HoldingPeriodChange => {
-  if (costBasisReporting.isZero()) {
+  if (costBasisReporting === undefined || costBasisReporting.isZero()) {
     return { kind: "new-position" };
   }
-  const delta = valueReporting.minus(costBasisReporting);
+  // 持有收益 = (市值 - 成本) + 累计分红（与支付宝「持有收益」口径一致）
+  const delta = valueReporting.minus(costBasisReporting).plus(dividendsReporting);
   const percent = delta.dividedBy(costBasisReporting).times(100);
   return { kind: "ok", delta, percent };
 };
@@ -154,18 +170,18 @@ const resolvePeriodChange = (
 ⚠️ 收益分析基于您录入的交易记录。
    若历史录入不完整（例如仅录入当前持仓快照），
    TWR 可能与实际有偏差。
-   持仓盈亏（成本基线）始终准确。
+   持有收益（成本基线 + 分红）始终准确。
 ```
 
-- TWR + cost-basis 双数字 tooltip 模板：
+- TWR + 持有收益 双数字 tooltip 模板（v3 修订）：
 
 ```
 时段收益率(TWR): +40.0%       (大字)
   └ ⓘ 「假设你在期初一次性投入今天等额资金，市场涨幅 +40%。
         GIPS 标准的『时间加权收益率』，剔除你的加仓/减仓节奏。
         依赖完整交易历史；若仅录入持仓快照，此数字仅供参考。」
-持仓盈亏:        +¥3,500 / +23.5%   (小字)
-  └ ⓘ 「今日市值减去你录入的累计成本。这是你的真实账户回报，
+持有收益:        +¥3,500 / +23.5%   (小字)
+  └ ⓘ 「今日市值减去累计成本，加上已收分红；与支付宝「持有收益」口径一致。
         无论交易历史是否完整都准确。」
 ```
 
