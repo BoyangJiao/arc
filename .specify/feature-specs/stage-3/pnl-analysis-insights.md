@@ -377,9 +377,16 @@ export interface PeriodPnlInput {
   readonly transactions: readonly Transaction[];
   /** Day-keyed FX resolver (caller injects historical FX via compute-valuation-at-date). */
   readonly fxAt: (currency: Currency, date: Date) => Decimal;
+  /** Chart x-axis sample days (snapshot dates + bootstrap fill), within [from, to].
+   *  Order-independent — sorted + deduped internally. ← ADDED in implementation;
+   *  the curve needs explicit sample points and `valueAt` alone can't enumerate them. */
+  readonly sampleDates: readonly Date[];
 }
 
 export interface PeriodPnlResult {
+  readonly startValue: Decimal;   // ← ADDED (handy for the date-range card)
+  readonly endValue: Decimal;     // ← ADDED
+
   /** = endValue − startValue − netInflow (period). 含资金流的金额变化。 */
   readonly valueChange: Decimal;
 
@@ -392,9 +399,14 @@ export interface PeriodPnlResult {
   /** Cumulative cost-basis return curve sample points (matches chart). */
   readonly returnCurve: ReadonlyArray<{ readonly date: Date; readonly ratio: Decimal }>;
 
-  /** XIRR (annualized money-weighted return) over the period. May be null
-   *  when cash flows are degenerate (single-day, all-same-sign, etc.). */
-  readonly mwr: Decimal | null;
+  /** Money-weighted return, both faces (null when degenerate — UI shows "—").
+   *  ← SPLIT from the spec's single `mwr`: XIRR is inherently ANNUALIZED, but
+   *  the UI shows two distinct numbers (「收益率(现金加权 MWR)」 vs 「年化收益率估算」).
+   *    mwrPeriod    → de-annualized to the actual window: (1+r)^(T/365) − 1
+   *                   → drives 「收益率(现金加权 MWR)」
+   *    mwrAnnualized → raw XIRR annual rate → drives 「年化收益率估算」 */
+  readonly mwrPeriod: Decimal | null;
+  readonly mwrAnnualized: Decimal | null;
 
   /** Per-asset signed contribution (period). Sorted by abs DESC. */
   readonly perAssetContribution: ReadonlyArray<{
@@ -405,7 +417,18 @@ export interface PeriodPnlResult {
 }
 
 export const computePeriodPnl = (input: PeriodPnlInput): PeriodPnlResult;
+
+// Helper exported separately (§决策 5):
+export const computeRealizedPnlInPeriod = (
+  transactions: readonly Transaction[],
+  from: Date,
+  to: Date,
+  reportingCurrency: Currency,
+  fxResolver: (currency: Currency, date: Date) => Decimal
+): Decimal;
 ```
+
+> **实现状态（2026-05-30, Opus 4.8, commit `295e0b5`）**: 算法层 (Commit 2) 已落地 + 18 测试（12 unit + 6 property），`@arc/core` 180/180 ✅，typecheck 6/6 ✅。上方契约已同步为实现的真实形状。Open question 1 已决议（MWR 退化 → 显示「—」+ ⓘ，保持卡片 layout）。CASH:\* 资产计入 netInflow 但排除出盈亏排行。Commit 3–8（hooks / charts / cards / route / i18n / e2e）为 Sonnet UI 落地。
 
 ### `computeMwr` 调用方式
 
