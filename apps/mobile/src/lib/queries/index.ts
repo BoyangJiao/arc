@@ -55,6 +55,7 @@ export {
 export { usePortfolioChartSeries } from "./use-portfolio-chart-series";
 export { useAssetTwr, type UseAssetTwrInput } from "./use-asset-twr";
 export { usePortfolioTwr, type UsePortfolioTwrInput } from "./use-portfolio-twr";
+export { usePnlAnalysis, type UsePnlAnalysisInput, type PnlAnalysisData } from "./use-pnl-analysis";
 export {
   useTargetAllocations,
   useUpsertTargetAllocations,
