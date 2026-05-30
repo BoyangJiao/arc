@@ -11,7 +11,7 @@
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 
-import { Button, Card, Chip, Text } from "../primitives";
+import { Button, Chip, Text } from "../primitives";
 import { useBusinessClasses } from "../tokens/business-context";
 import {
   TYPO_CAPTION,
@@ -71,73 +71,71 @@ export function PortfolioInsightCard({
   const classes = useBusinessClasses();
 
   return (
-    <Card>
-      <View className="p-5 gap-5">
-        {/* Identity */}
-        <View className="gap-1">
-          <View className="flex-row items-center gap-2">
-            <Text className={TYPO_TITLE_LG} numberOfLines={1}>
-              {portfolioName}
-            </Text>
-            {isActive && activeChipLabel ? (
-              <Chip size="sm" variant="soft" color="success">
-                <Chip.Label>{activeChipLabel}</Chip.Label>
-              </Chip>
-            ) : null}
-          </View>
-          <Text className={typographyClass("overline")}>{reportingCurrency}</Text>
+    <View className="gap-5">
+      {/* Identity */}
+      <View className="gap-1">
+        <View className="flex-row items-center gap-2">
+          <Text className={TYPO_TITLE_LG} numberOfLines={1}>
+            {portfolioName}
+          </Text>
+          {isActive && activeChipLabel ? (
+            <Chip size="sm" variant="soft" color="success">
+              <Chip.Label>{activeChipLabel}</Chip.Label>
+            </Chip>
+          ) : null}
         </View>
-
-        {/* Hero value + today */}
-        {isLoading ? (
-          <Text className={`${TYPO_CAPTION} text-muted`}>{totalValueLabel}</Text>
-        ) : (
-          <View className="gap-1">
-            <Text className={`${TYPO_DISPLAY_2XL} leading-none`}>{totalValueLabel}</Text>
-            <Text className={typographyClass("caption", pnlTextClass(todayChangeSign, classes))}>
-              {todayChangeLabel}
-            </Text>
-          </View>
-        )}
-
-        {twrInline ? <View>{twrInline}</View> : null}
-
-        {hasTargets ? (
-          <View className="gap-4">
-            <DeviationDonut
-              targetSegments={targetSegments}
-              currentSegments={currentSegments}
-              size={120}
-            />
-            <View className="gap-0.5">
-              <Text className={`${TYPO_CAPTION} text-muted`}>{deviationLabel}</Text>
-              <Text className={`${TYPO_CAPTION} text-muted`}>{rebalanceCountLabel}</Text>
-            </View>
-            <View className="gap-2">
-              <Button onPress={onViewActionsPress}>
-                <Button.Label>{viewActionsCta}</Button.Label>
-              </Button>
-              <Pressable
-                accessibilityRole="button"
-                onPress={onSetupTargetsPress}
-                className="py-1 active:opacity-60"
-              >
-                <Text className={typographyClass("label", "text-muted", "text-center")}>
-                  {adjustTargetsCta}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        ) : (
-          <View className="gap-3">
-            <Text className={`${TYPO_CAPTION} text-muted`}>{noTargetsTitle}</Text>
-            <Button variant="secondary" onPress={onSetupTargetsPress}>
-              <Button.Label>{noTargetsCta}</Button.Label>
-            </Button>
-          </View>
-        )}
+        <Text className={typographyClass("overline")}>{reportingCurrency}</Text>
       </View>
-    </Card>
+
+      {/* Hero value + today */}
+      {isLoading ? (
+        <Text className={`${TYPO_CAPTION} text-muted`}>{totalValueLabel}</Text>
+      ) : (
+        <View className="gap-1">
+          <Text className={`${TYPO_DISPLAY_2XL} leading-none`}>{totalValueLabel}</Text>
+          <Text className={typographyClass("caption", pnlTextClass(todayChangeSign, classes))}>
+            {todayChangeLabel}
+          </Text>
+        </View>
+      )}
+
+      {twrInline ? <View>{twrInline}</View> : null}
+
+      {hasTargets ? (
+        <View className="gap-4">
+          <DeviationDonut
+            targetSegments={targetSegments}
+            currentSegments={currentSegments}
+            size={120}
+          />
+          <View className="gap-0.5">
+            <Text className={`${TYPO_CAPTION} text-muted`}>{deviationLabel}</Text>
+            <Text className={`${TYPO_CAPTION} text-muted`}>{rebalanceCountLabel}</Text>
+          </View>
+          <View className="gap-2">
+            <Button onPress={onViewActionsPress}>
+              <Button.Label>{viewActionsCta}</Button.Label>
+            </Button>
+            <Pressable
+              accessibilityRole="button"
+              onPress={onSetupTargetsPress}
+              className="py-1 active:opacity-60"
+            >
+              <Text className={typographyClass("label", "text-muted", "text-center")}>
+                {adjustTargetsCta}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <View className="gap-3">
+          <Text className={`${TYPO_CAPTION} text-muted`}>{noTargetsTitle}</Text>
+          <Button variant="secondary" onPress={onSetupTargetsPress}>
+            <Button.Label>{noTargetsCta}</Button.Label>
+          </Button>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -153,16 +151,14 @@ export function CrossPortfolioRebalancePlaceholderCard({
   description,
 }: CrossPortfolioRebalancePlaceholderCardProps): ReactNode {
   return (
-    <Card className="opacity-80">
-      <View className="p-5 gap-2">
-        <View className="flex-row items-center gap-2">
-          <Text className={typographyClass("overline")}>{title}</Text>
-          <Chip size="sm" variant="soft" color="default">
-            <Chip.Label>{badge}</Chip.Label>
-          </Chip>
-        </View>
-        <Text className={`${TYPO_CAPTION} text-muted`}>{description}</Text>
+    <View className="gap-2 opacity-80">
+      <View className="flex-row items-center gap-2">
+        <Text className={typographyClass("overline")}>{title}</Text>
+        <Chip size="sm" variant="soft" color="default">
+          <Chip.Label>{badge}</Chip.Label>
+        </Chip>
       </View>
-    </Card>
+      <Text className={`${TYPO_CAPTION} text-muted`}>{description}</Text>
+    </View>
   );
 }

@@ -9,7 +9,6 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 
-import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
 import { TYPO_CAPTION, TYPO_LABEL, TYPO_METRIC_SM, typographyClass } from "../tokens/typography";
@@ -48,43 +47,41 @@ export function PnlCumulativeCard(props: PnlCumulativeCardProps): ReactNode {
   const returnColor = pnlTextClass(holdingReturnSign, classes);
 
   return (
-    <Card>
-      <View className="p-5 gap-5">
-        <View className="flex-row items-center gap-1.5">
-          <Text className={typographyClass("overline")}>{sectionTitle}</Text>
-          {tooltip ? (
-            <InfoTooltipButton
-              title={tooltip.title}
-              body={tooltip.body}
-              closeLabel={tooltip.closeLabel}
-            />
+    <View className="gap-5">
+      <View className="flex-row items-center gap-1.5">
+        <Text className={typographyClass("overline")}>{sectionTitle}</Text>
+        {tooltip ? (
+          <InfoTooltipButton
+            title={tooltip.title}
+            body={tooltip.body}
+            closeLabel={tooltip.closeLabel}
+          />
+        ) : null}
+      </View>
+
+      {/* Headline 持有收益 (range-independent). */}
+      <View className="gap-1">
+        <Text className={`${TYPO_CAPTION} text-muted`}>{holdingReturnLabelText}</Text>
+        <View className="flex-row items-baseline gap-2">
+          <Text className={typographyClass("metric", returnColor)}>{holdingReturnLabel}</Text>
+          {holdingReturnPercentLabel ? (
+            <Text className={typographyClass("rowValue", returnColor)}>
+              {holdingReturnPercentLabel}
+            </Text>
           ) : null}
         </View>
+      </View>
 
-        {/* Headline 持有收益 (range-independent). */}
-        <View className="gap-1">
-          <Text className={`${TYPO_CAPTION} text-muted`}>{holdingReturnLabelText}</Text>
-          <View className="flex-row items-baseline gap-2">
-            <Text className={typographyClass("metric", returnColor)}>{holdingReturnLabel}</Text>
-            {holdingReturnPercentLabel ? (
-              <Text className={typographyClass("rowValue", returnColor)}>
-                {holdingReturnPercentLabel}
-              </Text>
-            ) : null}
-          </View>
+      <View className="gap-3.5">
+        <View className="flex-row items-center justify-between">
+          <Text className={`${TYPO_LABEL} text-muted`}>{totalInvestedLabelText}</Text>
+          <Text className={TYPO_METRIC_SM}>{totalInvestedValue}</Text>
         </View>
-
-        <View className="gap-3.5">
-          <View className="flex-row items-center justify-between">
-            <Text className={`${TYPO_LABEL} text-muted`}>{totalInvestedLabelText}</Text>
-            <Text className={TYPO_METRIC_SM}>{totalInvestedValue}</Text>
-          </View>
-          <View className="flex-row items-center justify-between">
-            <Text className={`${TYPO_LABEL} text-muted`}>{totalValueLabelText}</Text>
-            <Text className={TYPO_METRIC_SM}>{totalValueValue}</Text>
-          </View>
+        <View className="flex-row items-center justify-between">
+          <Text className={`${TYPO_LABEL} text-muted`}>{totalValueLabelText}</Text>
+          <Text className={TYPO_METRIC_SM}>{totalValueValue}</Text>
         </View>
       </View>
-    </Card>
+    </View>
   );
 }

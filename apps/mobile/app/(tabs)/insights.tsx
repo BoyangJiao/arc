@@ -7,13 +7,13 @@ import { useRouter, type Href } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   CaretRightIcon,
-  Card,
   ChartLineIcon,
   CrossPortfolioRebalancePlaceholderCard,
   EmptyState,
   FLOATING_TAB_BAR_BOTTOM_INSET,
   LightbulbIcon,
   Screen,
+  Separator,
   TabScreenHeader,
   TabScrollShadow,
   Text,
@@ -24,6 +24,7 @@ import {
   TYPO_ROW_TITLE,
   UserAvatar,
 } from "@arc/ui";
+import { Fragment } from "react";
 import { useTranslation } from "@arc/i18n";
 
 import { PortfolioInsightCardLoader } from "../../src/components/PortfolioInsightCardLoader";
@@ -113,33 +114,34 @@ export default function InsightsTab() {
             accessibilityRole="button"
             accessibilityLabel={t("insights.pnl.entryCardTitle")}
             onPress={() => router.push("/insights/pnl-analysis" as Href)}
+            className="active:opacity-60"
           >
-            <Card>
-              <View className="flex-row items-center gap-3 p-4">
-                <ThemedIcon
-                  icon={ChartLineIcon}
-                  size={24}
-                  colorToken="foreground"
-                  weight="duotone"
-                />
-                <View className="flex-1">
-                  <Text className={TYPO_ROW_TITLE}>{t("insights.pnl.entryCardTitle")}</Text>
-                  <Text className={`${TYPO_CAPTION} text-muted`}>
-                    {t("insights.pnl.entryCardSubtitle")}
-                  </Text>
-                </View>
-                <ThemedIcon icon={CaretRightIcon} size={18} colorToken="muted" />
+            <View className="flex-row items-center gap-3 py-1">
+              <ThemedIcon icon={ChartLineIcon} size={24} colorToken="foreground" weight="duotone" />
+              <View className="flex-1">
+                <Text className={TYPO_ROW_TITLE}>{t("insights.pnl.entryCardTitle")}</Text>
+                <Text className={`${TYPO_CAPTION} text-muted`}>
+                  {t("insights.pnl.entryCardSubtitle")}
+                </Text>
               </View>
-            </Card>
+              <ThemedIcon icon={CaretRightIcon} size={18} colorToken="muted" />
+            </View>
           </Pressable>
+
+          <Separator />
 
           {portfolios.length > 1 ? (
             <Text className={TYPO_OVERLINE}>{t("rebalance.allPortfoliosSection")}</Text>
           ) : null}
 
-          {portfolios.map((portfolio) => (
-            <PortfolioInsightCardLoader key={portfolio.id} portfolio={portfolio} />
+          {portfolios.map((portfolio, index) => (
+            <Fragment key={portfolio.id}>
+              {index > 0 ? <Separator /> : null}
+              <PortfolioInsightCardLoader portfolio={portfolio} />
+            </Fragment>
           ))}
+
+          <Separator />
 
           <CrossPortfolioRebalancePlaceholderCard
             title={t("portfolios.crossPortfolioPlaceholderTitle")}

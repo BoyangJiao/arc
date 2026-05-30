@@ -10,7 +10,6 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import { Segment } from "heroui-native-pro/segment";
 
-import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
 import { TYPO_CONTROL_LABEL, TYPO_EMPTY_MESSAGE, typographyClass } from "../tokens/typography";
 
@@ -58,56 +57,54 @@ export function PnlRankingCard(props: PnlRankingCardProps): ReactNode {
   } = props;
 
   return (
-    <Card>
-      <View className="p-5 gap-4">
-        <Text className={typographyClass("overline")}>{sectionTitle}</Text>
+    <View className="gap-4">
+      <Text className={typographyClass("overline")}>{sectionTitle}</Text>
 
-        <Segment
-          className="w-full gap-0"
-          value={activeTab}
-          size="sm"
-          onValueChange={(next) => onTabChange(next as PnlRankingTab)}
-        >
-          <Segment.Group className="w-full self-stretch flex-row bg-transparent p-0 gap-0 rounded-none shadow-none">
-            <Segment.Indicator className="bg-surface-secondary shadow-none" />
-            <Segment.Item value="winners" className="flex-1 min-w-0 px-0 py-1">
-              <Segment.Label className={`${TYPO_CONTROL_LABEL} text-center`}>
-                {winnersTabLabel}
-              </Segment.Label>
-            </Segment.Item>
-            <Segment.Item value="losers" className="flex-1 min-w-0 px-0 py-1">
-              <Segment.Label className={`${TYPO_CONTROL_LABEL} text-center`}>
-                {losersTabLabel}
-              </Segment.Label>
-            </Segment.Item>
-          </Segment.Group>
-        </Segment>
+      <Segment
+        className="w-full gap-0"
+        value={activeTab}
+        size="sm"
+        onValueChange={(next) => onTabChange(next as PnlRankingTab)}
+      >
+        <Segment.Group className="w-full self-stretch flex-row bg-transparent p-0 gap-0 rounded-none shadow-none">
+          <Segment.Indicator className="bg-surface-secondary shadow-none" />
+          <Segment.Item value="winners" className="flex-1 min-w-0 px-0 py-1">
+            <Segment.Label className={`${TYPO_CONTROL_LABEL} text-center`}>
+              {winnersTabLabel}
+            </Segment.Label>
+          </Segment.Item>
+          <Segment.Item value="losers" className="flex-1 min-w-0 px-0 py-1">
+            <Segment.Label className={`${TYPO_CONTROL_LABEL} text-center`}>
+              {losersTabLabel}
+            </Segment.Label>
+          </Segment.Item>
+        </Segment.Group>
+      </Segment>
 
-        {rows.length === 0 ? (
-          <View className="items-center py-8">
-            <Text className={`${TYPO_EMPTY_MESSAGE} text-center`}>{emptyLabel}</Text>
-          </View>
-        ) : (
-          <View className="-my-1">
-            {rows.map((row) => (
-              <RankingRow
-                key={row.assetId}
-                name={row.name}
-                symbol={row.symbol}
-                market={row.market}
-                marketLabel={row.marketLabel}
-                imageUrl={row.imageUrl}
-                symbolLabel={row.symbolLabel}
-                contributionLabel={row.contributionLabel}
-                sign={row.sign}
-                rightSubLabel={row.rightSubLabel}
-                accessibilityLabel={row.accessibilityLabel}
-                onPress={onRowPress ? () => onRowPress(row.assetId) : undefined}
-              />
-            ))}
-          </View>
-        )}
-      </View>
-    </Card>
+      {rows.length === 0 ? (
+        <View className="items-center py-8">
+          <Text className={`${TYPO_EMPTY_MESSAGE} text-center`}>{emptyLabel}</Text>
+        </View>
+      ) : (
+        <View className="-my-1">
+          {rows.map((row) => (
+            <RankingRow
+              key={row.assetId}
+              name={row.name}
+              symbol={row.symbol}
+              market={row.market}
+              marketLabel={row.marketLabel}
+              imageUrl={row.imageUrl}
+              symbolLabel={row.symbolLabel}
+              contributionLabel={row.contributionLabel}
+              sign={row.sign}
+              rightSubLabel={row.rightSubLabel}
+              accessibilityLabel={row.accessibilityLabel}
+              onPress={onRowPress ? () => onRowPress(row.assetId) : undefined}
+            />
+          ))}
+        </View>
+      )}
+    </View>
   );
 }

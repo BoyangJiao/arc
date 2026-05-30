@@ -11,7 +11,6 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import Decimal from "decimal.js";
 import { parseAssetId, type Currency, type Market } from "@arc/core";
 import {
-  Card,
   DeviationBar,
   InScreenHeader,
   RebalanceActionList,
@@ -111,42 +110,38 @@ export default function RebalanceActionsScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <Screen contentContainerStyle={scrollContentBelowInScreenHeader}>
         <InScreenHeader title={t("rebalance.actionsTitle")} leftType="back" />
-        <View className="px-4 gap-4 pb-10">
+        <View className="gap-8 pb-10">
           {driftRows.length > 0 ? (
-            <Card>
-              <View className="p-5 gap-4">
-                <Text className={TYPO_OVERLINE}>{t("rebalance.driftSectionTitle")}</Text>
-                <DeviationBar
-                  rows={driftRows}
-                  formatPercent={(v) => `${v.toFixed(1)}%`}
-                  formatDeviation={formatSignedPercent}
-                />
-              </View>
-            </Card>
-          ) : null}
-
-          <Card>
-            <View className="p-5 gap-2">
-              <Text className={TYPO_OVERLINE}>{t("rebalance.actionsSectionTitle")}</Text>
-              <RebalanceActionList
-                rows={rows}
-                formatShares={(value, market, nativeCurrency) =>
-                  formatSharesWithUnit(
-                    value,
-                    market as Market,
-                    nativeCurrency as Currency,
-                    shareUnits
-                  )
-                }
-                formatAmount={(amount) =>
-                  formatMoney(amount, reportingCurrency, { redact: amountsHidden })
-                }
-                amountEstimateLabel={t("rebalance.amountEstimateLabel")}
-                atTargetLabel={t("rebalance.atTarget")}
-                disclaimer={t("rebalance.disclaimer")}
+            <View className="gap-4">
+              <Text className={TYPO_OVERLINE}>{t("rebalance.driftSectionTitle")}</Text>
+              <DeviationBar
+                rows={driftRows}
+                formatPercent={(v) => `${v.toFixed(1)}%`}
+                formatDeviation={formatSignedPercent}
               />
             </View>
-          </Card>
+          ) : null}
+
+          <View className="gap-2">
+            <Text className={TYPO_OVERLINE}>{t("rebalance.actionsSectionTitle")}</Text>
+            <RebalanceActionList
+              rows={rows}
+              formatShares={(value, market, nativeCurrency) =>
+                formatSharesWithUnit(
+                  value,
+                  market as Market,
+                  nativeCurrency as Currency,
+                  shareUnits
+                )
+              }
+              formatAmount={(amount) =>
+                formatMoney(amount, reportingCurrency, { redact: amountsHidden })
+              }
+              amountEstimateLabel={t("rebalance.amountEstimateLabel")}
+              atTargetLabel={t("rebalance.atTarget")}
+              disclaimer={t("rebalance.disclaimer")}
+            />
+          </View>
         </View>
       </Screen>
     </>

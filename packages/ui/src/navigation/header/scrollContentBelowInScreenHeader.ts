@@ -12,7 +12,7 @@ import type { ScrollViewProps } from "react-native";
 export const scrollContentBelowInScreenHeader: NonNullable<
   ScrollViewProps["contentContainerStyle"]
 > = {
-  paddingHorizontal: 24,
+  paddingHorizontal: 16,
   paddingTop: 0,
   paddingBottom: 24,
   gap: 16,

@@ -85,7 +85,7 @@ export function InScreenHeader({
 
   return (
     <View
-      className={cn("flex-row items-center justify-center px-2", isComfortable && "mb-3")}
+      className={cn("flex-row items-center justify-center", isComfortable && "mb-3")}
       style={
         isComfortable
           ? {

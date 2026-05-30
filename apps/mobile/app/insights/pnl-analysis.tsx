@@ -193,7 +193,7 @@ export default function PnlAnalysisScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <Screen contentContainerStyle={scrollContentBelowInScreenHeader}>
         <InScreenHeader title={t("insights.pnl.title")} leftType="back" />
-        <View className="px-4 gap-4 pb-10">
+        <View className="gap-8 pb-10">
           <PnlPeriodCard
             sectionTitle={t("insights.pnl.section.period")}
             periodLabel={t("insights.pnl.periodValueChange.title", { period: range })}

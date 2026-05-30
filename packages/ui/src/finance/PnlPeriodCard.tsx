@@ -12,7 +12,6 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 
-import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
 import {
   CumulativeReturnChart,
@@ -67,59 +66,54 @@ export function PnlPeriodCard(props: PnlPeriodCardProps): ReactNode {
   const classes = useBusinessClasses();
 
   return (
-    <Card>
-      <View className="p-5 gap-5">
-        {/* Headline: overline → descriptor → hero number → dates. */}
-        <View className="gap-1">
-          <Text className={typographyClass("overline")}>{sectionTitle}</Text>
-          <Text className={`${TYPO_CAPTION} text-muted`}>{periodLabel}</Text>
-          <Text
-            className={typographyClass(
-              "display2xl",
-              pnlTextClass(valueChangeSign, classes),
-              "leading-none"
-            )}
-          >
-            {valueChangeLabel}
-          </Text>
-          <Text className={`${TYPO_CAPTION} text-muted`}>{dateRangeLabel}</Text>
-        </View>
-
-        {/* Chart + time-range pills directly beneath it (Revolut Performance). */}
-        <View className="gap-3">
-          <CumulativeReturnChart
-            data={chartData}
-            loading={chartLoading}
-            emptyLabel={chartEmptyLabel}
-          />
-          <TimeRangeSelector value={range} onChange={onRangeChange} />
-        </View>
-
-        <View className="gap-3.5">
-          {metrics.map((row) => (
-            <View key={row.key} className="flex-row items-center justify-between">
-              <View className="flex-row items-center gap-1.5">
-                <Text className={`${TYPO_LABEL} text-muted`}>{row.label}</Text>
-                {row.tooltip ? (
-                  <InfoTooltipButton
-                    title={row.tooltip.title}
-                    body={row.tooltip.body}
-                    closeLabel={row.tooltip.closeLabel}
-                  />
-                ) : null}
-              </View>
-              <Text
-                className={typographyClass(
-                  "rowValue",
-                  pnlTextClass(row.sign ?? "neutral", classes)
-                )}
-              >
-                {row.value}
-              </Text>
-            </View>
-          ))}
-        </View>
+    <View className="gap-5">
+      {/* Headline: overline → descriptor → hero number → dates. */}
+      <View className="gap-1">
+        <Text className={typographyClass("overline")}>{sectionTitle}</Text>
+        <Text className={`${TYPO_CAPTION} text-muted`}>{periodLabel}</Text>
+        <Text
+          className={typographyClass(
+            "display2xl",
+            pnlTextClass(valueChangeSign, classes),
+            "leading-none"
+          )}
+        >
+          {valueChangeLabel}
+        </Text>
+        <Text className={`${TYPO_CAPTION} text-muted`}>{dateRangeLabel}</Text>
       </View>
-    </Card>
+
+      {/* Chart + time-range pills directly beneath it (Revolut Performance). */}
+      <View className="gap-3">
+        <CumulativeReturnChart
+          data={chartData}
+          loading={chartLoading}
+          emptyLabel={chartEmptyLabel}
+        />
+        <TimeRangeSelector value={range} onChange={onRangeChange} />
+      </View>
+
+      <View className="gap-3.5">
+        {metrics.map((row) => (
+          <View key={row.key} className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-1.5">
+              <Text className={`${TYPO_LABEL} text-muted`}>{row.label}</Text>
+              {row.tooltip ? (
+                <InfoTooltipButton
+                  title={row.tooltip.title}
+                  body={row.tooltip.body}
+                  closeLabel={row.tooltip.closeLabel}
+                />
+              ) : null}
+            </View>
+            <Text
+              className={typographyClass("rowValue", pnlTextClass(row.sign ?? "neutral", classes))}
+            >
+              {row.value}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
   );
 }
