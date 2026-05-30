@@ -44,6 +44,8 @@ export interface ScreenProps {
   /** Pull-to-refresh (scroll=true only). */
   refreshing?: boolean;
   onRefresh?: () => void | Promise<void>;
+  /** When false, disables vertical scroll (e.g. chart scrub vs parent ScrollView). */
+  scrollEnabled?: boolean;
   children: ReactNode;
 }
 
@@ -58,6 +60,7 @@ export function Screen({
   keyboardShouldPersistTaps = "handled",
   refreshing = false,
   onRefresh,
+  scrollEnabled = true,
   children,
 }: ScreenProps) {
   if (!scroll) {
@@ -73,6 +76,7 @@ export function Screen({
     <View className={className}>
       <SafeAreaView edges={edges} style={{ flex: 1 }}>
         <ScrollView
+          scrollEnabled={scrollEnabled}
           contentContainerStyle={contentContainerStyle}
           keyboardShouldPersistTaps={keyboardShouldPersistTaps}
           refreshControl={

@@ -1,9 +1,11 @@
 /**
- * SymbolPicker — debounced cross-market symbol search list.
+ * SymbolPicker — debounced cross-market symbol search (for use inside Screen ScrollView).
+ *
+ * No nested flex-1 FlatList — parent scroll keeps search pinned under market chips.
  */
 
 import type { ReactNode } from "react";
-import { FlatList, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import type { Market } from "@arc/core";
 import type { SymbolSearchResult } from "@arc/data-sources";
 import { Card, Input, Text, TextField } from "@arc/ui";
@@ -42,8 +44,10 @@ export function SymbolPicker({
     queryReady && !search.isFetching && search.isSuccess && (search.data?.length ?? 0) === 0;
   const showUnavailable = queryReady && !search.isFetching && search.isError && !notConfigured;
 
+  const results = queryReady ? (search.data ?? []) : [];
+
   return (
-    <View className="flex-1 gap-3">
+    <View className="gap-3">
       <TextField>
         <Input
           placeholder={placeholder}
@@ -56,22 +60,13 @@ export function SymbolPicker({
       {notConfigured ? <Text className="text-muted text-xs">{searchNotConfigured}</Text> : null}
       {showNoResults ? <Text className="text-muted text-xs">{searchNoResults}</Text> : null}
       {showUnavailable ? <Text className="text-danger text-xs">{searchUnavailable}</Text> : null}
-      <FlatList
-        className="flex-1"
-        data={search.data ?? []}
-        keyExtractor={(item) => item.assetId}
-        keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled
-        ListEmptyComponent={
-          !queryReady ? (
-            <Text className="text-muted text-sm">{emptyHint}</Text>
-          ) : search.isFetching ? (
-            <Text className="text-muted text-sm">…</Text>
-          ) : null
-        }
-        renderItem={({ item }) => (
-          <Pressable onPress={() => onSelect(item)} accessibilityRole="button">
-            <Card className="mb-2">
+      {!queryReady ? <Text className="text-muted text-sm">{emptyHint}</Text> : null}
+      {queryReady && search.isFetching ? <Text className="text-muted text-sm">…</Text> : null}
+
+      <View className="gap-2">
+        {results.map((item) => (
+          <Pressable key={item.assetId} onPress={() => onSelect(item)} accessibilityRole="button">
+            <Card>
               <View className="px-3 py-3">
                 <Text className="text-foreground font-medium">
                   {item.name} ({item.assetId})
@@ -79,8 +74,8 @@ export function SymbolPicker({
               </View>
             </Card>
           </Pressable>
-        )}
-      />
+        ))}
+      </View>
     </View>
   );
 }

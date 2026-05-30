@@ -89,6 +89,9 @@ export function ChartPressOverlay({
   const scrubMaskColor = colorWithOpacity(backgroundColor, 0.78);
 
   const heroScrubChrome = !showValueLabel && scrubDateLabels.length > 0;
+  /** Dim data to the right of the crosshair — hero (date in overlay) and asset detail (value chip). */
+  const showScrubFutureMask = heroScrubChrome || showValueLabel;
+  const crosshairTopGap = heroScrubChrome ? CHART_SCRUB_CROSSHAIR_TOP_GAP : 0;
 
   const emitScrub = useCallback(
     (index: number, value: number, active: boolean) => {
@@ -133,7 +136,13 @@ export function ChartPressOverlay({
         }
         return;
       }
-      if (previous?.active && previous.xIndex === current.xIndex) return;
+      if (
+        previous?.active &&
+        previous.xIndex === current.xIndex &&
+        previous.yVal === current.yVal
+      ) {
+        return;
+      }
       runOnJS(emitScrub)(current.xIndex, current.yVal, true);
     },
     [onScrubChange, clearScrub]
@@ -148,10 +157,10 @@ export function ChartPressOverlay({
   const renderOverlays = (bounds: ChartBounds): ReactNode =>
     isActive ? (
       <>
-        {heroScrubChrome ? (
+        {showScrubFutureMask ? (
           <ChartScrubFutureMask
             scrubX={state.x.position}
-            top={bounds.top + CHART_SCRUB_CROSSHAIR_TOP_GAP}
+            top={bounds.top + crosshairTopGap}
             bottom={bounds.bottom}
             right={bounds.right}
             maskColor={scrubMaskColor}
@@ -164,7 +173,7 @@ export function ChartPressOverlay({
         />
         <ChartCrosshair
           x={state.x.position}
-          top={bounds.top + (heroScrubChrome ? CHART_SCRUB_CROSSHAIR_TOP_GAP : 0)}
+          top={bounds.top + crosshairTopGap}
           bottom={bounds.bottom}
         />
       </>

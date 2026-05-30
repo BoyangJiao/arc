@@ -43,6 +43,7 @@ export const historicalQuotesToChartPoints = (
     x: index,
     y: q.price.toNumber(),
     label: q.asOf.slice(0, 10),
+    asOf: q.asOf,
   }));
 };
 
