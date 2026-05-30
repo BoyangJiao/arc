@@ -118,6 +118,13 @@ export const zh = {
       noDataTitle: "暂无历史走势",
       noDataDescription: "该资产在所选时段暂无历史行情数据",
     },
+    transactions: {
+      sectionTitle: "交易记录",
+      deleteAction: "删除",
+      deleteConfirmTitle: "确认删除此交易？",
+      deleteConfirmBody: "此操作不可撤销。",
+      deleteFailed: "删除失败，请稍后再试",
+    },
   },
   dailySnapshot: {
     title: "每日盈亏",

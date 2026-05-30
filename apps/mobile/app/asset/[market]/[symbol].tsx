@@ -22,6 +22,7 @@ import { composeAssetId, type Market } from "@arc/core";
 
 import { AssetDetailChartSection } from "../../../src/components/AssetDetailChartSection";
 import { AssetDetailPriceHeader } from "../../../src/components/AssetDetailPriceHeader";
+import { AssetTransactionHistorySection } from "../../../src/components/AssetTransactionHistorySection";
 import { resolveAssetDetailChartStatus } from "../../../src/lib/asset-detail-chart-status";
 import { formatMoney, currencySymbol } from "../../../src/lib/format-money";
 import { useAmountRedacted } from "../../../src/lib/use-amount-redacted";
@@ -30,8 +31,10 @@ import {
   historicalQuotesToChartPoints,
   useAddWatchlistItem,
   useAssetDetail,
+  useAssetTransactions,
   useAssetTwr,
   useDeleteAssetTransactions,
+  useDeleteTransaction,
   useHistoricalQuotes,
   useRemoveWatchlistItem,
   useWatchlistBase,
@@ -46,6 +49,7 @@ export default function AssetDetailScreen() {
   const { portfolio } = useActivePortfolio();
   const { amountsHidden } = useAmountRedacted();
   const deleteAssetTransactions = useDeleteAssetTransactions();
+  const deleteTransaction = useDeleteTransaction();
 
   const detail = useAssetDetail(market, symbol);
   const assetId = market && symbol ? composeAssetId(market as Market, symbol) : undefined;
@@ -55,6 +59,7 @@ export default function AssetDetailScreen() {
     assetId,
     range,
   });
+  const assetTransactions = useAssetTransactions(portfolio?.id, assetId);
   const chartData = useMemo(
     () => historicalQuotesToChartPoints(historical.data ?? []),
     [historical.data]
@@ -104,6 +109,20 @@ export default function AssetDetailScreen() {
       ]
     );
   }, [assetId, deleteAssetTransactions, holdingLabel, portfolio?.id, router, t]);
+
+  const handleDeleteTransaction = useCallback(
+    (id: string, portfolioId: string) => {
+      deleteTransaction.mutate(
+        { id, portfolioId },
+        {
+          onError: () => {
+            Alert.alert(t("common.error"), t("assetDetail.transactions.deleteFailed"));
+          },
+        }
+      );
+    },
+    [deleteTransaction, t]
+  );
 
   const handleOpenMore = useCallback(() => {
     Alert.alert(t("assetDetail.more"), undefined, [
@@ -293,6 +312,18 @@ export default function AssetDetailScreen() {
               <Button.Label>{t("assetDetail.addTransactionCta")}</Button.Label>
             </Button>
           </View>
+
+          {assetTransactions.data.length > 0 ? (
+            <View className="mt-4">
+              <AssetTransactionHistorySection
+                transactions={assetTransactions.data}
+                isPending={assetTransactions.isPending}
+                portfolioId={portfolio?.id}
+                amountsHidden={amountsHidden}
+                onDeleteTransaction={handleDeleteTransaction}
+              />
+            </View>
+          ) : null}
         </View>
       </Screen>
     </>

@@ -119,6 +119,13 @@ export const en = {
       noDataTitle: "No history for this range",
       noDataDescription: "There is no historical price data for this asset in the selected period.",
     },
+    transactions: {
+      sectionTitle: "Transactions",
+      deleteAction: "Delete",
+      deleteConfirmTitle: "Delete this transaction?",
+      deleteConfirmBody: "This action cannot be undone.",
+      deleteFailed: "Could not delete — please try again",
+    },
   },
   dailySnapshot: {
     title: "Daily P&L",
