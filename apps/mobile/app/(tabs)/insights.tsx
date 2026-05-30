@@ -6,6 +6,9 @@ import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  CaretRightIcon,
+  Card,
+  ChartLineIcon,
   CrossPortfolioRebalancePlaceholderCard,
   EmptyState,
   FLOATING_TAB_BAR_BOTTOM_INSET,
@@ -104,6 +107,30 @@ export default function InsightsTab() {
           }
         >
           <InsightsActiveRebalancePanel />
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("insights.pnl.entryCardTitle")}
+            onPress={() => router.push("/insights/pnl-analysis" as Href)}
+          >
+            <Card>
+              <View className="flex-row items-center gap-3 p-4">
+                <ThemedIcon
+                  icon={ChartLineIcon}
+                  size={24}
+                  colorToken="foreground"
+                  weight="duotone"
+                />
+                <View className="flex-1">
+                  <Text className="text-foreground font-semibold text-base">
+                    {t("insights.pnl.entryCardTitle")}
+                  </Text>
+                  <Text className="text-muted text-xs">{t("insights.pnl.entryCardSubtitle")}</Text>
+                </View>
+                <ThemedIcon icon={CaretRightIcon} size={18} colorToken="muted" />
+              </View>
+            </Card>
+          </Pressable>
 
           {portfolios.length > 1 ? (
             <Text className="text-foreground font-semibold text-base">

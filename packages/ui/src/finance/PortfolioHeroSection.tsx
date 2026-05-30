@@ -7,7 +7,7 @@
 
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import Decimal from "decimal.js";
 import { useSharedValue } from "react-native-reanimated";
 import type { ChartScrubState } from "./chart-scrub";
@@ -51,6 +51,11 @@ export interface PortfolioHeroSectionProps {
   readonly twrInline?: ReactNode;
   /** Placed beside total value (e.g. amount visibility eye toggle). */
   readonly totalValueAccessory?: ReactNode;
+  /** When set, the period-change block becomes a tappable entry to 盈亏分析
+   *  (ADR 016 §决策 1; carries the current chartRange). */
+  readonly onPeriodChangePress?: () => void;
+  /** a11y label for the period-change entry chip. */
+  readonly periodChangeAccessibilityLabel?: string;
 }
 
 const signOf = (value: Decimal): "positive" | "negative" | "zero" => {
@@ -83,6 +88,8 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
     emptyChartMessage,
     twrInline,
     totalValueAccessory,
+    onPeriodChangePress,
+    periodChangeAccessibilityLabel,
   } = props;
 
   const businessClasses = useBusinessClasses();
@@ -141,8 +148,8 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
             <View className="shrink-0 self-center">{totalValueAccessory}</View>
           ) : null}
         </View>
-        <View className="min-h-[40px] justify-center gap-0.5">
-          {chartLoading ? (
+        {(() => {
+          const periodInner = chartLoading ? (
             <>
               <Skeleton className="h-3.5 w-20 rounded-md" />
               <Skeleton className="h-6 w-40 rounded-md" />
@@ -156,8 +163,22 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
             </>
           ) : hasChart ? (
             <Text className={TYPO_CAPTION}>{periodChangeLabel}</Text>
-          ) : null}
-        </View>
+          ) : null;
+
+          // Only a tappable chip once there is a real period change to drill into.
+          return onPeriodChangePress && heroChange && !chartLoading ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={periodChangeAccessibilityLabel ?? periodChangeLabel}
+              onPress={onPeriodChangePress}
+              className="min-h-[40px] justify-center gap-0.5 active:opacity-60"
+            >
+              {periodInner}
+            </Pressable>
+          ) : (
+            <View className="min-h-[40px] justify-center gap-0.5">{periodInner}</View>
+          );
+        })()}
       </View>
 
       {twrInline ? <View>{twrInline}</View> : null}

@@ -326,6 +326,10 @@ export default function PortfolioTab() {
                 liveTotalValue={heroTotalValue}
                 formatMoney={formatAmount}
                 periodChangeLabel={t(`portfolio.periodChangeByRange.${chartRange}`)}
+                onPeriodChangePress={() =>
+                  router.push(`/insights/pnl-analysis?range=${chartRange}` as Href)
+                }
+                periodChangeAccessibilityLabel={t("insights.pnl.title")}
                 formatChangeLine={formatChangeLine}
                 formatAnchorTime={formatAnchorTime}
                 chartData={chartPoints}

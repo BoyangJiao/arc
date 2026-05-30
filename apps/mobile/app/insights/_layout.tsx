@@ -37,6 +37,7 @@ export default function InsightsLayout() {
         }}
       />
       <Stack.Screen name="rebalance/actions" />
+      <Stack.Screen name="pnl-analysis" />
     </Stack>
   );
 }
