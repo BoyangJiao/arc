@@ -124,11 +124,18 @@ export const en = {
     },
     transactions: {
       sectionTitle: "Transactions",
+      price: "Price",
+      quantity: "Quantity",
+      amount: "Amount",
+      dividendAmount: "Dividend",
+      notes: "Note",
+      empty: "No transactions yet",
       deleteAction: "Delete",
       deleteConfirmTitle: "Delete this transaction?",
       deleteConfirmBody: "This action cannot be undone.",
       deleteFailed: "Could not delete — please try again",
     },
+    noHolding: "No position yet — record a transaction to see it here",
   },
   dailySnapshot: {
     title: "Daily P&L",
@@ -240,6 +247,54 @@ export const en = {
     title: "Insights",
     comingSoon: "Rebalance engine coming in Stage 2",
     comingSoonHint: "Get actionable insights on your portfolio allocation",
+    pnl: {
+      title: "P&L Analysis",
+      entryCardTitle: "P&L Analysis",
+      entryCardSubtitle: "Period return + cumulative P&L + movers",
+      section: {
+        period: "Period P&L",
+        cumulative: "Cumulative P&L",
+        ranking: "Top movers",
+      },
+      periodValueChange: {
+        title: "{{period}} market value change",
+        dateRange: "{{from}} ~ {{to}}",
+      },
+      metrics: {
+        mwr: "Return (money-weighted, MWR)",
+        mwrTooltipTitle: "Money-weighted return (MWR)",
+        mwrTooltip:
+          "Money-weighted return (XIRR). It weights each of your deposits / withdrawals by timing; under the same market, different entry timing gives different results. Shown here for this period.",
+        annualized: "Annualized estimate",
+        annualizedTooltipTitle: "Annualized estimate",
+        annualizedTooltip:
+          "Annualized from the money-weighted return (MWR / XIRR) over 365 days. Short windows (< 30 days) carry larger estimation error.",
+        realized: "Realized P&L",
+        realizedTooltipTitle: "Realized P&L",
+        realizedTooltip:
+          "Sum of P&L realized by sells in this period: (sell price − average cost) × shares.",
+      },
+      cumulative: {
+        holdingReturn: "Holding return",
+        totalInvested: "Total invested",
+        totalValue: "Current value",
+        tooltipTitle: "Cumulative P&L",
+        tooltip:
+          "Holding return = current value − total invested + cumulative dividends, closing with the holdings rows. Independent of the time range.",
+      },
+      ranking: {
+        winnersTab: "Top 5 gainers",
+        losersTab: "Top 5 losers",
+        empty: "No P&L data for this period",
+        newPositionBadge: "New position",
+      },
+      chart: {
+        yAxisLabel: "Cumulative return",
+        empty: "No return data for this period — widen the range or keep adding transactions",
+      },
+      disclaimer: "For reference only, may be delayed. Not investment advice.",
+      tooltipClose: "Got it",
+    },
   },
   me: {
     title: "Me",

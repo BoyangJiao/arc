@@ -123,11 +123,18 @@ export const zh = {
     },
     transactions: {
       sectionTitle: "交易记录",
+      price: "成交价",
+      quantity: "数量",
+      amount: "金额",
+      dividendAmount: "分红金额",
+      notes: "备注",
+      empty: "暂无交易记录",
       deleteAction: "删除",
       deleteConfirmTitle: "确认删除此交易？",
       deleteConfirmBody: "此操作不可撤销。",
       deleteFailed: "删除失败，请稍后再试",
     },
+    noHolding: "暂无持仓，录入交易后在此查看",
   },
   dailySnapshot: {
     title: "每日盈亏",
@@ -235,6 +242,52 @@ export const zh = {
     title: "洞察",
     comingSoon: "再平衡引擎即将在 Stage 2 上线",
     comingSoonHint: "获取关于组合配置的可执行洞察",
+    pnl: {
+      title: "盈亏分析",
+      entryCardTitle: "盈亏分析",
+      entryCardSubtitle: "时段回报 + 累计盈亏 + 盈亏排行",
+      section: {
+        period: "时段盈亏",
+        cumulative: "累计盈亏",
+        ranking: "盈亏排行",
+      },
+      periodValueChange: {
+        title: "{{period}}资产市值变化",
+        dateRange: "{{from}} ~ {{to}}",
+      },
+      metrics: {
+        mwr: "收益率(现金加权 MWR)",
+        mwrTooltipTitle: "现金加权收益率（MWR）",
+        mwrTooltip:
+          "现金加权收益率（XIRR）。把你每次注资 / 取款的时点权重纳入计算；同样市场行情下，加仓时机不同会有不同结果。这里展示的是本时段口径。",
+        annualized: "年化收益率估算",
+        annualizedTooltipTitle: "年化收益率估算",
+        annualizedTooltip:
+          "基于现金加权收益率（MWR / XIRR）按 365 天年化估算。短周期（< 30 天）估算误差较大。",
+        realized: "已实现盈亏",
+        realizedTooltipTitle: "已实现盈亏",
+        realizedTooltip: "本时段内卖出交易实现的盈亏总和（卖出价 − 平均成本）× 数量。",
+      },
+      cumulative: {
+        holdingReturn: "持有收益",
+        totalInvested: "总投入",
+        totalValue: "现持市值",
+        tooltipTitle: "累计盈亏",
+        tooltip: "持有收益 = 现持市值 − 总投入 + 累计分红，与持仓行加和闭环。不随时间范围变化。",
+      },
+      ranking: {
+        winnersTab: "盈利 Top5",
+        losersTab: "亏损 Top5",
+        empty: "本期无盈亏数据",
+        newPositionBadge: "新建仓",
+      },
+      chart: {
+        yAxisLabel: "累计回报率",
+        empty: "本时段暂无回报数据 — 请扩大时间范围或继续录入交易",
+      },
+      disclaimer: "仅供参考，可能延迟。本工具不构成投资建议。",
+      tooltipClose: "知道了",
+    },
   },
   me: {
     title: "我",
