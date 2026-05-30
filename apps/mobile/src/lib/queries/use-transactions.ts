@@ -5,6 +5,7 @@
  * Shares / price / fee stored as text (Decimal serialized) in the DB.
  */
 
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import Decimal from "decimal.js";
 import {
@@ -172,6 +173,44 @@ export const useCreateTransaction = () => {
       // portfolioValuation refetches when txFingerprint changes — no extra AV burst.
     },
   });
+};
+
+/** Delete a single transaction by id. Invalidates portfolio valuation. */
+export const useDeleteTransaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { id: string; portfolioId: string }) => {
+      const { error } = await supabase.from("transactions").delete().eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["transactions", variables.portfolioId] });
+      queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+    },
+  });
+};
+
+/**
+ * Per-asset transaction list — client-side filter of the portfolio's cached transactions.
+ * Returns newest-first; reuses the parent portfolio query (no extra network call).
+ */
+export const useAssetTransactions = (
+  portfolioId: string | undefined,
+  assetId: string | undefined
+): { data: readonly Transaction[]; isPending: boolean } => {
+  const query = useTransactions(portfolioId);
+  const data = useMemo(
+    () =>
+      assetId
+        ? (query.data ?? [])
+            .filter((t) => t.assetId === assetId)
+            .slice()
+            .sort((a, b) => b.tradeDate.localeCompare(a.tradeDate))
+        : [],
+    [query.data, assetId]
+  );
+  return { data, isPending: query.isPending };
 };
 
 /** Remove all transactions for one asset in a portfolio (holding goes to zero). */

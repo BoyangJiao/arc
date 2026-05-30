@@ -23,7 +23,9 @@ export { useTransferBetweenPortfolios, TransferValidationError } from "./use-tra
 export {
   useTransactions,
   useCreateTransaction,
+  useDeleteTransaction,
   useDeleteAssetTransactions,
+  useAssetTransactions,
   type CreateTransactionInput,
   type CreateTransactionAssetMeta,
 } from "./use-transactions";
