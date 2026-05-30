@@ -49,6 +49,8 @@ export interface PortfolioHeroSectionProps {
   readonly emptyChartMessage?: string;
   /** Optional TWR row (linked to chartRange in parent). */
   readonly twrInline?: ReactNode;
+  /** Placed beside total value (e.g. amount visibility eye toggle). */
+  readonly totalValueAccessory?: ReactNode;
 }
 
 const signOf = (value: Decimal): "positive" | "negative" | "zero" => {
@@ -80,6 +82,7 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
     valuePrefix = "",
     emptyChartMessage,
     twrInline,
+    totalValueAccessory,
   } = props;
 
   const businessClasses = useBusinessClasses();
@@ -125,12 +128,19 @@ export function PortfolioHeroSection(props: PortfolioHeroSectionProps): ReactNod
     <View className="gap-3">
       <Text className={TYPO_LABEL}>{totalValueTitle}</Text>
       <View className="gap-1">
-        <FlippingNumberText
-          value={formatMoney(heroValue)}
-          className={TYPO_DISPLAY}
-          liveValue={scrubValueSv}
-          liveActive={scrubActiveSv}
-        />
+        <View className="flex-row items-center gap-2">
+          <View className="flex-1 min-w-0">
+            <FlippingNumberText
+              value={formatMoney(heroValue)}
+              className={TYPO_DISPLAY}
+              liveValue={scrubValueSv}
+              liveActive={scrubActiveSv}
+            />
+          </View>
+          {totalValueAccessory ? (
+            <View className="shrink-0 self-center">{totalValueAccessory}</View>
+          ) : null}
+        </View>
         <View className="min-h-[40px] justify-center gap-0.5">
           {chartLoading ? (
             <>

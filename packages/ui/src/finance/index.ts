@@ -83,6 +83,12 @@ export {
   type HoldingsTableProps,
   type HoldingsTableRow,
 } from "./HoldingsTable";
+export {
+  HoldingsSortControl,
+  type HoldingsSortControlProps,
+  type HoldingsSortKey,
+  type HoldingsSortOption,
+} from "./HoldingsSortControl";
 export { PortfolioHeroSection, type PortfolioHeroSectionProps } from "./PortfolioHeroSection";
 export { FlippingNumberText, type FlippingNumberTextProps } from "./FlippingNumberText";
 export {
@@ -101,11 +107,14 @@ export {
   type TransactionAmountMode,
   type TransactionAmountModeToggleProps,
 } from "./TransactionAmountModeToggle";
+export { AMOUNT_REDACTION_MASK } from "./amount-redaction";
+export { AmountVisibilityToggle, type AmountVisibilityToggleProps } from "./AmountVisibilityToggle";
 export {
   formatCompactChangeLine,
   formatSignedAmount,
   formatSignedPercent,
   formatUnsignedPercent,
+  type FormatCompactChangeLineOptions,
 } from "./format-compact-change";
 export { type ChartScrubState, scrubStateFromChartPoint, periodStartValue } from "./chart-scrub";
 export {

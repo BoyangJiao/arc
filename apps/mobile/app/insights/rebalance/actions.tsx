@@ -15,13 +15,15 @@ import {
 import { useTranslation } from "@arc/i18n";
 
 import { assetLabel, formatSharesWithUnit } from "../../../src/lib/rebalance-format";
-import { currencySymbol, formatMoney } from "../../../src/lib/format-money";
+import { formatMoney } from "../../../src/lib/format-money";
 import { useActivePortfolio, useRebalance } from "../../../src/lib/queries";
+import { useAmountRedacted } from "../../../src/lib/use-amount-redacted";
 import { useUserPreferences } from "../../../src/lib/user-preferences";
 
 export default function RebalanceActionsScreen() {
   const { t } = useTranslation();
   const { prefs } = useUserPreferences();
+  const { amountsHidden } = useAmountRedacted();
   const reportingCurrency = prefs?.reportingCurrency ?? "CNY";
   const { portfolioId: queryPortfolioId } = useLocalSearchParams<{ portfolioId?: string }>();
   const { activePortfolioId } = useActivePortfolio();
@@ -43,7 +45,9 @@ export default function RebalanceActionsScreen() {
       const priceHint =
         market !== "CASH" && val
           ? t("rebalance.actionPriceHint", {
-              price: `${currencySymbol(nativeCurrency)}${(val.priceNative ?? new Decimal(0)).toFixed(2)}`,
+              price: formatMoney(val.priceNative ?? new Decimal(0), nativeCurrency, {
+                redact: amountsHidden,
+              }),
             })
           : "";
 
@@ -60,7 +64,7 @@ export default function RebalanceActionsScreen() {
         priceHint,
       };
     });
-  }, [deviations, valuation, t]);
+  }, [deviations, valuation, t, amountsHidden]);
 
   const shareUnits = useMemo(
     () => ({ share: t("rebalance.units.share"), fund: t("rebalance.units.fund") }),
@@ -77,7 +81,9 @@ export default function RebalanceActionsScreen() {
           formatShares={(value, market, nativeCurrency) =>
             formatSharesWithUnit(value, market as Market, nativeCurrency as Currency, shareUnits)
           }
-          formatAmount={(amount) => formatMoney(amount, reportingCurrency)}
+          formatAmount={(amount) =>
+            formatMoney(amount, reportingCurrency, { redact: amountsHidden })
+          }
           amountEstimateLabel={t("rebalance.amountEstimateLabel")}
           atTargetLabel={t("rebalance.atTarget")}
           disclaimer={t("rebalance.disclaimer")}

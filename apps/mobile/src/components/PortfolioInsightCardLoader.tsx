@@ -10,6 +10,7 @@ import type { Portfolio } from "@arc/core";
 import { useTranslation } from "@arc/i18n";
 
 import { formatMoney } from "../lib/format-money";
+import { useAmountRedacted } from "../lib/use-amount-redacted";
 import { assetLabel, toDonutSegments } from "../lib/rebalance-format";
 import {
   useDailyDelta,
@@ -28,6 +29,7 @@ const parseCashKey = (assetId: string): string => {
 export const PortfolioInsightCardLoader = ({ portfolio }: { portfolio: Portfolio }) => {
   const { t } = useTranslation();
   const router = useRouter();
+  const { amountsHidden } = useAmountRedacted();
   const reportingCurrency = portfolio.reportingCurrency;
 
   const { data: valuation, isPending: valuationPending } = usePortfolioValuation(
@@ -90,7 +92,9 @@ export const PortfolioInsightCardLoader = ({ portfolio }: { portfolio: Portfolio
       totalValueLabel={
         valuationPending
           ? t("common.loading")
-          : formatMoney(valuation?.totalValue ?? new Decimal(0), reportingCurrency)
+          : formatMoney(valuation?.totalValue ?? new Decimal(0), reportingCurrency, {
+              redact: amountsHidden,
+            })
       }
       todayChangeLabel={t("portfolios.insightTodayChange", { percent: todayPercent })}
       deviationLabel={t("portfolios.insightDeviation", {

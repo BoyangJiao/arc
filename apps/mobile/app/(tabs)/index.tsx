@@ -15,8 +15,11 @@ import {
   formatCompactChangeLine,
   HOLDINGS_MARKET_ORDER,
   HoldingsMarketFilter,
+  HoldingsSortControl,
   HoldingsTable,
   type HoldingPeriodChange,
+  type HoldingsSortKey,
+  AmountVisibilityToggle,
   DailySnapshotCard,
   PortfolioHeroSection,
   Screen,
@@ -41,7 +44,8 @@ import {
 import { useAuth } from "../../src/lib/auth";
 import { pickDefaultRangeForTransactions } from "../../src/lib/default-chart-range";
 import { currencySymbol, formatMoney } from "../../src/lib/format-money";
-import { buildHoldingsTableRows } from "../../src/lib/holdings-presenter";
+import { useAmountRedacted } from "../../src/lib/use-amount-redacted";
+import { buildHoldingsTableRows, sortHoldingsRows } from "../../src/lib/holdings-presenter";
 import {
   filterPortfolioValuation,
   isMarketFilterActive,
@@ -73,13 +77,25 @@ export default function PortfolioTab() {
   }, []);
   const [selectedMarketFilters, setSelectedMarketFilters] = useState<Set<Market>>(() => new Set());
   const marketFilterActive = isMarketFilterActive(selectedMarketFilters);
+  const [sortKey, setSortKey] = useState<HoldingsSortKey>("value_desc");
 
   const { prefs } = useUserPreferences();
+  const { amountsHidden, toggleAmountVisibility } = useAmountRedacted();
 
   const { portfolio: activePortfolio, isLoading: activeLoading } = useActivePortfolio();
 
   const activeId = activePortfolio?.id;
   const reportingCurrency = activePortfolio?.reportingCurrency ?? prefs?.reportingCurrency ?? "CNY";
+  const currencySym = currencySymbol(reportingCurrency);
+  const formatChangeLine = useCallback(
+    (delta: Decimal, percent: Decimal | null) =>
+      formatCompactChangeLine(delta, percent, currencySym, { redactAmount: amountsHidden }),
+    [currencySym, amountsHidden]
+  );
+  const formatAmount = useCallback(
+    (amount: Decimal) => formatMoney(amount, reportingCurrency, { redact: amountsHidden }),
+    [reportingCurrency, amountsHidden]
+  );
   const { holdings, transactions, isPending: holdingsPending } = usePortfolioHoldings(activeId);
 
   // Smart default fires ONCE per portfolio context (not per filter switch).
@@ -151,16 +167,12 @@ export default function PortfolioTab() {
         return t("holdings.a11y.rowNewPosition", { symbol, name, value: valueLabel });
       }
       if (periodChange.kind === "ok") {
-        const change = formatCompactChangeLine(
-          periodChange.delta,
-          periodChange.percent,
-          currencySymbol(reportingCurrency)
-        );
+        const change = formatChangeLine(periodChange.delta, periodChange.percent);
         return t("holdings.a11y.rowWithChange", { symbol, name, value: valueLabel, change });
       }
       return t("holdings.a11y.row", { symbol, name, value: valueLabel });
     },
-    [t, reportingCurrency]
+    [t, formatChangeLine]
   );
 
   const holdingsRows = useMemo(
@@ -170,9 +182,9 @@ export default function PortfolioTab() {
         perAsset: valuation?.perAsset ?? [],
         catalog: catalog.data,
         reportingCurrency,
+        amountsHidden,
         quoteLoading: valuationFetching && !valuation,
-        formatPeriodChangeLine: (delta, percent) =>
-          formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency)),
+        formatPeriodChangeLine: formatChangeLine,
         positionLabel: formatPositionLabel,
         marketLabel,
         newPositionLabel: t("holdings.periodChange.newPosition"),
@@ -187,6 +199,7 @@ export default function PortfolioTab() {
       reportingCurrency,
       formatPositionLabel,
       formatHoldingsAccessibilityLabel,
+      amountsHidden,
       t,
     ]
   );
@@ -196,10 +209,13 @@ export default function PortfolioTab() {
     return HOLDINGS_MARKET_ORDER.filter((m) => present.has(m));
   }, [holdingsRows]);
 
-  const filteredHoldingsRows = useMemo(() => {
-    if (selectedMarketFilters.size === 0) return holdingsRows;
-    return holdingsRows.filter((row) => selectedMarketFilters.has(row.market));
-  }, [holdingsRows, selectedMarketFilters]);
+  const filteredAndSortedHoldingsRows = useMemo(() => {
+    const filtered =
+      selectedMarketFilters.size === 0
+        ? holdingsRows
+        : holdingsRows.filter((row) => selectedMarketFilters.has(row.market));
+    return sortHoldingsRows(filtered, sortKey);
+  }, [holdingsRows, selectedMarketFilters, sortKey]);
 
   const holdingsCount = holdings.length;
   const hasHoldings = holdingsCount > 0;
@@ -308,18 +324,24 @@ export default function PortfolioTab() {
               <PortfolioHeroSection
                 totalValueTitle={t("portfolio.totalValue")}
                 liveTotalValue={heroTotalValue}
-                formatMoney={(amount) => formatMoney(amount, reportingCurrency)}
+                formatMoney={formatAmount}
                 periodChangeLabel={t(`portfolio.periodChangeByRange.${chartRange}`)}
-                formatChangeLine={(delta, percent) =>
-                  formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))
-                }
+                formatChangeLine={formatChangeLine}
                 formatAnchorTime={formatAnchorTime}
                 chartData={chartPoints}
                 chartRange={chartRange}
                 onChartRangeChange={handleChartRangeChange}
                 chartLoading={chartSeries.isFetching}
-                valuePrefix={currencySymbol(reportingCurrency)}
+                valuePrefix={currencySym}
                 emptyChartMessage={t("portfolio.noSnapshotHistory")}
+                totalValueAccessory={
+                  <AmountVisibilityToggle
+                    amountsHidden={amountsHidden}
+                    onPress={toggleAmountVisibility}
+                    hideAmountsLabel={t("portfolio.hideAmounts")}
+                    showAmountsLabel={t("portfolio.showAmounts")}
+                  />
+                }
               />
               {heroDelta && heroDelta.status !== "empty-portfolio" ? (
                 <DailySnapshotCard
@@ -327,9 +349,7 @@ export default function PortfolioTab() {
                   title={t("dailySnapshot.title")}
                   noBaselineMessage={t("dailySnapshot.noBaseline")}
                   allNewPositionsMessage={t("dailySnapshot.allNewPositions")}
-                  formatChangeLine={(delta, percent) =>
-                    formatCompactChangeLine(delta, percent, currencySymbol(reportingCurrency))
-                  }
+                  formatChangeLine={formatChangeLine}
                   formatFooterDate={formatSnapshotFooterDate}
                   onPress={heroDelta.status === "ok" ? handleDailySnapshotPress : undefined}
                 />
@@ -363,8 +383,20 @@ export default function PortfolioTab() {
           {hasHoldings && !holdingsPending ? (
             <>
               <HoldingsTable
-                rows={filteredHoldingsRows}
+                rows={filteredAndSortedHoldingsRows}
                 sectionTitle={t("holdings.sectionTitle")}
+                headerRight={
+                  <HoldingsSortControl
+                    sortKey={sortKey}
+                    onSortKeyChange={setSortKey}
+                    options={[
+                      { key: "value_desc", label: t("holdings.sort.value_desc") },
+                      { key: "gain_pct_desc", label: t("holdings.sort.gain_pct_desc") },
+                      { key: "gain_pct_asc", label: t("holdings.sort.gain_pct_asc") },
+                      { key: "market", label: t("holdings.sort.market") },
+                    ]}
+                  />
+                }
                 emptyMessage={
                   selectedMarketFilters.size > 0 ? t("holdings.filterEmpty") : undefined
                 }

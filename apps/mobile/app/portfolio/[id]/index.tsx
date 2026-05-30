@@ -36,6 +36,7 @@ import {
 import Decimal from "decimal.js";
 
 import { formatMoney } from "../../../src/lib/format-money";
+import { useAmountRedacted } from "../../../src/lib/use-amount-redacted";
 import {
   useAssetCatalog,
   useDeleteAssetTransactions,
@@ -54,6 +55,7 @@ export default function PortfolioDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const { prefs } = useUserPreferences();
+  const { amountsHidden } = useAmountRedacted();
   const reportingCurrency = prefs?.reportingCurrency ?? "CNY";
 
   // Fetch portfolio metadata
@@ -133,7 +135,9 @@ export default function PortfolioDetailScreen() {
       <View className="mb-6">
         <Text className="text-muted text-sm mb-1">{t("portfolioDetail.totalMarketValue")}</Text>
         <Text className="text-foreground text-3xl font-bold">
-          {formatMoney(valuation?.totalValue ?? ZERO, reportingCurrency)}
+          {formatMoney(valuation?.totalValue ?? ZERO, reportingCurrency, {
+            redact: amountsHidden,
+          })}
         </Text>
         <Text className="text-muted text-xs mt-1">{t("common.disclaimer")}</Text>
         {hasPartialQuotes && (
@@ -190,6 +194,7 @@ export default function PortfolioDetailScreen() {
                 valuation={row}
                 quoteLoading={!row && (valuationPending || valuationFetching)}
                 reportingCurrency={reportingCurrency}
+                amountsHidden={amountsHidden}
                 onRemove={() => handleRemoveHolding(holding.assetId)}
                 t={t}
               />
@@ -221,6 +226,7 @@ interface HoldingRowProps {
   valuation: MarketValuation | undefined;
   quoteLoading: boolean;
   reportingCurrency: Currency;
+  amountsHidden: boolean;
   onRemove: () => void;
   t: (key: string) => string;
 }
@@ -231,6 +237,7 @@ function HoldingRow({
   valuation,
   quoteLoading,
   reportingCurrency,
+  amountsHidden,
   onRemove,
   t,
 }: HoldingRowProps) {
@@ -238,12 +245,12 @@ function HoldingRow({
   const displayName = assetMeta?.name?.trim() || symbol;
   const showSymbolLine = displayName !== symbol;
   const priceLabel = valuation
-    ? valuation.priceNative.toFixed(2)
+    ? formatMoney(valuation.priceNative, valuation.nativeCurrency, { redact: amountsHidden })
     : quoteLoading
       ? t("portfolioDetail.quoteLoading")
       : t("portfolioDetail.priceUnavailable");
   const valueLabel = valuation
-    ? formatMoney(valuation.valueReporting, reportingCurrency)
+    ? formatMoney(valuation.valueReporting, reportingCurrency, { redact: amountsHidden })
     : quoteLoading
       ? t("portfolioDetail.quoteLoading")
       : t("portfolioDetail.priceUnavailable");

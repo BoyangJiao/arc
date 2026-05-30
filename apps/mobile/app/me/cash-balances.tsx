@@ -18,7 +18,8 @@ import { useTranslation } from "@arc/i18n";
 import { resolvePortfolioDisplayName } from "@arc/core";
 
 import { CashBalanceTransferDialog } from "../../src/components/CashBalanceTransferDialog";
-import { currencySymbol } from "../../src/lib/format-money";
+import { formatMoney } from "../../src/lib/format-money";
+import { useAmountRedacted } from "../../src/lib/use-amount-redacted";
 import { useActivePortfolio } from "../../src/lib/queries";
 import {
   useCashBalances,
@@ -38,6 +39,7 @@ const tryAmount = (raw: string): Decimal | null => {
 };
 
 export default function CashBalancesScreen() {
+  const { amountsHidden } = useAmountRedacted();
   const { t } = useTranslation();
   const { portfolio, activePortfolioId } = useActivePortfolio();
   const portfolioId = activePortfolioId ?? undefined;
@@ -94,7 +96,7 @@ export default function CashBalancesScreen() {
               </Text>
               <Text className="text-muted text-xs">
                 {t("rebalance.cashCurrent", {
-                  amount: `${currencySymbol(row.currency)}${row.balance.toFixed(2)}`,
+                  amount: formatMoney(row.balance, row.currency, { redact: amountsHidden }),
                 })}
               </Text>
             </View>

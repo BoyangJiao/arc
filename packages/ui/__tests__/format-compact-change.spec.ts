@@ -25,4 +25,15 @@ describe("format-compact-change", () => {
   test("formatUnsignedPercent — never includes sign", () => {
     expect(formatUnsignedPercent(new Decimal("-13.17"))).toBe("13.17%");
   });
+
+  test("formatCompactChangeLine — redactAmount keeps percent only", () => {
+    expect(
+      formatCompactChangeLine(new Decimal("1000"), new Decimal("13.17"), "¥", {
+        redactAmount: true,
+      })
+    ).toBe("•••• (13.17%)");
+    expect(formatCompactChangeLine(new Decimal("1000"), null, "¥", { redactAmount: true })).toBe(
+      "••••"
+    );
+  });
 });

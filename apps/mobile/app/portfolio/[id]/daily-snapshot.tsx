@@ -25,6 +25,7 @@ import {
   parseMarketFiltersParam,
 } from "../../../src/lib/portfolio-market-filter";
 import { useDailyDelta, usePortfolio } from "../../../src/lib/queries";
+import { useAmountRedacted } from "../../../src/lib/use-amount-redacted";
 import { useUserPreferences } from "../../../src/lib/user-preferences";
 
 const MS_PER_DAY = 86_400_000;
@@ -42,6 +43,7 @@ export default function DailySnapshotDetailScreen() {
     markets?: string;
   }>();
   const { prefs } = useUserPreferences();
+  const { amountsHidden } = useAmountRedacted();
   const { data: portfolio } = usePortfolio(portfolioId);
 
   const marketFilters = useMemo(() => parseMarketFiltersParam(marketsParam), [marketsParam]);
@@ -71,8 +73,8 @@ export default function DailySnapshotDetailScreen() {
   }, [delta, t]);
 
   const formatMoverAmount = useCallback(
-    (amount: Decimal) => formatMoney(amount, reportingCurrency),
-    [reportingCurrency]
+    (amount: Decimal) => formatMoney(amount, reportingCurrency, { redact: amountsHidden }),
+    [reportingCurrency, amountsHidden]
   );
 
   const handleMoverPress = useCallback(
@@ -103,7 +105,9 @@ export default function DailySnapshotDetailScreen() {
               moversSectionTitle={t("dailySnapshot.moversSection")}
               disclaimer={t("dailySnapshot.disclaimer")}
               formatChangeLine={(d, p) =>
-                formatCompactChangeLine(d, p, currencySymbol(reportingCurrency))
+                formatCompactChangeLine(d, p, currencySymbol(reportingCurrency), {
+                  redactAmount: amountsHidden,
+                })
               }
               formatAmount={formatMoverAmount}
               formatPercent={formatSignedPercent}

@@ -26,6 +26,8 @@ export const HOLDINGS_MARKET_ORDER: readonly RebalanceMarket[] = [
 export interface HoldingsTableRow extends HoldingRowProps {
   readonly assetId: string;
   readonly market: RebalanceMarket;
+  /** Numeric market value in reporting currency — used by sort helpers only. */
+  readonly valueSortKey?: number;
 }
 
 export interface HoldingsTableProps {
@@ -33,6 +35,8 @@ export interface HoldingsTableProps {
   readonly sectionTitle: string;
   readonly onRowPress: (assetId: string) => void;
   readonly emptyMessage?: string;
+  /** Optional control rendered to the right of the section title (e.g. sort picker). */
+  readonly headerRight?: ReactNode;
 }
 
 export function HoldingsTable({
@@ -40,11 +44,19 @@ export function HoldingsTable({
   sectionTitle,
   onRowPress,
   emptyMessage,
+  headerRight,
 }: HoldingsTableProps): ReactNode {
+  const header = (
+    <View className="flex-row items-center">
+      <Text className={TYPO_SECTION_TITLE + " flex-1"}>{sectionTitle}</Text>
+      {headerRight}
+    </View>
+  );
+
   if (rows.length === 0) {
     return emptyMessage ? (
       <View className="gap-2">
-        <Text className={TYPO_SECTION_TITLE}>{sectionTitle}</Text>
+        {header}
         <Text className={TYPO_CAPTION}>{emptyMessage}</Text>
       </View>
     ) : null;
@@ -52,7 +64,7 @@ export function HoldingsTable({
 
   return (
     <View className="gap-2">
-      <Text className={TYPO_SECTION_TITLE}>{sectionTitle}</Text>
+      {header}
       <ListGroup>
         {rows.map((row, index) => (
           <Fragment key={row.assetId}>

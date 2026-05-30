@@ -5,7 +5,7 @@
 import Decimal from "decimal.js";
 import { parseAssetId, type Currency, type Holding, type Market } from "@arc/core";
 import type { MarketValuation } from "@arc/core";
-import type { HoldingPeriodChange, HoldingsTableRow } from "@arc/ui";
+import type { HoldingPeriodChange, HoldingsSortKey, HoldingsTableRow } from "@arc/ui";
 
 import type { AssetCatalogRow } from "./queries/use-asset-catalog";
 import { resolveAssetLogoUrl } from "./asset-logo-url";
@@ -46,6 +46,7 @@ export const buildHoldingsTableRows = (input: {
   catalog: ReadonlyMap<string, AssetCatalogRow> | undefined;
   reportingCurrency: Currency;
   quoteLoading: boolean;
+  amountsHidden?: boolean;
   formatPeriodChangeLine: (delta: Decimal, percent: Decimal | null) => string;
   positionLabel: (shares: Decimal, market: Market, symbol: string) => string;
   marketLabel: (market: Market) => string;
@@ -66,7 +67,9 @@ export const buildHoldingsTableRows = (input: {
     const { market, symbol } = parseAssetId(holding.assetId);
     const name = cat?.name ?? symbol;
     const valueReporting = val?.valueReporting ?? holding.shares.times(holding.averageCost);
-    const valueLabel = formatMoney(valueReporting, input.reportingCurrency);
+    const valueLabel = formatMoney(valueReporting, input.reportingCurrency, {
+      redact: input.amountsHidden,
+    });
     const dividendsReporting = holding.totalDividends.times(val?.fxRateUsed ?? new Decimal(1));
     const periodChange = resolvePeriodChange(
       valueReporting,
@@ -83,6 +86,7 @@ export const buildHoldingsTableRows = (input: {
       imageUrl: resolveAssetLogoUrl(market, symbol),
       positionLabel: input.positionLabel(holding.shares, market, symbol),
       valueLabel,
+      valueSortKey: valueReporting.toNumber(),
       valueLoading: input.quoteLoading && !val,
       periodChange,
       newPositionLabel: input.newPositionLabel,
@@ -105,7 +109,8 @@ export const formatMarketSectionHeader = (
   marketLabel: string,
   rows: readonly HoldingsTableRow[],
   perAsset: readonly MarketValuation[],
-  reportingCurrency: Currency
+  reportingCurrency: Currency,
+  amountsHidden = false
 ): string => {
   const assetIds = new Set(rows.map((r) => r.assetId));
   let nativeTotal = new Decimal(0);
@@ -119,8 +124,53 @@ export const formatMarketSectionHeader = (
     nativeCurrency = v.nativeCurrency;
   }
 
+  const redact = { redact: amountsHidden };
   if (nativeCurrency === reportingCurrency) {
-    return `${marketLabel} · ${formatMoney(nativeTotal, nativeCurrency)}`;
+    return `${marketLabel} · ${formatMoney(nativeTotal, nativeCurrency, redact)}`;
   }
-  return `${marketLabel} · ${formatMoney(nativeTotal, nativeCurrency)} / ${formatMoney(reportingTotal, reportingCurrency)}`;
+  return `${marketLabel} · ${formatMoney(nativeTotal, nativeCurrency, redact)} / ${formatMoney(reportingTotal, reportingCurrency, redact)}`;
+};
+
+export { type HoldingsSortKey } from "@arc/ui";
+
+/**
+ * Sort a holdings row array by the given key.
+ * Call after buildHoldingsTableRows + optional market filter.
+ * "market" restores the canonical market-group order.
+ */
+export const sortHoldingsRows = (
+  rows: readonly HoldingsTableRow[],
+  sortKey: HoldingsSortKey
+): HoldingsTableRow[] => {
+  const copy = [...rows];
+  switch (sortKey) {
+    case "market":
+      return copy.sort((a, b) => MARKET_ORDER.indexOf(a.market) - MARKET_ORDER.indexOf(b.market));
+    case "value_desc":
+      return copy.sort((a, b) => (b.valueSortKey ?? 0) - (a.valueSortKey ?? 0));
+    case "gain_pct_desc":
+      return copy.sort((a, b) => {
+        const pa =
+          a.periodChange.kind === "ok"
+            ? (a.periodChange.percent?.toNumber() ?? -Infinity)
+            : -Infinity;
+        const pb =
+          b.periodChange.kind === "ok"
+            ? (b.periodChange.percent?.toNumber() ?? -Infinity)
+            : -Infinity;
+        return pb - pa;
+      });
+    case "gain_pct_asc":
+      return copy.sort((a, b) => {
+        const pa =
+          a.periodChange.kind === "ok"
+            ? (a.periodChange.percent?.toNumber() ?? Infinity)
+            : Infinity;
+        const pb =
+          b.periodChange.kind === "ok"
+            ? (b.periodChange.percent?.toNumber() ?? Infinity)
+            : Infinity;
+        return pa - pb;
+      });
+  }
 };

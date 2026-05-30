@@ -9,7 +9,8 @@ import { CashBalanceTransferSheet } from "@arc/ui";
 import type { Currency, TransferIntent } from "@arc/core";
 import { useTranslation } from "@arc/i18n";
 
-import { currencySymbol } from "../lib/format-money";
+import { formatMoney } from "../lib/format-money";
+import { useAmountRedacted } from "../lib/use-amount-redacted";
 import {
   TransferValidationError,
   useCashBalances,
@@ -43,6 +44,7 @@ export const CashBalanceTransferDialog = ({
   sourcePortfolioName,
 }: CashBalanceTransferDialogProps) => {
   const { t } = useTranslation();
+  const { amountsHidden } = useAmountRedacted();
   const { data: portfolios = [] } = usePortfolios();
   const { rows } = useCashBalances(sourcePortfolioId);
   const transfer = useTransferBetweenPortfolios();
@@ -81,10 +83,10 @@ export const CashBalanceTransferDialog = ({
         return {
           assetId: r.assetId,
           currency: r.currency,
-          balanceLabel: `${currencySymbol(r.currency)}${snap.toFixed(2)}`,
+          balanceLabel: formatMoney(snap, r.currency, { redact: amountsHidden }),
         };
       });
-  }, [rows, snapshotBalances]);
+  }, [rows, snapshotBalances, amountsHidden]);
 
   const snapshotBalance = currencyAssetId
     ? (snapshotBalances.get(currencyAssetId) ?? new Decimal(0))
@@ -162,7 +164,9 @@ export const CashBalanceTransferDialog = ({
       onAmountChange={setAmount}
       availableLabel={t("portfolios.transferAvailable", {
         amount: currencyAssetId
-          ? `${currencySymbol(currencyAssetId.replace("CASH:", "") as Currency)}${snapshotBalance.toFixed(2)}`
+          ? formatMoney(snapshotBalance, currencyAssetId.replace("CASH:", "") as Currency, {
+              redact: amountsHidden,
+            })
           : "—",
       })}
       noFxHint={t("portfolios.transferNoFx")}

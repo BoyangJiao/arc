@@ -1,5 +1,7 @@
 import Decimal from "decimal.js";
 
+import { AMOUNT_REDACTION_MASK } from "./amount-redaction";
+
 /**
  * PnL percent / amount formatting rules (Arc finance copy):
  *
@@ -26,12 +28,22 @@ export const formatSignedPercent = (percent: Decimal): string => {
   return `${sign}${formatUnsignedPercent(percent)}`;
 };
 
+export type FormatCompactChangeLineOptions = {
+  /** Hide monetary portion; keep unsigned percent in parentheses when present. */
+  readonly redactAmount?: boolean;
+};
+
 /** Portfolio hero / holding row: +¥1,234.56 (13.17%) — sign on amount only. */
 export const formatCompactChangeLine = (
   delta: Decimal,
   percent: Decimal | null,
-  currencySym: string
+  currencySym: string,
+  options?: FormatCompactChangeLineOptions
 ): string => {
+  if (options?.redactAmount) {
+    if (percent === null || percent.isZero()) return AMOUNT_REDACTION_MASK;
+    return `${AMOUNT_REDACTION_MASK} (${formatUnsignedPercent(percent)})`;
+  }
   const amountSign = delta.isPositive() ? "+" : delta.isNegative() ? "-" : "";
   const amount = `${amountSign}${currencySym}${delta.abs().toFixed(2)}`;
   if (percent === null || percent.isZero()) return amount;
