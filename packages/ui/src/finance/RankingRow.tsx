@@ -44,7 +44,7 @@ export function RankingRow({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? name}
       onPress={onPress}
-      className="flex-row items-center justify-between py-2.5 active:opacity-60"
+      className="flex-row items-center justify-between py-3 active:opacity-60"
     >
       <View className="flex-1 pr-3">
         <Text className={TYPO_ROW_TITLE} numberOfLines={1}>

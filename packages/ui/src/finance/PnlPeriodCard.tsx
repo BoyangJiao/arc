@@ -4,6 +4,9 @@
  * Spec: pnl-analysis-insights §J18b / §UI. Big period value change + cumulative
  * return % chart + metric rows (MWR / annualized / realized), each with an
  * optional ⓘ explainer. Presentational — strings + signs come from the screen.
+ *
+ * Layout (Revolut/Wise stat-card hierarchy): small overline label → metric
+ * descriptor → hero number → date context → chart → metric rows.
  */
 
 import type { ReactNode } from "react";
@@ -13,7 +16,7 @@ import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
 import { CumulativeReturnChart, type PercentAxisInput } from "../charts";
 import { useBusinessClasses } from "../tokens/business-context";
-import { TYPO_CAPTION, TYPO_LABEL, TYPO_TITLE, typographyClass } from "../tokens/typography";
+import { TYPO_CAPTION, TYPO_LABEL, typographyClass } from "../tokens/typography";
 
 import { InfoTooltipButton } from "./InfoTooltipButton";
 import { pnlTextClass, type PnlSign } from "./pnl-types";
@@ -36,7 +39,6 @@ export interface PnlPeriodCardProps {
   readonly chartData: ReadonlyArray<PercentAxisInput>;
   readonly chartLoading?: boolean;
   readonly chartEmptyLabel?: string;
-  readonly formatPercent?: (pct: number) => string;
   readonly metrics: ReadonlyArray<PnlMetricRow>;
 }
 
@@ -50,19 +52,24 @@ export function PnlPeriodCard(props: PnlPeriodCardProps): ReactNode {
     chartData,
     chartLoading = false,
     chartEmptyLabel,
-    formatPercent,
     metrics,
   } = props;
   const classes = useBusinessClasses();
 
   return (
     <Card>
-      <View className="p-4 gap-3">
-        <Text className={TYPO_TITLE}>{sectionTitle}</Text>
-
-        <View className="gap-0.5">
+      <View className="p-5 gap-5">
+        {/* Headline: overline → descriptor → hero number → dates. */}
+        <View className="gap-1">
+          <Text className={typographyClass("overline")}>{sectionTitle}</Text>
           <Text className={`${TYPO_CAPTION} text-muted`}>{periodLabel}</Text>
-          <Text className={typographyClass("display2xl", pnlTextClass(valueChangeSign, classes))}>
+          <Text
+            className={typographyClass(
+              "display2xl",
+              pnlTextClass(valueChangeSign, classes),
+              "leading-none"
+            )}
+          >
             {valueChangeLabel}
           </Text>
           <Text className={`${TYPO_CAPTION} text-muted`}>{dateRangeLabel}</Text>
@@ -72,10 +79,9 @@ export function PnlPeriodCard(props: PnlPeriodCardProps): ReactNode {
           data={chartData}
           loading={chartLoading}
           emptyLabel={chartEmptyLabel}
-          formatPercent={formatPercent}
         />
 
-        <View className="gap-2 pt-1">
+        <View className="gap-3.5">
           {metrics.map((row) => (
             <View key={row.key} className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-1.5">

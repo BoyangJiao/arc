@@ -12,7 +12,7 @@ import { View } from "react-native";
 import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
-import { TYPO_CAPTION, TYPO_METRIC_SM, TYPO_TITLE, typographyClass } from "../tokens/typography";
+import { TYPO_CAPTION, TYPO_LABEL, TYPO_METRIC_SM, typographyClass } from "../tokens/typography";
 
 import { InfoTooltipButton } from "./InfoTooltipButton";
 import { pnlTextClass, type PnlSign } from "./pnl-types";
@@ -49,9 +49,9 @@ export function PnlCumulativeCard(props: PnlCumulativeCardProps): ReactNode {
 
   return (
     <Card>
-      <View className="p-4 gap-3">
+      <View className="p-5 gap-5">
         <View className="flex-row items-center gap-1.5">
-          <Text className={TYPO_TITLE}>{sectionTitle}</Text>
+          <Text className={typographyClass("overline")}>{sectionTitle}</Text>
           {tooltip ? (
             <InfoTooltipButton
               title={tooltip.title}
@@ -61,10 +61,11 @@ export function PnlCumulativeCard(props: PnlCumulativeCardProps): ReactNode {
           ) : null}
         </View>
 
-        <View className="flex-row items-baseline justify-between">
+        {/* Headline 持有收益 (range-independent). */}
+        <View className="gap-1">
           <Text className={`${TYPO_CAPTION} text-muted`}>{holdingReturnLabelText}</Text>
           <View className="flex-row items-baseline gap-2">
-            <Text className={typographyClass("metricSm", returnColor)}>{holdingReturnLabel}</Text>
+            <Text className={typographyClass("metric", returnColor)}>{holdingReturnLabel}</Text>
             {holdingReturnPercentLabel ? (
               <Text className={typographyClass("rowValue", returnColor)}>
                 {holdingReturnPercentLabel}
@@ -73,14 +74,15 @@ export function PnlCumulativeCard(props: PnlCumulativeCardProps): ReactNode {
           </View>
         </View>
 
-        <View className="flex-row items-baseline justify-between">
-          <Text className={`${TYPO_CAPTION} text-muted`}>{totalInvestedLabelText}</Text>
-          <Text className={TYPO_METRIC_SM}>{totalInvestedValue}</Text>
-        </View>
-
-        <View className="flex-row items-baseline justify-between">
-          <Text className={`${TYPO_CAPTION} text-muted`}>{totalValueLabelText}</Text>
-          <Text className={TYPO_METRIC_SM}>{totalValueValue}</Text>
+        <View className="gap-3.5">
+          <View className="flex-row items-center justify-between">
+            <Text className={`${TYPO_LABEL} text-muted`}>{totalInvestedLabelText}</Text>
+            <Text className={TYPO_METRIC_SM}>{totalInvestedValue}</Text>
+          </View>
+          <View className="flex-row items-center justify-between">
+            <Text className={`${TYPO_LABEL} text-muted`}>{totalValueLabelText}</Text>
+            <Text className={TYPO_METRIC_SM}>{totalValueValue}</Text>
+          </View>
         </View>
       </View>
     </Card>

@@ -12,7 +12,7 @@ import { Segment } from "heroui-native-pro/segment";
 
 import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
-import { TYPO_CONTROL_LABEL, TYPO_EMPTY_MESSAGE, TYPO_TITLE } from "../tokens/typography";
+import { TYPO_CONTROL_LABEL, TYPO_EMPTY_MESSAGE, typographyClass } from "../tokens/typography";
 
 import { RankingRow } from "./RankingRow";
 import type { PnlSign } from "./pnl-types";
@@ -54,8 +54,8 @@ export function PnlRankingCard(props: PnlRankingCardProps): ReactNode {
 
   return (
     <Card>
-      <View className="p-4 gap-3">
-        <Text className={TYPO_TITLE}>{sectionTitle}</Text>
+      <View className="p-5 gap-4">
+        <Text className={typographyClass("overline")}>{sectionTitle}</Text>
 
         <Segment
           className="w-full gap-0"
@@ -79,11 +79,11 @@ export function PnlRankingCard(props: PnlRankingCardProps): ReactNode {
         </Segment>
 
         {rows.length === 0 ? (
-          <View className="items-center py-6">
+          <View className="items-center py-8">
             <Text className={`${TYPO_EMPTY_MESSAGE} text-center`}>{emptyLabel}</Text>
           </View>
         ) : (
-          <View className="divide-y divide-border/40">
+          <View className="-my-1">
             {rows.map((row) => (
               <RankingRow
                 key={row.assetId}
