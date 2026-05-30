@@ -6,6 +6,13 @@
 
 export { LineChart, type ArcLineChartProps, type ArcLineChartColor } from "./LineChart";
 export { AreaChart, type ArcAreaChartProps } from "./AreaChart";
+export { CumulativeReturnChart, type ArcCumulativeReturnChartProps } from "./CumulativeReturnChart";
+export {
+  buildPercentAxisModel,
+  type PercentAxisInput,
+  type PercentAxisTick,
+  type PercentAxisModel,
+} from "./chart-percent-axis";
 export { ChartCrosshair } from "./ChartCrosshair";
 export { ChartDrawLoading, type ChartDrawLoadingProps } from "./ChartDrawLoading";
 export { ChartSkeleton, type ChartSkeletonProps } from "./ChartSkeleton";
