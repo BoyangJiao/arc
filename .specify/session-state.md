@@ -6,7 +6,9 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
-> **Last updated**: 2026-05-30 by Opus 4.7 — **Real Env P0 dogfooding 全部通过**（cost-basis / Hero / 持仓行 / 美股 filter / 506002 分红 +¥45,125 全对齐支付宝）。本轮新增 9 commit（`07f9c5d`→`9ee81d5`）：daily-delta P0 + allNewPositions fallback + 市场 filter smart range + cost-basis 含手续费 + finnhub ETF/ADR + chart 密度 + 主题持久化 + 派息→分红 + Finnhub NetworkError retry + watchlist star + Asset Detail 持有收益含分红。**⛔ CI BLOCKER**：本地 working tree 有 ~10 个 untracked files（`AssetDetailChartSection`、`use-amount-redacted`、`amount-redaction`、`HoldingsSortControl` 等 Cursor 中途留下的隐私 mask + Asset Detail 重构 + 持仓排序 work），committed code 已 import 它们 → **`pnpm typecheck` CI 在远端持续 fail**（`9ee81d5 / 176b2be / d487b21` 三次 Pre-push Quality Gate failure），本地 typecheck 6/6 ✅ 因为有 untracked 文件兜底。**Sonnet 首要任务**：决定 commit 这批未完成 work 还是 revert imports 让 CI 转绿。BoyangJiao 准备交接 P1 给 Sonnet。
+> **Last updated**: 2026-05-30 by Opus 4.8 — **CI 绿了 + Sonnet P1 #1–#3 收尾**。本轮 7 commit（`38e4268`→`7521b59`）：(1) **P0 CI fix** — 把 Cursor 留下的 ~10 untracked files 按主题拆 2 commit（`38e4268` Asset Detail chart 重构 / `fa2410e` 隐私 mask + 持仓排序）落地；(2) **ADR 016 v3**（`46577da`）持有收益含分红语义入文档 + costBasis tooltip i18n；(3) **Feature ① 单标的交易历史**（`8ffa688` hooks + `5ad152b` swipe-to-delete section）；(3) **Block D Phase 2 TWR layout polish**（`dc589f9`）ADR 016 §决策 4 视觉层次 — TWR 大字 prominent + 持有收益 小字 + 双 ⓘ tooltip（抽出共享 `InfoTooltipButton` + 新 `HoldingReturnInlineLabel`）；(4) **CI 二次修绿**（`7521b59`）— typecheck 转绿后 lint step 才跑到，暴露两个 pre-existing lint error（`asset-avatar-utils.ts` 6 hex → 移到 `tokens/avatar-gradients.ts`；`sign-in.tsx` 失效的 react-hooks eslint-disable → 删）。**CI ✅ green**（run `26676119184` success）。**P1 剩 #4 盈亏分析 Insights 模块**（独立 stream，需先写 spec）。
+>
+> **2026-05-30 by Opus 4.7** — **Real Env P0 dogfooding 全部通过**（cost-basis / Hero / 持仓行 / 美股 filter / 506002 分红 +¥45,125 全对齐支付宝）。9 commit（`07f9c5d`→`9ee81d5`）。⛔ 当时遗留 untracked-files CI blocker → 已由 Opus 4.8 本轮解决。
 >
 > **2026-05-29 by Opus 4.7** — Real Env dogfooding 反馈 4 bug：(1) 506002 收益率 137% vs 支付宝 150%（root cause = 3 现金分红 ¥3,920 未算入）→ 修复 commit `07f9c5d`（持仓行）+ `9ee81d5`（Asset Detail parity）；(2) 默认 1M（Hero）vs 1Y（Asset Detail）不一致 → 统一 3M；(3) 美股 finnhub 网络抖动 → A retry + backoff 落地（`d487b21`），C Vercel proxy **延后到阿里云迁移那一轮**（避免重复 port 成本）；(4) filter 切换 range 跳 1Y → revert filter→smart-default 耦合 → range 跨 filter 持久化。同时 i18n 派息 → 分红 + 自选 star button 在 Asset Detail header 落地。
 >
@@ -22,75 +24,40 @@
 
 ## You are here
 
-| Field                 | Value                                                                                                                                                                                                                                                                                                            |
-| :-------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Real Env P0 dogfooding 全部通过 ✅** → **⛔ CI fix（untracked files）** → **P1 工作**（Sonnet 路线：ADR 016 文案 v3 / Feature ① 交易历史 / 隐私 mask 完成）→ **盈亏分析 spec（#9+）**                                                                                                                |
-| **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: 已 push 至 PR #10，待 review                                                                                                                                                                                                                                      |
-| **Step (Block D)**    | **Phase 1 ✅ algorithm** (`@arc/core/returns/{cash-flow,twr,xirr}.ts` + 21 property tests). **Next** = Phase 2 (mobile hooks ✅ + UI 接入 — Asset Detail TwrInlineLabel 已 wire，ADR 016 §决策 4 layout polish 待 Sonnet)                                                                                        |
-| **Step (Real Env)**   | **dogfooding P0 通过**：cost-basis 含手续费 + 含分红、Hero scrub、市场 filter、新建仓 daily delta、Asset Detail parity 全 OK；Finnhub C 延后；Expo Go 扫码失败为 SDK 55 商店版本不兼容（非本仓 bug）                                                                                                             |
-| **Branch**            | `dev/stage-3` (**ahead 0** vs `origin/dev/stage-3`；已 push 全部 commit)                                                                                                                                                                                                                                         |
-| **Last commit**       | `9ee81d5` `fix(mobile,i18n): Asset Detail return includes dividends + rename label (未实现盈亏→持有收益)`                                                                                                                                                                                                        |
-| **Context slug**      | `holdings-and-transactions`                                                                                                                                                                                                                                                                                      |
-| **Context bundle**    | `.specify/codectx/holdings-and-transactions.xml`                                                                                                                                                                                                                                                                 |
-| **PR**                | **#10 opened**: https://github.com/BoyangJiao/arc/pull/10 (`dev/stage-3 → main`)；**CI failing**（见下方 CI status）                                                                                                                                                                                             |
-| **CI status**         | **⛔ Pre-push Quality Gate FAILING on `9ee81d5` / `176b2be` / `d487b21`**：`@arc/mobile#typecheck` 报 `Cannot find module '../../../src/components/AssetDetailChartSection'` + 同类共 6 个 import 错。本地 typecheck 6/6 ✅（因 untracked 文件兜底）；core 157 / mobile 50 / data-sources 166 / ui 17 tests 全绿 |
-| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                                                                                                                                                               |
-| **Out of scope**      | Block E features (Inbox/AI/订阅/脱敏/价格异动)、Block F polish redesign + CSV、大陆 Auth (ADR 012 P1) 实现；**Finnhub C Vercel proxy 延后到阿里云迁移那一轮**                                                                                                                                                    |
+| Field                 | Value                                                                                                                                                                                                                                                                          |
+| :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 — Real Env P0 通过 ✅ + CI 绿 ✅ + P1 #1–#3 收尾 ✅** → **剩 P1 #4 盈亏分析 Insights 模块**（独立 stream，需先写 spec `pnl-analysis-insights.md`）                                                                                                                   |
+| **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: 已 push 至 PR #10，待 review                                                                                                                                                                                                    |
+| **Step (Block D)**    | **Phase 1 ✅ algorithm** + **Phase 2 ✅ UI 接入**：Asset Detail TWR 大字 prominent + 持有收益 小字 + 双 ⓘ tooltip（ADR 016 §决策 4 layout，commit `dc589f9`）。**Next** = Phase 3 雪球对标（需 ≥6 月真实数据）+ PA/Drawdown specs（Opus）                                      |
+| **Step (Real Env)**   | **dogfooding P0 通过**：cost-basis 含手续费 + 含分红、Hero scrub、市场 filter、新建仓 daily delta、Asset Detail parity 全 OK；Finnhub C 延后；Expo Go 扫码失败为 SDK 55 商店版本不兼容（非本仓 bug）                                                                           |
+| **Branch**            | `dev/stage-3` (**ahead 0** vs `origin/dev/stage-3`；已 push 全部 commit)                                                                                                                                                                                                       |
+| **Last commit**       | `7521b59` `fix(ui,mobile): clear pre-existing lint errors blocking CI`                                                                                                                                                                                                         |
+| **Context slug**      | `holdings-and-transactions`                                                                                                                                                                                                                                                    |
+| **Context bundle**    | `.specify/codectx/holdings-and-transactions.xml`                                                                                                                                                                                                                               |
+| **PR**                | **#10 opened**: https://github.com/BoyangJiao/arc/pull/10 (`dev/stage-3 → main`)；**CI ✅ green**                                                                                                                                                                              |
+| **CI status**         | **✅ Pre-push Quality Gate GREEN on `7521b59`**（run `26676119184` success）。lint 6/6 + typecheck 6/6 + tests 全绿。根因复盘：CI gate lint step 排在 typecheck 之后，之前 typecheck 一直 fail 所以 lint 从没跑到 → typecheck 修绿后才暴露两个 pre-existing lint error（已修） |
+| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                                                                                                                             |
+| **Out of scope**      | Block E features (Inbox/AI/订阅/脱敏/价格异动)、Block F polish redesign + CSV、大陆 Auth (ADR 012 P1) 实现；**Finnhub C Vercel proxy 延后到阿里云迁移那一轮**                                                                                                                  |
 
-## Sonnet P1 handoff（2026-05-30 by BoyangJiao）
+## Sonnet P1 handoff（2026-05-30 by BoyangJiao）— **P0 + #1–#3 ✅ DONE（Opus 4.8）**
 
-**Real Env P0 全过** → Opus 4.7 把 dogfooding bug 全修完 → 现在交接 P1 工作给 Sonnet。
+**Real Env P0 全过** → Opus 4.7 修 dogfooding bug → Sonnet 收 P1 → **Opus 4.8 接管收尾 P0 CI + P1 #1–#3，全部落地 + CI 绿**。剩 P1 #4。
 
-### 🔥 P0 — 必须先修，否则 PR #10 无法 merge
+### 🔥 P0 — ✅ DONE（commit `38e4268` + `fa2410e`，CI 二修 `7521b59`）
 
-**CI 在 dev/stage-3 上持续 fail**（详见 §"CI status"）。原因：本地 working tree 有 ~10 个 **untracked files**（Cursor 中途留下的"隐私 mask + Asset Detail 重构 + 持仓排序"工作），已 committed 的 code 已 import 它们，但文件本身没 git add → 远端 `pnpm typecheck` 找不到模块。
+untracked-files CI blocker 已用方案 (c) 解决：按主题拆 2 commit（Asset Detail chart 重构 / 隐私 mask + 持仓排序），全部 untracked + modified 文件 review 后落地。**二次 CI fail**（lint，非 typecheck）已修：见下方 §"Critical mental model" 新增 gotcha「CI gate step 顺序」。
 
-**`git status` 显示的 untracked files**（按主题分组）：
+### 🟡 P1 — #1–#3 ✅ DONE，#4 待启动
 
-1. **隐私金额 mask**（与 `(tabs)/index.tsx` modified 状态耦合）：
-   - `apps/mobile/src/lib/use-amount-redacted.ts`
-   - `packages/ui/src/finance/amount-redaction.ts`
-   - `packages/ui/src/finance/AmountVisibilityToggle.tsx`
-2. **Asset Detail 重构**（与 `apps/mobile/app/asset/[market]/[symbol].tsx` modified 耦合）：
-   - `apps/mobile/src/components/AssetDetailChartSection.tsx`
-   - `apps/mobile/src/components/AssetDetailChartEmptyPlot.tsx`
-   - `apps/mobile/src/components/AssetDetailPriceHeader.tsx`
-   - `apps/mobile/src/components/AssetDetailTimeRangeScrubSlot.tsx`
-   - `apps/mobile/src/lib/asset-detail-chart-layout.ts`
-   - `apps/mobile/src/lib/asset-detail-chart-status.ts`
-3. **持仓排序**（与 `packages/ui/src/finance/HoldingsTable.tsx` modified 耦合）：
-   - `packages/ui/src/finance/HoldingsSortControl.tsx`
+1. **ADR 016 文档 v3 更新** — ✅ DONE（`46577da`）。§决策 2/4 持有收益含分红语义 + costBasis tooltip i18n（en+zh）+ v3 摘要 block。i18n label 已是「持有收益 / Holding return」。
+2. **Feature ① 单标的交易历史** — ✅ DONE（`8ffa688` `useDeleteTransaction`+`useAssetTransactions` hooks / `5ad152b` `AssetTransactionHistorySection` swipe-to-delete）。
+3. **Block D Phase 2 TWR layout polish** — ✅ DONE（`dc589f9`）。TWR 大字 prominent（`TwrInlineLabel size="prominent"`）+ 持有收益 小字（新 `HoldingReturnInlineLabel`）+ 双 ⓘ tooltip（抽出共享 `InfoTooltipButton`）。`use-asset-detail` 新增 `unrealizedPnLPercent`。i18n `assetDetail.unrealizedPnL` → `assetDetail.holdingReturn.{label,tooltipTitle}`。
 
-**Sonnet 首要任务**：跟 BoyangJiao confirm 这批 work 的归属 → 三选一：
-
-- (a) **直接 commit 这批 untracked + modified 文件**（最快，前提是它们的代码质量你看过 OK）
-- (b) **revert tracked 文件里的 import 引用**（让 CI 转绿，把 untracked 留到下一个 commit）
-- (c) **逐个文件 review 后合理拆 commit**（最稳妥）
-
-我（Opus）**没有**自作主张 commit 这批 work，因为它们看起来是用户/Cursor 平行进行的隐私 mask + UI 重构工作流，不应该被算法侧 dogfooding fix 顺手带进 commit history。
-
-### 🟡 P1 — CI 转绿后按 ROI 排序
-
-1. **ADR 016 文档 v3 更新**（~30 min）
-   - 把"持仓行 / Asset Detail 持有收益 = (current − cost) + 累计分红" 的语义写进 §决策 2 + §决策 4
-   - 目前 spec 跟代码（commit `07f9c5d` + `9ee81d5`）不一致，spec 仍说"持仓盈亏 = current − cost"，代码已含分红
-   - 同时把 i18n label 从"未实现盈亏 / Unrealized P&L" 改成 "持有收益 / Holding return" 入 ADR
-
-2. **Feature ① — 单标的交易历史**（~3-4 commit）
-   - Asset Detail 页面加 section，列出该资产所有 BUY/SELL/DIVIDEND
-   - 新 query hook `useAssetTransactions(portfolioId, assetId)` = `transactions.filter(t => t.assetId === assetId)`
-   - swipe-to-delete 复用现有交易删除流程
-   - 详情：see Opus 2026-05-29 conversation §"Feature ① 单标的交易历史"
-
-3. **Block D Phase 2 — Asset Detail TWR layout polish**（~1-2 commit）
-   - 把 TWR + 持有收益 改成 ADR 016 §决策 4 v2 template 视觉层次（TWR 大字 + 持有收益 小字 + 双 tooltip）
-   - 当前已 wire `TwrInlineLabel` 但 layout 还不分级
-   - i18n 已有 `assetDetail.twr.tooltip` + `assetDetail.costBasis.tooltip` 全套
-
-4. **Insights 盈亏分析模块**（独立 stream，~10+ commit）
+4. **⏭️ Insights 盈亏分析模块**（独立 stream，~10+ commit）— **下一步唯一剩余 P1**
    - ADR 016 §决策 7 + §六 已规划，feature spec 未写
    - 仿 IBKR 业绩 tab + 钱往 详情页：MWR 曲线 + cost-basis 累计回报 + 已实现/未实现盈亏 + 盈亏排行
-   - 建议先写 spec `.specify/feature-specs/stage-3/pnl-analysis-insights.md` 再分拆 commit
+   - **建议先写 spec** `.specify/feature-specs/stage-3/pnl-analysis-insights.md`（架构/设计 = Opus 主场）再分拆 commit
+   - 可复用：Block D `xirr`（MWR）、`computeAssetTwr`、`HoldingReturnInlineLabel`、`InfoTooltipButton`、charts L2
 
 ### 阿里云迁移上下文（P3 — 不在本次 P1 范围）
 
@@ -472,7 +439,9 @@ commit chain：
 
 ## Immediate next actions (next session)
 
-**Track F — Real Env dogfooding 问题修复（当前优先 — 用户主导带入 bug 列表）**
+**⭐ 唯一剩余 P1 — Insights 盈亏分析模块（见 §"Sonnet P1 handoff" #4）**：先写 spec `.specify/feature-specs/stage-3/pnl-analysis-insights.md`（Opus 主场），再分拆 commit。其余 Track A–G 为历史/并行支线，按需取用。
+
+**Track F — Real Env dogfooding 问题修复（持续 — 用户主导带入 bug 列表）**
 
 1. 用户在 Real Env（`cyberjby+arc-real@gmail.com`）录入真实持仓后继续日常使用，**逐条记录**与 Delta / 支付宝 / 预期行为的偏差。
 2. 下一会话：带 repro 步骤 + 截图/数值 → Sonnet/Cursor 修 mobile/core/data-sources（不动 schema 除非 Opus 签 off）。
@@ -583,6 +552,9 @@ UAT 验收：
 - **Rebalance DEV seed**: `rebalance:aligned|mild-drift|heavy-drift` 共用同一组 holdings；fixture 当前配置 ≈ **11.85 / 13.14 / 43.76 / 31.25**（见 `rebalance-seed-plans.ts`）。切换场景后 invalidate queries + 预热 `priceCache`/`fxCache`。
 - **缓存信任 (ADR 010)**: dev `cache-first` 不再无条件信任 cache。`source ∈ {seed-dev, fixture, alphavantage}` 或 `changePercent == null` → 走 Finnhub。新写一个 cache-first 读路径必须 `import { isStaleQuoteSource } from "../stale-quote"` 并在 `priceCache.get` 之后过滤，否则 HOOD/AAPL/MSFT/NVDA 类 bug 会复发。
 - **`DeviationBar` (RN)**: 勿用 `h-2` + `h-full` 撑条高 — 用固定 `8px`；条宽按 `|deviationPercent|` 而非 `currentPercent`。
+- **CI gate step 顺序（2026-05-30 踩坑）**: "Pre-push Quality Gate" 把 typecheck → lint → test 当**顺序 step**。typecheck fail 时 lint **从不执行**，会**掩盖** pre-existing lint error。本地 `git commit` 的 husky hook **只跑 prettier**（不跑 eslint）→ 本地 typecheck 6/6 ≠ CI 绿。**推前先本地 `pnpm lint` + `pnpm typecheck` + `pnpm test` 三件套**对齐 CI，别只信 typecheck。
+- **硬编码颜色 lint**: 业务/组件代码禁止 hex/oklch/rgb 字面量（`eslint.config.mjs` §决策七）。装饰性原始色（avatar 渐变等）放 `packages/ui/src/tokens/**`（lint 豁免目录，见 `avatar-gradients.ts` / `navigation-colors.ts`），勿留在 `finance/` 等业务层。
+- **失效 eslint-disable**: flat config **没注册** `react-hooks` 插件 → 任何 `// eslint-disable react-hooks/exhaustive-deps` 会报 "rule not found" **error**（非 warning）。要么注册插件，要么删 disable 行（当前选删，因规则本就没启用）。
 - All prior Stage 1 gotchas still apply (FixtureAdapter, @arc/ui imports, OTP 8-digit, etc.).
 - **Expo SDK 55** (2026-05-19): `expo@~55`, RN **0.83.6**, React **19.2**; `app.json` 已移除 `newArchEnabled` / `edgeToEdgeEnabled`（SDK 55 默认）；monorepo 启用 `experiments.autolinkingModuleResolution`；根 `pnpm.overrides` 钉住 `react@19.2.0`。勿扫 **8082** 等非 Arc Metro 二维码（会报 SDK 54 不兼容）。
 - **AKShare wrapper (Vercel)**: 纯 Python 子项目须 `vercel.json` **`builds` + `routes`**（勿仅用 `functions` glob）；共享代码放 `lib/` 勿放 `api/_shared/`。Hobby 冷启动慢；跨市场 4 标的串行拉价 UI 全表「加载中」直到最慢一只返回。
