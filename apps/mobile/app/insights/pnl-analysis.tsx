@@ -8,11 +8,11 @@
  * from the ?range= query param (Hero chip) else DEFAULT_TIME_RANGE (AC.2.3/2.4).
  */
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import type Decimal from "decimal.js";
-import { parseAssetId } from "@arc/core";
+import { parseAssetId, type Market } from "@arc/core";
 import {
   DEFAULT_TIME_RANGE,
   InScreenHeader,
@@ -21,7 +21,6 @@ import {
   PnlRankingCard,
   Screen,
   TIME_RANGE_OPTIONS,
-  TimeRangeSelector,
   Text,
   formatCompactChangeLine,
   formatSignedPercent,
@@ -35,6 +34,7 @@ import {
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
+import { resolveAssetLogoUrl } from "../../src/lib/asset-logo-url";
 import { buildCumulativePnlSummary } from "../../src/lib/pnl-presenter";
 import { currencySymbol, formatMoney } from "../../src/lib/format-money";
 import {
@@ -146,6 +146,11 @@ export default function PnlAnalysisScreen() {
   const cumulative = valuation ? buildCumulativePnlSummary(valuation, holdings) : null;
 
   // ─── 盈亏排行 ────────────────────────────────────────────────────────────
+  const marketLabel = useCallback(
+    (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US"),
+    [t]
+  );
+
   const toRow = (c: {
     assetId: string;
     contribution: Decimal;
@@ -156,7 +161,11 @@ export default function PnlAnalysisScreen() {
     return {
       assetId: c.assetId,
       name,
-      symbolLabel: `${market} · ${symbol}`,
+      symbol,
+      market,
+      marketLabel: marketLabel(market),
+      imageUrl: resolveAssetLogoUrl(market, symbol),
+      symbolLabel: `${marketLabel(market)} · ${symbol}`,
       contributionLabel: signedAmount(c.contribution),
       sign: signOf(c.contribution),
       rightSubLabel:
@@ -172,7 +181,7 @@ export default function PnlAnalysisScreen() {
     const losers = result.perAssetContribution.filter((c) => c.contribution.isNegative());
     const picked = (rankingTab === "winners" ? winners : losers).slice(0, 5);
     return picked.map(toRow);
-  }, [result, rankingTab, catalog, amountsHidden]);
+  }, [result, rankingTab, catalog, amountsHidden, marketLabel]);
 
   const handleRowPress = (assetId: string) => {
     const { market, symbol } = parseAssetId(assetId);
@@ -185,8 +194,6 @@ export default function PnlAnalysisScreen() {
       <Screen contentContainerStyle={scrollContentBelowInScreenHeader}>
         <InScreenHeader title={t("insights.pnl.title")} leftType="back" />
         <View className="px-4 gap-4 pb-10">
-          <TimeRangeSelector value={range} onChange={setRange} />
-
           <PnlPeriodCard
             sectionTitle={t("insights.pnl.section.period")}
             periodLabel={t("insights.pnl.periodValueChange.title", { period: range })}
@@ -196,6 +203,8 @@ export default function PnlAnalysisScreen() {
             chartData={chartData}
             chartLoading={pnlQuery.isPending}
             chartEmptyLabel={t("insights.pnl.chart.empty")}
+            range={range}
+            onRangeChange={setRange}
             metrics={metrics}
           />
 

@@ -16,12 +16,17 @@ import { TYPO_CONTROL_LABEL, TYPO_EMPTY_MESSAGE, typographyClass } from "../toke
 
 import { RankingRow } from "./RankingRow";
 import type { PnlSign } from "./pnl-types";
+import type { RebalanceMarket } from "./rebalance-types";
 
 export type PnlRankingTab = "winners" | "losers";
 
 export interface PnlRankingRowData {
   readonly assetId: string;
   readonly name: string;
+  readonly symbol: string;
+  readonly market: RebalanceMarket;
+  readonly marketLabel: string;
+  readonly imageUrl?: string | null;
   readonly symbolLabel?: string;
   readonly contributionLabel: string;
   readonly sign: PnlSign;
@@ -88,6 +93,10 @@ export function PnlRankingCard(props: PnlRankingCardProps): ReactNode {
               <RankingRow
                 key={row.assetId}
                 name={row.name}
+                symbol={row.symbol}
+                market={row.market}
+                marketLabel={row.marketLabel}
+                imageUrl={row.imageUrl}
                 symbolLabel={row.symbolLabel}
                 contributionLabel={row.contributionLabel}
                 sign={row.sign}

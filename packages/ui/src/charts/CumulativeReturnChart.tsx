@@ -9,9 +9,9 @@
  *     useChartPeriodStrokeColor (sign of last − first; first is 0 here) → AC.3.3
  *   - NO scrub (interactive=false) per §决策 10
  *
- * Design: Revolut/Wise-style — the line is the hero. We do NOT clutter it with
- * y-axis %% labels (the exact numbers live in the metric rows / headline); we
- * only draw a faint break-even baseline when the curve actually crosses 0%.
+ * Design (Revolut Performance): the line is the hero. A subtle right-axis shows
+ * max / 0% / min as small muted tick labels, plus a faint break-even baseline at
+ * 0% — scale cues without the heavy full-width gridlines.
  */
 
 import type { ReactNode } from "react";
@@ -21,7 +21,7 @@ import { View } from "react-native";
 import { AreaChart } from "./AreaChart";
 import { buildPercentAxisModel, type PercentAxisInput } from "./chart-percent-axis";
 import { Text } from "../primitives/Text";
-import { typographyClass } from "../tokens/typography";
+import { TYPO_CAPTION, typographyClass } from "../tokens/typography";
 
 export interface ArcCumulativeReturnChartProps {
   readonly data: ReadonlyArray<PercentAxisInput>;
@@ -30,6 +30,15 @@ export interface ArcCumulativeReturnChartProps {
   /** Shown when there is too little data to draw a curve (首日 (C) 用户). */
   readonly emptyLabel?: string;
 }
+
+const formatTick = (pct: number): string => {
+  const rounded = Math.round(pct * 10) / 10;
+  if (rounded === 0) return "0%";
+  const sign = rounded > 0 ? "+" : "-";
+  return `${sign}${Math.abs(rounded).toFixed(1)}%`;
+};
+
+const TICK_HALF_HEIGHT = 7;
 
 export function CumulativeReturnChart({
   data,
@@ -49,12 +58,15 @@ export function CumulativeReturnChart({
     );
   }
 
-  // Break-even baseline only when the curve has both gains and losses vs start —
-  // otherwise it sits flush against an edge and reads like a frame.
   const max = model.ticks[0]?.pct ?? 0;
   const min = model.ticks[model.ticks.length - 1]?.pct ?? 0;
   const zeroTick = model.ticks.find((t) => t.pct === 0);
+  // Break-even baseline only when the curve has both gains and losses vs start —
+  // otherwise it sits flush against an edge and reads like a frame.
   const showBaseline = !!zeroTick && max > 0 && min < 0;
+
+  const clampTop = (topFraction: number): number =>
+    Math.max(0, Math.min(height - TICK_HALF_HEIGHT * 2, topFraction * height - TICK_HALF_HEIGHT));
 
   return (
     <View className="relative w-full" style={{ height }}>
@@ -66,6 +78,18 @@ export function CumulativeReturnChart({
         />
       ) : null}
       <AreaChart data={model.points} height={height} loading={loading} interactive={false} />
+      {/* Subtle right-axis ticks — non-interactive overlay. */}
+      <View pointerEvents="none" className="absolute inset-0">
+        {model.ticks.map((tick) => (
+          <Text
+            key={tick.pct}
+            className={`${TYPO_CAPTION} text-muted/70 absolute right-0 tabular-nums`}
+            style={{ top: clampTop(tick.topFraction) }}
+          >
+            {formatTick(tick.pct)}
+          </Text>
+        ))}
+      </View>
     </View>
   );
 }

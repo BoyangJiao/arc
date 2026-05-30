@@ -14,7 +14,12 @@ import { View } from "react-native";
 
 import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
-import { CumulativeReturnChart, type PercentAxisInput } from "../charts";
+import {
+  CumulativeReturnChart,
+  TimeRangeSelector,
+  type PercentAxisInput,
+  type TimeRange,
+} from "../charts";
 import { useBusinessClasses } from "../tokens/business-context";
 import { TYPO_CAPTION, TYPO_LABEL, typographyClass } from "../tokens/typography";
 
@@ -39,6 +44,9 @@ export interface PnlPeriodCardProps {
   readonly chartData: ReadonlyArray<PercentAxisInput>;
   readonly chartLoading?: boolean;
   readonly chartEmptyLabel?: string;
+  /** Time-range pills rendered directly below the chart (Revolut Performance). */
+  readonly range: TimeRange;
+  readonly onRangeChange: (range: TimeRange) => void;
   readonly metrics: ReadonlyArray<PnlMetricRow>;
 }
 
@@ -52,6 +60,8 @@ export function PnlPeriodCard(props: PnlPeriodCardProps): ReactNode {
     chartData,
     chartLoading = false,
     chartEmptyLabel,
+    range,
+    onRangeChange,
     metrics,
   } = props;
   const classes = useBusinessClasses();
@@ -75,11 +85,15 @@ export function PnlPeriodCard(props: PnlPeriodCardProps): ReactNode {
           <Text className={`${TYPO_CAPTION} text-muted`}>{dateRangeLabel}</Text>
         </View>
 
-        <CumulativeReturnChart
-          data={chartData}
-          loading={chartLoading}
-          emptyLabel={chartEmptyLabel}
-        />
+        {/* Chart + time-range pills directly beneath it (Revolut Performance). */}
+        <View className="gap-3">
+          <CumulativeReturnChart
+            data={chartData}
+            loading={chartLoading}
+            emptyLabel={chartEmptyLabel}
+          />
+          <TimeRangeSelector value={range} onChange={onRangeChange} />
+        </View>
 
         <View className="gap-3.5">
           {metrics.map((row) => (

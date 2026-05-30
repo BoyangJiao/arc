@@ -13,10 +13,17 @@ import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
 import { TYPO_CAPTION, TYPO_ROW_TITLE, typographyClass } from "../tokens/typography";
 
+import { AssetAvatar } from "./AssetAvatar";
 import { pnlTextClass, type PnlSign } from "./pnl-types";
+import type { RebalanceMarket } from "./rebalance-types";
 
 export interface RankingRowProps {
   readonly name: string;
+  /** Leading asset avatar (Revolut performance-contribution row). */
+  readonly symbol: string;
+  readonly market: RebalanceMarket;
+  readonly marketLabel: string;
+  readonly imageUrl?: string | null;
   /** Secondary identifier, e.g. "美股 · UBER". */
   readonly symbolLabel?: string;
   /** Signed contribution amount, e.g. "+¥18,400.00". */
@@ -30,6 +37,10 @@ export interface RankingRowProps {
 
 export function RankingRow({
   name,
+  symbol,
+  market,
+  marketLabel,
+  imageUrl,
   symbolLabel,
   contributionLabel,
   sign,
@@ -44,9 +55,10 @@ export function RankingRow({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? name}
       onPress={onPress}
-      className="flex-row items-center justify-between py-3 active:opacity-60"
+      className="flex-row items-center gap-3 py-3 active:opacity-60"
     >
-      <View className="flex-1 pr-3">
+      <AssetAvatar symbol={symbol} market={market} marketLabel={marketLabel} imageUrl={imageUrl} />
+      <View className="flex-1 min-w-0 pr-3">
         <Text className={TYPO_ROW_TITLE} numberOfLines={1}>
           {name}
         </Text>
