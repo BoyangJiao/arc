@@ -47,6 +47,8 @@ export {
   Toast,
   // Navigation
   Tabs,
+  // Slider — target-allocation editor (rebalance setup, first real-use unlock)
+  Slider,
   // Scroll utilities (crypto-wallet home pattern — ScrollShadow + LinearGradient)
   ScrollShadow,
   // Select — compact sort/filter picker (first real-use unlock, HoldingsSortControl)

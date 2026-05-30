@@ -568,6 +568,7 @@ export const zh = {
     setupIntro: "为每个持仓填写目标占比（合计须等于 100%）。",
     sumOk: "当前合计：{{sum}}% ✓",
     sumCurrent: "当前合计：{{sum}}%",
+    currentWeight: "当前 {{pct}}%",
     sumShort: "还差 {{delta}}%",
     sumOver: "超出 {{delta}}%",
     actionsTitle: "再平衡行动单",

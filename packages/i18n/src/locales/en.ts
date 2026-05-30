@@ -582,6 +582,7 @@ export const en = {
     setupIntro: "Assign a target weight to each holding (must total 100%).",
     sumOk: "Total: {{sum}}% ✓",
     sumCurrent: "Current total: {{sum}}%",
+    currentWeight: "Now {{pct}}%",
     sumShort: "{{delta}}% below 100",
     sumOver: "{{delta}}% above 100",
     actionsTitle: "Rebalance action list",
