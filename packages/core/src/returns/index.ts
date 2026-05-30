@@ -27,6 +27,7 @@ export * from "./errors";
 export * from "./cash-flow";
 export * from "./twr";
 export * from "./xirr";
+export * from "./period-pnl";
 
 /**
  * computeCumulativeReturn — Stage 1 simple cumulative return.
