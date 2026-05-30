@@ -26,6 +26,8 @@ export interface AssetDetailView {
       }
     | undefined;
   readonly unrealizedPnL: Decimal | null;
+  /** unrealizedPnL / totalCostBasis × 100; null when cost basis is zero/unknown. */
+  readonly unrealizedPnLPercent: Decimal | null;
 }
 
 export const useAssetDetail = (market: string | undefined, symbol: string | undefined) => {
@@ -49,9 +51,13 @@ export const useAssetDetail = (market: string | undefined, symbol: string | unde
     // Same formula as holdings-presenter row delta (07f9c5d), in native currency
     // — no FX conversion needed (all three terms come from `holding` accumulators).
     let unrealizedPnL: Decimal | null = null;
+    let unrealizedPnLPercent: Decimal | null = null;
     if (holding && quote) {
       const marketValue = holding.shares.times(quote.price);
       unrealizedPnL = marketValue.minus(holding.totalCostBasis).plus(holding.totalDividends);
+      if (!holding.totalCostBasis.isZero()) {
+        unrealizedPnLPercent = unrealizedPnL.dividedBy(holding.totalCostBasis).times(100);
+      }
     }
 
     return {
@@ -69,6 +75,7 @@ export const useAssetDetail = (market: string | undefined, symbol: string | unde
           }
         : undefined,
       unrealizedPnL,
+      unrealizedPnLPercent,
     };
   }, [assetId, market, symbol, catalog.data, priceQuery.data, holding]);
 

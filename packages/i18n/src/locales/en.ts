@@ -92,7 +92,10 @@ export const en = {
     myHolding: "My holding",
     shares: "Shares: {{shares}}",
     avgCost: "Avg. cost: {{cost}}",
-    unrealizedPnL: "Holding return: {{pnl}}",
+    holdingReturn: {
+      label: "Holding return",
+      tooltipTitle: "Holding return",
+    },
     addTransactionCta: "Record a transaction for this asset",
     more: "More",
     removeFromPortfolio: "Remove from portfolio",

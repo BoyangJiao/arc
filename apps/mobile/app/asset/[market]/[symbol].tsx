@@ -9,6 +9,7 @@ import {
   Button,
   DotsThreeVerticalIcon,
   HeaderActionButton,
+  HoldingReturnInlineLabel,
   InScreenHeader,
   Screen,
   StarIcon,
@@ -267,33 +268,11 @@ export default function AssetDetailScreen() {
           />
 
           {detail.data?.holding ? (
-            <View className="mt-4 gap-2 border-t border-border pt-4">
-              <Text className="text-muted text-sm">
-                {t("assetDetail.dataCompleteness.disclosure")}
-              </Text>
+            <View className="mt-4 gap-3 border-t border-border pt-4">
               <Text className="text-foreground font-semibold">{t("assetDetail.myHolding")}</Text>
-              <Text className="text-muted text-sm">
-                {t("assetDetail.shares", {
-                  shares: detail.data.holding.shares.toFixed(4),
-                })}
-              </Text>
-              <Text className="text-muted text-sm">
-                {t("assetDetail.avgCost", {
-                  cost: formatMoney(detail.data.holding.averageCost, detail.data.currency, {
-                    redact: amountsHidden,
-                  }),
-                })}
-              </Text>
-              {detail.data.unrealizedPnL !== null ? (
-                <Text className="text-foreground text-sm">
-                  {t("assetDetail.unrealizedPnL", {
-                    pnl: formatMoney(detail.data.unrealizedPnL, detail.data.currency, {
-                      redact: amountsHidden,
-                    }),
-                  })}
-                </Text>
-              ) : null}
+
               <TwrInlineLabel
+                size="prominent"
                 range={range}
                 result={assetTwr.isError ? undefined : assetTwr.data}
                 loading={assetTwr.isLoading}
@@ -303,7 +282,38 @@ export default function AssetDetailScreen() {
                 tooltipBody={t("assetDetail.twr.tooltip")}
                 closeLabel={t("common.close")}
               />
-              <Text className="text-muted text-xs">{t("assetDetail.costBasis.tooltip")}</Text>
+
+              {detail.data.unrealizedPnL !== null ? (
+                <HoldingReturnInlineLabel
+                  label={t("assetDetail.holdingReturn.label")}
+                  amount={detail.data.unrealizedPnL}
+                  percent={detail.data.unrealizedPnLPercent}
+                  currencySymbol={currencySymbol(detail.data.currency)}
+                  redactAmount={amountsHidden}
+                  tooltipTitle={t("assetDetail.holdingReturn.tooltipTitle")}
+                  tooltipBody={t("assetDetail.costBasis.tooltip")}
+                  closeLabel={t("common.close")}
+                />
+              ) : null}
+
+              <View className="gap-1">
+                <Text className="text-muted text-sm">
+                  {t("assetDetail.shares", {
+                    shares: detail.data.holding.shares.toFixed(4),
+                  })}
+                </Text>
+                <Text className="text-muted text-sm">
+                  {t("assetDetail.avgCost", {
+                    cost: formatMoney(detail.data.holding.averageCost, detail.data.currency, {
+                      redact: amountsHidden,
+                    }),
+                  })}
+                </Text>
+              </View>
+
+              <Text className="text-muted text-xs">
+                {t("assetDetail.dataCompleteness.disclosure")}
+              </Text>
             </View>
           ) : null}
 

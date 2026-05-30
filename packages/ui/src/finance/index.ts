@@ -97,6 +97,11 @@ export {
   type TwrInlineLabelResult,
 } from "./TwrInlineLabel";
 export {
+  HoldingReturnInlineLabel,
+  type HoldingReturnInlineLabelProps,
+} from "./HoldingReturnInlineLabel";
+export { InfoTooltipButton, type InfoTooltipButtonProps } from "./InfoTooltipButton";
+export {
   computePeriodChange,
   computePeriodChangeFromBaseline,
   firstNonZeroChartY,
