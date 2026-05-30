@@ -18,11 +18,14 @@ import {
   TabScrollShadow,
   Text,
   ThemedIcon,
+  TYPO_CAPTION,
+  TYPO_DISCLAIMER,
+  TYPO_OVERLINE,
+  TYPO_ROW_TITLE,
   UserAvatar,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
-import { InsightsActiveRebalancePanel } from "../../src/components/InsightsActiveRebalancePanel";
 import { PortfolioInsightCardLoader } from "../../src/components/PortfolioInsightCardLoader";
 import { useAuth } from "../../src/lib/auth";
 import { usePortfolios } from "../../src/lib/queries";
@@ -106,8 +109,6 @@ export default function InsightsTab() {
             />
           }
         >
-          <InsightsActiveRebalancePanel />
-
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t("insights.pnl.entryCardTitle")}
@@ -122,10 +123,10 @@ export default function InsightsTab() {
                   weight="duotone"
                 />
                 <View className="flex-1">
-                  <Text className="text-foreground font-semibold text-base">
-                    {t("insights.pnl.entryCardTitle")}
+                  <Text className={TYPO_ROW_TITLE}>{t("insights.pnl.entryCardTitle")}</Text>
+                  <Text className={`${TYPO_CAPTION} text-muted`}>
+                    {t("insights.pnl.entryCardSubtitle")}
                   </Text>
-                  <Text className="text-muted text-xs">{t("insights.pnl.entryCardSubtitle")}</Text>
                 </View>
                 <ThemedIcon icon={CaretRightIcon} size={18} colorToken="muted" />
               </View>
@@ -133,9 +134,7 @@ export default function InsightsTab() {
           </Pressable>
 
           {portfolios.length > 1 ? (
-            <Text className="text-foreground font-semibold text-base">
-              {t("rebalance.allPortfoliosSection")}
-            </Text>
+            <Text className={TYPO_OVERLINE}>{t("rebalance.allPortfoliosSection")}</Text>
           ) : null}
 
           {portfolios.map((portfolio) => (
@@ -148,7 +147,9 @@ export default function InsightsTab() {
             description={t("portfolios.crossPortfolioPlaceholderDescription")}
           />
 
-          <Text className="text-muted text-xs text-center">{t("common.notInvestmentAdvice")}</Text>
+          <Text className={`${TYPO_DISCLAIMER} text-center`}>
+            {t("common.notInvestmentAdvice")}
+          </Text>
         </ScrollView>
       </TabScrollShadow>
     </Screen>

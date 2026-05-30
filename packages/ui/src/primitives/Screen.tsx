@@ -46,6 +46,12 @@ export interface ScreenProps {
   onRefresh?: () => void | Promise<void>;
   /** When false, disables vertical scroll (e.g. chart scrub vs parent ScrollView). */
   scrollEnabled?: boolean;
+  /**
+   * Pinned footer rendered below the scroll area (sticky 吸底). Stays fixed while
+   * content scrolls. Pair with `edges` including `'bottom'` so it clears the home
+   * indicator. The footer supplies its own padding / background.
+   */
+  footer?: ReactNode;
   children: ReactNode;
 }
 
@@ -61,6 +67,7 @@ export function Screen({
   refreshing = false,
   onRefresh,
   scrollEnabled = true,
+  footer,
   children,
 }: ScreenProps) {
   if (!scroll) {
@@ -68,6 +75,7 @@ export function Screen({
       <View className={className}>
         <SafeAreaView edges={edges} style={{ flex: 1 }}>
           <View className="flex-1">{children}</View>
+          {footer}
         </SafeAreaView>
       </View>
     );
@@ -76,6 +84,7 @@ export function Screen({
     <View className={className}>
       <SafeAreaView edges={edges} style={{ flex: 1 }}>
         <ScrollView
+          style={footer ? { flex: 1 } : undefined}
           scrollEnabled={scrollEnabled}
           contentContainerStyle={contentContainerStyle}
           keyboardShouldPersistTaps={keyboardShouldPersistTaps}
@@ -87,6 +96,7 @@ export function Screen({
         >
           {children}
         </ScrollView>
+        {footer}
       </SafeAreaView>
     </View>
   );

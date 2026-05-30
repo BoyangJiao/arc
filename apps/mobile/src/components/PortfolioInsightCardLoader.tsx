@@ -2,10 +2,10 @@
  * PortfolioInsightCardLoader — fetches per-portfolio insight data for Insights dashboard.
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
-import { PortfolioInsightCard, TwrInlineLabel } from "@arc/ui";
+import { PortfolioInsightCard, TwrInlineLabel, formatSignedPercent, type PnlSign } from "@arc/ui";
 import type { Portfolio } from "@arc/core";
 import { useTranslation } from "@arc/i18n";
 
@@ -13,6 +13,12 @@ import { formatMoney } from "../lib/format-money";
 import { useAmountRedacted } from "../lib/use-amount-redacted";
 import { assetLabel, toDonutSegments } from "../lib/rebalance-format";
 import {
+  claimInsightsSessionLiveFetch,
+  insightsSessionValuationKey,
+} from "../lib/insights-session-valuation";
+import { isCacheFirstMarketData } from "../lib/market-data-policy";
+import {
+  useActivePortfolio,
   useDailyDelta,
   usePortfolioTwr,
   usePortfolioValuation,
@@ -30,6 +36,7 @@ export const PortfolioInsightCardLoader = ({ portfolio }: { portfolio: Portfolio
   const { t } = useTranslation();
   const router = useRouter();
   const { amountsHidden } = useAmountRedacted();
+  const { activePortfolioId } = useActivePortfolio();
   const reportingCurrency = portfolio.reportingCurrency;
 
   const { data: valuation, isPending: valuationPending } = usePortfolioValuation(
@@ -39,12 +46,24 @@ export const PortfolioInsightCardLoader = ({ portfolio }: { portfolio: Portfolio
   const {
     deviations,
     targets,
+    holdings,
     isLoading: rebalanceLoading,
+    refreshFromLive,
   } = useRebalance(portfolio.id, reportingCurrency);
   const dailyDelta = useDailyDelta(portfolio.id, reportingCurrency);
   const portfolioTwr = usePortfolioTwr({ portfolioId: portfolio.id, range: INSIGHT_TWR_RANGE });
 
   const hasTargets = targets.length > 0;
+  const isActive = activePortfolioId === portfolio.id;
+
+  // Cache-first → live refresh on mount, once per session, for the active
+  // portfolio only (ADR 007 real-link; folded in from the old active panel).
+  useEffect(() => {
+    if (!isActive || holdings.length === 0 || !hasTargets || !isCacheFirstMarketData()) return;
+    const key = insightsSessionValuationKey(portfolio.id, reportingCurrency);
+    if (!claimInsightsSessionLiveFetch(key)) return;
+    void refreshFromLive();
+  }, [isActive, holdings.length, hasTargets, portfolio.id, reportingCurrency, refreshFromLive]);
 
   const labelFor = (assetId: string) =>
     assetLabel(assetId, t(`rebalance.cashNames.${parseCashKey(assetId)}` as const));
@@ -80,15 +99,20 @@ export const PortfolioInsightCardLoader = ({ portfolio }: { portfolio: Portfolio
 
   const rebalanceCount = deviations.filter((d) => !d.sharesNeeded.isZero()).length;
 
-  const todayPercent =
-    dailyDelta.data?.status === "ok" ? `${dailyDelta.data.totalDeltaPercent.toFixed(2)}%` : "—";
+  const todayDelta = dailyDelta.data?.status === "ok" ? dailyDelta.data.totalDeltaPercent : null;
+  const todayChange = todayDelta ? formatSignedPercent(todayDelta) : "—";
+  const todaySign: PnlSign =
+    !todayDelta || todayDelta.isZero() ? "neutral" : todayDelta.isNegative() ? "loss" : "gain";
 
   const setupHref = `/insights/rebalance/setup?portfolioId=${portfolio.id}` as Href;
+  const actionsHref = `/insights/rebalance/actions?portfolioId=${portfolio.id}` as Href;
 
   return (
     <PortfolioInsightCard
       portfolioName={portfolio.name}
       reportingCurrency={portfolio.reportingCurrency}
+      isActive={isActive}
+      activeChipLabel={t("portfolios.activeChip")}
       totalValueLabel={
         valuationPending
           ? t("common.loading")
@@ -96,7 +120,8 @@ export const PortfolioInsightCardLoader = ({ portfolio }: { portfolio: Portfolio
               redact: amountsHidden,
             })
       }
-      todayChangeLabel={t("portfolios.insightTodayChange", { percent: todayPercent })}
+      todayChangeLabel={t("portfolios.insightTodayChange", { change: todayChange })}
+      todayChangeSign={todaySign}
       deviationLabel={t("portfolios.insightDeviation", {
         percent: maxDeviation.toFixed(1),
       })}
@@ -106,7 +131,8 @@ export const PortfolioInsightCardLoader = ({ portfolio }: { portfolio: Portfolio
       hasTargets={hasTargets}
       noTargetsTitle={t("portfolios.insightNoTargets")}
       noTargetsCta={t("portfolios.insightSetupTargets")}
-      viewCta={t("portfolios.insightView")}
+      viewActionsCta={t("portfolios.insightViewActions")}
+      adjustTargetsCta={t("portfolios.insightAdjustTargets")}
       targetSegments={targetDonut}
       currentSegments={currentDonut}
       isLoading={valuationPending || rebalanceLoading}
@@ -122,7 +148,7 @@ export const PortfolioInsightCardLoader = ({ portfolio }: { portfolio: Portfolio
           closeLabel={t("common.close")}
         />
       }
-      onViewPress={() => router.push(setupHref)}
+      onViewActionsPress={() => router.push(actionsHref)}
       onSetupTargetsPress={() => router.push(setupHref)}
     />
   );

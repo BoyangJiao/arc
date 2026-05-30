@@ -13,6 +13,7 @@ import {
   InScreenHeader,
   Screen,
   StarIcon,
+  Tabs,
   Text,
   TwrInlineLabel,
   type TimeRange,
@@ -47,6 +48,7 @@ export default function AssetDetailScreen() {
   const { market, symbol } = useLocalSearchParams<{ market: string; symbol: string }>();
   const [range, setRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
   const [chartScrubbing, setChartScrubbing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"holding" | "transactions">("holding");
   const { portfolio } = useActivePortfolio();
   const { amountsHidden } = useAmountRedacted();
   const deleteAssetTransactions = useDeleteAssetTransactions();
@@ -204,7 +206,17 @@ export default function AssetDetailScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <Screen scrollEnabled={!chartScrubbing}>
+      <Screen
+        scrollEnabled={!chartScrubbing}
+        edges={["top", "bottom"]}
+        footer={
+          <View className="border-t border-border bg-background px-6 pb-2 pt-3">
+            <Button onPress={handleAddTx}>
+              <Button.Label>{t("assetDetail.addTransactionCta")}</Button.Label>
+            </Button>
+          </View>
+        }
+      >
         <InScreenHeader
           title={detail.data?.name ?? symbol ?? ""}
           leftType="back"
@@ -267,64 +279,81 @@ export default function AssetDetailScreen() {
             onScrubbingChange={setChartScrubbing}
           />
 
-          {detail.data?.holding ? (
-            <View className="mt-4 gap-3 border-t border-border pt-4">
-              <Text className="text-foreground font-semibold">{t("assetDetail.myHolding")}</Text>
-
-              <TwrInlineLabel
-                size="prominent"
-                range={range}
-                result={assetTwr.isError ? undefined : assetTwr.data}
-                loading={assetTwr.isLoading}
-                unavailable={t("twr.unavailable")}
-                twrAbbrevLabel={t("twr.label")}
-                tooltipTitle={t("twr.tooltipTitle")}
-                tooltipBody={t("assetDetail.twr.tooltip")}
-                closeLabel={t("common.close")}
-              />
-
-              {detail.data.unrealizedPnL !== null ? (
-                <HoldingReturnInlineLabel
-                  label={t("assetDetail.holdingReturn.label")}
-                  amount={detail.data.unrealizedPnL}
-                  percent={detail.data.unrealizedPnLPercent}
-                  currencySymbol={currencySymbol(detail.data.currency)}
-                  redactAmount={amountsHidden}
-                  tooltipTitle={t("assetDetail.holdingReturn.tooltipTitle")}
-                  tooltipBody={t("assetDetail.costBasis.tooltip")}
-                  closeLabel={t("common.close")}
-                />
-              ) : null}
-
-              <View className="gap-1">
-                <Text className="text-muted text-sm">
-                  {t("assetDetail.shares", {
-                    shares: detail.data.holding.shares.toFixed(4),
-                  })}
-                </Text>
-                <Text className="text-muted text-sm">
-                  {t("assetDetail.avgCost", {
-                    cost: formatMoney(detail.data.holding.averageCost, detail.data.currency, {
-                      redact: amountsHidden,
-                    }),
-                  })}
-                </Text>
-              </View>
-
-              <Text className="text-muted text-xs">
-                {t("assetDetail.dataCompleteness.disclosure")}
-              </Text>
-            </View>
-          ) : null}
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as "holding" | "transactions")}
+            variant="secondary"
+            className="mt-4 w-full"
+          >
+            <Tabs.List className="w-full self-stretch">
+              <Tabs.Indicator />
+              <Tabs.Trigger value="holding" className="flex-1">
+                <Tabs.Label className="text-center">{t("assetDetail.myHolding")}</Tabs.Label>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="transactions" className="flex-1">
+                <Tabs.Label className="text-center">
+                  {t("assetDetail.transactions.sectionTitle")}
+                </Tabs.Label>
+              </Tabs.Trigger>
+            </Tabs.List>
+          </Tabs>
 
           <View className="mt-4">
-            <Button onPress={handleAddTx}>
-              <Button.Label>{t("assetDetail.addTransactionCta")}</Button.Label>
-            </Button>
-          </View>
+            {activeTab === "holding" ? (
+              detail.data?.holding ? (
+                <View className="gap-3">
+                  <TwrInlineLabel
+                    size="prominent"
+                    range={range}
+                    result={assetTwr.isError ? undefined : assetTwr.data}
+                    loading={assetTwr.isLoading}
+                    unavailable={t("twr.unavailable")}
+                    twrAbbrevLabel={t("twr.label")}
+                    tooltipTitle={t("twr.tooltipTitle")}
+                    tooltipBody={t("assetDetail.twr.tooltip")}
+                    closeLabel={t("common.close")}
+                  />
 
-          {assetTransactions.data.length > 0 ? (
-            <View className="mt-4">
+                  {detail.data.unrealizedPnL !== null ? (
+                    <HoldingReturnInlineLabel
+                      label={t("assetDetail.holdingReturn.label")}
+                      amount={detail.data.unrealizedPnL}
+                      percent={detail.data.unrealizedPnLPercent}
+                      currencySymbol={currencySymbol(detail.data.currency)}
+                      redactAmount={amountsHidden}
+                      tooltipTitle={t("assetDetail.holdingReturn.tooltipTitle")}
+                      tooltipBody={t("assetDetail.costBasis.tooltip")}
+                      closeLabel={t("common.close")}
+                    />
+                  ) : null}
+
+                  <View className="gap-1">
+                    <Text className="text-muted text-sm">
+                      {t("assetDetail.shares", {
+                        shares: detail.data.holding.shares.toFixed(4),
+                      })}
+                    </Text>
+                    <Text className="text-muted text-sm">
+                      {t("assetDetail.avgCost", {
+                        cost: formatMoney(detail.data.holding.averageCost, detail.data.currency, {
+                          redact: amountsHidden,
+                        }),
+                      })}
+                    </Text>
+                  </View>
+
+                  <Text className="text-muted text-xs">
+                    {t("assetDetail.dataCompleteness.disclosure")}
+                  </Text>
+                </View>
+              ) : (
+                <View className="py-8">
+                  <Text className="text-muted text-center text-sm">
+                    {t("assetDetail.noHolding")}
+                  </Text>
+                </View>
+              )
+            ) : (
               <AssetTransactionHistorySection
                 transactions={assetTransactions.data}
                 isPending={assetTransactions.isPending}
@@ -332,8 +361,8 @@ export default function AssetDetailScreen() {
                 amountsHidden={amountsHidden}
                 onDeleteTransaction={handleDeleteTransaction}
               />
-            </View>
-          ) : null}
+            )}
+          </View>
         </View>
       </Screen>
     </>
