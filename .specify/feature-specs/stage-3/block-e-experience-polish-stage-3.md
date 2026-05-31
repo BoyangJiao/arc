@@ -1,6 +1,6 @@
 # Feature: Block E — 上架前体验 polish（P1：脱敏收口 + Inbox 空态 + 体验闭环）— Stage 3
 
-- **Status**: Code complete — Opus 4.8 (2026-05-31). Commit 1 (份额脱敏收口) ✅ · Commit 2 (/me/inbox 空态) ✅ · Commit 3 (empty/loading/error 审计) ✅ **审计结论：5 条主 journey 三态已全部合规，无需改码**（详见 §体验闭环审计结论）。Awaiting BoyangJiao UAT（S3-AC-E.1/E.3/E.4）.
+- **Status**: Code complete (P1 + P2) — Opus 4.8 (2026-05-31). P1: 份额脱敏收口 + /me/inbox 空态 + 三态审计（全合规，无需改码）+ formatShares 单测 6 个. P2: /ai 占位页（Insights header Sparkle 入口）+ /me/subscription 三档占位（Free/Pro/Pro+，无定价、无支付）. typecheck 6/6 · test 58(mobile)+全绿 · lint 0err · lint:copy clean. Awaiting BoyangJiao UAT.
 - **Author**: Claude Opus 4.8 (draft)
 - **Created**: 2026-05-31
 - **Implements**: `stage-3-roadmap.md` §三 Block E（前 3 项 P1）；roadmap §七 tactical decision 4（Inbox 先做空态）
@@ -107,8 +107,8 @@ roadmap §153「Me / Inbox 子页（Revolut 范式）」。P1 仅空态：图标
 
 ## 显式 out of scope（本轮不做 — roadmap Block E 的 P2）
 
-- AI 入口占位页（roadmap §152）
-- 订阅档位占位页（roadmap §154，含计价策略 → Opus 单独讨论）
+- ~~AI 入口占位页~~ → P2 已完成（commit 8d1b71c）
+- ~~订阅档位占位页~~ → P2 已完成占位（commit 8d1b71c；计价策略仍待 Opus 讨论）
 - 价格异动检测后台 job → 写 Inbox（需 Edge Function + migration + cron + 阈值算法；Inbox 空态是其前置容器）
 - 脱敏高级触发（摇一摇 / 长按）— 现 Hero 眼睛已够
 
