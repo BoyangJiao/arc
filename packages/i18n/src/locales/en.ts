@@ -665,4 +665,10 @@ export const en = {
   debug: {
     heroUiTitle: "HeroUI Native",
   },
+  inbox: {
+    title: "Inbox",
+    entryTitle: "Inbox",
+    emptyTitle: "No messages yet",
+    emptyDescription: "Price alerts and reminders will show up here.",
+  },
 };

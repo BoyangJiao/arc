@@ -650,4 +650,10 @@ export const zh = {
   debug: {
     heroUiTitle: "HeroUI Native",
   },
+  inbox: {
+    title: "消息",
+    entryTitle: "消息",
+    emptyTitle: "暂无消息",
+    emptyDescription: "这里会显示价格异动与提醒记录。",
+  },
 };
