@@ -671,4 +671,51 @@ export const en = {
     emptyTitle: "No messages yet",
     emptyDescription: "Price alerts and reminders will show up here.",
   },
+  ai: {
+    title: "AI Assistant",
+    heroTitle: "AI Assistant",
+    comingSoon: "Coming soon",
+    heroDescription: "Soon you'll be able to ask in natural language how your holdings are doing.",
+    presetsTitle: "You could ask",
+    presets: {
+      periodChange: "How did my portfolio value change this month?",
+      topMover: "Which holding moved the most recently?",
+      drift: "How far is my allocation from target?",
+      realized: "What is my realized profit and loss?",
+    },
+    disclaimer: "AI answers are for reference only and are not investment advice.",
+  },
+  subscription: {
+    title: "Subscription",
+    intro: "Subscription tiers are being planned — stay tuned.",
+    comingSoon: "Stay tuned",
+    tiers: {
+      free: {
+        name: "Free",
+        features: {
+          "0": "Multi-market holdings tracking",
+          "1": "Rebalancing and P&L analysis",
+          "2": "English and Chinese",
+        },
+      },
+      pro: {
+        name: "Pro",
+        features: {
+          "0": "Everything in Free",
+          "1": "More portfolios and history",
+          "2": "Advanced charts and export",
+        },
+      },
+      proPlus: {
+        name: "Pro+",
+        features: {
+          "0": "Everything in Pro",
+          "1": "AI portfolio analysis",
+          "2": "Priority support",
+        },
+      },
+    },
+    disclaimer:
+      "This tool is not investment advice. Subscription and pricing details will be announced later.",
+  },
 };

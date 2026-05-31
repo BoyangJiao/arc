@@ -165,6 +165,7 @@ function AppShell() {
             }}
           />
           <Stack.Screen name="insights" options={{ headerShown: false }} />
+          <Stack.Screen name="ai" options={{ headerShown: false }} />
         </Stack>
         <DevToolsFloatingOverlay />
       </View>

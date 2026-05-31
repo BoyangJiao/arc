@@ -11,9 +11,11 @@ import {
   CrossPortfolioRebalancePlaceholderCard,
   EmptyState,
   FLOATING_TAB_BAR_BOTTOM_INSET,
+  HeaderActionButton,
   LightbulbIcon,
   Screen,
   Separator,
+  SparkleIcon,
   TabScreenHeader,
   TabScrollShadow,
   Text,
@@ -49,6 +51,13 @@ export default function InsightsTab() {
         <Pressable onPress={handleAvatarPress} accessibilityLabel={t("me.title")} hitSlop={8}>
           <UserAvatar seed={user?.email} size={40} />
         </Pressable>
+      }
+      rightSlot={
+        <HeaderActionButton
+          icon={SparkleIcon}
+          onPress={() => router.push("/ai" as Href)}
+          accessibilityLabel={t("ai.title")}
+        />
       }
     />
   );

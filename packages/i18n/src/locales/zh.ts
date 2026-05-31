@@ -656,4 +656,50 @@ export const zh = {
     emptyTitle: "暂无消息",
     emptyDescription: "这里会显示价格异动与提醒记录。",
   },
+  ai: {
+    title: "AI 助手",
+    heroTitle: "AI 助手",
+    comingSoon: "即将推出",
+    heroDescription: "未来你可以用自然语言提问，了解自己的资产表现。",
+    presetsTitle: "你可以问",
+    presets: {
+      periodChange: "本月我的资产市值变化是多少？",
+      topMover: "哪个标的这段时间涨得最多？",
+      drift: "我的配置偏离目标多少？",
+      realized: "我已实现的盈亏是多少？",
+    },
+    disclaimer: "AI 回答仅供参考，不构成投资建议。",
+  },
+  subscription: {
+    title: "订阅",
+    intro: "订阅档位正在规划中，敬请期待。",
+    comingSoon: "敬请期待",
+    tiers: {
+      free: {
+        name: "免费版",
+        features: {
+          "0": "多市场持仓追踪",
+          "1": "再平衡与盈亏分析",
+          "2": "中英双语",
+        },
+      },
+      pro: {
+        name: "专业版",
+        features: {
+          "0": "包含免费版全部功能",
+          "1": "更多组合与历史数据",
+          "2": "高级图表与导出",
+        },
+      },
+      proPlus: {
+        name: "旗舰版",
+        features: {
+          "0": "包含专业版全部功能",
+          "1": "AI 资产分析",
+          "2": "优先支持",
+        },
+      },
+    },
+    disclaimer: "本工具不构成投资建议。订阅与计价细节以后续公布为准。",
+  },
 };

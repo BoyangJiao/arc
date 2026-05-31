@@ -81,6 +81,20 @@ export default function MeScreen() {
             </PressableFeedback.Scale>
             <PressableFeedback.Ripple />
           </PressableFeedback>
+          <PressableFeedback
+            animation={false}
+            onPress={() => router.push("/me/subscription" as Href)}
+          >
+            <PressableFeedback.Scale>
+              <ListGroup.Item disabled>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>{t("subscription.title")}</ListGroup.ItemTitle>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix />
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+            <PressableFeedback.Ripple />
+          </PressableFeedback>
           <PressableFeedback animation={false} onPress={() => router.push("/me/settings" as Href)}>
             <PressableFeedback.Scale>
               <ListGroup.Item disabled>
