@@ -12,7 +12,7 @@ import type { Transaction } from "@arc/core";
 import { useTranslation } from "@arc/i18n";
 import { Card, SwipeableActionsRow, Text, TYPO_CAPTION } from "@arc/ui";
 
-import { formatMoney } from "../lib/format-money";
+import { formatMoney, formatShares } from "../lib/format-money";
 
 export interface AssetTransactionHistorySectionProps {
   readonly transactions: ReadonlyArray<Transaction>;
@@ -31,10 +31,6 @@ function formatTradeDate(isoDate: string): string {
   return isoDate.slice(0, 10);
 }
 
-function formatShares(tx: Transaction): string {
-  return tx.shares.toDecimalPlaces(4).toString();
-}
-
 /** Build the labelled value grid per transaction type (Delta / 钱往 layout). */
 function buildGridCells(
   tx: Transaction,
@@ -51,10 +47,16 @@ function buildGridCells(
       value: money(tx.shares.times(tx.pricePerShare)),
     });
   } else if (tx.type === "SPLIT") {
-    cells.push({ label: t("assetDetail.transactions.quantity"), value: formatShares(tx) });
+    cells.push({
+      label: t("assetDetail.transactions.quantity"),
+      value: formatShares(tx.shares, { redact: amountsHidden }),
+    });
   } else {
     cells.push({ label: t("assetDetail.transactions.price"), value: money(tx.pricePerShare) });
-    cells.push({ label: t("assetDetail.transactions.quantity"), value: formatShares(tx) });
+    cells.push({
+      label: t("assetDetail.transactions.quantity"),
+      value: formatShares(tx.shares, { redact: amountsHidden }),
+    });
     cells.push({
       label: t("assetDetail.transactions.amount"),
       value: money(tx.shares.times(tx.pricePerShare)),

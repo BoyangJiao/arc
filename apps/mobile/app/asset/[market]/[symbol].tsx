@@ -26,7 +26,7 @@ import { AssetDetailChartSection } from "../../../src/components/AssetDetailChar
 import { AssetDetailPriceHeader } from "../../../src/components/AssetDetailPriceHeader";
 import { AssetTransactionHistorySection } from "../../../src/components/AssetTransactionHistorySection";
 import { resolveAssetDetailChartStatus } from "../../../src/lib/asset-detail-chart-status";
-import { formatMoney, currencySymbol } from "../../../src/lib/format-money";
+import { formatMoney, currencySymbol, formatShares } from "../../../src/lib/format-money";
 import { useAmountRedacted } from "../../../src/lib/use-amount-redacted";
 import { useActivePortfolio } from "../../../src/lib/queries/use-active-portfolio";
 import {
@@ -330,7 +330,10 @@ export default function AssetDetailScreen() {
                   <View className="gap-1">
                     <Text className="text-muted text-sm">
                       {t("assetDetail.shares", {
-                        shares: detail.data.holding.shares.toFixed(4),
+                        shares: formatShares(detail.data.holding.shares, {
+                          decimals: 4,
+                          redact: amountsHidden,
+                        }),
                       })}
                     </Text>
                     <Text className="text-muted text-sm">

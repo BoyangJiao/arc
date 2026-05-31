@@ -35,7 +35,7 @@ import {
 } from "@arc/core";
 import Decimal from "decimal.js";
 
-import { formatMoney } from "../../../src/lib/format-money";
+import { formatMoney, formatShares } from "../../../src/lib/format-money";
 import { useAmountRedacted } from "../../../src/lib/use-amount-redacted";
 import {
   useAssetCatalog,
@@ -278,7 +278,7 @@ function HoldingRow({
             </Text>
           </View>
           <Text className="text-foreground w-16 text-right text-sm">
-            {holding.shares.toFixed(2)}
+            {formatShares(holding.shares, { decimals: 2, redact: amountsHidden })}
           </Text>
           <Text className="text-muted w-20 text-right text-sm">{priceLabel}</Text>
           <Text className="text-foreground w-24 text-right text-sm font-medium">{valueLabel}</Text>

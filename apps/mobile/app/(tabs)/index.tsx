@@ -43,7 +43,7 @@ import {
 } from "../../src/components/PortfolioTabHeader";
 import { useAuth } from "../../src/lib/auth";
 import { pickDefaultRangeForTransactions } from "../../src/lib/default-chart-range";
-import { currencySymbol, formatMoney } from "../../src/lib/format-money";
+import { currencySymbol, formatMoney, formatShares } from "../../src/lib/format-money";
 import { useAmountRedacted } from "../../src/lib/use-amount-redacted";
 import { buildHoldingsTableRows, sortHoldingsRows } from "../../src/lib/holdings-presenter";
 import {
@@ -140,7 +140,7 @@ export default function PortfolioTab() {
 
   const formatPositionLabel = useCallback(
     (shares: Decimal, market: Market, symbol: string) => {
-      const qty = shares.toFixed(2);
+      const qty = formatShares(shares, { decimals: 2, redact: amountsHidden });
       switch (market) {
         case "FUND":
           return t("holdings.positionUnits.fund", { shares: qty });
@@ -152,7 +152,7 @@ export default function PortfolioTab() {
           return t("holdings.positionUnits.equity", { shares: qty });
       }
     },
-    [t]
+    [t, amountsHidden]
   );
 
   const formatHoldingsAccessibilityLabel = useCallback(

@@ -41,3 +41,19 @@ export const formatMoney = (
   options?: FormatMoneyOptions
 ): string =>
   options?.redact ? AMOUNT_REDACTION_MASK : `${currencySymbol(currency)}${amount.toFixed(2)}`;
+
+export type FormatSharesOptions = {
+  /** When true, returns the dot mask (screenshot mode hides share counts too — a
+   *  known share count × public NAV can back out the masked amount). */
+  readonly redact?: boolean;
+  /** Fixed decimal places. When omitted, trailing zeros are trimmed (max 4 dp). */
+  readonly decimals?: number;
+};
+
+/** Render a share / position quantity; masks to dots when redacted. */
+export const formatShares = (shares: Decimal, options?: FormatSharesOptions): string => {
+  if (options?.redact) return AMOUNT_REDACTION_MASK;
+  return options?.decimals !== undefined
+    ? shares.toFixed(options.decimals)
+    : shares.toDecimalPlaces(4).toString();
+};
