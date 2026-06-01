@@ -1,6 +1,6 @@
 # Feature: CSV 导入（交易批量录入）— Stage 3 Block F
 
-- **Status**: Accepted — Opus 4.8 (2026-06-01). 决策 1a + 4a 已确认（BoyangJiao 同意）。决策 1 升级为**可扩展格式 profile 架构**（BoyangJiao 提出：导入需兼顾各券商/平台格式 → 本轮搭好 seam，仅出 Arc-native profile，后续按真实模板逐个加 profile，不重构）。Ready for Sonnet 实现。
+- **Status**: Implemented — Sonnet 4.6 (2026-06-01). 6 commits on `dev/stage-3`. Pending UAT (S3-AC-FI.1–FI.12).
 - **Author**: Claude Opus 4.8 (draft)
 - **Created**: 2026-06-01
 - **Implements**: `stage-3-roadmap.md` §三 Block F 第 2 项「CSV 导入（Stage 2 下放）」

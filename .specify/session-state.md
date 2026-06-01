@@ -42,18 +42,18 @@
 
 | Field                 | Value                                                                                                                                                                                                                                                                          |
 | :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Block F CSV 导出代码完成 ✅**（5 commits `f45e3bc`→`31b5bb2`，`dev/stage-3`，未 push）→ **下一步 = BoyangJiao UAT S3-AC-F.1–F.8 + push + PR**                                                                                                                      |
+| **Active stage**      | **Stage 3 — Block F CSV 导出 ✅ + CSV 导入代码完成 ✅**（导入 6 commits `3491e91`→`2b13fe5`，`dev/stage-3`，未 push）→ **下一步 = BoyangJiao UAT S3-AC-FI.1–FI.12 + push + PR**                                                                                                |
 | **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: 已 push 至 PR #10，待 review                                                                                                                                                                                                    |
 | **Step (Block D)**    | **Phase 1 ✅ algorithm** + **Phase 2 ✅ UI 接入**：Asset Detail TWR 大字 prominent + 持有收益 小字 + 双 ⓘ tooltip（ADR 016 §决策 4 layout，commit `dc589f9`）。**Next** = Phase 3 雪球对标（需 ≥6 月真实数据）+ PA/Drawdown specs（Opus）                                      |
 | **Step (Real Env)**   | **dogfooding P0 通过**：cost-basis 含手续费 + 含分红、Hero scrub、市场 filter、新建仓 daily delta、Asset Detail parity 全 OK；Finnhub C 延后；Expo Go 扫码失败为 SDK 55 商店版本不兼容（非本仓 bug）                                                                           |
 | **Branch**            | `dev/stage-3` (**ahead 6** vs `origin/dev/stage-3`；P1 #4 盈亏分析 6 commit 未 push)                                                                                                                                                                                           |
-| **Last commit**       | `31b5bb2` `feat(mobile): /me/export screen + Me entry + i18n (S3-AC-F.1–F.7)`                                                                                                                                                                                                  |
+| **Last commit**       | `2b13fe5` `feat(mobile): /me/import 3-step screen + Me entry + i18n (S3-AC-FI.1–FI.11)`                                                                                                                                                                                        |
 | **Context slug**      | `holdings-and-transactions`                                                                                                                                                                                                                                                    |
 | **Context bundle**    | `.specify/codectx/holdings-and-transactions.xml`                                                                                                                                                                                                                               |
 | **PR**                | **#10 opened**: https://github.com/BoyangJiao/arc/pull/10 (`dev/stage-3 → main`)；**CI ✅ green**                                                                                                                                                                              |
 | **CI status**         | **✅ Pre-push Quality Gate GREEN on `7521b59`**（run `26676119184` success）。lint 6/6 + typecheck 6/6 + tests 全绿。根因复盘：CI gate lint step 排在 typecheck 之后，之前 typecheck 一直 fail 所以 lint 从没跑到 → typecheck 修绿后才暴露两个 pre-existing lint error（已修） |
 | **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                                                                                                                             |
-| **Out of scope**      | Block E 价格异动后台 job（阿里云迁移绑定）、Block F CSV 导入（独立 spec）、大陆 Auth (ADR 012 P1) 实现；**Finnhub C Vercel proxy 延后到阿里云迁移那一轮**                                                                                                                      |
+| **Out of scope**      | Block E 价格异动后台 job（阿里云迁移绑定）、大陆 Auth (ADR 012 P1) 实现；**Finnhub C Vercel proxy 延后到阿里云迁移那一轮**；多平台 CSV profile（支付宝/IBKR/雪球 — 按真实模板逐个加，架构 seam 已就位）                                                                        |
 
 ## Sonnet P1 handoff（2026-05-30 by BoyangJiao）— **P0 + #1–#3 ✅ DONE（Opus 4.8）**
 
@@ -442,17 +442,18 @@ commit chain：
 不 push；每 commit 末 pnpm typecheck 6/6 + pnpm test 全绿。
 ```
 
-## Stage 3 — Block F progress (CSV 导出，2026-06-01) ✅ code complete
+## Stage 3 — Block F progress (CSV 导出 + 导入，2026-06-01) ✅ code complete
 
-| Commit    | Title                                                               | Status         |
-| :-------- | :------------------------------------------------------------------ | :------------- |
-| `f45e3bc` | `chore(mobile): add expo-file-system + expo-sharing (SDK 55)`       | ✅             |
-| `9695152` | `feat(mobile): transactions-to-csv pure fn + tests (AC.6/AC.8)`     | ✅ 17 tests    |
-| `9db2726` | `feat(mobile): useAllTransactions + use-csv-export hook`            | ✅             |
-| `31b5bb2` | `feat(mobile): /me/export screen + Me entry + i18n (S3-AC-F.1–F.7)` | ✅             |
-| docs      | spec Implemented + session-state bump                               | ✅ this commit |
+### CSV 导出（Block F 第 1 项）✅
 
-**UAT 清单**（BoyangJiao 真机验证）：
+| Commit    | Title                                                               | Status      |
+| :-------- | :------------------------------------------------------------------ | :---------- |
+| `f45e3bc` | `chore(mobile): add expo-file-system + expo-sharing (SDK 55)`       | ✅          |
+| `9695152` | `feat(mobile): transactions-to-csv pure fn + tests (AC.6/AC.8)`     | ✅ 17 tests |
+| `9db2726` | `feat(mobile): useAllTransactions + use-csv-export hook`            | ✅          |
+| `31b5bb2` | `feat(mobile): /me/export screen + Me entry + i18n (S3-AC-F.1–F.7)` | ✅          |
+
+**导出 UAT 清单**（BoyangJiao 真机验证）：
 
 | AC            | 测什么                                                                       |
 | :------------ | :--------------------------------------------------------------------------- |
@@ -464,6 +465,33 @@ commit chain：
 | **S3-AC-F.6** | `notes` 含逗号/引号/换行 → RFC 4180 转义正确（Excel 打开不错列）             |
 | **S3-AC-F.7** | 无交易 → 按钮禁用 + 空态；i18n en+zh + lint:copy 无禁忌词                    |
 | **S3-AC-F.8** | 单测：`transactionsToCsv` 17 tests 全绿（`pnpm --filter @arc/mobile test`）  |
+
+### CSV 导入（Block F 第 2 项）✅ code complete
+
+| Commit    | Title                                                                          | Status      |
+| :-------- | :----------------------------------------------------------------------------- | :---------- |
+| `3491e91` | `chore(mobile): add expo-document-picker (SDK 55)`                             | ✅          |
+| `4caafcd` | `feat(mobile): csv import — L1 raw parse + L3 validator + tests (AC.FI.10)`    | ✅ 34 tests |
+| `7f0e851` | `feat(mobile): import format profiles — arc-native + registry (AC.FI.12)`      | ✅ 15 tests |
+| `a1c64ba` | `feat(mobile): use-csv-import hook — pick + parse + write to target portfolio` | ✅          |
+| `2b13fe5` | `feat(mobile): /me/import 3-step screen + Me entry + i18n (S3-AC-FI.1–FI.11)`  | ✅          |
+
+**导入 UAT 清单**（BoyangJiao 真机验证）：
+
+| AC              | 测什么                                                                                                  |
+| :-------------- | :------------------------------------------------------------------------------------------------------ |
+| **S3-AC-FI.1**  | Me →「导入数据」→ `/me/import` → 选 .csv → 进预览；返回正常                                             |
+| **S3-AC-FI.2**  | 合法文件：预览显示正确「可导入 N 行」+ 目标组合选择器（默认 active）                                    |
+| **S3-AC-FI.3**  | 缺必需列 → 整文件拒绝 + 提示缺哪列；不写入任何行                                                        |
+| **S3-AC-FI.4**  | 含坏行（type 非法 / shares 非数 / asset_id 格式错 / 日期非法）→ 逐行报错 + 行号；坏行不阻塞好行         |
+| **S3-AC-FI.5**  | 确认导入 → 仅有效行写入目标组合；结果页成功/失败计数准确                                                |
+| **S3-AC-FI.6**  | 导入后 Portfolio 持仓 = 原持仓 + 导入交易（法则 2 闭环；估值/图表刷新）                                 |
+| **S3-AC-FI.7**  | **Round-trip**：导出 A 组合 → 导入到空 B 组合 → B 持仓 == A 持仓                                        |
+| **S3-AC-FI.8**  | 重复导入同一文件 → 交易翻倍（无去重）+ UI 事前提示；符合预期非 bug                                      |
+| **S3-AC-FI.9**  | RFC 4180 反解析：notes 含逗号/引号/换行的行正确还原                                                     |
+| **S3-AC-FI.10** | 单测：`csvToTransactions` 34 tests + `csvRawParse` 18 tests 全绿                                        |
+| **S3-AC-FI.11** | i18n en+zh 齐全 + `lint:copy` 无禁忌词；导入走真实写库（ADR 007，无 mock 短路）                         |
+| **S3-AC-FI.12** | Profile 架构：`detectProfile(导出 header)` = arc-native；未知 header → undefined；15 profile tests 全绿 |
 
 ## Active blockers / waiting on user
 
@@ -478,7 +506,7 @@ commit chain：
 
 ## Immediate next actions (next session)
 
-**⭐ 下一步 — Block F UAT（BoyangJiao 真机，见 §Block F progress UAT 清单）**：S3-AC-F.1–F.8 通过后 push + 并入 PR #10。Block F 代码完成（5 commits），无需 code change，仅 UAT。
+**⭐ 下一步 — Block F 导入 UAT（BoyangJiao 真机，见 §Block F progress 导入 UAT 清单）**：S3-AC-FI.1–FI.12 通过后 push + 并入 PR #10。Block F 导出 + 导入代码全部完成（11 commits），无需 code change，仅 UAT。
 
 **⭐ 历史 P1 — Insights 盈亏分析模块（见 §"Sonnet P1 handoff" #4）**：代码已完成，待 BoyangJiao Real Env UAT 对账（AC.5）+ push + PR。其余 Track A–G 为历史/并行支线，按需取用。
 
