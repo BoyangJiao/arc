@@ -1,6 +1,6 @@
 # Feature: CSV 导出（交易备份）— Stage 3 Block F
 
-- **Status**: Draft — Opus 4.8 (2026-06-01); awaiting BoyangJiao review
+- **Status**: Accepted — Opus 4.8 (2026-06-01); BoyangJiao 授权按最佳 UX 定稿（决策 1a = 全部 portfolio；决策 4 = 确认页）。Ready for Sonnet 实现。
 - **Author**: Claude Opus 4.8 (draft)
 - **Created**: 2026-06-01
 - **Implements**: `stage-3-roadmap.md` §三 Block F 第 1 项「CSV 导出（备份；Me 入口）」
@@ -133,6 +133,6 @@ portfolio_id,portfolio_name,asset_id,type,shares,price_per_share,currency,fee,tr
 
 ## Known risks / open questions
 
-- **决策 1a**（active portfolio vs 全部）、**决策 4**（确认页 vs 直接触发）— 待 BoyangJiao 一句话确认；spec 默认取「全部 portfolio + 确认页」。
+- ~~**决策 1a** / **决策 4**~~ — ✅ Resolved 2026-06-01（BoyangJiao 授权按最佳 UX）：**全部 portfolio**（备份语义）+ **确认页**（防误触 + 计数反馈）。
 - `expo-sharing` 在 web 输出无原生分享 → web 可降级为 `Blob` 下载或隐藏入口（Stage 3 主用 iOS，web 降级非阻塞，commit 3 注明）。
 - 未来 CSV **导入**需读回此格式 → 列名/语义现在就定稳（asset_id 作 join key），导入 spec 直接复用。

@@ -46,6 +46,20 @@ fi
 
 pnpm exec lint-staged
 
+# ─── Typecheck gate ──────────────────────────────────────────────────────────
+# lint-staged only runs prettier/eslint, not tsc — so type errors used to slip
+# through to CI (e.g. a wrong HeroUI prop). Run the turbo-cached typecheck when
+# any .ts/.tsx is staged; it's near-instant on a cache hit, and blocks the
+# commit on a real type error. Escape hatch: `git commit --no-verify`.
+if git diff --cached --name-only --diff-filter=ACM | grep -qE '\.(ts|tsx)$'; then
+  echo "🔎 Running typecheck (TS/TSX staged)…"
+  if ! pnpm -s typecheck; then
+    echo "❌ Pre-commit blocked: typecheck failed. Fix the type error above,"
+    echo "   or use \`git commit --no-verify\` if you must defer it (and say why)."
+    exit 1
+  fi
+fi
+
 # Skills sync: detect changes in .claude/skills → mirror IDEs (.qoder/, .cursor/)
 # Note: mirror dirs are gitignored; sync is local-only
 PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || exit 0)"
