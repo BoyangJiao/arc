@@ -6,6 +6,8 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
+> **Last updated**: 2026-06-01 by Sonnet 4.6 — **Block F CSV 导出全链路实现完成**（5 commits on `dev/stage-3`，未 push）。commit 链：`f45e3bc`（expo-file-system+sharing SDK 55）→ `9695152`（transactions-to-csv 纯函数 + 17 单测 AC.6/AC.8）→ `9db2726`（useAllTransactions all-portfolio query + useCsvExport hook SDK 55 File API + web Blob 降级）→ `31b5bb2`（/me/export 确认页 + Me 入口行 + i18n export.\* en+zh）→ spec Implemented。6/6 typecheck ✅ · 76/76 tests ✅ · lint:copy clean ✅。**待 BoyangJiao UAT**：S3-AC-F.1–F.8（Me → 导出数据 → 确认页计数 → 导出 CSV → 系统分享 → 存文件 → Excel 打开）。
+>
 > **Last updated**: 2026-06-01 by Opus 4.8（续）— **真机复验通过 + 收尾杂务**。(1) 用户**真机复验语言/币种持久化通过**（commit `0cf0cb9` 确认有效）。(2) **2 个旧 stash 已 drop**（均经审查确认可弃）：`stash@{1}` = 陈旧 lint-staged 备份（文件已在 HEAD 且 HEAD 更新）；`stash@{0}` = 废弃的 akshare WIP —— 会**删掉 `fetch_search`**（`search.py` 依赖，破坏 Block C 搜索）+ 把 session-state 回退到 05-20，**不可恢复**。(3) **pre-commit 加 typecheck gate**：lint-staged 只跑 prettier/eslint 不跑 tsc（Block E 曾漏一个 HeroUI prop 类型错误到 CI）→ 现在暂存含 .ts/.tsx 时跑 turbo-cached `pnpm typecheck`，红就拦。(4) **Block F CSV 导出 spec = Accepted**（`csv-export-stage-3.md`；决策 1a=全部 portfolio、决策 4=确认页，按最佳 UX 定稿）→ **可交接 Sonnet 实现**（5-commit 链 + 交接 prompt 已在 spec 内）。⚠️ 现有 `useTransactions` 仅 per-portfolio，commit 3 需新增 all-portfolio query。
 >
 > **Last updated**: 2026-06-01 by Opus 4.8 — **Block E P1+P2 收尾 + UAT bugfix + push**。用户 UAT 通过，报 1 个问题：**币种/语言设置未持久化**。诊断（查 live DB 确认写入成功）：(1) **语言 = 真 boot bug** — i18n 硬编码 `lng` 初始化，唯一 `changeLanguage` 在 Settings toggle，冷启动不重新应用 `prefs.locale` → 英文回退中文；修复：AppShell `useEffect` 按 `prefs.locale` 调 `changeLanguage`（仿 `BusinessTokensProvider` 消费 `financeColorMode`）。(2) **币种 = 非持久化 bug**（DB 行正确）— `activePortfolio.reportingCurrency` 在 Portfolio Tab + daily-snapshot 盖过全局 Settings 币种；**用户决策：全局币种为准**，per-portfolio 币种只作新建默认值；2 处 `?? ` 顺序反转。commit `0cf0cb9`。typecheck 6/6 · test 全绿 · lint 0err · copy clean。**已 push**（branch 22 ahead → origin/dev/stage-3；PR #10 open）。**⚠️ 该 fix gate-green 但用户未在真机复验**（建议重启 App 验证语言/币种保持）。**⚠️ 2 个旧 stash 仍未动**：`stash@{0}` wip akshare P1（疑似前序未完成，需用户确认）/ `stash@{1}` lint-staged 备份。**下一步：Block F 启动准备**（CSV 进出 + P2 收尾；见 roadmap §三 Block F）。
@@ -36,18 +38,18 @@
 
 | Field                 | Value                                                                                                                                                                                                                                                                          |
 | :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 — Real Env P0 ✅ + CI 绿 ✅ + P1 #1–#4 全部代码完成 ✅**（P1 #4 盈亏分析 Insights 模块本轮全栈落地，`295e0b5`→`3eab00e`）→ **下一步 = BoyangJiao Real Env UAT 对账（AC.5）+ push + PR**                                                                              |
+| **Active stage**      | **Stage 3 — Block F CSV 导出代码完成 ✅**（5 commits `f45e3bc`→`31b5bb2`，`dev/stage-3`，未 push）→ **下一步 = BoyangJiao UAT S3-AC-F.1–F.8 + push + PR**                                                                                                                      |
 | **Step (Block C)**    | **UAT ✅ all S3-AC-C.1–C.12 passed**. Pending: 已 push 至 PR #10，待 review                                                                                                                                                                                                    |
 | **Step (Block D)**    | **Phase 1 ✅ algorithm** + **Phase 2 ✅ UI 接入**：Asset Detail TWR 大字 prominent + 持有收益 小字 + 双 ⓘ tooltip（ADR 016 §决策 4 layout，commit `dc589f9`）。**Next** = Phase 3 雪球对标（需 ≥6 月真实数据）+ PA/Drawdown specs（Opus）                                      |
 | **Step (Real Env)**   | **dogfooding P0 通过**：cost-basis 含手续费 + 含分红、Hero scrub、市场 filter、新建仓 daily delta、Asset Detail parity 全 OK；Finnhub C 延后；Expo Go 扫码失败为 SDK 55 商店版本不兼容（非本仓 bug）                                                                           |
 | **Branch**            | `dev/stage-3` (**ahead 6** vs `origin/dev/stage-3`；P1 #4 盈亏分析 6 commit 未 push)                                                                                                                                                                                           |
-| **Last commit**       | `3eab00e` `feat(mobile,ui): /insights/pnl-analysis route + entries + Hero chip wiring`                                                                                                                                                                                         |
+| **Last commit**       | `31b5bb2` `feat(mobile): /me/export screen + Me entry + i18n (S3-AC-F.1–F.7)`                                                                                                                                                                                                  |
 | **Context slug**      | `holdings-and-transactions`                                                                                                                                                                                                                                                    |
 | **Context bundle**    | `.specify/codectx/holdings-and-transactions.xml`                                                                                                                                                                                                                               |
 | **PR**                | **#10 opened**: https://github.com/BoyangJiao/arc/pull/10 (`dev/stage-3 → main`)；**CI ✅ green**                                                                                                                                                                              |
 | **CI status**         | **✅ Pre-push Quality Gate GREEN on `7521b59`**（run `26676119184` success）。lint 6/6 + typecheck 6/6 + tests 全绿。根因复盘：CI gate lint step 排在 typecheck 之后，之前 typecheck 一直 fail 所以 lint 从没跑到 → typecheck 修绿后才暴露两个 pre-existing lint error（已修） |
 | **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                                                                                                                             |
-| **Out of scope**      | Block E features (Inbox/AI/订阅/脱敏/价格异动)、Block F polish redesign + CSV、大陆 Auth (ADR 012 P1) 实现；**Finnhub C Vercel proxy 延后到阿里云迁移那一轮**                                                                                                                  |
+| **Out of scope**      | Block E 价格异动后台 job（阿里云迁移绑定）、Block F CSV 导入（独立 spec）、大陆 Auth (ADR 012 P1) 实现；**Finnhub C Vercel proxy 延后到阿里云迁移那一轮**                                                                                                                      |
 
 ## Sonnet P1 handoff（2026-05-30 by BoyangJiao）— **P0 + #1–#3 ✅ DONE（Opus 4.8）**
 
@@ -436,6 +438,29 @@ commit chain：
 不 push；每 commit 末 pnpm typecheck 6/6 + pnpm test 全绿。
 ```
 
+## Stage 3 — Block F progress (CSV 导出，2026-06-01) ✅ code complete
+
+| Commit    | Title                                                               | Status         |
+| :-------- | :------------------------------------------------------------------ | :------------- |
+| `f45e3bc` | `chore(mobile): add expo-file-system + expo-sharing (SDK 55)`       | ✅             |
+| `9695152` | `feat(mobile): transactions-to-csv pure fn + tests (AC.6/AC.8)`     | ✅ 17 tests    |
+| `9db2726` | `feat(mobile): useAllTransactions + use-csv-export hook`            | ✅             |
+| `31b5bb2` | `feat(mobile): /me/export screen + Me entry + i18n (S3-AC-F.1–F.7)` | ✅             |
+| docs      | spec Implemented + session-state bump                               | ✅ this commit |
+
+**UAT 清单**（BoyangJiao 真机验证）：
+
+| AC            | 测什么                                                                       |
+| :------------ | :--------------------------------------------------------------------------- |
+| **S3-AC-F.1** | Me →「导出数据」→ `/me/export`，显示交易/组合计数；返回正常                  |
+| **S3-AC-F.2** | tap 导出 → 系统分享面板弹出；存文件后 CSV 可在 Excel/Numbers 打开            |
+| **S3-AC-F.3** | CSV 表头 = 10 列；行数 = 交易总数（全 portfolio）                            |
+| **S3-AC-F.4** | `shares`/`price_per_share`/`fee` 为全精度 Decimal 字符串（非格式化、非脱敏） |
+| **S3-AC-F.5** | 原始币种保留（`currency` 列 = 交易币种，未换算报告币种）                     |
+| **S3-AC-F.6** | `notes` 含逗号/引号/换行 → RFC 4180 转义正确（Excel 打开不错列）             |
+| **S3-AC-F.7** | 无交易 → 按钮禁用 + 空态；i18n en+zh + lint:copy 无禁忌词                    |
+| **S3-AC-F.8** | 单测：`transactionsToCsv` 17 tests 全绿（`pnpm --filter @arc/mobile test`）  |
+
 ## Active blockers / waiting on user
 
 - **Migration `0010`** `assets` CN/HK/FUND INSERT RLS — ✅ user applied (SQL Editor)
@@ -449,7 +474,9 @@ commit chain：
 
 ## Immediate next actions (next session)
 
-**⭐ 唯一剩余 P1 — Insights 盈亏分析模块（见 §"Sonnet P1 handoff" #4）**：先写 spec `.specify/feature-specs/stage-3/pnl-analysis-insights.md`（Opus 主场），再分拆 commit。其余 Track A–G 为历史/并行支线，按需取用。
+**⭐ 下一步 — Block F UAT（BoyangJiao 真机，见 §Block F progress UAT 清单）**：S3-AC-F.1–F.8 通过后 push + 并入 PR #10。Block F 代码完成（5 commits），无需 code change，仅 UAT。
+
+**⭐ 历史 P1 — Insights 盈亏分析模块（见 §"Sonnet P1 handoff" #4）**：代码已完成，待 BoyangJiao Real Env UAT 对账（AC.5）+ push + PR。其余 Track A–G 为历史/并行支线，按需取用。
 
 **Track F — Real Env dogfooding 问题修复（持续 — 用户主导带入 bug 列表）**
 

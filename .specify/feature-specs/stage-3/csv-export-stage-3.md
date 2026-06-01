@@ -1,6 +1,6 @@
 # Feature: CSV 导出（交易备份）— Stage 3 Block F
 
-- **Status**: Accepted — Opus 4.8 (2026-06-01); BoyangJiao 授权按最佳 UX 定稿（决策 1a = 全部 portfolio；决策 4 = 确认页）。Ready for Sonnet 实现。
+- **Status**: Implemented — Sonnet 4.6 (2026-06-01); 5 commits on `dev/stage-3`. Pending UAT (S3-AC-F.1–F.8).
 - **Author**: Claude Opus 4.8 (draft)
 - **Created**: 2026-06-01
 - **Implements**: `stage-3-roadmap.md` §三 Block F 第 1 项「CSV 导出（备份；Me 入口）」
