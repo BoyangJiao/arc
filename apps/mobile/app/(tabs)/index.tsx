@@ -85,7 +85,11 @@ export default function PortfolioTab() {
   const { portfolio: activePortfolio, isLoading: activeLoading } = useActivePortfolio();
 
   const activeId = activePortfolio?.id;
-  const reportingCurrency = activePortfolio?.reportingCurrency ?? prefs?.reportingCurrency ?? "CNY";
+  // Global Settings currency is authoritative; per-portfolio reportingCurrency
+  // only seeds new-portfolio defaults — it must not shadow the user's chosen
+  // global reporting currency in display/valuation (each holding keeps its own
+  // native currency; conversion always targets this global one).
+  const reportingCurrency = prefs?.reportingCurrency ?? activePortfolio?.reportingCurrency ?? "CNY";
   const currencySym = currencySymbol(reportingCurrency);
   const formatChangeLine = useCallback(
     (delta: Decimal, percent: Decimal | null) =>

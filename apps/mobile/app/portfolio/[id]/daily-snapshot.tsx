@@ -49,7 +49,9 @@ export default function DailySnapshotDetailScreen() {
   const marketFilters = useMemo(() => parseMarketFiltersParam(marketsParam), [marketsParam]);
   const marketFilterActive = isMarketFilterActive(marketFilters);
 
-  const reportingCurrency = portfolio?.reportingCurrency ?? prefs?.reportingCurrency ?? "CNY";
+  // Global Settings currency is authoritative (matches Portfolio Tab); the
+  // per-portfolio reportingCurrency only seeds new-portfolio defaults.
+  const reportingCurrency = prefs?.reportingCurrency ?? portfolio?.reportingCurrency ?? "CNY";
   const {
     data: delta,
     isPending,

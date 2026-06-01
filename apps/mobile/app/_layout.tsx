@@ -26,7 +26,7 @@
  */
 
 import "../global.css";
-import "@arc/i18n";
+import i18n from "@arc/i18n";
 
 import { useEffect, useMemo } from "react";
 import { View } from "react-native";
@@ -85,6 +85,16 @@ function AppShell() {
   const { colorMode } = useColorMode();
   const segments = useSegments();
   const router = useRouter();
+
+  // Apply the persisted UI language on cold start (and whenever it changes).
+  // i18n initializes with a hardcoded default lng; without this the stored
+  // `prefs.locale` (e.g. "en") would silently revert to the default on restart.
+  // Mirrors how BusinessTokensProvider consumes prefs.financeColorMode below.
+  useEffect(() => {
+    if (prefs?.locale && prefs.locale !== i18n.language) {
+      void i18n.changeLanguage(prefs.locale);
+    }
+  }, [prefs?.locale]);
 
   useEffect(() => {
     if (authLoading) return;
