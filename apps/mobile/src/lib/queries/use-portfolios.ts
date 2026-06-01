@@ -259,7 +259,7 @@ export const useEnsureDefaultPortfolio = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (name: string = DEFAULT_PORTFOLIO_CANONICAL_NAME): Promise<string> => {
+    mutationFn: async (opts?: { name?: string; reportingCurrency?: Currency }): Promise<string> => {
       if (!user) throw new Error("Not signed in");
 
       const { data: existing } = await supabase
@@ -272,12 +272,15 @@ export const useEnsureDefaultPortfolio = () => {
 
       if (existing) return existing.id;
 
+      // Default portfolio: canonical stored name (display resolves to localized
+      // portfolio.myPortfolio); reporting currency inherits the user's Settings
+      // default (falls back to CNY when prefs not yet loaded).
       const { data, error } = await supabase
         .from("portfolios")
         .insert({
           user_id: user.id,
-          name,
-          reporting_currency: "CNY",
+          name: opts?.name ?? DEFAULT_PORTFOLIO_CANONICAL_NAME,
+          reporting_currency: opts?.reportingCurrency ?? "CNY",
         })
         .select("id")
         .single();
@@ -285,8 +288,9 @@ export const useEnsureDefaultPortfolio = () => {
       if (error) throw error;
       return data.id;
     },
-    onSuccess: () => {
+    onSuccess: (id) => {
       if (user) invalidatePortfolios(queryClient, user.id);
+      useActivePortfolioStore.getState().setActivePortfolioId(id);
     },
   });
 };

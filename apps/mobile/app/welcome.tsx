@@ -27,6 +27,8 @@ export default function WelcomeScreen() {
     }
   }, [loading, prefs?.hasSeenWelcome, router]);
 
+  // The default portfolio is ensured on the home screen (deterministic landing
+  // point), not here — so reset / skipped-welcome paths self-heal too.
   const finish = () => {
     markWelcomeSeen.mutate();
     router.replace("/(tabs)" as Href);

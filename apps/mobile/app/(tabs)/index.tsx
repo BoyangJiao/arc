@@ -55,7 +55,9 @@ import {
   useActivePortfolio,
   useAssetCatalog,
   useDailyDelta,
+  useEnsureDefaultPortfolio,
   usePortfolioHoldings,
+  usePortfolios,
   usePortfolioChartSeries,
   usePortfolioValuation,
   snapshotsToChartPoints,
@@ -98,6 +100,30 @@ export default function PortfolioTab() {
   const { amountsHidden, toggleAmountVisibility } = useAmountRedacted();
 
   const { portfolio: activePortfolio, isLoading: activeLoading } = useActivePortfolio();
+
+  // Invariant: a signed-in user always has the default portfolio ("主要投资组合",
+  // inheriting the Settings reporting currency). Enforce it here — the deterministic
+  // landing point — so reset / fresh-signup / skipped-welcome all self-heal instead
+  // of dead-ending on the "no portfolio" empty state. ensureDefault is idempotent
+  // (returns the existing portfolio if any); a ref guards against double-firing.
+  const { data: allPortfolios, isPending: portfoliosPending } = usePortfolios();
+  const ensureDefaultPortfolio = useEnsureDefaultPortfolio();
+  const ensuredDefaultRef = useRef(false);
+  useEffect(() => {
+    if (ensuredDefaultRef.current) return;
+    if (!user || portfoliosPending) return;
+    if ((allPortfolios?.length ?? 0) > 0) return;
+    ensuredDefaultRef.current = true;
+    void ensureDefaultPortfolio.mutateAsync({
+      reportingCurrency: prefs?.reportingCurrency ?? "CNY",
+    });
+  }, [
+    user,
+    portfoliosPending,
+    allPortfolios?.length,
+    prefs?.reportingCurrency,
+    ensureDefaultPortfolio,
+  ]);
 
   const activeId = activePortfolio?.id;
   // Global Settings currency is authoritative; per-portfolio reportingCurrency
@@ -392,7 +418,7 @@ export default function PortfolioTab() {
             <Text className={typographyClass("danger", "-mt-2")}>{t("common.error")}</Text>
           )}
 
-          {activeLoading ? (
+          {activeLoading || ensureDefaultPortfolio.isPending ? (
             <Text className={TYPO_LABEL}>{t("common.loading")}</Text>
           ) : !activePortfolio ? (
             <Card>
