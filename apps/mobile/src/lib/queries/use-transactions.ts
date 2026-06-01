@@ -3,6 +3,9 @@
  *
  * Stage 1: Only BUY type supported. Writes to Supabase `transactions` table.
  * Shares / price / fee stored as text (Decimal serialized) in the DB.
+ *
+ * useAllTransactions — fetch ALL transactions across every portfolio owned by
+ * the current user (used by CSV export for full backup semantics).
  */
 
 import { useMemo } from "react";
@@ -211,6 +214,36 @@ export const useAssetTransactions = (
     [query.data, assetId]
   );
   return { data, isPending: query.isPending };
+};
+
+/**
+ * Fetch ALL transactions across every portfolio owned by the current user.
+ * Used exclusively by CSV export — single query via RLS (portfolios join).
+ * Returns trades ordered by trade_date ascending (oldest first).
+ */
+export const useAllTransactions = (): UseQueryResult<Transaction[], Error> => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["transactions", "all", user?.id],
+    enabled: !!user,
+    queryFn: async (): Promise<Transaction[]> => {
+      if (!user) return [];
+
+      // RLS ensures only user's own portfolios rows are returned.
+      // We join via portfolios to implicitly scope to this user's data.
+      const { data, error } = await supabase
+        .from("transactions")
+        .select(
+          "id, portfolio_id, asset_id, type, shares, price_per_share, currency, fee, trade_date, notes, portfolios!inner(user_id)"
+        )
+        .eq("portfolios.user_id", user.id)
+        .order("trade_date", { ascending: true });
+
+      if (error) throw error;
+      return (data ?? []).map(fromDB);
+    },
+  });
 };
 
 /** Remove all transactions for one asset in a portfolio (holding goes to zero). */

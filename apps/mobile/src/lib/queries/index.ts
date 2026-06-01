@@ -22,6 +22,7 @@ export { useActivePortfolio, type UseActivePortfolioResult } from "./use-active-
 export { useTransferBetweenPortfolios, TransferValidationError } from "./use-transfer";
 export {
   useTransactions,
+  useAllTransactions,
   useCreateTransaction,
   useDeleteTransaction,
   useDeleteAssetTransactions,
