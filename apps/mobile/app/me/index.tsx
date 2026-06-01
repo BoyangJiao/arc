@@ -81,22 +81,11 @@ export default function MeScreen() {
             </PressableFeedback.Scale>
             <PressableFeedback.Ripple />
           </PressableFeedback>
-          <PressableFeedback animation={false} onPress={() => router.push("/me/export" as Href)}>
+          <PressableFeedback animation={false} onPress={() => router.push("/me/data" as Href)}>
             <PressableFeedback.Scale>
               <ListGroup.Item disabled>
                 <ListGroup.ItemContent>
-                  <ListGroup.ItemTitle>{t("export.entryTitle")}</ListGroup.ItemTitle>
-                </ListGroup.ItemContent>
-                <ListGroup.ItemSuffix />
-              </ListGroup.Item>
-            </PressableFeedback.Scale>
-            <PressableFeedback.Ripple />
-          </PressableFeedback>
-          <PressableFeedback animation={false} onPress={() => router.push("/me/import" as Href)}>
-            <PressableFeedback.Scale>
-              <ListGroup.Item disabled>
-                <ListGroup.ItemContent>
-                  <ListGroup.ItemTitle>{t("import.entryTitle")}</ListGroup.ItemTitle>
+                  <ListGroup.ItemTitle>{t("data.entryTitle")}</ListGroup.ItemTitle>
                 </ListGroup.ItemContent>
                 <ListGroup.ItemSuffix />
               </ListGroup.Item>

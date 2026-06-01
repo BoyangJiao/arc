@@ -10,6 +10,7 @@ export const en = {
     save: "Save",
     back: "Back",
     close: "Close",
+    done: "Done",
     refresh: "Refresh data",
   },
   tabs: {
@@ -29,7 +30,7 @@ export const en = {
     holdings: "Holdings",
     holdingsCount: "{{count}} holdings",
     marketValue: "Market Value",
-    myPortfolio: "My Portfolio",
+    myPortfolio: "Primary Portfolio",
     addTransaction: "Add Transaction",
     noPortfolios: "No portfolios yet",
     noPortfoliosHint: "Create your first portfolio to start tracking",
@@ -519,6 +520,9 @@ export const en = {
     activeMarker: "Active",
     defaultBadge: "Default",
     rename: "Rename",
+    moreActions: "More actions",
+    delete: "Delete",
+    cannotDeleteDefault: "The default portfolio can’t be deleted",
     archive: "Archive",
     unarchive: "Restore",
     hardDelete: "Delete permanently",
@@ -718,6 +722,10 @@ export const en = {
     disclaimer:
       "This tool is not investment advice. Subscription and pricing details will be announced later.",
   },
+  data: {
+    entryTitle: "Data management",
+    title: "Data management",
+  },
   export: {
     entryTitle: "Export data",
     title: "Export data",
@@ -738,6 +746,7 @@ export const en = {
       "Import transaction records from a CSV file. Only Arc-format CSV is supported in this release.",
     duplicateWarning:
       "Import is append-only and does not check for duplicates. Importing the same file twice will create duplicate transactions.",
+    willCreatePortfolio: "No portfolio yet — importing will create “{{name}}”.",
     selectFile: "Select CSV file",
     changeFile: "Change file",
     targetPortfolio: "Target portfolio",

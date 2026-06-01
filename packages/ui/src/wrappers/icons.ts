@@ -21,11 +21,13 @@ import {
   EyeSlashIcon,
   LightbulbIcon,
   MagnifyingGlassIcon,
+  PencilSimpleIcon,
   SparkleIcon,
   StarIcon,
   TrashIcon,
   TrendDownIcon,
   TrendUpIcon,
+  WarningIcon,
   XIcon,
 } from "phosphor-react-native";
 
@@ -48,11 +50,13 @@ export {
   EyeSlashIcon,
   LightbulbIcon,
   MagnifyingGlassIcon,
+  PencilSimpleIcon,
   SparkleIcon,
   StarIcon,
   TrashIcon,
   TrendDownIcon,
   TrendUpIcon,
+  WarningIcon,
   XIcon,
 };
 

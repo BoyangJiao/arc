@@ -14,7 +14,7 @@
 
 import { useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
-import { readAsStringAsync } from "expo-file-system";
+import { File as ExpoFile } from "expo-file-system";
 import { Platform } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -64,8 +64,7 @@ const readFileText = async (uri: string, webFile: File | undefined): Promise<str
   if (Platform.OS === "web" && webFile) {
     return webFile.text();
   }
-  // encoding defaults to UTF-8; SDK 55 legacyWarnings re-exports readAsStringAsync
-  return readAsStringAsync(uri, { encoding: "utf8" });
+  return new ExpoFile(uri).text();
 };
 
 // ─── Hook ────────────────────────────────────────────────────────────────
