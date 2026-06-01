@@ -65,6 +65,21 @@ import { useTranslation } from "@arc/i18n";
 
 const ZERO = new Decimal(0);
 
+/**
+ * Daily P&L card visibility on the Portfolio Tab.
+ *
+ * Hidden for now: equity markets don't trade on weekends, so checking on a
+ * Monday (or any post-holiday) routinely shows a stale / "no overnight data"
+ * baseline, which reads as broken. Daily P&L is also not core to Arc's job
+ * (allocation tracking + rebalancing), so it doesn't earn the prime slot.
+ *
+ * The full feature is intact — hook (`useDailyDelta`), pure compute
+ * (`@arc/core` `computeDailyDelta`), card, and the detail route
+ * (`/portfolio/[id]/daily-snapshot`) all still work. Flip this to re-surface
+ * it (e.g. gate behind a paid tier later).
+ */
+const SHOW_DAILY_SNAPSHOT_CARD = false;
+
 export default function PortfolioTab() {
   const { i18n, t } = useTranslation();
   const router = useRouter();
@@ -121,8 +136,10 @@ export default function PortfolioTab() {
     refreshFromLive,
   } = usePortfolioValuation(activeId, reportingCurrency);
 
+  // Pass `undefined` portfolioId while the card is hidden so the snapshot query
+  // stays disabled (no wasted Supabase fetch). The card is its only consumer.
   const dailyDelta = useDailyDelta(
-    activeId,
+    SHOW_DAILY_SNAPSHOT_CARD ? activeId : undefined,
     reportingCurrency,
     marketFilterActive ? selectedMarketFilters : undefined
   );
@@ -351,7 +368,7 @@ export default function PortfolioTab() {
                   />
                 }
               />
-              {heroDelta && heroDelta.status !== "empty-portfolio" ? (
+              {SHOW_DAILY_SNAPSHOT_CARD && heroDelta && heroDelta.status !== "empty-portfolio" ? (
                 <DailySnapshotCard
                   delta={heroDelta}
                   title={t("dailySnapshot.title")}
