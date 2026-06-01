@@ -84,15 +84,40 @@ export const resetCleanEnv = async (queryClient: QueryClient): Promise<ResetSumm
   const userId = user.id;
   const tablesDeleted: string[] = [];
 
-  // 1. Dependents of portfolios (FK constraints require this order).
-  const userScopedTables = [
+  // 1. Fetch user's portfolio IDs so we can delete portfolio-scoped tables
+  //    (transactions / target_allocations / portfolio_value_snapshots have
+  //    portfolio_id FK, not user_id directly).
+  const { data: portfolioRows, error: pfErr } = await supabase
+    .from("portfolios")
+    .select("id")
+    .eq("user_id", userId);
+  if (pfErr) {
+    throw new ResetCleanEnvError(`Failed to fetch portfolios: ${pfErr.message}`);
+  }
+  const portfolioIds = (portfolioRows ?? []).map((r) => r.id as string);
+
+  // 2. Delete portfolio-scoped dependents (FK cascade order; portfolio_id column only).
+  const portfolioScopedTables = [
     "transactions",
     "target_allocations",
     "portfolio_value_snapshots",
-    "watchlist_items",
-    "portfolios",
-    "user_preferences",
   ] as const;
+
+  for (const table of portfolioScopedTables) {
+    if (portfolioIds.length === 0) {
+      // No portfolios → nothing to delete in dependent tables.
+      tablesDeleted.push(table);
+      continue;
+    }
+    const { error } = await supabase.from(table).delete().in("portfolio_id", portfolioIds);
+    if (error) {
+      throw new ResetCleanEnvError(`Failed to wipe ${table}: ${error.message}`);
+    }
+    tablesDeleted.push(table);
+  }
+
+  // 3. Delete user-scoped tables (have user_id column directly).
+  const userScopedTables = ["watchlist_items", "portfolios", "user_preferences"] as const;
 
   for (const table of userScopedTables) {
     const { error } = await supabase.from(table).delete().eq("user_id", userId);

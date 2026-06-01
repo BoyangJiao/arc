@@ -30,7 +30,12 @@ const userRef: { current: MockUser | null; error: Error | null } = {
   error: null,
 };
 
-const deleteCalls: Array<{ table: string; column: string; value: string }> = [];
+const deleteCalls: Array<{ table: string; column: string; value: string | string[] }> = [];
+
+// Portfolio IDs returned by the `from("portfolios").select("id").eq("user_id", …)`
+// lookup that resetCleanEnv now runs first (portfolio-scoped tables are deleted
+// by portfolio_id, since they have no user_id column).
+const portfolioIdsRef: { current: string[] } = { current: ["pf-1", "pf-2"] };
 
 const mockSupabase = {
   auth: {
@@ -40,8 +45,19 @@ const mockSupabase = {
     })),
   },
   from: vi.fn((table: string) => ({
+    select: (_columns: string) => ({
+      eq: (_column: string, _value: string) =>
+        Promise.resolve({
+          data: portfolioIdsRef.current.map((id) => ({ id })),
+          error: null,
+        }),
+    }),
     delete: () => ({
       eq: (column: string, value: string) => {
+        deleteCalls.push({ table, column, value });
+        return Promise.resolve({ error: null });
+      },
+      in: (column: string, value: string[]) => {
         deleteCalls.push({ table, column, value });
         return Promise.resolve({ error: null });
       },
@@ -98,6 +114,7 @@ beforeEach(() => {
   deleteCalls.length = 0;
   storedKeys.length = 0;
   removedKeys.length = 0;
+  portfolioIdsRef.current = ["pf-1", "pf-2"];
   mockAsyncStorage.getAllKeys.mockClear();
   mockAsyncStorage.multiRemove.mockClear();
   mockSupabase.from.mockClear();
@@ -147,11 +164,24 @@ describe("resetCleanEnv", () => {
 
     const summary = await resetCleanEnv(qc);
 
-    // 1. Tables deleted in FK-safe order, every row scoped to user_id.
+    // 1. Tables deleted in FK-safe order. Portfolio-scoped dependents go first
+    //    (deleted by portfolio_id via .in(), since they have no user_id column),
+    //    then user-scoped tables (by user_id via .eq()).
     const tablesTouched = deleteCalls.map((c) => c.table);
     expect(tablesTouched).toEqual([...EXPECTED_TABLES_IN_ORDER]);
-    expect(deleteCalls.every((c) => c.column === "user_id")).toBe(true);
-    expect(deleteCalls.every((c) => c.value === "user-clean")).toBe(true);
+
+    const portfolioScoped = ["transactions", "target_allocations", "portfolio_value_snapshots"];
+    const userScoped = ["watchlist_items", "portfolios", "user_preferences"];
+    for (const c of deleteCalls) {
+      if (portfolioScoped.includes(c.table)) {
+        expect(c.column).toBe("portfolio_id");
+        expect(c.value).toEqual(["pf-1", "pf-2"]);
+      } else {
+        expect(userScoped).toContain(c.table);
+        expect(c.column).toBe("user_id");
+        expect(c.value).toBe("user-clean");
+      }
+    }
 
     // 2. AsyncStorage — only Clean user's data keys removed; FAB position
     //    and Supabase session keys MUST remain untouched.
@@ -167,5 +197,25 @@ describe("resetCleanEnv", () => {
     // 4. Summary surface matches docs.
     expect(summary.deletedFromTables).toEqual([...EXPECTED_TABLES_IN_ORDER]);
     expect(summary.clearedAsyncStorageKeys.length).toBe(3);
+  });
+
+  it("no portfolios: skips portfolio-scoped deletes but still reports all tables", async () => {
+    userRef.current = { id: "user-clean", email: CLEAN_EMAIL };
+    portfolioIdsRef.current = []; // user has zero portfolios
+    const qc = fakeQueryClient();
+    const resetCleanEnv = await importResetCleanEnv();
+
+    const summary = await resetCleanEnv(qc);
+
+    // Portfolio-scoped tables issue no delete call (nothing to scope to) but are
+    // still reported as handled; user-scoped tables still delete by user_id.
+    const portfolioScoped = ["transactions", "target_allocations", "portfolio_value_snapshots"];
+    expect(deleteCalls.some((c) => portfolioScoped.includes(c.table))).toBe(false);
+    expect(deleteCalls.map((c) => c.table)).toEqual([
+      "watchlist_items",
+      "portfolios",
+      "user_preferences",
+    ]);
+    expect(summary.deletedFromTables).toEqual([...EXPECTED_TABLES_IN_ORDER]);
   });
 });
