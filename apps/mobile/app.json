@@ -29,7 +29,7 @@
       "output": "static",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-font"],
+    "plugins": ["expo-router", "expo-font", "expo-sharing"],
     "experiments": {
       "typedRoutes": true,
       "autolinkingModuleResolution": true
