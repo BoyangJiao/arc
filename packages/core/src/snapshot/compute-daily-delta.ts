@@ -43,6 +43,14 @@ const ZERO = new Decimal(0);
  *
  * Headline total = Σ (current − baseline) for **currently held** assets that existed in
  * the baseline snapshot with value > 0 — NOT `current.totalValue − baseline.totalValue`.
+ *
+ * Currency: deltas are computed in each asset's NATIVE currency (the only
+ * currency-stable basis) and converted into today's reporting currency with the
+ * FX rate today's valuation used. The baseline's stored `valueReporting` is
+ * frozen in whatever reporting currency the snapshot was written with and is
+ * intentionally NOT compared against today's `valueReporting` (which follows the
+ * user's current reporting currency) — doing so was a cross-currency subtraction
+ * bug. See data-model-invariants §4.
  */
 export const computeDailyDelta = (
   current: PortfolioValuation,
@@ -80,19 +88,32 @@ export const computeDailyDelta = (
 
   const movers: AssetDelta[] = [];
   let totalDeltaReporting = ZERO;
-  let heldBaselineTotal = ZERO;
+  let heldBaselineReporting = ZERO;
 
   for (const asset of current.perAsset) {
     const baselineAsset = baselineByAsset.get(asset.assetId);
-    const baselineValue = baselineAsset?.valueReporting ?? ZERO;
-    const deltaReporting = baselineValue.isZero()
-      ? ZERO
-      : asset.valueReporting.minus(baselineValue);
 
-    // baseline value 0 (new buy in current) → reporting + percent both 0 (avoid Inf / misleading ¥)
-    const deltaPercent = baselineValue.isZero()
+    // Compare in the asset's NATIVE currency, never the frozen reporting value.
+    // The baseline snapshot's `valueReporting` is pinned to whatever reporting
+    // currency the portfolio used when the Edge Function wrote it (e.g. CNY),
+    // while today's `valueReporting` follows the user's current (possibly
+    // switched, e.g. USD) reporting currency. Subtracting them directly is a
+    // cross-currency bug (data-model-invariants §4: history uses its own rate;
+    // never compare pre-converted values across currencies). `valueNative` is
+    // currency-stable, so the overnight move is well-defined there; we then
+    // convert it into today's reporting currency with the same FX rate today's
+    // valuation used. This also makes `deltaPercent` invariant to currency
+    // switches (it's a pure native ratio).
+    const sameCurrency = baselineAsset != null && baselineAsset.currency === asset.nativeCurrency;
+    const baselineNative = sameCurrency ? baselineAsset!.valueNative : ZERO;
+
+    // baseline 0 / absent / currency-mismatch (new buy or unreconcilable) →
+    // reporting + percent both 0 (avoid Inf / misleading cross-currency ¥).
+    const deltaNative = baselineNative.isZero() ? ZERO : asset.valueNative.minus(baselineNative);
+    const deltaReporting = deltaNative.times(asset.fxRateUsed);
+    const deltaPercent = baselineNative.isZero()
       ? ZERO
-      : deltaReporting.dividedBy(baselineValue).times(100);
+      : deltaNative.dividedBy(baselineNative).times(100);
 
     movers.push({
       assetId: asset.assetId,
@@ -102,15 +123,17 @@ export const computeDailyDelta = (
     });
 
     // Headline total: overnight-held assets only (exclude new buys + sold-off).
-    if (!baselineValue.isZero()) {
+    // Denominator is the baseline native value converted at *today's* FX, so the
+    // headline % stays currency-consistent with the numerator.
+    if (!baselineNative.isZero()) {
       totalDeltaReporting = totalDeltaReporting.plus(deltaReporting);
-      heldBaselineTotal = heldBaselineTotal.plus(baselineValue);
+      heldBaselineReporting = heldBaselineReporting.plus(baselineNative.times(asset.fxRateUsed));
     }
   }
 
-  const totalDeltaPercent = heldBaselineTotal.isZero()
+  const totalDeltaPercent = heldBaselineReporting.isZero()
     ? ZERO
-    : totalDeltaReporting.dividedBy(heldBaselineTotal).times(100);
+    : totalDeltaReporting.dividedBy(heldBaselineReporting).times(100);
 
   // Sort movers by abs(deltaPercent) descending. Stable sort:
   // ties broken by assetId so test/render output is deterministic.

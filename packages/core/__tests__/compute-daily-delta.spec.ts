@@ -263,6 +263,81 @@ describe("computeDailyDelta — mover sort", () => {
 });
 
 // ──────────────────────────────────────────────────────────────────────────
+// Cross-currency baseline (regression: baseline frozen in CNY, current in USD)
+//
+// Repro: portfolio snapshot written by the Edge Function in the portfolio's
+// reporting currency (CNY), then viewed after the user's *global* reporting
+// currency switched to USD. The old impl subtracted current.valueReporting (USD)
+// from baseline.valueReporting (CNY) → ~-85% on every asset + a garbage headline
+// that scaled with the FX rate. Fix compares in native currency.
+
+describe("computeDailyDelta — cross-currency baseline", () => {
+  // A single US asset held overnight: yesterday 100 shares @ $100 = $10,000 native.
+  // Baseline snapshot was stored with the portfolio in CNY (valueReporting in CNY),
+  // today the user views in USD (fxRateUsed = 1 for a USD asset → USD reporting).
+  const usAssetTodayUsd = (): MarketValuation => ({
+    ...mkAssetVal("US:AAPL", 11000, { shares: 100, priceNative: 110, currency: "USD" }),
+    // 100 sh × $110 = $11,000 native; viewing in USD so fx = 1, reporting = 11000
+    valueReporting: dec(11000),
+    reportingCurrency: "USD",
+    fxRateUsed: dec(1),
+  });
+
+  const usAssetBaselineCny = (): SnapshotAsset => ({
+    assetId: "US:AAPL",
+    shares: dec(100),
+    valueNative: dec(10000), // $10,000 native (currency-stable)
+    currency: "USD",
+    valueReporting: dec(72000), // frozen in CNY @ 7.2 — must be ignored
+  });
+
+  it("uses native delta, not the frozen cross-currency reporting value", () => {
+    const current = mkCurrent([usAssetTodayUsd()], 11000);
+    const baseline = mkBaseline([usAssetBaselineCny()], 72000);
+    const result = computeDailyDelta(current, baseline);
+
+    // Native overnight move: $10,000 → $11,000 = +$1,000 (+10%), NOT -85%.
+    expect(result.movers[0].deltaReporting.toString()).toBe("1000");
+    expect(result.movers[0].deltaPercent.toString()).toBe("10");
+    expect(result.totalDeltaReporting.toString()).toBe("1000");
+    expect(result.totalDeltaPercent.toString()).toBe("10");
+  });
+
+  it("deltaPercent is invariant to the reporting currency the user is viewing", () => {
+    // Same native move, now viewed in CNY (fx 7.2). Percent must match the USD view.
+    const currentCny = mkCurrent(
+      [
+        {
+          ...usAssetTodayUsd(),
+          valueReporting: dec(79200), // $11,000 × 7.2
+          reportingCurrency: "CNY",
+          fxRateUsed: dec("7.2"),
+        },
+      ],
+      79200
+    );
+    const baseline = mkBaseline([usAssetBaselineCny()], 72000);
+    const result = computeDailyDelta(currentCny, baseline);
+
+    expect(result.movers[0].deltaPercent.toString()).toBe("10"); // same % as USD view
+    // Reporting amount scales with FX: $1,000 native × 7.2 = ¥7,200.
+    expect(result.movers[0].deltaReporting.toString()).toBe("7200");
+    expect(result.totalDeltaPercent.toString()).toBe("10");
+  });
+
+  it("currency mismatch on the same assetId is treated as unreconcilable (no overnight delta)", () => {
+    const current = mkCurrent([usAssetTodayUsd()], 11000);
+    // Corrupt/legacy row: assetId matches but currency differs from today's native.
+    const baseline = mkBaseline([{ ...usAssetBaselineCny(), currency: "HKD" as Currency }], 72000);
+    const result = computeDailyDelta(current, baseline);
+
+    expect(result.movers[0].deltaReporting.toString()).toBe("0");
+    expect(result.movers[0].deltaPercent.toString()).toBe("0");
+    expect(result.totalDeltaReporting.toString()).toBe("0");
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────
 // Per-asset deltas
 
 describe("computeDailyDelta — per-asset deltas", () => {
