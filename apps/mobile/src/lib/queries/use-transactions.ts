@@ -100,8 +100,9 @@ export interface CreateTransactionInput {
 /**
  * Ensure `assets` row exists before inserting a transaction (FK).
  * Stage 1 US-only: name defaults to symbol until Stage 2 search enriches metadata.
+ * Exported for CSV import (same upsert path, no duplicate SQL).
  */
-const ensureAssetRow = async (asset: Asset): Promise<void> => {
+export const ensureAssetRow = async (asset: Asset): Promise<void> => {
   const { error } = await supabase.from("assets").upsert(
     {
       id: asset.id,
