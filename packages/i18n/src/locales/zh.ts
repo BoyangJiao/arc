@@ -702,4 +702,16 @@ export const zh = {
     },
     disclaimer: "本工具不构成投资建议。订阅与计价细节以后续公布为准。",
   },
+  export: {
+    entryTitle: "导出数据",
+    title: "导出数据",
+    description: "将你的全部交易记录导出为 CSV 文件。",
+    summary_one: "{{count}} 笔交易 · {{portfolios}} 个组合",
+    summary_other: "{{count}} 笔交易 · {{portfolios}} 个组合",
+    exportButton: "导出 CSV",
+    exporting: "正在导出…",
+    emptyTitle: "暂无可导出的交易",
+    emptyDescription: "录入第一笔交易后即可导出 CSV。",
+    errorPrefix: "导出失败",
+  },
 };

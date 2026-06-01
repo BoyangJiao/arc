@@ -718,4 +718,16 @@ export const en = {
     disclaimer:
       "This tool is not investment advice. Subscription and pricing details will be announced later.",
   },
+  export: {
+    entryTitle: "Export data",
+    title: "Export data",
+    description: "Export all your transaction records as a CSV file.",
+    summary_one: "{{count}} transaction · {{portfolios}} portfolio",
+    summary_other: "{{count}} transactions · {{portfolios}} portfolios",
+    exportButton: "Export CSV",
+    exporting: "Exporting…",
+    emptyTitle: "No transactions to export",
+    emptyDescription: "Record your first transaction to enable CSV export.",
+    errorPrefix: "Export failed",
+  },
 };
