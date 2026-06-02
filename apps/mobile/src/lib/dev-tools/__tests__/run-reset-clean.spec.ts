@@ -83,6 +83,15 @@ vi.mock("@react-native-async-storage/async-storage", () => ({
   default: mockAsyncStorage,
 }));
 
+// ── clearQueryCache mock (avoids pulling in react-native-mmkv native module) ─
+// Path is relative to this test file (in __tests__/), not to run-reset-clean.ts.
+let clearQueryCacheCalled = false;
+vi.mock("../../cache/clear-query-cache", () => ({
+  clearQueryCache: vi.fn(async () => {
+    clearQueryCacheCalled = true;
+  }),
+}));
+
 // ── Module under test (dynamic import after mocks) ──────────────────────────
 
 import type { QueryClient } from "@tanstack/react-query";
@@ -114,6 +123,7 @@ beforeEach(() => {
   deleteCalls.length = 0;
   storedKeys.length = 0;
   removedKeys.length = 0;
+  clearQueryCacheCalled = false;
   portfolioIdsRef.current = ["pf-1", "pf-2"];
   mockAsyncStorage.getAllKeys.mockClear();
   mockAsyncStorage.multiRemove.mockClear();
@@ -191,8 +201,8 @@ describe("resetCleanEnv", () => {
     expect(removedKeys).not.toContain("arc:dev-tools-fab:v1");
     expect(removedKeys).not.toContain("sb-jdvlzkictwinkgcvgwew-auth-token");
 
-    // 3. QueryClient cleared.
-    expect((qc as unknown as { __cleared: { value: boolean } }).__cleared.value).toBe(true);
+    // 3. clearQueryCache called (clears in-memory QueryClient + MMKV on-disk cache).
+    expect(clearQueryCacheCalled).toBe(true);
 
     // 4. Summary surface matches docs.
     expect(summary.deletedFromTables).toEqual([...EXPECTED_TABLES_IN_ORDER]);

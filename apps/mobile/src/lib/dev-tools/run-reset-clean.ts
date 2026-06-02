@@ -29,8 +29,8 @@
  */
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { QueryClient } from "@tanstack/react-query";
 
+import { clearQueryCache } from "../cache/clear-query-cache";
 import { supabase } from "../supabase";
 import { detectEnvMode } from "./env-mode";
 
@@ -61,7 +61,8 @@ interface ResetSummary {
   clearedAsyncStorageKeys: ReadonlyArray<string>;
 }
 
-export const resetCleanEnv = async (queryClient: QueryClient): Promise<ResetSummary> => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const resetCleanEnv = async (_queryClient: unknown): Promise<ResetSummary> => {
   const {
     data: { user },
     error: authErr,
@@ -135,8 +136,10 @@ export const resetCleanEnv = async (queryClient: QueryClient): Promise<ResetSumm
     await AsyncStorage.multiRemove(keysToRemove);
   }
 
-  // 3. Drop all cached queries so the next mount sees fresh (empty) state.
-  queryClient.clear();
+  // 3. Drop all cached queries (in-memory + MMKV on-disk) so the next mount
+  //    sees fresh (empty) state. AC.OF.9: prevents Clean env user from seeing
+  //    a previous session's cached holdings after reset.
+  await clearQueryCache();
 
   return {
     deletedFromTables: tablesDeleted,
