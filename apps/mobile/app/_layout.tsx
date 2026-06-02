@@ -5,11 +5,18 @@
  *   GestureHandlerRootView      — RN gesture system root
  *     SafeAreaProvider          — notch / home-indicator awareness
  *       HeroUINativeProvider    — HeroUI theme + portal root
- *         QueryClientProvider   — TanStack Query cache
+ *         PersistQueryClientProvider — TanStack Query cache + MMKV persistence
  *           AuthProvider        — Supabase Auth session state
  *             AppShell          — drives BusinessTokensProvider from user prefs
  *               BusinessTokensProvider — gain/loss color from prefs
  *                 <Stack>       — expo-router file-based routing
+ *
+ * Persist gate (offline-cache-stage-3.md §决策 7):
+ *   MMKV init is async (secure-store key read). We await `buildPersister()` before
+ *   mounting PersistQueryClientProvider so rehydrate happens before auth routing.
+ *   While the persister is initializing we stay on splash (persisterReady=false).
+ *   If the persister returns null (web / secure-store failure) we fall back to
+ *   plain QueryClientProvider — correctness is preserved, cold-start speed degrades.
  *
  * Auth guard logic (in AppShell):
  *   - loading=true → render Stack as-is (Splash-equivalent)
@@ -28,13 +35,14 @@
 import "../global.css";
 import i18n from "@arc/i18n";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Stack, useRouter, useSegments, type Href } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 
 import {
   BusinessTokensProvider,
@@ -45,9 +53,16 @@ import {
 
 import { DevToolsFloatingOverlay } from "../src/components/dev-tools/DevToolsFloatingOverlay";
 import { AuthProvider, useAuth } from "../src/lib/auth";
+import {
+  buildPersister,
+  shouldPersistQuery,
+  QUERY_CACHE_BUSTER,
+  CACHE_MAX_AGE_MS,
+} from "../src/lib/cache/query-persister";
 import { queryClient } from "../src/lib/query-client";
 import { ThemeProvider, useColorMode } from "../src/lib/theme";
 import { useUserPreferences } from "../src/lib/user-preferences";
+import type { Persister } from "@tanstack/react-query-persist-client";
 
 /**
  * Design-token-aligned navigation colors.
@@ -57,16 +72,50 @@ import { useUserPreferences } from "../src/lib/user-preferences";
 const NAV_COLORS = NAVIGATION_COLORS;
 
 export default function RootLayout() {
+  // Persist gate: await MMKV encrypted init before rendering the query tree.
+  // `null` = persister unavailable (web/failure) — use plain QueryClientProvider.
+  const [persister, setPersister] = useState<Persister | null | undefined>(undefined);
+
+  useEffect(() => {
+    buildPersister()
+      .then(setPersister)
+      .catch(() => setPersister(null));
+  }, []);
+
+  // Still initializing — stay on splash (blank view preserves current splash screen).
+  if (persister === undefined) {
+    return null;
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
           <HeroUINativeProvider>
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <AppShell />
-              </AuthProvider>
-            </QueryClientProvider>
+            {persister ? (
+              <PersistQueryClientProvider
+                client={queryClient}
+                persistOptions={{
+                  persister,
+                  buster: QUERY_CACHE_BUSTER,
+                  maxAge: CACHE_MAX_AGE_MS,
+                  dehydrateOptions: {
+                    shouldDehydrateQuery: shouldPersistQuery,
+                  },
+                }}
+              >
+                <AuthProvider>
+                  <AppShell />
+                </AuthProvider>
+              </PersistQueryClientProvider>
+            ) : (
+              // Fallback: web or secure-store unavailable → plain provider, no persistence.
+              <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                  <AppShell />
+                </AuthProvider>
+              </QueryClientProvider>
+            )}
           </HeroUINativeProvider>
         </ThemeProvider>
       </SafeAreaProvider>

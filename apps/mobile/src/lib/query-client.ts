@@ -9,9 +9,18 @@
  *
  * RN-specific: AppState focus integration is wired in the QueryProvider
  * via `focusManager.setEventListener` — see _layout.tsx.
+ *
+ * Persist-specific (offline-cache-stage-3.md §决策 5):
+ *   Queries in the persist whitelist (see query-persister.ts) must have
+ *   gcTime ≥ maxAge (24h). Without this, TanStack GC evicts the query before
+ *   the persister can write it → cold start still sees empty cache.
+ *   Applied via `setQueryDefaults` per prefix below.
  */
 
 import { QueryClient } from "@tanstack/react-query";
+
+/** 24 h — matches CACHE_MAX_AGE_MS in query-persister.ts. */
+const PERSIST_GC_TIME_MS = 24 * 60 * 60 * 1000;
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,3 +32,26 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+/**
+ * Lift gcTime to 24 h for persist-whitelist query prefixes (spec §决策 5).
+ * Source of truth for the whitelist is query-persister.ts PERSIST_QUERY_KEY_PREFIXES;
+ * keep in sync if the whitelist changes.
+ */
+const PERSIST_WHITELIST_PREFIXES = [
+  "portfolios",
+  "portfolio",
+  "transactions",
+  "portfolioValuation",
+  "portfolio-chart-bootstrap",
+  "portfolio-value-snapshots",
+  "pnl-analysis",
+  "twr-portfolio",
+  "targetAllocations",
+  "dailySnapshot",
+  "watchlist",
+] as const;
+
+for (const prefix of PERSIST_WHITELIST_PREFIXES) {
+  queryClient.setQueryDefaults([prefix], { gcTime: PERSIST_GC_TIME_MS });
+}
