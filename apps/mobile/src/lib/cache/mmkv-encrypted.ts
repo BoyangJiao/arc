@@ -19,6 +19,7 @@
  */
 
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import type { MMKV } from "react-native-mmkv";
 
 const SECURE_STORE_KEY = "arc.mmkv.encryptionKey.v1";
@@ -39,6 +40,17 @@ export const getEncryptedMmkv = async (): Promise<MmkvInstance> => {
 
   // Web: MMKV is not available. Return null → caller uses noop persister.
   if (Platform.OS === "web") {
+    _cached = null;
+    return null;
+  }
+
+  // Expo Go: react-native-mmkv v4 uses NitroModules which throw at module-eval
+  // time in Expo Go ("NitroModules are not supported in Expo Go!"). The error is
+  // synchronous and at <global> scope — a try/catch around dynamic import() can't
+  // intercept it. Guard here so we never attempt to load the module in Expo Go.
+  // Development builds (expo prebuild / EAS) have appOwnership === null → proceed.
+  const appOwnership = (Constants as { appOwnership?: string | null }).appOwnership;
+  if (appOwnership === "expo") {
     _cached = null;
     return null;
   }
