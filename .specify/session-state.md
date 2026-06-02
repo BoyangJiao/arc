@@ -6,6 +6,8 @@
 >
 > **Never write here:** API keys, JWTs, `DATABASE_URL`, `.env` contents, or other secrets.
 >
+> **Last updated**: 2026-06-02 by Opus 4.8（续）— **Block F review 通过 + 2 小修 push + Stage 3→4 时序锁定**。(1) 系统 review 离线缓存 7 commit：架构扎实（Decimal serializer 复用、白名单准确、gcTime≥maxAge、MMKV v4 createMMKV+Expo Go guard 正确、加密/清缓存/CacheStatusBar 合规）。(2) 修 2 个非阻塞 review 发现（commit `803b2fc`）：MMKV 加密 key 改用 Web Crypto getRandomValues（feature-detect，Math.random 仅兜底；expo-crypto 因网络沙箱装不上，留 follow-up）+ persist 白名单去重（query-persister 为单一来源，query-client import）。typecheck 6/6 · 154 mobile 测试 · lint 0。(3) **BoyangJiao 锁定 Stage 3 收尾→Stage 4 时序**（见顶部「🗺️ 时序」块）：UAT→修bug→**UI/UX 地基打磨(80分即停)**→**EAS dev build 上机**→自用4周→Stage 3 收尾→PR#10 合 main→Stage 4(**onboarding 先做**→IAP/TestFlight/阿里云迁移/法务)。(4) **登记有意推后项**（见「⏸️ 有意推后」块）：Inbox 推送/订阅支付/onboarding/EAS 配置/UIUX 第二波/TestFlight —— 均非漏做。**外部 todo：BoyangJiao 注册 Apple Developer 账号 $99/年**（dev build 装真机必需）。**下一步 = BoyangJiao 专心 Block F UAT**（S3-AC-FI.1–12 + OF.1–12）。
+>
 > **Last updated**: 2026-06-02 by Sonnet 4.6 — **离线只读缓存全链路实现完成**（6 commits `6c64088`→`c1d70de` on `dev/stage-3`，未 push）。commit 链：`6c64088`（deps: react-native-mmkv + persist-client + secure-store + netinfo）→ `d3f0db3`（MMKV encrypted init，async secure-store key，web/failure→null）→ `30b0308`（query-persister + PersistQueryClientProvider + gcTime 24h 白名单）→ `1228a80`（CacheStatusBar「更新于 HH:MM」+断网行+刷新提示 + i18n）→ `c1d70de`（clear-query-cache：登出/reset 清 MMKV+内存，测试 mock 修正）。typecheck 6/6 ✅ · test 154/154 ✅ · lint 0err · copy clean ✅。**待 BoyangJiao UAT**：S3-AC-OF.1–OF.12（重点 OF.1 冷启动秒开 / OF.4 Decimal 精度 / OF.8 MMKV 加密 / OF.11 时间戳 / OF.12 断网行）。
 >
 > **Last updated**: 2026-06-02 by Opus 4.8（续）— **Block F 最后一项 = 离线只读缓存 spec Accepted**（`offline-cache-stage-3.md`）。用户价值澄清：报价/FX 已有 AsyncStorage 持久缓存，缺口 = **Supabase 派生数据**（holdings/valuation/chart/pnl/twr）只在 Query 内存缓存、冷启动丢失 → 本特性用 **MMKV + react-query-persist-client** 补，冷启动/弱网先显示上次组合视图 + 后台刷新（只读，双向同步留 Stage 4，roadmap 决策 5）。3 决策已定：**加密落盘**（secure-store key）/ **不持久化 historical** / **「更新于 HH:MM」常显 + 刷新软提示 + 断网行**（缓解冷启动后台刷新完数字跳变的认知失调 —— BoyangJiao UX 洞察；Stage 4 离线同步后此问题自消）。**最大技术风险 = Decimal-safe 序列化**（Query data 满是 Decimal，naive JSON 会丢精度/炸 `.times`）= 正确性核心，Opus 亲自写 serializer+单测后再交接 Sonnet 接 wiring。7-commit 链 + 12 AC。
@@ -43,6 +45,43 @@
 > **2026-05-25 by Composer (Cursor)**: Real / Clean 双环境 J-RE.1 ✅ 用户 UAT 跑通；Resend `auth.boyangjiao.xyz` Verified；Supabase Custom SMTP `noreply@auth.boyangjiao.xyz`。代码链 `2a81c6b`…`53d9034` on `dev/stage-3`（ahead 7+，含未 commit 的 ADR 014/015 + holdings-presenter / portfolio-chart-bootstrap / use-portfolio-chart-series 等改动）。
 
 ---
+
+## 🗺️ Stage 3 收尾 → Stage 4 时序（BoyangJiao 锁定 2026-06-02）
+
+**当前位置**：Block F 全部代码完成 + 2 个 review 小修已 push（`803b2fc`）→ **下一步 = BoyangJiao Block F UAT**。
+
+**锁定的执行时序**（这是跨会话的主计划，改动需 BoyangJiao 同意）：
+
+```
+1. Block F UAT（模拟器/电脑做，更快，不必等装机）→ 集中修 bug
+2. UI/UX 系统优化（自用前「地基打磨」一轮）
+3. EAS dev build 上机（装到 iPhone，脱离电脑独立用）
+4. 自用 ≥ 4 周（真实场景）+ 攒 TWR 雪球对标 + 记 bug   ← Stage 3 DoD 最长的杆
+5. Stage 3 收尾 → PR #10 合 main
+6. Stage 4：new user onboarding（上架前打磨冲刺第一件）→ 然后 IAP / TestFlight / 阿里云迁移 / 法务
+```
+
+**关键纪律 / 决策依据**：
+
+- **UI/UX 优化分两层（Opus 2026-06-02 提醒，BoyangJiao 采纳「80 分即停」）**：
+  - **地基打磨**（不依赖自用数据 → 放第 2 步）：视觉一致性、间距、明显别扭的交互、空/载/错态统一、token 纪律。
+  - **使用驱动精修**（依赖 4 周自用 → 第二波，自用后）：高频屏细节、流程快捷、信息层级。
+  - **铁律**：第 2 步是 **timebox「打磨到 80 分就停」**，明确接受「自用会暴露第二波 UX 问题」是预期内的好事，不让完美主义无限推后第 4 步的 4 周时钟。
+- **自用 = dev build 上机，不是 TestFlight**：development build（EAS）装到自己 iPhone 即可独立自用；TestFlight 是给「别人」测的分发渠道，留 Stage 4。注：Expo Go 已不可用（离线缓存 MMKV/NitroModules 不支持，故必须 dev build）。
+- **onboarding 放 Stage 4 开头**：自用阶段唯一用户是 BoyangJiao 自己，不需引导；且 onboarding 设计应被「自用 4 周发现什么让人困惑」驱动 → 放自用后信息更充分。
+
+## ⏸️ 有意推后（不是漏做 — Stage 4 / 阿里云迁移待办）
+
+| 项                                | roadmap 定位                                                | 为何推后                                                                                                          | 目标节点                             |
+| :-------------------------------- | :---------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------- | :----------------------------------- |
+| **Inbox 推送 + 有内容态**         | Block E「价格异动提醒(推送+邮件)」`price-alerts-stage-3.md` | 本质=价格异动后台特性（Edge Function+migration+cron+阈值算法+APNs），依赖阿里云迁移（不在迁移前建新 Vercel/后台） | **阿里云迁移那一轮**                 |
+| **订阅打通 + 支付（IAP/Stripe）** | §七 决策 2 **明确 Stage 4**                                 | 上架级工程（审核/沙盒/收据/退款）；feature gating 需先有自用反馈 + 计价策略（Opus 议题）                          | **Stage 4 上架准备**                 |
+| **new user onboarding**           | —                                                           | 自用不需引导；设计应被自用困惑点驱动                                                                              | **Stage 4 开头（上架前打磨第一件）** |
+| **EAS dev build 配置**            | 新增                                                        | 无 eas.json / projectId / expo-dev-client；需 Apple Developer 账号（$99/年，外部 todo，BoyangJiao 注册）          | **第 3 步（UI/UX 优化后、自用前）**  |
+| **UI/UX 第二波（使用驱动精修）**  | —                                                           | 需 4 周自用数据                                                                                                   | **Stage 3 末 / Stage 4**             |
+| **TestFlight**                    | Stage 4                                                     | 给外部测试者的分发渠道，自用不需要                                                                                | **Stage 4**                          |
+
+**BoyangJiao 外部 todo（只有你能做，建议尽早启动）**：注册 **Apple Developer 账号（$99/年）** — dev build 装真机必需，审批可能一两天。
 
 ## You are here
 
