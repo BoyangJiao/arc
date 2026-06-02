@@ -19,6 +19,8 @@
 
 import { QueryClient } from "@tanstack/react-query";
 
+import { PERSIST_QUERY_KEY_PREFIXES } from "./cache/query-persister";
+
 /** 24 h — matches CACHE_MAX_AGE_MS in query-persister.ts. */
 const PERSIST_GC_TIME_MS = 24 * 60 * 60 * 1000;
 
@@ -35,23 +37,9 @@ export const queryClient = new QueryClient({
 
 /**
  * Lift gcTime to 24 h for persist-whitelist query prefixes (spec §决策 5).
- * Source of truth for the whitelist is query-persister.ts PERSIST_QUERY_KEY_PREFIXES;
- * keep in sync if the whitelist changes.
+ * Single source of truth = PERSIST_QUERY_KEY_PREFIXES in query-persister.ts,
+ * so the gcTime set and the dehydrate whitelist can never drift apart.
  */
-const PERSIST_WHITELIST_PREFIXES = [
-  "portfolios",
-  "portfolio",
-  "transactions",
-  "portfolioValuation",
-  "portfolio-chart-bootstrap",
-  "portfolio-value-snapshots",
-  "pnl-analysis",
-  "twr-portfolio",
-  "targetAllocations",
-  "dailySnapshot",
-  "watchlist",
-] as const;
-
-for (const prefix of PERSIST_WHITELIST_PREFIXES) {
+for (const prefix of PERSIST_QUERY_KEY_PREFIXES) {
   queryClient.setQueryDefaults([prefix], { gcTime: PERSIST_GC_TIME_MS });
 }

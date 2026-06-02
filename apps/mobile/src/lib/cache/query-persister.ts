@@ -50,7 +50,7 @@ export const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
  *   - "price"                   → already in persistent-market-cache
  *   - "portfolioTransactionCount" → lightweight, quick to refetch
  */
-const PERSIST_QUERY_KEY_PREFIXES: ReadonlyArray<string> = [
+export const PERSIST_QUERY_KEY_PREFIXES: ReadonlyArray<string> = [
   "portfolios",
   "portfolio",
   "transactions",

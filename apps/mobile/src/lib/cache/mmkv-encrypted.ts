@@ -88,12 +88,25 @@ export const resetMmkvInstance = (): void => {
 
 const generateKey = (): string => {
   const array = new Uint8Array(32);
-  // expo-crypto is not installed; use Math.random as fallback for key
-  // generation — acceptable because the key is immediately stored in the
-  // hardware-backed secure store and never leaves the device.
-  for (let i = 0; i < array.length; i++) {
-    array[i] = Math.floor(Math.random() * 256);
+
+  // Prefer a CSPRNG. Hermes (RN dev/prod builds) exposes a Web Crypto
+  // `getRandomValues`; use it when present. We feature-detect rather than
+  // hard-depend so the module still loads in runtimes/tests without it.
+  const webCrypto = (globalThis as { crypto?: { getRandomValues?: (a: Uint8Array) => Uint8Array } })
+    .crypto;
+  if (typeof webCrypto?.getRandomValues === "function") {
+    webCrypto.getRandomValues(array);
+  } else {
+    // Last-resort fallback (e.g. a runtime without Web Crypto). Not
+    // cryptographically strong, but the key is immediately sealed in the
+    // hardware-backed secure store and never leaves the device. Follow-up:
+    // add `expo-crypto` (getRandomBytes) once it can be installed, to drop
+    // this branch entirely.
+    for (let i = 0; i < array.length; i++) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
   }
+
   return Array.from(array)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
