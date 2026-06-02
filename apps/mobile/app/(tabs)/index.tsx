@@ -41,6 +41,7 @@ import {
   PortfolioTabHeaderCenter,
   PortfolioTabHeaderManageButton,
 } from "../../src/components/PortfolioTabHeader";
+import { CacheStatusBar } from "../../src/components/CacheStatusBar";
 import { useAuth } from "../../src/lib/auth";
 import { pickDefaultRangeForTransactions } from "../../src/lib/default-chart-range";
 import { currencySymbol, formatMoney, formatShares } from "../../src/lib/format-money";
@@ -159,6 +160,7 @@ export default function PortfolioTab() {
     data: valuation,
     isFetching: valuationFetching,
     isError: valuationError,
+    dataUpdatedAt: valuationUpdatedAt,
     refreshFromLive,
   } = usePortfolioValuation(activeId, reportingCurrency);
 
@@ -393,6 +395,10 @@ export default function PortfolioTab() {
                     showAmountsLabel={t("portfolio.showAmounts")}
                   />
                 }
+              />
+              <CacheStatusBar
+                dataUpdatedAt={valuationUpdatedAt || null}
+                isRefreshing={valuationFetching && !!valuation}
               />
               {SHOW_DAILY_SNAPSHOT_CARD && heroDelta && heroDelta.status !== "empty-portfolio" ? (
                 <DailySnapshotCard

@@ -750,4 +750,9 @@ export const zh = {
     tryAgain: "重试",
     noPortfolios: "暂无组合，请先创建一个组合。",
   },
+  cache: {
+    updatedAt: "更新于 {{time}}",
+    refreshing: "更新中…",
+    offline: "无网络连接 — 显示上次缓存数据",
+  },
 };

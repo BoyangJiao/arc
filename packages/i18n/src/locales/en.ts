@@ -768,4 +768,9 @@ export const en = {
     tryAgain: "Try again",
     noPortfolios: "No portfolios available. Create a portfolio first.",
   },
+  cache: {
+    updatedAt: "Updated {{time}}",
+    refreshing: "Updating…",
+    offline: "No internet connection — showing last cached data",
+  },
 };
