@@ -89,4 +89,38 @@ describe("parseRawCsv", () => {
     expect(result.header).toHaveLength(10);
     expect(result.header[2]).toBe("asset_id");
   });
+
+  // FI.9 regression: a newline inside a quoted field must NOT split the record.
+  it("keeps a quoted field with an embedded newline on one record", () => {
+    const csv = 'a,notes\n1,"line1\nline2"';
+    const result = parseRawCsv(csv);
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]).toEqual({ a: "1", notes: "line1\nline2" });
+  });
+
+  it("handles multiple multi-line records + a following normal row", () => {
+    const csv = 'a,notes\n1,"x\ny"\n2,"p\nq\nr"\n3,plain';
+    const result = parseRawCsv(csv);
+    expect(result.rows).toHaveLength(3);
+    expect(result.rows[0]).toEqual({ a: "1", notes: "x\ny" });
+    expect(result.rows[1]).toEqual({ a: "2", notes: "p\nq\nr" });
+    expect(result.rows[2]).toEqual({ a: "3", notes: "plain" });
+  });
+
+  it("handles a quoted field with both embedded newline and escaped quote", () => {
+    const csv = 'a,notes\n1,"he said ""hi""\nnext line"';
+    const result = parseRawCsv(csv);
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]).toEqual({ a: "1", notes: 'he said "hi"\nnext line' });
+  });
+
+  // Round-trip with the export escaper: export → parse must recover notes exactly.
+  it("round-trips a CRLF-joined export with a multi-line note", () => {
+    // Mirrors transactions-to-csv: CRLF row separator, quoted multi-line notes.
+    const csv = 'a,notes\r\n1,"first\nsecond"\r\n2,plain';
+    const result = parseRawCsv(csv);
+    expect(result.rows).toHaveLength(2);
+    expect(result.rows[0]).toEqual({ a: "1", notes: "first\nsecond" });
+    expect(result.rows[1]).toEqual({ a: "2", notes: "plain" });
+  });
 });

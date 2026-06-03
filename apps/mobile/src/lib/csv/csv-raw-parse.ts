@@ -71,18 +71,55 @@ export const splitCsvLine = (line: string): string[] => {
 };
 
 /**
+ * Split CSV text into logical records, respecting RFC 4180 §2.6 — a newline
+ * inside a double-quoted field does NOT end the record.
+ *
+ * A naive `text.split("\n")` breaks any notes value that contains a line break
+ * (which our own export legitimately emits as `"line1\nline2"`), splitting one
+ * transaction across several "rows" and corrupting the import (FI.9). This walks
+ * the whole string once, tracking quote state, and only cuts a record on a
+ * newline that is outside quotes.
+ *
+ * Input must already be LF-normalized. Quote chars are kept verbatim; field-level
+ * unescaping is done by {@link splitCsvLine}.
+ */
+const splitCsvRecords = (text: string): string[] => {
+  const records: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') {
+      if (inQuotes && text[i + 1] === '"') {
+        // Escaped quote ("") — stays inside the field, keep both chars.
+        current += '""';
+        i++;
+        continue;
+      }
+      inQuotes = !inQuotes;
+      current += ch;
+    } else if (ch === "\n" && !inQuotes) {
+      records.push(current);
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  if (current !== "") records.push(current);
+
+  return records;
+};
+
+/**
  * Parse a full CSV text string (RFC 4180).
  *
- * - Normalizes CRLF → LF before splitting.
+ * - Normalizes CRLF → LF.
  * - Strips a single trailing newline.
  * - Returns empty header + empty rows for blank input.
- * - Does NOT handle multi-line quoted fields that span multiple physical lines
- *   (Arc export does not emit them, and spec does not require cross-line support).
- *   The notes field uses \n within a quoted field on a single row (RFC 4180 §2.6).
- *
- * Note: Our export always writes notes on one line using \r\n row separators,
- * so multi-line within a cell is not expected in practice but we keep the parser
- * simple and documented.
+ * - **Handles multi-line quoted fields** (e.g. a notes value containing a line
+ *   break, which Arc export emits as `"a\nb"`) via {@link splitCsvRecords} —
+ *   records are cut only on newlines outside quotes (FI.9 fix).
  */
 export const parseRawCsv = (text: string): RawParseResult => {
   const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
@@ -92,16 +129,16 @@ export const parseRawCsv = (text: string): RawParseResult => {
     return { header: [], rows: [] };
   }
 
-  const lines = trimmed.split("\n");
-  const header = splitCsvLine(lines[0]);
+  const records = splitCsvRecords(trimmed);
+  const header = splitCsvLine(records[0]);
 
-  if (lines.length === 1) {
+  if (records.length === 1) {
     return { header, rows: [] };
   }
 
   const rows: Readonly<Record<string, string>>[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    const values = splitCsvLine(lines[i]);
+  for (let i = 1; i < records.length; i++) {
+    const values = splitCsvLine(records[i]);
     const row: Record<string, string> = {};
     for (let j = 0; j < header.length; j++) {
       row[header[j]] = values[j] ?? "";
