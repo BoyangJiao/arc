@@ -9,6 +9,7 @@
 
 import type { Icon } from "phosphor-react-native";
 import {
+  ArchiveIcon,
   ArrowsDownUpIcon,
   BriefcaseIcon,
   CaretLeftIcon,
@@ -38,6 +39,7 @@ export type LucideIcon = Icon;
 
 // ── Canonical Phosphor exports ──────────────────────────────────────────────
 export {
+  ArchiveIcon,
   ArrowsDownUpIcon,
   BriefcaseIcon,
   CaretLeftIcon,

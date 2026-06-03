@@ -17,6 +17,7 @@ import { useMemo, useState } from "react";
 import { Alert, Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import {
+  ArchiveIcon,
   BottomSheet,
   Button,
   DotsThreeVerticalIcon,
@@ -101,6 +102,24 @@ export default function PortfoliosListScreen() {
       setHardDeleteTarget(portfolio);
       setConfirmName("");
     }, 380);
+  };
+
+  // Archive = soft, reversible (restore from the Archived section). Distinct from
+  // the permanent name-typed Delete. Archiving the active portfolio moves active
+  // to another non-archived one (an archived portfolio must not stay active).
+  const handleSheetArchive = (portfolio: Portfolio) => {
+    setSheetTarget(null);
+    void (async () => {
+      try {
+        await archive.mutateAsync(portfolio.id);
+        if (portfolio.id === activePortfolioId) {
+          const next = activeList.find((p) => p.id !== portfolio.id);
+          setActivePortfolioId(next?.id ?? null);
+        }
+      } catch (err) {
+        Alert.alert(t("common.error"), err instanceof Error ? err.message : String(err));
+      }
+    })();
   };
 
   const runHardDelete = (target: Portfolio) => {
@@ -235,13 +254,25 @@ export default function PortfoliosListScreen() {
               </Pressable>
 
               {sheetTarget && sheetTarget.id !== defaultPortfolioId ? (
-                <Pressable
-                  className="flex-row items-center gap-3 py-3 active:opacity-60"
-                  onPress={() => handleSheetDelete(sheetTarget)}
-                >
-                  <ThemedIcon icon={TrashIcon} size={20} colorToken="warning" />
-                  <Text className="text-danger text-base">{t("portfolios.delete")}</Text>
-                </Pressable>
+                <>
+                  {/* Archive — soft, reversible (restore from the Archived section). */}
+                  <Pressable
+                    className="flex-row items-center gap-3 py-3 active:opacity-60"
+                    onPress={() => handleSheetArchive(sheetTarget)}
+                  >
+                    <ThemedIcon icon={ArchiveIcon} size={20} colorToken="foreground" />
+                    <Text className="text-foreground text-base">{t("portfolios.archive")}</Text>
+                  </Pressable>
+
+                  {/* Delete — permanent, name-typed confirm. */}
+                  <Pressable
+                    className="flex-row items-center gap-3 py-3 active:opacity-60"
+                    onPress={() => handleSheetDelete(sheetTarget)}
+                  >
+                    <ThemedIcon icon={TrashIcon} size={20} colorToken="warning" />
+                    <Text className="text-danger text-base">{t("portfolios.delete")}</Text>
+                  </Pressable>
+                </>
               ) : (
                 <Text className="text-muted text-xs py-2">
                   {t("portfolios.cannotDeleteDefault")}
