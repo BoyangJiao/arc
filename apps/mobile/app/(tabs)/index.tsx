@@ -428,7 +428,7 @@ export default function PortfolioTab() {
             <Text className={TYPO_LABEL}>{t("common.loading")}</Text>
           ) : !activePortfolio ? (
             <Card>
-              <View className="p-6 items-center">
+              <View className="items-center">
                 <Text className={typographyClass("emptyMessage", "mb-2")}>
                   {t("portfolio.noPortfolios")}
                 </Text>
@@ -477,7 +477,7 @@ export default function PortfolioTab() {
                   router.push(`/portfolio/${activePortfolio.id}/transactions/new` as Href)
                 }
               >
-                <View className="p-6 items-center">
+                <View className="items-center">
                   <Text className={typographyClass("emptyMessage", "mb-2")}>
                     {t("portfolio.empty")}
                   </Text>
@@ -486,10 +486,6 @@ export default function PortfolioTab() {
               </Pressable>
             </Card>
           )}
-
-          <Text className={typographyClass("disclaimer", "text-center")}>
-            {t("common.notInvestmentAdvice")}
-          </Text>
         </ScrollView>
       </TabScrollShadow>
     </Screen>

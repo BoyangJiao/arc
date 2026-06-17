@@ -67,7 +67,7 @@ export function SymbolPicker({
         {results.map((item) => (
           <Pressable key={item.assetId} onPress={() => onSelect(item)} accessibilityRole="button">
             <Card>
-              <View className="px-3 py-3">
+              <View>
                 <Text className="text-foreground font-medium">
                   {item.name} ({item.assetId})
                 </Text>

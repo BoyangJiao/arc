@@ -224,7 +224,7 @@ function StartCard({
   const busy = isSendingCode || isSendingLink;
   return (
     <Card>
-      <View className="p-4 gap-3">
+      <View className="gap-3">
         <Text className="text-foreground">{t("auth.emailLabel")}</Text>
         <TextInput
           value={email}
@@ -275,7 +275,7 @@ function CodeInputCard({
 }) {
   return (
     <Card>
-      <View className="p-4 gap-3">
+      <View className="gap-3">
         <Text className="text-foreground text-lg font-semibold">{t("auth.codeSentTitle")}</Text>
         <Text className="text-muted">{t("auth.codeSentBody", { email })}</Text>
 
@@ -310,7 +310,7 @@ function CodeInputCard({
 function LinkSentCard({ email, onBack, t }: { email: string; onBack: () => void; t: I18nT }) {
   return (
     <Card>
-      <View className="p-4 gap-3">
+      <View className="gap-3">
         <Text className="text-foreground text-lg font-semibold">{t("auth.linkSentTitle")}</Text>
         <Text className="text-muted">{t("auth.linkSentBody", { email })}</Text>
         <Button variant="ghost" onPress={onBack}>

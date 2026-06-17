@@ -38,6 +38,10 @@ export default function InsightsLayout() {
       />
       <Stack.Screen name="rebalance/actions" />
       <Stack.Screen name="pnl-analysis" />
+      <Stack.Screen name="exposure/[dimension]" />
+      <Stack.Screen name="trade-stats" />
+      <Stack.Screen name="risk" />
+      <Stack.Screen name="asset-value" />
     </Stack>
   );
 }

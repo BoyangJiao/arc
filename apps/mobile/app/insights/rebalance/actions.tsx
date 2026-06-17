@@ -5,21 +5,31 @@
  * detail lives here now that the Insights dashboard card shows only the donut.
  */
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { View } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import Decimal from "decimal.js";
 import { parseAssetId, type Currency, type Market } from "@arc/core";
 import {
+  ALLOCATION_PALETTE,
   DeviationBar,
+  DonutChart,
+  GearIcon,
+  HeaderActionButton,
   InScreenHeader,
+  NAVIGATION_COLORS,
   RebalanceActionList,
   Screen,
   Text,
+  TYPO_CAPTION,
   TYPO_OVERLINE,
+  TYPO_ROW_TITLE,
   scrollContentBelowInScreenHeader,
+  type DonutChartDatum,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
+
+import { useColorMode } from "../../../src/lib/theme";
 
 import { resolveAssetLogoUrl } from "../../../src/lib/asset-logo-url";
 import {
@@ -40,6 +50,8 @@ const parseCashKey = (assetId: string): string => {
 
 export default function RebalanceActionsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const { colorMode } = useColorMode();
   const { prefs } = useUserPreferences();
   const { amountsHidden } = useAmountRedacted();
   const reportingCurrency = prefs?.reportingCurrency ?? "CNY";
@@ -50,7 +62,7 @@ export default function RebalanceActionsScreen() {
       ? queryPortfolioId
       : (activePortfolioId ?? undefined);
 
-  const { deviations, valuation } = useRebalance(portfolioId, reportingCurrency);
+  const { deviations, targets, valuation } = useRebalance(portfolioId, reportingCurrency);
 
   const marketLabel = useCallback(
     (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US"),
@@ -100,20 +112,99 @@ export default function RebalanceActionsScreen() {
 
   const driftRows = useMemo(() => toDeviationBarRows(deviations, labelFor), [deviations, labelFor]);
 
+  // Rebalance donut = TARGET allocation (the configured targets) — matches the
+  // drift / adjustment lists below, so slice count == the rebalance config.
+  const allocationDonut = useMemo<DonutChartDatum[]>(
+    () =>
+      targets.map((tg, i) => ({
+        key: labelFor(tg.assetId),
+        value: tg.targetPercent.toNumber(),
+        color: ALLOCATION_PALETTE[i % ALLOCATION_PALETTE.length]!,
+      })),
+    [targets, labelFor]
+  );
+
   const shareUnits = useMemo(
     () => ({ share: t("rebalance.units.share"), fund: t("rebalance.units.fund") }),
     [t]
+  );
+
+  // Donut center mirrors the dashboard card (default = max drift). Tapping a
+  // slice swaps the center to that target's mix % + its drift.
+  const deviationByAsset = useMemo(
+    () => new Map(deviations.map((d) => [d.assetId, d.deviationPercent])),
+    [deviations]
+  );
+  const maxDeviation = useMemo(
+    () =>
+      deviations.reduce(
+        (max, d) => (d.deviationPercent.abs().gt(max) ? d.deviationPercent.abs() : max),
+        new Decimal(0)
+      ),
+    [deviations]
+  );
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const selectedTarget = selectedIndex != null ? targets[selectedIndex] : undefined;
+
+  const donutCenter = selectedTarget ? (
+    <View className="items-center px-6">
+      <Text className={TYPO_ROW_TITLE} numberOfLines={1}>
+        {labelFor(selectedTarget.assetId)}
+      </Text>
+      <Text className={`${TYPO_CAPTION} text-muted`}>
+        {`${t("insights.allocation.targetLabel")} ${selectedTarget.targetPercent.toFixed(0)}%`}
+      </Text>
+      <Text className={`${TYPO_CAPTION} text-muted`}>
+        {`${t("insights.allocation.deviationLabel")} ${formatSignedPercent(
+          deviationByAsset.get(selectedTarget.assetId) ?? new Decimal(0)
+        )}`}
+      </Text>
+    </View>
+  ) : (
+    <View className="items-center">
+      <Text className={TYPO_ROW_TITLE}>{`${maxDeviation.toFixed(1)}%`}</Text>
+      <Text className={`${TYPO_CAPTION} text-muted`}>{t("insights.allocation.maxDeviation")}</Text>
+    </View>
   );
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <Screen contentContainerStyle={scrollContentBelowInScreenHeader}>
-        <InScreenHeader title={t("rebalance.actionsTitle")} leftType="back" />
+        <InScreenHeader
+          title={t("rebalance.actionsTitle")}
+          leftType="back"
+          rightSlot={
+            <HeaderActionButton
+              icon={GearIcon}
+              onPress={() =>
+                router.push(
+                  `/insights/rebalance/setup${portfolioId ? `?portfolioId=${portfolioId}` : ""}` as Href
+                )
+              }
+              accessibilityLabel={t("rebalance.adjustTargets")}
+            />
+          }
+        />
         <View className="gap-8 pb-10">
+          {allocationDonut.length > 0 ? (
+            <DonutChart
+              data={allocationDonut}
+              heightClass="h-56"
+              insetColor={NAVIGATION_COLORS[colorMode].background}
+              onSlicePress={setSelectedIndex}
+              center={donutCenter}
+            />
+          ) : null}
+
           {driftRows.length > 0 ? (
             <View className="gap-4">
-              <Text className={TYPO_OVERLINE}>{t("rebalance.driftSectionTitle")}</Text>
+              <View className="gap-1">
+                <Text className={TYPO_OVERLINE}>{t("rebalance.driftSectionTitle")}</Text>
+                <Text className={`${TYPO_CAPTION} text-muted`}>
+                  {t("rebalance.driftDirectionHint")}
+                </Text>
+              </View>
               <DeviationBar
                 rows={driftRows}
                 formatPercent={(v) => `${v.toFixed(1)}%`}

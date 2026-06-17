@@ -160,7 +160,7 @@ export default function PortfolioDetailScreen() {
         <Text className="text-muted">{t("common.loading")}</Text>
       ) : isEmpty ? (
         <Card>
-          <View className="p-6 items-center">
+          <View className="items-center">
             <Text className="text-muted text-center mb-2">
               {t("portfolioDetail.emptyHoldings")}
             </Text>
@@ -211,11 +211,6 @@ export default function PortfolioDetailScreen() {
           </Button>
         </View>
       )}
-
-      {/* Disclaimer */}
-      <View className="mt-4">
-        <Text className="text-muted text-xs text-center">{t("common.notInvestmentAdvice")}</Text>
-      </View>
     </Screen>
   );
 }
@@ -268,7 +263,7 @@ function HoldingRow({
       ]}
     >
       <Card>
-        <View className="flex-row items-center px-3 py-3">
+        <View className="flex-row items-center">
           <View className="flex-1 min-w-0 pr-2">
             <Text className="text-foreground font-medium" numberOfLines={1}>
               {displayName}

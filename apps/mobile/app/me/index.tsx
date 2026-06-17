@@ -125,6 +125,11 @@ export default function MeScreen() {
           </Button>
         </View>
       </View>
+
+      {/* Global disclaimer — single canonical placement (app-wide consolidation) */}
+      <Text className="text-muted text-xs text-center mt-10 mb-2">
+        {t("common.notInvestmentAdvice")}
+      </Text>
     </Screen>
   );
 }

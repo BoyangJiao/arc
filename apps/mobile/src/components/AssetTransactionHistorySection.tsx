@@ -123,7 +123,7 @@ function TransactionRow({
       ]}
     >
       <Card>
-        <View className="gap-3 px-3 py-3">
+        <View className="gap-3">
           {/* Header: type badge + trade date */}
           <View className="flex-row items-center gap-2">
             <View className="bg-surface-secondary rounded-md px-2 py-0.5">

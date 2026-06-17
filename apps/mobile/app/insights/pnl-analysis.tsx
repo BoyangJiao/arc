@@ -3,9 +3,15 @@
  *
  * Spec: .specify/feature-specs/stage-3/pnl-analysis-insights.md (Commit 6).
  *
- * Three cards: 时段盈亏 (period, range-dependent) + 累计盈亏 (cumulative,
- * range-INDEPENDENT, AC.2.2) + 盈亏排行 (movers, range-dependent). Range inits
- * from the ?range= query param (Hero chip) else DEFAULT_TIME_RANGE (AC.2.3/2.4).
+ * Three portfolio-level P&L cards ONLY: 时段盈亏 (period, range-dependent) +
+ * 累计盈亏 (cumulative, range-INDEPENDENT, AC.2.2) + 盈亏排行 (movers,
+ * range-dependent). Range inits from the ?range= query param (Hero chip) else
+ * DEFAULT_TIME_RANGE (AC.2.3/2.4).
+ *
+ * Per-asset breakdown (收益报告 / 资产价值) lives in 持仓表现; activity + risk
+ * (交易统计 / 风险 / 回撤) lives in 组合统计 — both inline sections on the
+ * Insights tab (insights-enrichment-stage-3 §taxonomy). They were intentionally
+ * moved OUT of this page so it stays a focused P&L view.
  */
 
 import { useCallback, useMemo, useState } from "react";
@@ -77,10 +83,11 @@ export default function PnlAnalysisScreen() {
   const result = pnlQuery.data?.result;
   const valuation = valuationQuery.data ?? null;
 
-  const assetIds = useMemo(
-    () => (result ? result.perAssetContribution.map((c) => c.assetId) : []),
-    [result]
-  );
+  const assetIds = useMemo(() => {
+    const ids = new Set<string>();
+    result?.perAssetContribution.forEach((c) => ids.add(c.assetId));
+    return [...ids];
+  }, [result]);
   const { data: catalog } = useAssetCatalog(assetIds);
 
   const money = (amount: Decimal): string =>
@@ -206,6 +213,7 @@ export default function PnlAnalysisScreen() {
             range={range}
             onRangeChange={setRange}
             metrics={metrics}
+            formatScrubDate={(iso) => iso.slice(0, 10)}
           />
 
           <PnlCumulativeCard

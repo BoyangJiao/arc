@@ -144,7 +144,7 @@ export function DevToolsScenarioPanel({
             <Text className="text-muted text-sm">{t("devTools.pickFeature")}</Text>
 
             <Card>
-              <View className="p-4 flex-row items-center justify-between gap-3">
+              <View className="flex-row items-center justify-between gap-3">
                 <View className="flex-1 gap-1 pr-2">
                   <Text className="text-foreground text-base font-semibold">
                     {t("devTools.apiRateLimitSimLabel")}
@@ -167,7 +167,7 @@ export function DevToolsScenarioPanel({
                 className="active:opacity-70"
               >
                 <Card>
-                  <View className="p-4 gap-1">
+                  <View className="gap-1">
                     <Text className="text-foreground text-base font-semibold">
                       {t(`devTools.features.${feature.labelKey}.label` as const)}
                     </Text>
@@ -221,7 +221,7 @@ export function DevToolsScenarioPanel({
             className="active:opacity-70"
           >
             <Card>
-              <View className="p-4 flex-row items-center justify-between gap-3">
+              <View className="flex-row items-center justify-between gap-3">
                 <View className="flex-1 gap-1">
                   <Text className="text-foreground text-base font-semibold">
                     {labelFor(labelKey)}
@@ -357,7 +357,7 @@ function EnvSwitcherSection(): React.ReactNode {
 
   return (
     <Card>
-      <View className="p-4 gap-3">
+      <View className="gap-3">
         <Text className="text-foreground text-base font-semibold">
           {t("devTools.env.sectionLabel")}
         </Text>

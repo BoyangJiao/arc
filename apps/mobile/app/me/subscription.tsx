@@ -32,7 +32,7 @@ export default function SubscriptionScreen() {
 
         {TIER_KEYS.map((tier) => (
           <Card key={tier}>
-            <View className="gap-3 p-4">
+            <View className="gap-3">
               <View className="flex-row items-center gap-2">
                 <Text className="text-foreground text-lg font-semibold">
                   {t(`subscription.tiers.${tier}.name` as "subscription.tiers.free.name")}

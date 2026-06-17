@@ -1,18 +1,22 @@
 /**
- * (tabs)/insights.tsx — per-portfolio insight cards dashboard (Stage 3 Block B).
+ * (tabs)/insights.tsx — insights dashboard, scoped to ONE portfolio at a time.
+ *
+ * A top PortfolioToggleGroup (shown only with ≥2 portfolios) selects which
+ * portfolio's insights to view — it drives the active-portfolio id, so every
+ * section (盈亏分析 entry / 资产配置 / 持仓表现 / 组合统计) follows the same
+ * selection. Replaces the old per-portfolio chip + allocation loop.
  */
 
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  CaretRightIcon,
-  ChartLineIcon,
   CrossPortfolioRebalancePlaceholderCard,
   EmptyState,
   FLOATING_TAB_BAR_BOTTOM_INSET,
   HeaderActionButton,
   LightbulbIcon,
+  PortfolioToggleGroup,
   Screen,
   Separator,
   SparkleIcon,
@@ -20,18 +24,16 @@ import {
   TabScrollShadow,
   Text,
   ThemedIcon,
-  TYPO_CAPTION,
-  TYPO_DISCLAIMER,
-  TYPO_OVERLINE,
-  TYPO_ROW_TITLE,
   UserAvatar,
 } from "@arc/ui";
-import { Fragment } from "react";
 import { useTranslation } from "@arc/i18n";
 
-import { PortfolioInsightCardLoader } from "../../src/components/PortfolioInsightCardLoader";
+import { PortfolioAllocationSection } from "../../src/components/PortfolioAllocationSection";
+import { PortfolioHoldingsPerformanceSection } from "../../src/components/PortfolioHoldingsPerformanceSection";
+import { PortfolioStatsSection } from "../../src/components/PortfolioStatsSection";
+import { PnlEntryCardLoader } from "../../src/components/PnlEntryCardLoader";
 import { useAuth } from "../../src/lib/auth";
-import { usePortfolios } from "../../src/lib/queries";
+import { useActivePortfolio, usePortfolios } from "../../src/lib/queries";
 
 export default function InsightsTab() {
   const { t } = useTranslation();
@@ -39,6 +41,9 @@ export default function InsightsTab() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: portfolios = [], isPending, refetch, isFetching } = usePortfolios();
+  const { activePortfolioId, setActivePortfolioId } = useActivePortfolio();
+  const selectedPortfolio =
+    portfolios.find((p) => p.id === activePortfolioId) ?? portfolios[0] ?? null;
 
   const handleAvatarPress = () => {
     router.push("/me" as Href);
@@ -119,36 +124,21 @@ export default function InsightsTab() {
             />
           }
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("insights.pnl.entryCardTitle")}
-            onPress={() => router.push("/insights/pnl-analysis" as Href)}
-            className="active:opacity-60"
-          >
-            <View className="flex-row items-center gap-3 py-1">
-              <ThemedIcon icon={ChartLineIcon} size={24} colorToken="foreground" weight="duotone" />
-              <View className="flex-1">
-                <Text className={TYPO_ROW_TITLE}>{t("insights.pnl.entryCardTitle")}</Text>
-                <Text className={`${TYPO_CAPTION} text-muted`}>
-                  {t("insights.pnl.entryCardSubtitle")}
-                </Text>
-              </View>
-              <ThemedIcon icon={CaretRightIcon} size={18} colorToken="muted" />
-            </View>
-          </Pressable>
+          <PortfolioToggleGroup
+            portfolios={portfolios}
+            selectedId={selectedPortfolio?.id ?? null}
+            onSelect={setActivePortfolioId}
+          />
+
+          <PnlEntryCardLoader />
+
+          {selectedPortfolio ? <PortfolioAllocationSection portfolio={selectedPortfolio} /> : null}
 
           <Separator />
 
-          {portfolios.length > 1 ? (
-            <Text className={TYPO_OVERLINE}>{t("rebalance.allPortfoliosSection")}</Text>
-          ) : null}
+          <PortfolioHoldingsPerformanceSection />
 
-          {portfolios.map((portfolio, index) => (
-            <Fragment key={portfolio.id}>
-              {index > 0 ? <Separator /> : null}
-              <PortfolioInsightCardLoader portfolio={portfolio} />
-            </Fragment>
-          ))}
+          <PortfolioStatsSection />
 
           <Separator />
 
@@ -157,10 +147,6 @@ export default function InsightsTab() {
             badge={t("portfolios.crossPortfolioPlaceholderBadge")}
             description={t("portfolios.crossPortfolioPlaceholderDescription")}
           />
-
-          <Text className={`${TYPO_DISCLAIMER} text-center`}>
-            {t("common.notInvestmentAdvice")}
-          </Text>
         </ScrollView>
       </TabScrollShadow>
     </Screen>

@@ -75,7 +75,7 @@ export default function AuthCallbackScreen() {
       >
         {errorMsg ? (
           <Card>
-            <View className="p-4 gap-3">
+            <View className="gap-3">
               <Text className="text-foreground text-lg font-semibold">
                 {t("auth.callbackFailed")}
               </Text>
