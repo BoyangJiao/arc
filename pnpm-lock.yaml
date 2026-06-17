@@ -139,11 +139,11 @@ importers:
         specifier: ~55.0.6
         version: 55.0.6(react-native@0.83.6(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       heroui-native:
-        specifier: ^1.0.3
-        version: 1.0.3(705c4e56d6d590fa6e62f9025d4efb5b)
+        specifier: ^1.0.4
+        version: 1.0.4(705c4e56d6d590fa6e62f9025d4efb5b)
       heroui-native-pro:
-        specifier: 1.0.0-beta.3
-        version: 1.0.0-beta.3
+        specifier: 1.0.0-beta.4
+        version: 1.0.0-beta.4
       react:
         specifier: 19.2.0
         version: 19.2.0
@@ -302,11 +302,11 @@ importers:
         specifier: ~55.0.14
         version: 55.0.14(expo@55.0.24)(react-native@0.83.6(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       heroui-native:
-        specifier: ^1.0.3
-        version: 1.0.3(705c4e56d6d590fa6e62f9025d4efb5b)
+        specifier: ^1.0.4
+        version: 1.0.4(705c4e56d6d590fa6e62f9025d4efb5b)
       heroui-native-pro:
-        specifier: 1.0.0-beta.3
-        version: 1.0.0-beta.3
+        specifier: 1.0.0-beta.4
+        version: 1.0.0-beta.4
       phosphor-react-native:
         specifier: ^3.0.6
         version: 3.0.6(react-native-svg@15.15.3(react-native@0.83.6(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.6(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
@@ -4119,13 +4119,13 @@ packages:
   hermes-parser@0.35.0:
     resolution: {integrity: sha512-9JLjeHxBx8T4CAsydZR49PNZUaix+WpQJwu9p2010lu+7Kwl6D/7wYFFJxoz+aXkaaClp9Zfg6W6/zVlSJORaA==}
 
-  heroui-native-pro@1.0.0-beta.3:
-    resolution: {integrity: sha512-TdczMDjvtUHAG83iRB6HA8fPgkAJAeR01mqQJ6Sm0+FUKYwh29rhxYjFbwTa5bXKq6smXDOn4yPupMb8sRtIWw==}
+  heroui-native-pro@1.0.0-beta.4:
+    resolution: {integrity: sha512-Yi4qvpOJ2+tvImhuYEMjKto3BF+eek7FaLbB6pk5mG34R2c+1Mj7hastwYXwIQ66qPfT6Z3lP1hJgnc/gcnI/w==}
 
-  heroui-native@1.0.3:
-    resolution: {integrity: sha512-FBhnb/NdcevP0VhwVYHIFSKq7YnEuY5uUoK5UwlFpSZfMuyIyTN8dsckh+W1c2zk5EX4sVukqDQ1gjli/aH1hA==}
+  heroui-native@1.0.4:
+    resolution: {integrity: sha512-XujbUhZNtUVv8bZSAgdjUstLB+p3kggK53FIfXXafLRVTcrq1VbwRcS1Cd1ijNOKPPF6Xqr+5W2n4fFV/U0wAw==}
     peerDependencies:
-      '@gorhom/bottom-sheet': ^5.2.8
+      '@gorhom/bottom-sheet': ^5.2.9
       react: 19.2.0
       react-native: '>=0.81.0'
       react-native-gesture-handler: ^2.28.0
@@ -10369,12 +10369,12 @@ snapshots:
     dependencies:
       hermes-estree: 0.35.0
 
-  heroui-native-pro@1.0.0-beta.3:
+  heroui-native-pro@1.0.0-beta.4:
     dependencies:
       chalk: 5.6.2
       heroui-pro: 1.0.0-beta.6
 
-  heroui-native@1.0.3(705c4e56d6d590fa6e62f9025d4efb5b):
+  heroui-native@1.0.4(705c4e56d6d590fa6e62f9025d4efb5b):
     dependencies:
       react: 19.2.0
       react-native: 0.83.6(@babel/core@7.29.0)(@react-native/metro-config@0.85.2(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0)
