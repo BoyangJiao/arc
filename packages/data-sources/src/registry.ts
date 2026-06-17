@@ -14,6 +14,7 @@ import {
   createAkshareCnAdapter,
   createAkshareFundAdapter,
   createAkshareHkAdapter,
+  createAkshareUsAdapter,
   createAkshareClient,
 } from "./adapters/akshare";
 import { createCashPriceAdapter } from "./adapters/cash-adapter";
@@ -70,15 +71,19 @@ export const createDefaultPriceAdapters = (
   const cnPrimary = tushareClient ? createTushareCnAdapter({ client: tushareClient }) : null;
   const cnSecondary = akshareClient ? createAkshareCnAdapter({ client: akshareClient }) : null;
 
-  // US history: prefer Tushare us_daily when a token is configured (replaces the
-  // rate-capped Alpha Vantage free tier); Finnhub still serves live US quotes.
+  // US history precedence (live quotes always Finnhub):
+  //   akshare (DEV-only fallback, ADR 011 — remove pre-launch)
+  //   → Tushare us_daily (once entitled)
+  //   → Alpha Vantage (free-tier last resort, rate-capped).
   const tushareUs = tushareClient ? createTushareUsAdapter({ client: tushareClient }) : null;
+  const akshareUs = akshareClient ? createAkshareUsAdapter({ client: akshareClient }) : null;
+  const usHistorical = akshareUs ?? tushareUs;
 
   const adapters: Partial<Record<Market, PriceAdapter>> = {
     US: createUsPriceAdapter({
       finnhubApiKey: config.finnhubApiKey,
       alphaVantageApiKey: config.alphaVantageApiKey,
-      ...(tushareUs ? { historical: tushareUs } : {}),
+      ...(usHistorical ? { historical: usHistorical } : {}),
     }),
     CRYPTO: createCoingeckoAdapter({ apiKey: config.coingeckoApiKey }),
   };

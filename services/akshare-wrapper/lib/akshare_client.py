@@ -43,6 +43,12 @@ def _fund_as_of(nav_date: str) -> str:
     return datetime(y, m, d, 15, 0, 0, tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _us_as_of(trade_date: str) -> str:
+    # ~16:00 US Eastern ≈ 20:00 UTC (matches Tushare us_daily asOf in the TS adapter).
+    y, m, d = int(trade_date[0:4]), int(trade_date[4:6]), int(trade_date[6:8])
+    return datetime(y, m, d, 20, 0, 0, tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def _quote(
     asset_id: str,
     price: float,
@@ -153,6 +159,61 @@ def fetch_fund_quote(symbol: str) -> dict[str, Any]:
     )
 
 
+# ---- US (dev fallback while Tushare us_daily is not entitled) -------------
+# akshare stock_us_daily returns FULL unadjusted history (no date params) — we
+# slice the window ourselves. Removed before launch in favour of Tushare (ADR 011).
+
+def _us_hist_df(symbol: str) -> pd.DataFrame:
+    df = ak.stock_us_daily(symbol=symbol.upper(), adjust="")
+    if df is None or df.empty:
+        return df
+    df = df.reset_index()
+    return df
+
+
+def _us_date_col(df: pd.DataFrame) -> str:
+    return "date" if "date" in df.columns else str(df.columns[0])
+
+
+def fetch_us_quote(symbol: str) -> dict[str, Any]:
+    df = _us_hist_df(symbol)
+    if df is None or df.empty:
+        raise LookupError(f"US symbol not found: {symbol}")
+    date_col = _us_date_col(df)
+    row = df.iloc[-1]
+    trade_date = str(row[date_col]).split(" ")[0].replace("-", "")
+    change = None
+    if len(df) > 1:
+        prev = float(df.iloc[-2]["close"])
+        if prev:
+            change = (float(row["close"]) - prev) / prev * 100
+    return _quote(
+        f"US:{symbol.upper()}", float(row["close"]), "USD", _us_as_of(trade_date), "akshare-us", change
+    )
+
+
+def fetch_us_window(symbol: str, start_ymd: str, end_ymd: str) -> list[dict[str, Any]]:
+    df = _us_hist_df(symbol)
+    if df is None or df.empty:
+        return []
+    date_col = _us_date_col(df)
+    out: list[dict[str, Any]] = []
+    prev_close: float | None = None
+    for i in range(len(df)):
+        row = df.iloc[i]
+        trade_date = str(row[date_col]).split(" ")[0].replace("-", "")
+        if trade_date < start_ymd or trade_date > end_ymd:
+            prev_close = float(row["close"])
+            continue
+        close = float(row["close"])
+        change = (close - prev_close) / prev_close * 100 if prev_close else None
+        out.append(
+            _quote(f"US:{symbol.upper()}", close, "USD", _us_as_of(trade_date), "akshare-us", change)
+        )
+        prev_close = close
+    return out
+
+
 def fetch_quote(market: str, symbol: str) -> dict[str, Any]:
     m = market.upper()
     if m == "CN":
@@ -161,6 +222,8 @@ def fetch_quote(market: str, symbol: str) -> dict[str, Any]:
         return fetch_hk_quote(symbol)
     if m == "FUND":
         return fetch_fund_quote(symbol)
+    if m == "US":
+        return fetch_us_quote(symbol)
     raise ValueError(f"unsupported market: {market}")
 
 
@@ -412,4 +475,6 @@ def fetch_quotes_window(
         return fetch_hk_window(symbol, start, end)
     if m == "FUND":
         return fetch_fund_window(symbol, start, end)
+    if m == "US":
+        return fetch_us_window(symbol, start, end)
     raise ValueError(f"unsupported market: {market}")

@@ -9,18 +9,18 @@ import type { Currency, Market, PriceQuote } from "@arc/core";
 import { NetworkError, NotFoundError, ParseError, QuotaError, RateLimitError } from "../../errors";
 import type { SymbolSearchResult } from "../../interfaces";
 
+/** US = dev-only fallback while Tushare us_daily is not entitled (ADR 011; removed pre-launch). */
+export type AkshareMarket = "CN" | "HK" | "FUND" | "US";
+
 export interface AkshareClient {
-  fetchLatest(market: "CN" | "HK" | "FUND", symbol: string): Promise<PriceQuote>;
+  fetchLatest(market: AkshareMarket, symbol: string): Promise<PriceQuote>;
   fetchHistorical(
-    market: "CN" | "HK" | "FUND",
+    market: AkshareMarket,
     symbol: string,
     from: Date,
     to: Date
   ): Promise<ReadonlyArray<PriceQuote>>;
-  searchSymbols(
-    market: "CN" | "HK" | "FUND",
-    query: string
-  ): Promise<ReadonlyArray<SymbolSearchResult>>;
+  searchSymbols(market: AkshareMarket, query: string): Promise<ReadonlyArray<SymbolSearchResult>>;
 }
 
 export interface AkshareClientConfig {
@@ -53,7 +53,7 @@ interface AkshareSearchJson {
 
 const parseQuoteJson = (
   body: AkshareQuoteJson,
-  market: "CN" | "HK" | "FUND",
+  market: AkshareMarket,
   symbol: string
 ): PriceQuote => {
   const assetId = body.assetId ?? `${market}:${symbol}`;
