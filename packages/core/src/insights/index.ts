@@ -3,3 +3,4 @@
 
 export * from "./exposure";
 export * from "./risk";
+export * from "./benchmark";
