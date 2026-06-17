@@ -58,6 +58,11 @@ export { useAssetTwr, type UseAssetTwrInput } from "./use-asset-twr";
 export { usePortfolioTwr, type UsePortfolioTwrInput } from "./use-portfolio-twr";
 export { usePnlAnalysis, type UsePnlAnalysisInput, type PnlAnalysisData } from "./use-pnl-analysis";
 export {
+  useBenchmarkComparison,
+  type UseBenchmarkComparisonInput,
+  type BenchmarkBucketRow,
+} from "./use-benchmark-comparison";
+export {
   useTargetAllocations,
   useUpsertTargetAllocations,
   useDeleteAllTargetAllocations,
