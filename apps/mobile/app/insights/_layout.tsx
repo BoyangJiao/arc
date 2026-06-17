@@ -41,6 +41,7 @@ export default function InsightsLayout() {
       <Stack.Screen name="exposure/[dimension]" />
       <Stack.Screen name="trade-stats" />
       <Stack.Screen name="risk" />
+      <Stack.Screen name="drawdown" />
       <Stack.Screen name="asset-value" />
     </Stack>
   );

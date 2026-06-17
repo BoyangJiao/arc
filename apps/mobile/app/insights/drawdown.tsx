@@ -1,13 +1,11 @@
 /**
- * /insights/risk — 风险 detail (Delta「投资组合风险」UX pattern, Arc data).
+ * /insights/drawdown — 回撤 detail (Delta risk-page UX pattern, Arc data).
  *
- * Delta's risk page is benchmark-relative beta; Arc's beta-vs-benchmark needs the
- * deferred Tushare index adapter (#9/#11), so we use the risk metric we DO have:
- * annualized volatility. Layout mirrors the Delta screenshot — a prominent
- * per-asset bar chart on top + a "most volatile assets" ranking below. Drawdown
- * is its own page (/insights/drawdown). Active-portfolio scoped.
+ * Separate from 风险 (volatility). Prominent underwater drawdown curve (drawdown
+ * from the running peak, ratio ≤ 0) + max-drawdown headline + a per-asset
+ * "deepest drawdown" ranking. Active-portfolio scoped.
  *
- * 文案铁律: states historical volatility neutrally — no "降仓 / 建议" guidance.
+ * 文案铁律: states historical drawdown neutrally — no guidance.
  */
 
 import { useMemo, useState } from "react";
@@ -17,8 +15,8 @@ import Decimal from "decimal.js";
 import { insights, parseAssetId, type Market } from "@arc/core";
 import {
   AssetAvatar,
-  BarChart,
   Card,
+  CumulativeReturnChart,
   DEFAULT_TIME_RANGE,
   InScreenHeader,
   InfoTooltipButton,
@@ -32,6 +30,7 @@ import {
   TYPO_ROW_TITLE,
   TYPO_ROW_VALUE,
   scrollContentBelowInScreenHeader,
+  type PercentAxisInput,
   type TimeRange,
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
@@ -44,14 +43,14 @@ import {
 } from "../../src/lib/queries";
 
 const pct1 = (d: Decimal): string => `${d.times(100).toFixed(1)}%`;
+const signedDrawdown = (d: Decimal): string => (d.isZero() ? pct1(d) : `-${pct1(d)}`);
 
-/** Drop leading zero-value points so a 0→value jump doesn't inflate volatility. */
 const trimLeadingZeros = (series: ReadonlyArray<Decimal>): Decimal[] => {
   const first = series.findIndex((v) => v.greaterThan(0));
   return first < 0 ? [] : series.slice(first);
 };
 
-export default function RiskScreen() {
+export default function DrawdownScreen() {
   const { t } = useTranslation();
   const { portfolio } = useActivePortfolio();
   const portfolioId = portfolio?.id;
@@ -61,9 +60,19 @@ export default function RiskScreen() {
 
   const valueSeries = useMemo(() => snapshots.map((s) => s.totalValue), [snapshots]);
   const hasData = valueSeries.length >= 2;
-  const annualVol = useMemo(() => insights.annualizedVolatility(valueSeries, 252), [valueSeries]);
+  const maxDrawdown = useMemo(() => insights.maxDrawdown(valueSeries), [valueSeries]);
 
-  // Per-asset annualized volatility ranking ("most volatile holdings").
+  // Underwater curve: each point's drawdown from the running peak (ratio ≤ 0).
+  const curve = useMemo<ReadonlyArray<PercentAxisInput>>(() => {
+    let peak = new Decimal(0);
+    return snapshots.map((s) => {
+      if (s.totalValue.greaterThan(peak)) peak = s.totalValue;
+      const ratio = peak.greaterThan(0) ? s.totalValue.div(peak).minus(1) : new Decimal(0);
+      return { ratio: ratio.toNumber(), asOf: s.asOf };
+    });
+  }, [snapshots]);
+
+  // Per-asset deepest drawdown ranking.
   const perAsset = useMemo(() => {
     const latest = snapshots[snapshots.length - 1];
     if (!latest) return [];
@@ -73,36 +82,27 @@ export default function RiskScreen() {
         const series = trimLeadingZeros(
           snapshots.map((s) => s.perAssetReporting.get(id) ?? new Decimal(0))
         );
-        return {
-          id,
-          symbol: parseAssetId(id).symbol,
-          vol: insights.annualizedVolatility(series, 252),
-        };
+        return { id, dd: insights.maxDrawdown(series) };
       })
-      .filter((r) => r.vol.greaterThan(0))
-      .sort((a, b) => b.vol.comparedTo(a.vol))
+      .filter((r) => r.dd.greaterThan(0))
+      .sort((a, b) => b.dd.comparedTo(a.dd))
       .slice(0, 8);
   }, [snapshots]);
 
   const { data: catalog } = useAssetCatalog(useMemo(() => perAsset.map((r) => r.id), [perAsset]));
   const marketLabel = (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US");
 
-  const barData = useMemo(
-    () => perAsset.slice(0, 6).map((r) => ({ label: r.symbol, vol: r.vol.times(100).toNumber() })),
-    [perAsset]
-  );
-
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <Screen contentContainerStyle={scrollContentBelowInScreenHeader}>
         <InScreenHeader
-          title={t("insights.risk.detailTitle")}
+          title={t("insights.drawdown.detailTitle")}
           leftType="back"
           rightSlot={
             <InfoTooltipButton
-              title={t("insights.risk.detailTitle")}
-              body={t("insights.risk.info")}
+              title={t("insights.drawdown.detailTitle")}
+              body={t("insights.drawdown.info")}
               closeLabel={t("insights.pnl.tooltipClose")}
             />
           }
@@ -113,22 +113,24 @@ export default function RiskScreen() {
           <Card>
             <View className="gap-1">
               <Text className={`${TYPO_CAPTION} text-muted`}>
-                {t("insights.risk.volatilityShort")}
+                {t("insights.drawdown.maxLabel")}
               </Text>
-              <Text className={TYPO_METRIC}>{hasData ? pct1(annualVol) : "—"}</Text>
+              <Text className={TYPO_METRIC}>{hasData ? signedDrawdown(maxDrawdown) : "—"}</Text>
             </View>
           </Card>
 
-          {barData.length > 0 ? (
-            <View className="gap-3">
-              <Text className={TYPO_OVERLINE}>{t("insights.risk.byAssetTitle")}</Text>
-              <BarChart data={barData} xKey="label" series={[{ key: "vol" }]} height={224} />
-            </View>
-          ) : null}
+          <View className="gap-3">
+            <Text className={TYPO_OVERLINE}>{t("insights.drawdown.curveTitle")}</Text>
+            <CumulativeReturnChart
+              data={curve}
+              emptyLabel={t("insights.pnl.chart.empty")}
+              formatScrubDate={(iso) => iso.slice(0, 10)}
+            />
+          </View>
 
           {perAsset.length > 0 ? (
             <View className="gap-1">
-              <Text className={TYPO_OVERLINE}>{t("insights.risk.riskiestAssetsTitle")}</Text>
+              <Text className={TYPO_OVERLINE}>{t("insights.drawdown.deepestAssetsTitle")}</Text>
               {perAsset.map((r) => {
                 const { market, symbol } = parseAssetId(r.id);
                 const name = catalog?.get(r.id)?.name ?? symbol;
@@ -149,7 +151,7 @@ export default function RiskScreen() {
                         {`${marketLabel(market)} · ${symbol}`}
                       </Text>
                     </View>
-                    <Text className={TYPO_ROW_VALUE}>{pct1(r.vol)}</Text>
+                    <Text className={TYPO_ROW_VALUE}>{signedDrawdown(r.dd)}</Text>
                   </View>
                 );
               })}
@@ -157,7 +159,9 @@ export default function RiskScreen() {
           ) : null}
 
           <Separator />
-          <Text className="text-muted text-xs text-center">{t("insights.risk.disclaimer")}</Text>
+          <Text className="text-muted text-xs text-center">
+            {t("insights.drawdown.disclaimer")}
+          </Text>
         </View>
       </Screen>
     </>

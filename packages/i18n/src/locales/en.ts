@@ -285,10 +285,11 @@ export const en = {
     risk: {
       title: "Risk",
       volatilityLabel: "Annualized volatility · historical, for reference",
-      volatilityShort: "Annualized volatility",
-      detailTitle: "Risk & drawdown",
+      volatilityShort: "Portfolio annualized volatility",
+      detailTitle: "Risk",
+      byAssetTitle: "Volatility by asset",
       riskiestAssetsTitle: "Most volatile assets",
-      info: "Measures your portfolio's volatility and drawdown from its historical value. Annualized volatility reflects how much the value swings; max drawdown is the largest peak-to-trough drop in the range. Based on history, not a prediction — for reference only.",
+      info: "Measures risk via your portfolio's annualized volatility — how much its value swings. Based on history, not a prediction; for reference only.",
       disclaimer:
         "Based on historical value volatility, for reference only — not a prediction of future risk.",
     },
@@ -296,6 +297,11 @@ export const en = {
       title: "Drawdown",
       maxLabel: "Max drawdown in range",
       curveTitle: "Drawdown curve",
+      detailTitle: "Drawdown",
+      deepestAssetsTitle: "Deepest drawdowns",
+      info: "Drawdown is how far value has fallen from its peak in the range. The underwater curve shows the drop below the prior high at any point; max drawdown is the deepest one. Based on history, for reference only.",
+      disclaimer:
+        "Based on historical value, for reference only — not a prediction of future risk.",
     },
     exposure: {
       marketTitle: "Market exposure",

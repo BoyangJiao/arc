@@ -121,7 +121,7 @@ export const PortfolioStatsSection = () => {
             tier="pro"
             value={maxDrawdown.isZero() ? pct1(maxDrawdown) : `-${pct1(maxDrawdown)}`}
             caption={t("insights.drawdown.maxLabel")}
-            onPress={() => router.push("/insights/risk" as Href)}
+            onPress={() => router.push("/insights/drawdown" as Href)}
           />
         </>
       ) : null}
