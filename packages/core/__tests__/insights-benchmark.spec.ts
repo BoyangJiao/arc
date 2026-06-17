@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import Decimal from "decimal.js";
 
-import { bucketReturn, type IndexClose } from "../src/insights/benchmark";
+import { bucketReturn, calendarBuckets, type IndexClose } from "../src/insights/benchmark";
 
 const dec = (n: number | string): Decimal => new Decimal(n);
 const closes = (rows: ReadonlyArray<[string, number | string]>): IndexClose[] =>
@@ -54,6 +54,18 @@ describe("bucketReturn", () => {
     expect(bucketReturn(bad, "2026-01-01", "2026-01-31")).toBeNull();
   });
 
+  it("integrates with calendarBuckets: per-bucket window slices the series", () => {
+    const now = new Date("2026-06-18T00:00:00Z");
+    const months = calendarBuckets("month", 2, now); // [2026-4 (May), 2026-5 (Jun)]
+    const may = months[0]!;
+    const r = bucketReturn(
+      SERIES,
+      may.from.toISOString().slice(0, 10),
+      may.to.toISOString().slice(0, 10)
+    );
+    expect(r).toBeNull(); // SERIES is all January → no May data
+  });
+
   it("property: result = end/start − 1 for any positive ascending pair", () => {
     fc.assert(
       fc.property(
@@ -69,5 +81,33 @@ describe("bucketReturn", () => {
         }
       )
     );
+  });
+});
+
+describe("calendarBuckets", () => {
+  const now = new Date("2026-06-18T12:00:00Z"); // June 2026 = Q2 (q index 1), month index 5
+
+  it("year: last N calendar years, current ends at now", () => {
+    const b = calendarBuckets("year", 3, now);
+    expect(b.map((x) => x.key)).toEqual(["2024", "2025", "2026"]);
+    expect(b[0]!.from.toISOString().slice(0, 10)).toBe("2024-01-01");
+    expect(b[0]!.to.toISOString().slice(0, 10)).toBe("2024-12-31");
+    expect(b[2]!.to.getTime()).toBe(now.getTime()); // current bucket ends now
+  });
+
+  it("quarter: keys are 0-based, current ends at now", () => {
+    const b = calendarBuckets("quarter", 2, now);
+    expect(b.map((x) => x.key)).toEqual(["2026-Q0", "2026-Q1"]);
+    expect(b[0]!.from.toISOString().slice(0, 10)).toBe("2026-01-01");
+    expect(b[0]!.to.toISOString().slice(0, 10)).toBe("2026-03-31");
+    expect(b[1]!.to.getTime()).toBe(now.getTime());
+  });
+
+  it("month: wraps across year boundary", () => {
+    const jan = new Date("2026-01-10T00:00:00Z");
+    const b = calendarBuckets("month", 2, jan); // Dec 2025, Jan 2026
+    expect(b.map((x) => x.key)).toEqual(["2025-11", "2026-0"]);
+    expect(b[0]!.from.toISOString().slice(0, 10)).toBe("2025-12-01");
+    expect(b[0]!.to.toISOString().slice(0, 10)).toBe("2025-12-31");
   });
 });
