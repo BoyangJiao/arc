@@ -14,11 +14,15 @@ import { useBusinessClasses } from "../tokens/business-context";
 import { TYPO_CAPTION, TYPO_LABEL, TYPO_METRIC_SM, typographyClass } from "../tokens/typography";
 
 import { InfoTooltipButton } from "./InfoTooltipButton";
+import { InsightSection } from "./InsightSection";
 import { pnlTextClass, type PnlSign } from "./pnl-types";
 
 export interface PnlCumulativeCardProps {
   readonly sectionTitle: string;
   readonly tooltip?: { readonly title: string; readonly body: string; readonly closeLabel: string };
+  /** When set, the whole card taps through (e.g. Insights 盈亏分析 entry → detail). */
+  readonly onPress?: () => void;
+  readonly accessibilityLabel?: string;
   readonly holdingReturnLabel: string;
   /** Holding return % — e.g. "+47.57%"; omit when nothing invested. */
   readonly holdingReturnPercentLabel?: string;
@@ -34,6 +38,8 @@ export function PnlCumulativeCard(props: PnlCumulativeCardProps): ReactNode {
   const {
     sectionTitle,
     tooltip,
+    onPress,
+    accessibilityLabel,
     holdingReturnLabel,
     holdingReturnPercentLabel,
     holdingReturnSign,
@@ -47,18 +53,20 @@ export function PnlCumulativeCard(props: PnlCumulativeCardProps): ReactNode {
   const returnColor = pnlTextClass(holdingReturnSign, classes);
 
   return (
-    <View className="gap-5">
-      <View className="flex-row items-center gap-1.5">
-        <Text className={typographyClass("overline")}>{sectionTitle}</Text>
-        {tooltip ? (
+    <InsightSection
+      title={sectionTitle}
+      onPress={onPress}
+      accessibilityLabel={accessibilityLabel}
+      titleAccessory={
+        tooltip ? (
           <InfoTooltipButton
             title={tooltip.title}
             body={tooltip.body}
             closeLabel={tooltip.closeLabel}
           />
-        ) : null}
-      </View>
-
+        ) : undefined
+      }
+    >
       {/* Headline 持有收益 (range-independent). */}
       <View className="gap-1">
         <Text className={`${TYPO_CAPTION} text-muted`}>{holdingReturnLabelText}</Text>
@@ -82,6 +90,6 @@ export function PnlCumulativeCard(props: PnlCumulativeCardProps): ReactNode {
           <Text className={TYPO_METRIC_SM}>{totalValueValue}</Text>
         </View>
       </View>
-    </View>
+    </InsightSection>
   );
 }

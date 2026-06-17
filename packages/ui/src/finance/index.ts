@@ -54,9 +54,7 @@ export {
   type TransferDestOption,
 } from "./CashBalanceTransferSheet";
 export {
-  PortfolioInsightCard,
   CrossPortfolioRebalancePlaceholderCard,
-  type PortfolioInsightCardProps,
   type CrossPortfolioRebalancePlaceholderCardProps,
 } from "./PortfolioInsightCard";
 export {
@@ -72,9 +70,19 @@ export { MarketChip, type MarketChipProps } from "./MarketChip";
 export { HoldingsMarketFilter, type HoldingsMarketFilterProps } from "./HoldingsMarketFilter";
 export {
   AllocationDonut,
+  ALLOCATION_PALETTE,
   type AllocationDonutProps,
   type AllocationDonutSlice,
 } from "./AllocationDonut";
+export { InsightSection, type InsightSectionProps } from "./InsightSection";
+export { ExposureSummaryTile, type ExposureSummaryTileProps } from "./ExposureSummaryTile";
+export {
+  PortfolioToggleGroup,
+  type PortfolioToggleGroupProps,
+  type PortfolioToggleOption,
+} from "./PortfolioToggleGroup";
+export { SegmentToggle, type SegmentToggleProps, type SegmentToggleOption } from "./SegmentToggle";
+export { InsightTierBadge, type InsightTier, type InsightTierBadgeProps } from "./InsightTierBadge";
 export { ChangePercentBadge, type ChangePercentBadgeProps } from "./ChangePercentBadge";
 export { HoldingRow, type HoldingRowProps, type HoldingPeriodChange } from "./HoldingRow";
 export {

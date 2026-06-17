@@ -29,6 +29,10 @@ export interface ArcCumulativeReturnChartProps {
   readonly loading?: boolean;
   /** Shown when there is too little data to draw a curve (首日 (C) 用户). */
   readonly emptyLabel?: string;
+  /** Enable Coinbase/Hero-style scrub (date anchor on drag). Default false. */
+  readonly interactive?: boolean;
+  /** Format the scrub anchor date (ISO → label); only used when interactive. */
+  readonly formatScrubDate?: (isoTimestamp: string) => string;
 }
 
 const formatTick = (pct: number): string => {
@@ -45,6 +49,8 @@ export function CumulativeReturnChart({
   height = 160,
   loading = false,
   emptyLabel,
+  interactive = false,
+  formatScrubDate,
 }: ArcCumulativeReturnChartProps): ReactNode {
   const model = useMemo(() => buildPercentAxisModel(data), [data]);
 
@@ -77,7 +83,13 @@ export function CumulativeReturnChart({
           style={{ top: zeroTick!.topFraction * height }}
         />
       ) : null}
-      <AreaChart data={model.points} height={height} loading={loading} interactive={false} />
+      <AreaChart
+        data={model.points}
+        height={height}
+        loading={loading}
+        interactive={interactive}
+        formatScrubDate={formatScrubDate}
+      />
       {/* Subtle right-axis ticks — non-interactive overlay. */}
       <View pointerEvents="none" className="absolute inset-0">
         {model.ticks.map((tick) => (

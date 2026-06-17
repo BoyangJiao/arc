@@ -73,7 +73,7 @@ export function PortfolioExpandablePanel(props: PortfolioExpandablePanelProps): 
 
       {expanded ? (
         <Card>
-          <View className="px-3 py-3 gap-3">
+          <View className="gap-3">
             {portfolios.length > 0 ? (
               <View className="gap-2">
                 {portfolios.map((portfolio) => (

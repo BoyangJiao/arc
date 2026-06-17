@@ -6,6 +6,15 @@
 
 export { LineChart, type ArcLineChartProps, type ArcLineChartColor } from "./LineChart";
 export { AreaChart, type ArcAreaChartProps } from "./AreaChart";
+export {
+  BarChart,
+  type ArcBarChartProps,
+  type ArcBarChartSeries,
+  type ArcBarChartRow,
+} from "./BarChart";
+export { DonutChart, type DonutChartProps, type DonutChartDatum } from "./DonutChart";
+export { MultiLineChart, type MultiLineChartProps, type MultiLineSeries } from "./MultiLineChart";
+export { MultiLineScrubChart, type MultiLineScrubChartProps } from "./MultiLineScrubChart";
 export { CumulativeReturnChart, type ArcCumulativeReturnChartProps } from "./CumulativeReturnChart";
 export {
   buildPercentAxisModel,

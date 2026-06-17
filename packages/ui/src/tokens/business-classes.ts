@@ -30,8 +30,8 @@ export interface BusinessClassMap {
   readonly gain: BusinessClassSet;
   readonly loss: BusinessClassSet;
   readonly pnlNeutral: Pick<BusinessClassSet, "text">;
-  readonly deviationWarning: Pick<BusinessClassSet, "bgSoft" | "textOnSoft">;
-  readonly deviationCritical: Pick<BusinessClassSet, "bgSoft" | "textOnSoft">;
+  readonly deviationWarning: Pick<BusinessClassSet, "bg" | "bgSoft" | "textOnSoft">;
+  readonly deviationCritical: Pick<BusinessClassSet, "bg" | "bgSoft" | "textOnSoft">;
 }
 
 // ── 各模式下的字面量 className 表（Tailwind v4 编译器可扫描）────────────
@@ -53,10 +53,12 @@ const DANGER_CLASSES: BusinessClassSet = {
 const SHARED_NEUTRAL = {
   pnlNeutral: { text: "text-muted" },
   deviationWarning: {
+    bg: "bg-warning",
     bgSoft: "bg-warning-soft",
     textOnSoft: "text-warning",
   },
   deviationCritical: {
+    bg: "bg-danger",
     bgSoft: "bg-danger-soft",
     textOnSoft: "text-danger",
   },

@@ -47,6 +47,8 @@ export interface PnlPeriodCardProps {
   readonly range: TimeRange;
   readonly onRangeChange: (range: TimeRange) => void;
   readonly metrics: ReadonlyArray<PnlMetricRow>;
+  /** Hero-style scrub anchor date formatter (ISO → label). */
+  readonly formatScrubDate?: (isoTimestamp: string) => string;
 }
 
 export function PnlPeriodCard(props: PnlPeriodCardProps): ReactNode {
@@ -62,14 +64,16 @@ export function PnlPeriodCard(props: PnlPeriodCardProps): ReactNode {
     range,
     onRangeChange,
     metrics,
+    formatScrubDate,
   } = props;
   const classes = useBusinessClasses();
 
+  // Hero module pattern (Portfolio Tab): no card chrome — label → hero number →
+  // dates → scrubbable chart → range pills → metric rows.
   return (
     <View className="gap-5">
-      {/* Headline: overline → descriptor → hero number → dates. */}
       <View className="gap-1">
-        <Text className={typographyClass("overline")}>{sectionTitle}</Text>
+        <Text className={TYPO_LABEL}>{sectionTitle}</Text>
         <Text className={`${TYPO_CAPTION} text-muted`}>{periodLabel}</Text>
         <Text
           className={typographyClass(
@@ -83,12 +87,14 @@ export function PnlPeriodCard(props: PnlPeriodCardProps): ReactNode {
         <Text className={`${TYPO_CAPTION} text-muted`}>{dateRangeLabel}</Text>
       </View>
 
-      {/* Chart + time-range pills directly beneath it (Revolut Performance). */}
+      {/* Chart + time-range pills directly beneath it (mirrors Hero AreaChart). */}
       <View className="gap-3">
         <CumulativeReturnChart
           data={chartData}
           loading={chartLoading}
           emptyLabel={chartEmptyLabel}
+          interactive
+          formatScrubDate={formatScrubDate}
         />
         <TimeRangeSelector value={range} onChange={onRangeChange} />
       </View>

@@ -20,11 +20,28 @@ export interface AllocationDonutSlice {
 export interface AllocationDonutProps {
   readonly slices: ReadonlyArray<AllocationDonutSlice>;
   readonly size?: number;
+  /** Hide the side legend (donut-only, e.g. compact summary tiles). */
+  readonly hideLegend?: boolean;
+  /** Overlay centered inside the donut hole (e.g. top-slice % or total). */
+  readonly center?: ReactNode;
 }
 
+/**
+ * Shared allocation/exposure donut palette (Delta-ordered: purple → pink →
+ * yellow → blue → green → gray, so the largest slice reads purple).
+ * Exported so custom legends (exposure detail) can color-match by index.
+ */
 /* eslint-disable no-restricted-syntax -- SVG stroke/fill palette */
-const SLICE_COLORS = ["#006fee", "#7828c8", "#f5a524", "#f31260", "#71717a", "#17c964"] as const;
+export const ALLOCATION_PALETTE = [
+  "#7828c8",
+  "#f31260",
+  "#f5a524",
+  "#006fee",
+  "#17c964",
+  "#71717a",
+] as const;
 /* eslint-enable no-restricted-syntax */
+const SLICE_COLORS = ALLOCATION_PALETTE;
 
 const polar = (cx: number, cy: number, r: number, angleDeg: number) => {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -41,7 +58,12 @@ const arcPath = (cx: number, cy: number, r: number, start: number, end: number):
   return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 0 ${e.x} ${e.y}`;
 };
 
-export function AllocationDonut({ slices, size = 160 }: AllocationDonutProps): ReactNode {
+export function AllocationDonut({
+  slices,
+  size = 160,
+  hideLegend = false,
+  center,
+}: AllocationDonutProps): ReactNode {
   const total = slices.reduce((sum, s) => sum.plus(s.value), new Decimal(0));
   if (total.isZero()) return null;
 
@@ -52,8 +74,8 @@ export function AllocationDonut({ slices, size = 160 }: AllocationDonutProps): R
 
   let cursor = 0;
 
-  return (
-    <View className="flex-row items-center gap-4">
+  const ring = (
+    <View className="relative" style={{ width: size, height: size }}>
       <Svg width={size} height={size}>
         <G>
           {slices.map((slice, index) => {
@@ -77,6 +99,21 @@ export function AllocationDonut({ slices, size = 160 }: AllocationDonutProps): R
           })}
         </G>
       </Svg>
+      {center ? (
+        <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
+          {center}
+        </View>
+      ) : null}
+    </View>
+  );
+
+  if (hideLegend) {
+    return <View className="items-center">{ring}</View>;
+  }
+
+  return (
+    <View className="flex-row items-center gap-4">
+      {ring}
       <View className="flex-1 gap-1">
         {slices.map((slice, index) => {
           const pct = slice.value.div(total).times(100);

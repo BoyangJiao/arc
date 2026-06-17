@@ -58,7 +58,7 @@ export function WatchlistRow(props: WatchlistRowProps): ReactNode {
   const content = (
     <Card>
       <View
-        className="flex-row items-center px-3 py-3 gap-3"
+        className="flex-row items-center gap-3"
         accessibilityLabel={accessibilityLabel ?? `${symbol} ${name}`}
       >
         <View className="flex-1 min-w-0">

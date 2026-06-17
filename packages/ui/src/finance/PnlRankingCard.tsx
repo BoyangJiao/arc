@@ -11,8 +11,9 @@ import { View } from "react-native";
 import { Segment } from "heroui-native-pro/segment";
 
 import { Text } from "../primitives/Text";
-import { TYPO_CONTROL_LABEL, TYPO_EMPTY_MESSAGE, typographyClass } from "../tokens/typography";
+import { TYPO_CONTROL_LABEL, TYPO_EMPTY_MESSAGE } from "../tokens/typography";
 
+import { InsightSection } from "./InsightSection";
 import { RankingRow } from "./RankingRow";
 import type { PnlSign } from "./pnl-types";
 import type { RebalanceMarket } from "./rebalance-types";
@@ -57,9 +58,7 @@ export function PnlRankingCard(props: PnlRankingCardProps): ReactNode {
   } = props;
 
   return (
-    <View className="gap-4">
-      <Text className={typographyClass("overline")}>{sectionTitle}</Text>
-
+    <InsightSection title={sectionTitle} bodyClassName="gap-4">
       <Segment
         className="w-full gap-0"
         value={activeTab}
@@ -105,6 +104,6 @@ export function PnlRankingCard(props: PnlRankingCardProps): ReactNode {
           ))}
         </View>
       )}
-    </View>
+    </InsightSection>
   );
 }

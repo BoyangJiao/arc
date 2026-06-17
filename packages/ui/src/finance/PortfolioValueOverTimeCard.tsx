@@ -55,7 +55,7 @@ export function PortfolioValueOverTimeCard(props: PortfolioValueOverTimeCardProp
 
   return (
     <Card>
-      <View className="p-4 gap-3">
+      <View className="gap-3">
         <Text className={TYPO_TITLE}>{title}</Text>
         <Text className={TYPO_DISPLAY_2XL}>{totalValueLabel}</Text>
         <Text className={TYPO_DISCLAIMER}>{disclaimer}</Text>
