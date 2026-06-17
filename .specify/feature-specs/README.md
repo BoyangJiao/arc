@@ -42,16 +42,19 @@
 
 > 总路线图：[stage-3-roadmap.md](./stage-3/stage-3-roadmap.md)（Accepted 2026-05-19）
 
-| 序  | Block | 文件                                                                                   | 状态     | 创建       | 说明                                  |
-| :-: | :---- | :------------------------------------------------------------------------------------- | :------- | :--------- | :------------------------------------ |
-|  0  | —     | [stage-3-roadmap.md](./stage-3/stage-3-roadmap.md)                                     | Accepted | 2026-05-19 | 依赖排序 + 模型路由 + 风险登记        |
-|  1  | A     | [tushare-adapter-stage-3.md](./stage-3/tushare-adapter-stage-3.md)                     | Accepted | 2026-05-19 | CN 行情（Tushare + AKShare reshape）  |
-|  2  | A     | [coingecko-adapter-stage-3.md](./stage-3/coingecko-adapter-stage-3.md)                 | Accepted | 2026-05-20 | CRYPTO 行情（Block A 漏单收口）       |
-|  3  | B     | [multi-portfolio-stage-3.md](./stage-3/multi-portfolio-stage-3.md)                     | Accepted | 2026-05-20 | 多组合管理 + 跨组合现金划转           |
-|  4  | C     | [holdings-and-transactions-stage-3.md](./stage-3/holdings-and-transactions-stage-3.md) | Accepted | 2026-05-20 | 持仓表 / 资产详情 / 图表 / 跨市场录入 |
-|  5  | D     | [twr-stage-3.md](./stage-3/twr-stage-3.md)                                             | Draft    | 2026-05-24 | TWR / MWR 算法                        |
-|  6  | D     | [performance-attribution-stage-3.md](./stage-3/performance-attribution-stage-3.md)     | Draft    | 2026-05-24 | 业绩归因                              |
-|  7  | D     | [drawdown-stage-3.md](./stage-3/drawdown-stage-3.md)                                   | Draft    | 2026-05-24 | 回撤分析                              |
+| 序  | Block | 文件                                                                                   | 状态     | 创建       | 说明                                                 |
+| :-: | :---- | :------------------------------------------------------------------------------------- | :------- | :--------- | :--------------------------------------------------- |
+|  0  | —     | [stage-3-roadmap.md](./stage-3/stage-3-roadmap.md)                                     | Accepted | 2026-05-19 | 依赖排序 + 模型路由 + 风险登记                       |
+|  1  | A     | [tushare-adapter-stage-3.md](./stage-3/tushare-adapter-stage-3.md)                     | Accepted | 2026-05-19 | CN 行情（Tushare + AKShare reshape）                 |
+|  2  | A     | [coingecko-adapter-stage-3.md](./stage-3/coingecko-adapter-stage-3.md)                 | Accepted | 2026-05-20 | CRYPTO 行情（Block A 漏单收口）                      |
+|  3  | B     | [multi-portfolio-stage-3.md](./stage-3/multi-portfolio-stage-3.md)                     | Accepted | 2026-05-20 | 多组合管理 + 跨组合现金划转                          |
+|  4  | C     | [holdings-and-transactions-stage-3.md](./stage-3/holdings-and-transactions-stage-3.md) | Accepted | 2026-05-20 | 持仓表 / 资产详情 / 图表 / 跨市场录入                |
+|  5  | D     | [twr-stage-3.md](./stage-3/twr-stage-3.md)                                             | Draft    | 2026-05-24 | TWR / MWR 算法                                       |
+|  6  | D     | [performance-attribution-stage-3.md](./stage-3/performance-attribution-stage-3.md)     | Draft    | 2026-05-24 | 业绩归因                                             |
+|  7  | D     | [drawdown-stage-3.md](./stage-3/drawdown-stage-3.md)                                   | Draft    | 2026-05-24 | 回撤分析                                             |
+|  8  | D     | [insights-enrichment-stage-3.md](./stage-3/insights-enrichment-stage-3.md)             | Accepted | 2026-06-15 | Insights 扩充（敞口/基准/风险卡 + 图表复用）         |
+|  9  | D     | [benchmark-comparison-stage-3.md](./stage-3/benchmark-comparison-stage-3.md)           | Draft    | 2026-06-16 | 组合 vs 基准 + beta（用户可选基准 · 需指数 adapter） |
+| 10  | D     | [realized-pnl-fx-stage-3.md](./stage-3/realized-pnl-fx-stage-3.md)                     | Draft    | 2026-06-16 | 收益报告「已实现」列（历史 FX）                      |
 
 ---
 
