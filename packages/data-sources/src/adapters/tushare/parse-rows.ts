@@ -21,6 +21,14 @@ export const cnTradeDateToAsOf = (tradeDate: string): string => {
   return new Date(Date.UTC(y, m, d, 7, 0, 0)).toISOString();
 };
 
+/** YYYYMMDD → ~16:00 US Eastern ≈ 20:00 UTC (EOD asOf for US daily). */
+export const usTradeDateToAsOf = (tradeDate: string): string => {
+  const y = Number(tradeDate.slice(0, 4));
+  const m = Number(tradeDate.slice(4, 6)) - 1;
+  const d = Number(tradeDate.slice(6, 8));
+  return new Date(Date.UTC(y, m, d, 20, 0, 0)).toISOString();
+};
+
 export const formatYmd = (date: Date): string => {
   const y = date.getUTCFullYear();
   const m = String(date.getUTCMonth() + 1).padStart(2, "0");

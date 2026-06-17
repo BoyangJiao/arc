@@ -21,6 +21,7 @@ import { createCoingeckoAdapter } from "./adapters/coingecko";
 import { createUsPriceAdapter } from "./adapters/us-price-adapter";
 import { createTushareClient } from "./adapters/tushare/client";
 import { createTushareCnAdapter } from "./adapters/tushare/cn";
+import { createTushareUsAdapter } from "./adapters/tushare/us";
 import { withFallback } from "./adapters/with-fallback";
 import { NotFoundError } from "./errors";
 import type { FxAdapter, PriceAdapter } from "./interfaces";
@@ -69,10 +70,15 @@ export const createDefaultPriceAdapters = (
   const cnPrimary = tushareClient ? createTushareCnAdapter({ client: tushareClient }) : null;
   const cnSecondary = akshareClient ? createAkshareCnAdapter({ client: akshareClient }) : null;
 
+  // US history: prefer Tushare us_daily when a token is configured (replaces the
+  // rate-capped Alpha Vantage free tier); Finnhub still serves live US quotes.
+  const tushareUs = tushareClient ? createTushareUsAdapter({ client: tushareClient }) : null;
+
   const adapters: Partial<Record<Market, PriceAdapter>> = {
     US: createUsPriceAdapter({
       finnhubApiKey: config.finnhubApiKey,
       alphaVantageApiKey: config.alphaVantageApiKey,
+      ...(tushareUs ? { historical: tushareUs } : {}),
     }),
     CRYPTO: createCoingeckoAdapter({ apiKey: config.coingeckoApiKey }),
   };
