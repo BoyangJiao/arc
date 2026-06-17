@@ -249,8 +249,8 @@ export const zh = {
       targetLabel: "目标配置",
       deviationLabel: "偏离",
     },
-    holdingsPerformance: {
-      title: "持仓表现",
+    portfolioPerformance: {
+      title: "投资组合表现",
     },
     stats: {
       title: "组合统计",

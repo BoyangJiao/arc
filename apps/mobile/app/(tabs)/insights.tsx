@@ -29,7 +29,7 @@ import {
 import { useTranslation } from "@arc/i18n";
 
 import { PortfolioAllocationSection } from "../../src/components/PortfolioAllocationSection";
-import { PortfolioHoldingsPerformanceSection } from "../../src/components/PortfolioHoldingsPerformanceSection";
+import { PortfolioPerformanceSection } from "../../src/components/PortfolioPerformanceSection";
 import { PortfolioStatsSection } from "../../src/components/PortfolioStatsSection";
 import { PnlEntryCardLoader } from "../../src/components/PnlEntryCardLoader";
 import { useAuth } from "../../src/lib/auth";
@@ -136,7 +136,7 @@ export default function InsightsTab() {
 
           <Separator />
 
-          <PortfolioHoldingsPerformanceSection />
+          <PortfolioPerformanceSection />
 
           <PortfolioStatsSection />
 

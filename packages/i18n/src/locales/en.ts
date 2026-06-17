@@ -254,8 +254,8 @@ export const en = {
       targetLabel: "Target mix",
       deviationLabel: "Drift",
     },
-    holdingsPerformance: {
-      title: "Holdings performance",
+    portfolioPerformance: {
+      title: "Portfolio performance",
     },
     stats: {
       title: "Portfolio stats",
