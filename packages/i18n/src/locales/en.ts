@@ -248,6 +248,69 @@ export const en = {
     title: "Insights",
     comingSoon: "Rebalance engine coming in Stage 2",
     comingSoonHint: "Get actionable insights on your portfolio allocation",
+    allocation: {
+      title: "Asset allocation",
+      maxDeviation: "Max drift",
+      targetLabel: "Target mix",
+      deviationLabel: "Drift",
+    },
+    holdingsPerformance: {
+      title: "Holdings performance",
+    },
+    stats: {
+      title: "Portfolio stats",
+    },
+    tradeStats: {
+      title: "Trade activity",
+      summary: "trades · across {{count}} assets",
+      totalLabel: "Total trades",
+      mostTradedTitle: "Most-traded assets",
+      tradeCount_one: "{{count}} trade",
+      tradeCount_other: "{{count}} trades",
+      viewHistory: "View full transaction history",
+      info: "This chart shows how many trades (buys and sells) you made per month, quarter, or year, plus your most-traded assets.",
+      granularity: {
+        month: "Month",
+        quarter: "Quarter",
+        year: "Year",
+      },
+    },
+    returns: {
+      title: "Returns report",
+    },
+    assetValue: {
+      title: "Asset value",
+      info: "Shows each holding's market value (in your reporting currency) over the selected range. Defaults to your top holdings by current value; use the chips below to choose which assets to plot. Press and hold the chart to read each asset's value on a given day.",
+    },
+    risk: {
+      title: "Risk",
+      volatilityLabel: "Annualized volatility · historical, for reference",
+      volatilityShort: "Annualized volatility",
+      detailTitle: "Risk & drawdown",
+      riskiestAssetsTitle: "Most volatile assets",
+      info: "Measures your portfolio's volatility and drawdown from its historical value. Annualized volatility reflects how much the value swings; max drawdown is the largest peak-to-trough drop in the range. Based on history, not a prediction — for reference only.",
+      disclaimer:
+        "Based on historical value volatility, for reference only — not a prediction of future risk.",
+    },
+    drawdown: {
+      title: "Drawdown",
+      maxLabel: "Max drawdown in range",
+      curveTitle: "Drawdown curve",
+    },
+    exposure: {
+      marketTitle: "Market exposure",
+      currencyTitle: "Currency exposure",
+      empty: "No holdings yet — add transactions to see your exposure breakdown",
+      totalLabel: "Total value",
+    },
+    currencies: {
+      CNY: "Chinese Yuan",
+      USD: "US Dollar",
+      HKD: "Hong Kong Dollar",
+      JPY: "Japanese Yen",
+      BTC: "Bitcoin",
+      ETH: "Ethereum",
+    },
     pnl: {
       title: "P&L Analysis",
       entryCardTitle: "P&L Analysis",
@@ -293,7 +356,7 @@ export const en = {
         yAxisLabel: "Cumulative return",
         empty: "No return data for this period — widen the range or keep adding transactions",
       },
-      disclaimer: "For reference only, may be delayed. Not investment advice.",
+      disclaimer: "For reference only, may be delayed.",
       tooltipClose: "Got it",
     },
   },
@@ -581,7 +644,9 @@ export const en = {
     setupFirstCta: "Set initial target allocation",
     cashBalancesLink: "Record cash balances",
     viewActionsCta: "View rebalance action list",
-    disclaimer: "For reference only; not investment advice.",
+    disclaimer: "For reference only.",
+    cardTitle: "Rebalance",
+    adjustTargets: "Adjust target allocation",
     setupTitle: "Target allocation",
     setupIntro: "Assign a target weight to each holding (must total 100%).",
     sumOk: "Total: {{sum}}% ✓",
@@ -591,6 +656,7 @@ export const en = {
     sumOver: "{{delta}}% above 100",
     actionsTitle: "Rebalance action list",
     driftSectionTitle: "Allocation drift",
+    driftDirectionHint: "Left = under target · Right = over target",
     actionsSectionTitle: "Adjustments",
     amountEstimateLabel: "Approx.",
     units: {
@@ -687,7 +753,7 @@ export const en = {
       drift: "How far is my allocation from target?",
       realized: "What is my realized profit and loss?",
     },
-    disclaimer: "AI answers are for reference only and are not investment advice.",
+    disclaimer: "AI answers are for reference only.",
   },
   subscription: {
     title: "Subscription",
@@ -719,8 +785,7 @@ export const en = {
         },
       },
     },
-    disclaimer:
-      "This tool is not investment advice. Subscription and pricing details will be announced later.",
+    disclaimer: "Subscription and pricing details will be announced later.",
   },
   data: {
     entryTitle: "Data management",
