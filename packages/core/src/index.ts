@@ -9,3 +9,4 @@ export * as portfolio from "./portfolio";
 export * from "./portfolio/transfer";
 export * from "./portfolio/resolve-active-portfolio";
 export * as fx from "./fx";
+export * as insights from "./insights";
