@@ -10,6 +10,7 @@
  */
 
 import type { Currency } from "@arc/core";
+import { ALLOCATION_PALETTE } from "@arc/ui";
 
 export interface Benchmark {
   /** Stable id (persisted, UI key). */
@@ -18,17 +19,24 @@ export interface Benchmark {
   readonly nameKey: string;
   /** Existing-adapter asset whose close series proxies this benchmark. */
   readonly proxyAssetId: string;
+  /** FIXED bar/legend color (hex, distinct hue) — stable per benchmark, not by position. */
+  readonly color: string;
 }
 
-/** Up to 2 benchmarks compared at once (Delta parity). */
-export const MAX_BENCHMARKS = 2;
+/** Cap = all catalog benchmarks (no artificial 2-limit; user picks any subset). */
+export const MAX_BENCHMARKS = 5;
+
+/** 本组合 series color — distinct from every benchmark. */
+export const PORTFOLIO_COLOR = ALLOCATION_PALETTE[0]!;
+
+const c = (i: number): string => ALLOCATION_PALETTE[i % ALLOCATION_PALETTE.length]!;
 
 export const BENCHMARKS: readonly Benchmark[] = [
-  { id: "CSI300", nameKey: "CSI300", proxyAssetId: "FUND:510300" }, // 沪深300 → 华泰柏瑞300ETF
-  { id: "CSI500", nameKey: "CSI500", proxyAssetId: "FUND:510500" }, // 中证500 → 南方500ETF
-  { id: "SPX", nameKey: "SPX", proxyAssetId: "US:SPY" }, // 标普500 → SPY
-  { id: "NDX", nameKey: "NDX", proxyAssetId: "US:QQQ" }, // 纳指100 → QQQ
-  { id: "HSI", nameKey: "HSI", proxyAssetId: "FUND:159920" }, // 恒生 → 华夏恒生ETF
+  { id: "CSI300", nameKey: "CSI300", proxyAssetId: "FUND:510300", color: c(1) }, // 沪深300 → 华泰柏瑞300ETF
+  { id: "CSI500", nameKey: "CSI500", proxyAssetId: "FUND:510500", color: c(2) }, // 中证500 → 南方500ETF
+  { id: "SPX", nameKey: "SPX", proxyAssetId: "US:SPY", color: c(3) }, // 标普500 → SPY
+  { id: "NDX", nameKey: "NDX", proxyAssetId: "US:QQQ", color: c(4) }, // 纳指100 → QQQ
+  { id: "HSI", nameKey: "HSI", proxyAssetId: "FUND:159920", color: c(5) }, // 恒生 → 华夏恒生ETF
 ];
 
 export const benchmarkById = (id: string): Benchmark | undefined =>

@@ -28,6 +28,11 @@ export interface ArcBarChartSeries {
   readonly key: string;
   /** 柱色 className；缺省按 Arc chart token（--chart-1..5）轮转 */
   readonly colorClassName?: string;
+  /**
+   * 显式柱色（hex）—— 绕过 Uniwind 直接给 Skia `color`。用于需要**互异色相**的
+   * 多序列（如指数对标，chart token 仅同色相明度变化，无法区分）。优先于 colorClassName。
+   */
+  readonly color?: string;
 }
 
 export interface ArcBarChartProps {
@@ -70,8 +75,14 @@ export function BarChart({
 
   if (data.length === 0 || series.length === 0) return null;
 
-  const colorFor = (index: number): string =>
-    series[index]?.colorClassName ?? DEFAULT_BAR_COLORS[index % DEFAULT_BAR_COLORS.length]!;
+  // Explicit hex `color` wins (distinct hues); else the Uniwind chart-token class.
+  const paint = (index: number): Record<string, string> =>
+    series[index]?.color
+      ? { color: series[index]!.color! }
+      : {
+          colorClassName:
+            series[index]?.colorClassName ?? DEFAULT_BAR_COLORS[index % DEFAULT_BAR_COLORS.length]!,
+        };
 
   return (
     <View className="relative w-full">
@@ -88,17 +99,13 @@ export function BarChart({
               points={args.points[series[0]!.key]!}
               chartBounds={args.chartBounds}
               barWidth={barWidth}
-              colorClassName={colorFor(0)}
+              {...paint(0)}
               roundedCorners={ROUNDED_TOP}
             />
           ) : (
             <ProBarChart.BarGroup chartBounds={args.chartBounds} barWidth={barWidth}>
               {series.map((s, i) => (
-                <ProBarChart.BarGroupItem
-                  key={s.key}
-                  points={args.points[s.key]!}
-                  colorClassName={colorFor(i)}
-                />
+                <ProBarChart.BarGroupItem key={s.key} points={args.points[s.key]!} {...paint(i)} />
               ))}
             </ProBarChart.BarGroup>
           )

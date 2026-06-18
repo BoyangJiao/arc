@@ -26,19 +26,18 @@ import {
 import type { insights } from "@arc/core";
 import { useTranslation } from "@arc/i18n";
 
-import { BENCHMARKS, benchmarkById, defaultBenchmarkId } from "../../src/lib/benchmark-catalog";
+import {
+  BENCHMARKS,
+  benchmarkById,
+  defaultBenchmarkId,
+  PORTFOLIO_COLOR,
+} from "../../src/lib/benchmark-catalog";
 import { useBenchmarkSelectionStore } from "../../src/lib/store/benchmark-selection";
 import { useActivePortfolio, useBenchmarkComparison } from "../../src/lib/queries";
 import { useUserPreferences } from "../../src/lib/user-preferences";
 
 type Granularity = insights.BucketGranularity;
-
-// Bar + matching legend-dot color tokens (literal so Tailwind scans them).
-const SERIES_STYLE = [
-  { bar: "accent-chart-1", dot: "bg-accent-chart-1" },
-  { bar: "accent-chart-3", dot: "bg-accent-chart-3" },
-  { bar: "accent-chart-4", dot: "bg-accent-chart-4" },
-] as const;
+const benchmarkColor = (id: string): string => benchmarkById(id)?.color ?? PORTFOLIO_COLOR;
 
 export default function BenchmarkScreen() {
   const { t } = useTranslation();
@@ -84,21 +83,15 @@ export default function BenchmarkScreen() {
 
   const series = useMemo<ArcBarChartSeries[]>(
     () => [
-      { key: "port", colorClassName: SERIES_STYLE[0].bar },
-      ...effectiveIds.map((id, i) => ({
-        key: `bm_${id}`,
-        colorClassName: SERIES_STYLE[(i % 2) + 1].bar,
-      })),
+      { key: "port", color: PORTFOLIO_COLOR },
+      ...effectiveIds.map((id) => ({ key: `bm_${id}`, color: benchmarkColor(id) })),
     ],
     [effectiveIds]
   );
 
   const legend = [
-    { label: t("insights.benchmark.portfolioLabel"), dot: SERIES_STYLE[0].dot },
-    ...effectiveIds.map((id, i) => ({
-      label: benchmarkName(id),
-      dot: SERIES_STYLE[(i % 2) + 1].dot,
-    })),
+    { label: t("insights.benchmark.portfolioLabel"), color: PORTFOLIO_COLOR },
+    ...effectiveIds.map((id) => ({ label: benchmarkName(id), color: benchmarkColor(id) })),
   ];
 
   const granularityOptions = [
@@ -137,7 +130,10 @@ export default function BenchmarkScreen() {
               <View className="flex-row flex-wrap gap-x-4 gap-y-1.5">
                 {legend.map((l) => (
                   <View key={l.label} className="flex-row items-center gap-1.5">
-                    <View className={`w-2.5 h-2.5 rounded-full ${l.dot}`} />
+                    <View
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: l.color }}
+                    />
                     <Text className={TYPO_CAPTION_FOREGROUND}>{l.label}</Text>
                   </View>
                 ))}
@@ -160,15 +156,15 @@ export default function BenchmarkScreen() {
                     key={b.id}
                     accessibilityRole="button"
                     onPress={() => portfolioId && toggle(portfolioId, b.id)}
-                    className={`px-3 py-1.5 rounded-full border active:opacity-70 ${
-                      active ? "bg-accent-soft border-accent-soft" : "border-border"
+                    className={`flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border active:opacity-70 ${
+                      active ? "bg-surface-secondary border-foreground/30" : "border-border"
                     }`}
                   >
-                    <Text
-                      className={
-                        active ? "text-accent-soft-foreground text-sm" : "text-muted text-sm"
-                      }
-                    >
+                    <View
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: b.color, opacity: active ? 1 : 0.4 }}
+                    />
+                    <Text className={active ? "text-foreground text-sm" : "text-muted text-sm"}>
                       {benchmarkName(b.id)}
                     </Text>
                   </Pressable>
