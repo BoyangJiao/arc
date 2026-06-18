@@ -14,9 +14,8 @@ import Decimal from "decimal.js";
 import { insights, parseAssetId, returns, type Currency, type Transaction } from "@arc/core";
 
 import { benchmarkById } from "../benchmark-catalog";
-import { computeValuationAtDate } from "../compute-valuation-at-date";
 import { getRegistry } from "../market-data";
-import { buildValueAt, collectBoundaryDayKeys, indexByUtcDay } from "../twr-day-lookup";
+import { buildValueAt, collectBoundaryDayKeys } from "../twr-day-lookup";
 
 import { usePortfolio } from "./use-portfolios";
 import {
@@ -113,22 +112,19 @@ export const useBenchmarkComparison = (
       for (const b of buckets) {
         for (const k of collectBoundaryDayKeys(b.from, b.to, txTimes)) dayKeys.add(k);
       }
-      const snapshotByDay = indexByUtcDay(snapshots);
+      // Forward-fill from the EOD snapshot series (no network / no throws — robust at
+      // calendar boundaries that fall on holidays). 0 before the first snapshot.
+      const sortedSnaps = [...snapshots].sort((a, b) => a.asOf.localeCompare(b.asOf));
+      const valueOnOrBefore = (dayKey: string): Decimal => {
+        let value = new Decimal(0);
+        for (const s of sortedSnaps) {
+          if (s.asOf.slice(0, 10) <= dayKey) value = s.totalValue;
+          else break;
+        }
+        return value;
+      };
       const valueByDay = new Map<string, Decimal>();
-      for (const dayKey of dayKeys) {
-        const snap = snapshotByDay.get(dayKey);
-        valueByDay.set(
-          dayKey,
-          snap
-            ? snap.totalValue
-            : await computeValuationAtDate({
-                portfolioId: portfolioId!,
-                dayKey,
-                transactions,
-                reportingCurrency,
-              })
-        );
-      }
+      for (const dayKey of dayKeys) valueByDay.set(dayKey, valueOnOrBefore(dayKey));
       const valueAt = buildValueAt(valueByDay);
 
       const portfolioReturnByKey = new Map<string, number | null>();
