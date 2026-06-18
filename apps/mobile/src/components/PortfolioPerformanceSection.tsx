@@ -100,6 +100,24 @@ export const PortfolioPerformanceSection = () => {
           <MultiLineChart data={assetValueData} series={assetValueSeries} />
         </View>
       </Card>
+
+      {/* 指数对标 — entry → /insights/benchmark (#9). */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("insights.benchmark.title")}
+        onPress={() => router.push("/insights/benchmark" as Href)}
+        className="active:opacity-70"
+      >
+        <Card>
+          <View className="flex-row items-center justify-between gap-2">
+            <View className="flex-row items-center gap-2">
+              <Text className={TYPO_LABEL}>{t("insights.benchmark.title")}</Text>
+              <InsightTierBadge tier="proPlus" />
+            </View>
+            <ThemedIcon icon={CaretRightIcon} size={16} colorToken="muted" />
+          </View>
+        </Card>
+      </Pressable>
     </View>
   );
 };

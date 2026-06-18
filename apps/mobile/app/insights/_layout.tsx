@@ -43,6 +43,7 @@ export default function InsightsLayout() {
       <Stack.Screen name="risk" />
       <Stack.Screen name="drawdown" />
       <Stack.Screen name="asset-value" />
+      <Stack.Screen name="benchmark" />
     </Stack>
   );
 }

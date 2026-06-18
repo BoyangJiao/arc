@@ -282,6 +282,22 @@ export const en = {
       title: "Asset value",
       info: "Shows each holding's market value (in your reporting currency) over the selected range. Defaults to your top holdings by current value; use the chips below to choose which assets to plot. Press and hold the chart to read each asset's value on a given day.",
     },
+    benchmark: {
+      title: "Benchmark",
+      portfolioLabel: "Portfolio",
+      pickLabel: "Pick benchmarks (max 2)",
+      empty: "No comparable return data yet — add transactions to see it",
+      info: "Compares your portfolio's time-weighted return (TWR) per period against the selected indices' price return. Indices are approximated by their tracking ETFs. Neutral, for reference only — not buy/sell/rebalance advice.",
+      disclaimer:
+        "Benchmarks approximated by tracking ETFs; returns are historical, for reference only and may be delayed.",
+      names: {
+        CSI300: "CSI 300",
+        CSI500: "CSI 500",
+        SPX: "S&P 500",
+        NDX: "Nasdaq 100",
+        HSI: "Hang Seng",
+      },
+    },
     risk: {
       title: "Risk",
       volatilityLabel: "Annualized volatility · historical, for reference",
