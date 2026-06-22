@@ -39,16 +39,12 @@ import { resolveAssetLogoUrl } from "../../src/lib/asset-logo-url";
 import {
   useActivePortfolio,
   useAssetCatalog,
-  usePortfolioValueSnapshots,
+  usePortfolioRiskSeries,
+  useEmptyRiskSeriesView,
 } from "../../src/lib/queries";
 
 const pct1 = (d: Decimal): string => `${d.times(100).toFixed(1)}%`;
 const signedDrawdown = (d: Decimal): string => (d.isZero() ? pct1(d) : `-${pct1(d)}`);
-
-const trimLeadingZeros = (series: ReadonlyArray<Decimal>): Decimal[] => {
-  const first = series.findIndex((v) => v.greaterThan(0));
-  return first < 0 ? [] : series.slice(first);
-};
 
 export default function DrawdownScreen() {
   const { t } = useTranslation();
@@ -56,38 +52,36 @@ export default function DrawdownScreen() {
   const portfolioId = portfolio?.id;
 
   const [range, setRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
-  const { data: snapshots = [] } = usePortfolioValueSnapshots(portfolioId, range);
+  const emptyView = useEmptyRiskSeriesView();
+  const { data: series = emptyView } = usePortfolioRiskSeries({ portfolioId, range });
 
-  const valueSeries = useMemo(() => snapshots.map((s) => s.totalValue), [snapshots]);
-  const hasData = valueSeries.length >= 2;
-  const maxDrawdown = useMemo(() => insights.maxDrawdown(valueSeries), [valueSeries]);
+  // Drawdown on the cash-flow-adjusted growth index, not raw totalValue (which a
+  // buy/sell would spike). growthIndex is index-aligned with `asOf`.
+  const hasData = series.growthIndex.length >= 2;
+  const maxDrawdown = useMemo(() => insights.maxDrawdown(series.growthIndex), [series.growthIndex]);
 
   // Underwater curve: each point's drawdown from the running peak (ratio ≤ 0).
   const curve = useMemo<ReadonlyArray<PercentAxisInput>>(() => {
     let peak = new Decimal(0);
-    return snapshots.map((s) => {
-      if (s.totalValue.greaterThan(peak)) peak = s.totalValue;
-      const ratio = peak.greaterThan(0) ? s.totalValue.div(peak).minus(1) : new Decimal(0);
-      return { ratio: ratio.toNumber(), asOf: s.asOf };
+    return series.growthIndex.map((gi, i) => {
+      if (gi.greaterThan(peak)) peak = gi;
+      const ratio = peak.greaterThan(0) ? gi.div(peak).minus(1) : new Decimal(0);
+      return { ratio: ratio.toNumber(), asOf: series.asOf[i] ?? "" };
     });
-  }, [snapshots]);
+  }, [series.growthIndex, series.asOf]);
 
-  // Per-asset deepest drawdown ranking.
+  // Per-asset deepest drawdown ranking (market-only growth index).
   const perAsset = useMemo(() => {
-    const latest = snapshots[snapshots.length - 1];
-    if (!latest) return [];
-    return [...latest.perAssetReporting.entries()]
+    return [...series.latestHoldings.entries()]
       .filter(([, v]) => v.greaterThan(0))
-      .map(([id]) => {
-        const series = trimLeadingZeros(
-          snapshots.map((s) => s.perAssetReporting.get(id) ?? new Decimal(0))
-        );
-        return { id, dd: insights.maxDrawdown(series) };
-      })
+      .map(([id]) => ({
+        id,
+        dd: insights.maxDrawdown(series.perAsset.get(id)?.growthIndex ?? []),
+      }))
       .filter((r) => r.dd.greaterThan(0))
       .sort((a, b) => b.dd.comparedTo(a.dd))
       .slice(0, 8);
-  }, [snapshots]);
+  }, [series]);
 
   const { data: catalog } = useAssetCatalog(useMemo(() => perAsset.map((r) => r.id), [perAsset]));
   const marketLabel = (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US");

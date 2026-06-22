@@ -47,6 +47,8 @@ export const transactions = pgTable(
     tradeDate: timestamp("trade_date", { withTimezone: true }).notNull(),
     /** 备注 — 仅展示用，不参与计算 */
     notes: text("notes"),
+    /** 持有账户 / 平台（如「支付宝」「IBKR」）— 资产位置敞口分组用（#12）；可空 */
+    account: text("account"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .default(sql`now()`),

@@ -3,10 +3,11 @@
  *
  * Grouped bars per calendar bucket (月/季度/年): 本组合 per-bucket TWR vs each
  * selected benchmark's price return. Benchmark chips toggle ≤2 selections.
- * Active-portfolio scoped. 文案铁律: neutral — no "跑输就该换/调仓" guidance.
+ * Selection is ephemeral (resets on each visit). Active-portfolio scoped.
+ * 文案铁律: neutral — no "跑输就该换/调仓" guidance.
  */
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Stack } from "expo-router";
 import {
@@ -20,6 +21,7 @@ import {
   TYPO_CAPTION_FOREGROUND,
   TYPO_OVERLINE,
   scrollContentBelowInScreenHeader,
+  useToast,
   type ArcBarChartRow,
   type ArcBarChartSeries,
 } from "@arc/ui";
@@ -29,39 +31,54 @@ import { useTranslation } from "@arc/i18n";
 import {
   BENCHMARKS,
   benchmarkById,
-  defaultBenchmarkId,
+  DEFAULT_DETAIL_BENCHMARK_IDS,
+  MAX_BENCHMARK_SELECTION,
   PORTFOLIO_COLOR,
 } from "../../src/lib/benchmark-catalog";
-import { useBenchmarkSelectionStore } from "../../src/lib/store/benchmark-selection";
 import { useActivePortfolio, useBenchmarkComparison } from "../../src/lib/queries";
-import { useUserPreferences } from "../../src/lib/user-preferences";
 
 type Granularity = insights.BucketGranularity;
 const benchmarkColor = (id: string): string => benchmarkById(id)?.color ?? PORTFOLIO_COLOR;
 
 export default function BenchmarkScreen() {
   const { t } = useTranslation();
-  const { prefs } = useUserPreferences();
-  const reportingCurrency = prefs?.reportingCurrency ?? "CNY";
+  const { toast } = useToast();
 
   const { portfolio } = useActivePortfolio();
   const portfolioId = portfolio?.id;
 
-  const [granularity, setGranularity] = useState<Granularity>("year");
-  const selectionByPortfolio = useBenchmarkSelectionStore((s) => s.byPortfolio);
-  const toggle = useBenchmarkSelectionStore((s) => s.toggle);
+  const [granularity, setGranularity] = useState<Granularity>("quarter");
+  const [selectedIds, setSelectedIds] = useState<string[]>(() => [...DEFAULT_DETAIL_BENCHMARK_IDS]);
 
-  const selected = portfolioId ? (selectionByPortfolio[portfolioId] ?? []) : [];
-  const effectiveIds = useMemo(
-    () => (selected.length > 0 ? selected : [defaultBenchmarkId(reportingCurrency)]),
-    [selected, reportingCurrency]
-  );
-
-  const { data: rows = [] } = useBenchmarkComparison({
+  const {
+    data: rows = [],
+    isPending,
+    isFetching,
+    isFetched,
+  } = useBenchmarkComparison({
     portfolioId,
     granularity,
-    benchmarkIds: effectiveIds,
+    benchmarkIds: selectedIds,
   });
+
+  const toggleBenchmark = useCallback(
+    (benchmarkId: string) => {
+      setSelectedIds((current) => {
+        if (current.includes(benchmarkId)) {
+          if (current.length <= 1) {
+            toast.show(t("insights.benchmark.minOneRequired"));
+            return current;
+          }
+          return current.filter((id) => id !== benchmarkId);
+        }
+        if (current.length >= MAX_BENCHMARK_SELECTION) {
+          return [...current.slice(1), benchmarkId];
+        }
+        return [...current, benchmarkId];
+      });
+    },
+    [t, toast]
+  );
 
   const benchmarkName = (id: string) =>
     t(
@@ -70,28 +87,30 @@ export default function BenchmarkScreen() {
 
   // Only buckets where the portfolio actually has a return (post-inception).
   const shown = useMemo(() => rows.filter((r) => r.portfolioReturn !== null), [rows]);
+  const isLoadingChart = isPending || (isFetching && shown.length === 0);
+  const isEmpty = isFetched && shown.length === 0;
 
   const chartData = useMemo<ArcBarChartRow[]>(
     () =>
       shown.map((r) => {
         const row: ArcBarChartRow = { label: r.label, port: r.portfolioReturn ?? 0 };
-        for (const id of effectiveIds) row[`bm_${id}`] = r.benchmarkReturns[id] ?? 0;
+        for (const id of selectedIds) row[`bm_${id}`] = r.benchmarkReturns[id] ?? 0;
         return row;
       }),
-    [shown, effectiveIds]
+    [shown, selectedIds]
   );
 
   const series = useMemo<ArcBarChartSeries[]>(
     () => [
       { key: "port", color: PORTFOLIO_COLOR },
-      ...effectiveIds.map((id) => ({ key: `bm_${id}`, color: benchmarkColor(id) })),
+      ...selectedIds.map((id) => ({ key: `bm_${id}`, color: benchmarkColor(id) })),
     ],
-    [effectiveIds]
+    [selectedIds]
   );
 
   const legend = [
     { label: t("insights.benchmark.portfolioLabel"), color: PORTFOLIO_COLOR },
-    ...effectiveIds.map((id) => ({ label: benchmarkName(id), color: benchmarkColor(id) })),
+    ...selectedIds.map((id) => ({ label: benchmarkName(id), color: benchmarkColor(id) })),
   ];
 
   const granularityOptions = [
@@ -124,7 +143,11 @@ export default function BenchmarkScreen() {
             />
           </View>
 
-          {chartData.length > 0 ? (
+          {isLoadingChart ? (
+            <Text className={`${TYPO_CAPTION} text-muted text-center py-8`}>
+              {t("common.loading")}
+            </Text>
+          ) : chartData.length > 0 ? (
             <View className="gap-3">
               <BarChart data={chartData} xKey="label" series={series} height={240} />
               <View className="flex-row flex-wrap gap-x-4 gap-y-1.5">
@@ -139,23 +162,23 @@ export default function BenchmarkScreen() {
                 ))}
               </View>
             </View>
-          ) : (
+          ) : isEmpty ? (
             <Text className={`${TYPO_CAPTION} text-muted text-center py-8`}>
               {t("insights.benchmark.empty")}
             </Text>
-          )}
+          ) : null}
 
           {/* Benchmark chips (toggle ≤2). */}
           <View className="gap-2">
             <Text className={TYPO_OVERLINE}>{t("insights.benchmark.pickLabel")}</Text>
             <View className="flex-row flex-wrap gap-2">
               {BENCHMARKS.map((b) => {
-                const active = effectiveIds.includes(b.id);
+                const active = selectedIds.includes(b.id);
                 return (
                   <Pressable
                     key={b.id}
                     accessibilityRole="button"
-                    onPress={() => portfolioId && toggle(portfolioId, b.id)}
+                    onPress={() => toggleBenchmark(b.id)}
                     className={`flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border active:opacity-70 ${
                       active ? "bg-surface-secondary border-foreground/30" : "border-border"
                     }`}

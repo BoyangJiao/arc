@@ -30,6 +30,7 @@ import {
 import { useTranslation } from "@arc/i18n";
 
 import { currencySymbol, formatMoney } from "../../src/lib/format-money";
+import { buildForwardFilledAssetSeries } from "../../src/lib/snapshot-asset-series";
 import {
   useActivePortfolio,
   useAssetCatalog,
@@ -82,15 +83,13 @@ export default function AssetValueScreen() {
     [visible]
   );
 
-  const data = useMemo<Record<string, number>[]>(
+  const data = useMemo(
     () =>
-      snapshots.map((snap, i) => {
-        const row: Record<string, number> = { index: i };
-        for (const c of candidates) {
-          row[c.key] = snap.perAssetReporting.get(c.id)?.toNumber() ?? 0;
-        }
-        return row;
-      }),
+      buildForwardFilledAssetSeries(
+        snapshots,
+        candidates.map((c) => c.id),
+        (id) => seriesKey(id)
+      ),
     [snapshots, candidates]
   );
 

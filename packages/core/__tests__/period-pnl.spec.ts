@@ -474,6 +474,42 @@ describe("computePeriodPnl — per-asset ranking (AC.1.6, AC.1.7, §决策 6)", 
     });
     // ΔValue 0, netInflow 0, dividends 50 → contribution 50
     expect(res.perAssetContribution[0]!.contribution.toString()).toBe("50");
+    expect(res.perAssetContribution[0]!.realized.toString()).toBe("0");
+  });
+
+  it("per-asset realized P&L from a SELL uses trade-date FX (#6)", () => {
+    const txs = [
+      mkTx({
+        type: "BUY",
+        assetId: "US:UBER",
+        shares: 10,
+        pricePerShare: 10,
+        currency: "USD",
+        tradeDate: "2026-01-01T00:00:00.000Z",
+      }),
+      mkTx({
+        type: "SELL",
+        assetId: "US:UBER",
+        shares: 4,
+        pricePerShare: 15,
+        currency: "USD",
+        tradeDate: "2026-03-01T00:00:00.000Z",
+      }),
+    ];
+    const res = computePeriodPnl({
+      from: FROM,
+      to: TO,
+      reportingCurrency: "CNY",
+      valueAt: valueAtFrom({}),
+      perAssetValueAt: perAssetFrom({}),
+      transactions: txs,
+      fxAt: () => dec(7), // USD→CNY at sale date
+      sampleDates: [],
+    });
+    // realized native = 4 × (15 − 10) = 20 USD → × 7 = 140 CNY
+    const uber = res.perAssetContribution.find((c) => c.assetId === "US:UBER")!;
+    expect(uber.realized.toString()).toBe("140");
+    expect(res.realizedPnL.toString()).toBe("140");
   });
 });
 

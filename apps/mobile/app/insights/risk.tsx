@@ -1,17 +1,18 @@
 /**
  * /insights/risk — 风险 detail (Delta「投资组合风险」UX pattern, Arc data).
  *
- * Delta's risk page is benchmark-relative beta; Arc's beta-vs-benchmark needs the
- * deferred Tushare index adapter (#9/#11), so we use the risk metric we DO have:
- * annualized volatility. Layout mirrors the Delta screenshot — a prominent
- * per-asset bar chart on top + a "most volatile assets" ranking below. Drawdown
- * is its own page (/insights/drawdown). Active-portfolio scoped.
+ * Two cash-flow-neutral risk metrics (computed on flow-free returns, robust to
+ * buys/sells and partial/anachronistic snapshots — see portfolio-risk-series.ts):
+ * annualized volatility, and beta vs a benchmark (#11, reuses the 指数对标 #9 proxy
+ * close series). Plus a prominent per-asset volatility bar chart + "most volatile
+ * assets" ranking. Drawdown is its own page (/insights/drawdown). Active-portfolio
+ * scoped.
  *
- * 文案铁律: states historical volatility neutrally — no "降仓 / 建议" guidance.
+ * 文案铁律: states historical volatility / beta neutrally — no "降仓 / 建议" guidance.
  */
 
-import { useMemo, useState } from "react";
-import { View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, View } from "react-native";
 import { Stack } from "expo-router";
 import Decimal from "decimal.js";
 import { insights, parseAssetId, type Market } from "@arc/core";
@@ -38,18 +39,20 @@ import { useTranslation } from "@arc/i18n";
 
 import { resolveAssetLogoUrl } from "../../src/lib/asset-logo-url";
 import {
+  BENCHMARKS,
+  benchmarkById,
+  defaultBenchmarkId,
+  PORTFOLIO_COLOR,
+} from "../../src/lib/benchmark-catalog";
+import {
   useActivePortfolio,
   useAssetCatalog,
-  usePortfolioValueSnapshots,
+  usePortfolioBeta,
+  usePortfolioRiskSeries,
+  useEmptyRiskSeriesView,
 } from "../../src/lib/queries";
 
 const pct1 = (d: Decimal): string => `${d.times(100).toFixed(1)}%`;
-
-/** Drop leading zero-value points so a 0→value jump doesn't inflate volatility. */
-const trimLeadingZeros = (series: ReadonlyArray<Decimal>): Decimal[] => {
-  const first = series.findIndex((v) => v.greaterThan(0));
-  return first < 0 ? [] : series.slice(first);
-};
 
 export default function RiskScreen() {
   const { t } = useTranslation();
@@ -57,32 +60,45 @@ export default function RiskScreen() {
   const portfolioId = portfolio?.id;
 
   const [range, setRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
-  const { data: snapshots = [] } = usePortfolioValueSnapshots(portfolioId, range);
+  const emptyView = useEmptyRiskSeriesView();
+  const { data: series = emptyView } = usePortfolioRiskSeries({ portfolioId, range });
 
-  const valueSeries = useMemo(() => snapshots.map((s) => s.totalValue), [snapshots]);
-  const hasData = valueSeries.length >= 2;
-  const annualVol = useMemo(() => insights.annualizedVolatility(valueSeries, 252), [valueSeries]);
+  // Cash-flow-adjusted: volatility on market-only returns, not raw totalValue.
+  const hasData = series.portfolioReturns.length >= 2;
+  const annualVol = useMemo(
+    () => insights.volatilityFromReturns(series.portfolioReturns, 252),
+    [series.portfolioReturns]
+  );
 
   // Per-asset annualized volatility ranking ("most volatile holdings").
   const perAsset = useMemo(() => {
-    const latest = snapshots[snapshots.length - 1];
-    if (!latest) return [];
-    return [...latest.perAssetReporting.entries()]
+    return [...series.latestHoldings.entries()]
       .filter(([, v]) => v.greaterThan(0))
-      .map(([id]) => {
-        const series = trimLeadingZeros(
-          snapshots.map((s) => s.perAssetReporting.get(id) ?? new Decimal(0))
-        );
-        return {
-          id,
-          symbol: parseAssetId(id).symbol,
-          vol: insights.annualizedVolatility(series, 252),
-        };
-      })
+      .map(([id]) => ({
+        id,
+        symbol: parseAssetId(id).symbol,
+        vol: insights.volatilityFromReturns(series.perAsset.get(id)?.returns ?? [], 252),
+      }))
       .filter((r) => r.vol.greaterThan(0))
       .sort((a, b) => b.vol.comparedTo(a.vol))
       .slice(0, 8);
-  }, [snapshots]);
+  }, [series]);
+
+  // Beta vs a benchmark (#11): default by reporting currency, user can switch.
+  const [benchmarkId, setBenchmarkId] = useState<string>(() =>
+    defaultBenchmarkId(portfolio?.reportingCurrency ?? "CNY")
+  );
+  const [benchmarkPicked, setBenchmarkPicked] = useState(false);
+  useEffect(() => {
+    if (!benchmarkPicked && portfolio)
+      setBenchmarkId(defaultBenchmarkId(portfolio.reportingCurrency));
+  }, [benchmarkPicked, portfolio]);
+
+  const { data: betaResult } = usePortfolioBeta({ portfolioId, range, benchmarkId });
+  const benchmarkName = (id: string) =>
+    t(
+      `insights.benchmark.names.${benchmarkById(id)?.nameKey ?? id}` as "insights.benchmark.names.SPX"
+    );
 
   const { data: catalog } = useAssetCatalog(useMemo(() => perAsset.map((r) => r.id), [perAsset]));
   const marketLabel = (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US");
@@ -118,6 +134,53 @@ export default function RiskScreen() {
               <Text className={TYPO_METRIC}>{hasData ? pct1(annualVol) : "—"}</Text>
             </View>
           </Card>
+
+          {/* Beta vs benchmark (#11). */}
+          <View className="gap-3">
+            <Card>
+              <View className="gap-1">
+                <Text className={`${TYPO_CAPTION} text-muted`}>{t("insights.risk.betaLabel")}</Text>
+                <Text className={TYPO_METRIC}>
+                  {betaResult?.beta != null ? betaResult.beta.toFixed(2) : "—"}
+                </Text>
+                <Text className={`${TYPO_CAPTION} text-muted`}>
+                  {t("insights.risk.betaVs", { benchmark: benchmarkName(benchmarkId) })}
+                  {betaResult && betaResult.sampleSize > 0 && betaResult.sampleSize < 10
+                    ? ` · ${t("insights.risk.betaLowConfidence")}`
+                    : ""}
+                </Text>
+              </View>
+            </Card>
+            <View className="flex-row flex-wrap gap-2">
+              {BENCHMARKS.map((b) => {
+                const active = b.id === benchmarkId;
+                return (
+                  <Pressable
+                    key={b.id}
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setBenchmarkPicked(true);
+                      setBenchmarkId(b.id);
+                    }}
+                    className={`flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border active:opacity-70 ${
+                      active ? "bg-surface-secondary border-foreground/30" : "border-border"
+                    }`}
+                  >
+                    <View
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        backgroundColor: b.color ?? PORTFOLIO_COLOR,
+                        opacity: active ? 1 : 0.4,
+                      }}
+                    />
+                    <Text className={active ? "text-foreground text-sm" : "text-muted text-sm"}>
+                      {benchmarkName(b.id)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
 
           {barData.length > 0 ? (
             <View className="gap-3">

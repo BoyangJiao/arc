@@ -59,6 +59,7 @@ export const PERSIST_QUERY_KEY_PREFIXES: ReadonlyArray<string> = [
   "portfolio-value-snapshots",
   "pnl-analysis",
   "twr-portfolio",
+  "benchmark-comparison",
   "targetAllocations",
   "dailySnapshot",
   "watchlist",

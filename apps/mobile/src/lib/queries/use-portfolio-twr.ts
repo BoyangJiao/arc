@@ -4,60 +4,21 @@
 
 import { useMemo } from "react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import Decimal from "decimal.js";
-import { returns, type Currency, type Transaction } from "@arc/core";
+import { returns, type Transaction } from "@arc/core";
 import type { TimeRange } from "@arc/ui";
 
-import { computeValuationAtDate } from "../compute-valuation-at-date";
-import { buildValueAt, collectBoundaryDayKeys, indexByUtcDay } from "../twr-day-lookup";
+import { resolvePortfolioValuesByDay } from "../resolve-portfolio-boundary-values";
+import { buildValueAt, collectBoundaryDayKeys } from "../twr-day-lookup";
 import { resolvePortfolioTwrWindow } from "../twr-window";
 
 import { usePortfolio } from "./use-portfolios";
-import {
-  usePortfolioValueSnapshots,
-  type PortfolioSnapshotPoint,
-} from "./use-portfolio-value-snapshots";
+import { usePortfolioValueSnapshots } from "./use-portfolio-value-snapshots";
 import { useTransactions } from "./use-transactions";
 
 export interface UsePortfolioTwrInput {
   readonly portfolioId: string | undefined;
   readonly range: TimeRange;
 }
-
-const indexSnapshotsByDay = (
-  points: readonly PortfolioSnapshotPoint[]
-): ReadonlyMap<string, PortfolioSnapshotPoint> => indexByUtcDay(points);
-
-const resolvePortfolioValuesByDay = async (input: {
-  readonly portfolioId: string;
-  readonly dayKeys: readonly string[];
-  readonly snapshots: readonly PortfolioSnapshotPoint[];
-  readonly transactions: readonly Transaction[];
-  readonly reportingCurrency: Currency;
-}): Promise<Map<string, Decimal>> => {
-  const snapshotByDay = indexSnapshotsByDay(input.snapshots);
-  const valueByDay = new Map<string, Decimal>();
-
-  for (const dayKey of input.dayKeys) {
-    const snapshot = snapshotByDay.get(dayKey);
-    if (snapshot) {
-      valueByDay.set(dayKey, snapshot.totalValue);
-      continue;
-    }
-
-    valueByDay.set(
-      dayKey,
-      await computeValuationAtDate({
-        portfolioId: input.portfolioId,
-        dayKey,
-        transactions: input.transactions,
-        reportingCurrency: input.reportingCurrency,
-      })
-    );
-  }
-
-  return valueByDay;
-};
 
 type TwrResult = ReturnType<typeof returns.computePortfolioTwr>;
 

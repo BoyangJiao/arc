@@ -85,6 +85,11 @@ export interface AssetPeriodContribution {
   readonly contribution: Decimal;
   /** contribution / startValue; `null` for a position opened inside the period. */
   readonly ratio: Decimal | null;
+  /**
+   * Realized P&L from SELLs in the period (reporting currency, trade-date FX),
+   * `(sell price − average cost) × shares`. Zero when the asset wasn't sold (#6).
+   */
+  readonly realized: Decimal;
 }
 
 export interface PeriodPnlResult {
@@ -286,6 +291,7 @@ export const computePeriodPnl = (input: PeriodPnlInput): PeriodPnlResult => {
   // Per-asset period aggregates (non-CASH only) for the ranking card.
   const perAssetInflow = new Map<string, Decimal>();
   const perAssetDividends = new Map<string, Decimal>();
+  const perAssetRealized = new Map<string, Decimal>();
   const rankedAssetIds: string[] = [];
   const seenAsset = new Set<string>();
 
@@ -308,7 +314,14 @@ export const computePeriodPnl = (input: PeriodPnlInput): PeriodPnlResult => {
 
     const costDeltaNative = applyToAccumulator(acc, tx, (realizedNative) => {
       if (inClosed) {
-        realizedPnL = realizedPnL.plus(realizedNative.times(fx));
+        const realizedReporting = realizedNative.times(fx);
+        realizedPnL = realizedPnL.plus(realizedReporting);
+        if (!cash) {
+          perAssetRealized.set(
+            tx.assetId,
+            (perAssetRealized.get(tx.assetId) ?? ZERO).plus(realizedReporting)
+          );
+        }
       }
     });
     cumInvested = cumInvested.plus(costDeltaNative.times(fx));
@@ -409,7 +422,7 @@ export const computePeriodPnl = (input: PeriodPnlInput): PeriodPnlResult => {
     const dividends = perAssetDividends.get(assetId) ?? ZERO;
     const contribution = endV.minus(startV).minus(inflow).plus(dividends);
     const ratio = startV.isZero() ? null : contribution.dividedBy(startV);
-    return { assetId, contribution, ratio };
+    return { assetId, contribution, ratio, realized: perAssetRealized.get(assetId) ?? ZERO };
   });
   perAssetContribution.sort((a, b) => {
     const diff = b.contribution.abs().minus(a.contribution.abs());

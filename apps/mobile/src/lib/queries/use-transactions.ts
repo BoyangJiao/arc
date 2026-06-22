@@ -36,6 +36,7 @@ interface DBTransactionRow {
   fee: string;
   trade_date: string;
   notes: string | null;
+  account: string | null;
 }
 
 const fromDB = (row: DBTransactionRow): Transaction => ({
@@ -49,6 +50,7 @@ const fromDB = (row: DBTransactionRow): Transaction => ({
   fee: new Decimal(row.fee),
   tradeDate: row.trade_date,
   notes: row.notes ?? undefined,
+  account: row.account ?? undefined,
 });
 
 export const useTransactions = (
@@ -65,7 +67,7 @@ export const useTransactions = (
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, portfolio_id, asset_id, type, shares, price_per_share, currency, fee, trade_date, notes"
+          "id, portfolio_id, asset_id, type, shares, price_per_share, currency, fee, trade_date, notes, account"
         )
         .eq("portfolio_id", portfolioId)
         .order("trade_date", { ascending: true });
@@ -93,6 +95,8 @@ export interface CreateTransactionInput {
   fee: string; // Decimal string
   tradeDate: string; // ISO date
   notes?: string;
+  /** Holding account / platform for 资产位置敞口 (#12); optional. */
+  account?: string;
   /** When set, upserts assets row before insert (cross-market tx entry). */
   assetMeta?: CreateTransactionAssetMeta;
 }
@@ -167,6 +171,7 @@ export const useCreateTransaction = () => {
         fee: input.fee,
         trade_date: input.tradeDate,
         notes: input.notes || null,
+        account: input.account?.trim() || null,
       });
 
       if (error) throw error;
@@ -236,7 +241,7 @@ export const useAllTransactions = (): UseQueryResult<Transaction[], Error> => {
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, portfolio_id, asset_id, type, shares, price_per_share, currency, fee, trade_date, notes, portfolios!inner(user_id)"
+          "id, portfolio_id, asset_id, type, shares, price_per_share, currency, fee, trade_date, notes, account, portfolios!inner(user_id)"
         )
         .eq("portfolios.user_id", user.id)
         .order("trade_date", { ascending: true });

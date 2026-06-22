@@ -17,8 +17,7 @@ import { View } from "react-native";
 import { LineChart as ProLineChart } from "heroui-native-pro/line-chart";
 import type { ChartBounds, PointsArray } from "victory-native";
 
-import { Text } from "../primitives/Text";
-import { TYPO_CAPTION_FOREGROUND } from "../tokens/typography";
+import { ChartSeriesLegend } from "./ChartSeriesLegend";
 import { HIDDEN_CARTESIAN_AXIS_PROPS } from "./chart-axis-props";
 
 export interface MultiLineSeries {
@@ -74,16 +73,9 @@ export function MultiLineChart({
           )}
         </ProLineChartRoot>
       </View>
-      <View className="flex-row flex-wrap gap-x-4 gap-y-1.5">
-        {series.map((s) => (
-          <View key={s.key} className="flex-row items-center gap-1.5">
-            <View className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-            <Text className={TYPO_CAPTION_FOREGROUND} numberOfLines={1}>
-              {s.label}
-            </Text>
-          </View>
-        ))}
-      </View>
+      <ChartSeriesLegend
+        items={series.map((s) => ({ key: s.key, label: s.label, color: s.color }))}
+      />
     </View>
   );
 }

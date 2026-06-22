@@ -90,6 +90,8 @@ export interface Transaction {
   readonly tradeDate: string;
   /** 备注 — 仅展示用，不参与计算 */
   readonly notes?: string;
+  /** 持有账户 / 平台（如「支付宝」「IBKR」）— 资产位置敞口分组用（#12）；可空 */
+  readonly account?: string;
 }
 
 // ─── 持仓 (Holding) ──────────────────────────────────────────────────────

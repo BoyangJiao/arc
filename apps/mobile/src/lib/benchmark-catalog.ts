@@ -23,8 +23,18 @@ export interface Benchmark {
   readonly color: string;
 }
 
+/** Max benchmarks selectable on the detail page (grouped bar chart). */
+export const MAX_BENCHMARK_SELECTION = 2;
+
 /** Cap = all catalog benchmarks (no artificial 2-limit; user picks any subset). */
 export const MAX_BENCHMARKS = 5;
+
+/** Entry-card preview: quarter buckets vs 沪深300 + 中证500. */
+export const ENTRY_PREVIEW_GRANULARITY = "quarter" as const;
+export const ENTRY_PREVIEW_BENCHMARK_IDS: readonly string[] = ["CSI300", "CSI500"];
+
+/** Detail page initial selection (ephemeral — reset each visit). */
+export const DEFAULT_DETAIL_BENCHMARK_IDS: readonly string[] = ["CSI300", "CSI500"];
 
 /** 本组合 series color — distinct from every benchmark. */
 export const PORTFOLIO_COLOR = ALLOCATION_PALETTE[0]!;

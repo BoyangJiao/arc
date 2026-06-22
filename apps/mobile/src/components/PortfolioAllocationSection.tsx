@@ -34,7 +34,12 @@ import {
   insightsSessionValuationKey,
 } from "../lib/insights-session-valuation";
 import { isCacheFirstMarketData } from "../lib/market-data-policy";
-import { useActivePortfolio, usePortfolioValuation, useRebalance } from "../lib/queries";
+import {
+  useActivePortfolio,
+  usePortfolioValuation,
+  useRebalance,
+  useTransactions,
+} from "../lib/queries";
 import { useColorMode } from "../lib/theme";
 
 const parseCashKey = (assetId: string): string => {
@@ -91,8 +96,18 @@ export const PortfolioAllocationSection = ({ portfolio }: { portfolio: Portfolio
     [targets, t]
   );
 
+  const { data: transactions = [] } = useTransactions(portfolio.id);
+
   const market = useMemo(() => insights.marketExposure(perAsset), [valuation]);
   const currency = useMemo(() => insights.currencyExposure(perAsset), [valuation]);
+  const account = useMemo(
+    () => insights.accountExposure(perAsset, transactions),
+    [valuation, transactions]
+  );
+  const accountLabel = (g: string) =>
+    g === insights.ACCOUNT_UNASSIGNED ? t("insights.exposure.unassignedAccount") : g;
+  // Only surface 资产位置 once the user has tagged at least one real account.
+  const hasAccountData = account.some((s) => s.group !== insights.ACCOUNT_UNASSIGNED);
   const marketData: DonutChartDatum[] = market.map((s, i) => ({
     key: marketLabel(s.group),
     value: s.value.toNumber(),
@@ -100,6 +115,11 @@ export const PortfolioAllocationSection = ({ portfolio }: { portfolio: Portfolio
   }));
   const currencyData: DonutChartDatum[] = currency.map((s, i) => ({
     key: currencyLabel(s.group),
+    value: s.value.toNumber(),
+    color: color(i),
+  }));
+  const accountData: DonutChartDatum[] = account.map((s, i) => ({
+    key: accountLabel(s.group),
     value: s.value.toNumber(),
     color: color(i),
   }));
@@ -186,6 +206,22 @@ export const PortfolioAllocationSection = ({ portfolio }: { portfolio: Portfolio
           onPress={() => go(`/insights/exposure/currency?portfolioId=${portfolio.id}`)}
         />
       </View>
+
+      {/* 资产位置敞口 — appears once holdings carry an account/platform tag (#12) */}
+      {hasAccountData ? (
+        <View className="flex-row gap-3">
+          <ExposureSummaryTile
+            title={t("insights.exposure.accountTitle")}
+            tier="pro"
+            data={accountData}
+            insetColor={insetColor}
+            topLabel={account[0] ? accountLabel(account[0].group) : undefined}
+            topPercent={account[0] ? formatPct(account[0].weight) : undefined}
+            emptyLabel={t("insights.exposure.empty")}
+            onPress={() => go(`/insights/exposure/account?portfolioId=${portfolio.id}`)}
+          />
+        </View>
+      ) : null}
     </View>
   );
 };

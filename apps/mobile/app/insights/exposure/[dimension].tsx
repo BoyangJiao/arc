@@ -37,12 +37,13 @@ import {
   useActivePortfolio,
   useAssetCatalog,
   usePortfolioValuation,
+  useTransactions,
 } from "../../../src/lib/queries";
 import { useAmountRedacted } from "../../../src/lib/use-amount-redacted";
 import { useUserPreferences } from "../../../src/lib/user-preferences";
 import { useColorMode } from "../../../src/lib/theme";
 
-type Dimension = "market" | "currency";
+type Dimension = "market" | "currency" | "account";
 
 export default function ExposureDetailScreen() {
   const { t } = useTranslation();
@@ -55,7 +56,12 @@ export default function ExposureDetailScreen() {
     dimension?: string;
     portfolioId?: string;
   }>();
-  const dimension: Dimension = dimensionParam === "currency" ? "currency" : "market";
+  const dimension: Dimension =
+    dimensionParam === "currency"
+      ? "currency"
+      : dimensionParam === "account"
+        ? "account"
+        : "market";
 
   const { activePortfolioId } = useActivePortfolio();
   const portfolioId =
@@ -65,24 +71,28 @@ export default function ExposureDetailScreen() {
 
   const { data: valuation } = usePortfolioValuation(portfolioId, reportingCurrency);
   const perAsset = useMemo(() => valuation?.perAsset ?? [], [valuation]);
+  const { data: transactions = [] } = useTransactions(portfolioId);
 
-  const groups = useMemo(
-    () =>
-      dimension === "currency"
-        ? insights.currencyExposureBreakdown(perAsset)
-        : insights.marketExposureBreakdown(perAsset),
-    [dimension, perAsset]
-  );
+  const groups = useMemo<ReadonlyArray<insights.ExposureGroupBreakdown<string>>>(() => {
+    if (dimension === "currency") return insights.currencyExposureBreakdown(perAsset);
+    if (dimension === "account") return insights.accountExposureBreakdown(perAsset, transactions);
+    return insights.marketExposureBreakdown(perAsset);
+  }, [dimension, perAsset, transactions]);
 
   const assetIds = useMemo(() => perAsset.map((v) => v.assetId), [perAsset]);
   const { data: catalog } = useAssetCatalog(assetIds);
 
   const [expanded, setExpanded] = useState<string>("");
 
-  const groupLabel = (group: string): string =>
-    dimension === "currency"
+  const groupLabel = (group: string): string => {
+    if (dimension === "account")
+      return group === insights.ACCOUNT_UNASSIGNED
+        ? t("insights.exposure.unassignedAccount")
+        : group;
+    return dimension === "currency"
       ? t(`insights.currencies.${group}` as "insights.currencies.CNY")
       : t(`holdings.markets.${group}` as "holdings.markets.US");
+  };
 
   const total = useMemo(
     () => groups.reduce((sum, g) => sum.plus(g.value), new Decimal(0)),
@@ -118,7 +128,9 @@ export default function ExposureDetailScreen() {
   const title =
     dimension === "currency"
       ? t("insights.exposure.currencyTitle")
-      : t("insights.exposure.marketTitle");
+      : dimension === "account"
+        ? t("insights.exposure.accountTitle")
+        : t("insights.exposure.marketTitle");
 
   return (
     <>

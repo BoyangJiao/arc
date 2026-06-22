@@ -45,6 +45,7 @@ export {
   SkeletonGroup,
   // Feedback
   Toast,
+  useToast,
   // Navigation
   Tabs,
   // Slider — target-allocation editor (rebalance setup, first real-use unlock)

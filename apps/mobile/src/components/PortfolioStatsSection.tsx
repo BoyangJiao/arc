@@ -32,7 +32,12 @@ import {
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
-import { useActivePortfolio, usePortfolioValueSnapshots, useTransactions } from "../lib/queries";
+import {
+  useActivePortfolio,
+  useEmptyRiskSeriesView,
+  usePortfolioRiskSeries,
+  useTransactions,
+} from "../lib/queries";
 
 const pct1 = (d: Decimal): string => `${d.times(100).toFixed(1)}%`;
 
@@ -78,7 +83,11 @@ export const PortfolioStatsSection = () => {
   const portfolioId = portfolio?.id;
 
   const { data: transactions = [] } = useTransactions(portfolioId);
-  const { data: valueSnapshots = [] } = usePortfolioValueSnapshots(portfolioId, DEFAULT_TIME_RANGE);
+  const emptyView = useEmptyRiskSeriesView();
+  const { data: series = emptyView } = usePortfolioRiskSeries({
+    portfolioId,
+    range: DEFAULT_TIME_RANGE,
+  });
 
   const tradeCount = transactions.length;
   const tradedAssetCount = useMemo(
@@ -86,10 +95,15 @@ export const PortfolioStatsSection = () => {
     [transactions]
   );
 
-  const valueSeries = useMemo(() => valueSnapshots.map((s) => s.totalValue), [valueSnapshots]);
-  const hasRiskData = valueSeries.length >= 2;
-  const annualVol = useMemo(() => insights.annualizedVolatility(valueSeries, 252), [valueSeries]);
-  const maxDrawdown = useMemo(() => insights.maxDrawdown(valueSeries), [valueSeries]);
+  // Cash-flow-adjusted: raw totalValue ratios treat a buy/sell as a market move and
+  // inflate these metrics (the 450% volatility bug). Mirror /insights/risk + /drawdown
+  // so the entry card and the detail pages show the same numbers.
+  const hasRiskData = series.growthIndex.length >= 2;
+  const annualVol = useMemo(
+    () => insights.volatilityFromReturns(series.portfolioReturns, 252),
+    [series.portfolioReturns]
+  );
+  const maxDrawdown = useMemo(() => insights.maxDrawdown(series.growthIndex), [series.growthIndex]);
 
   if (!portfolio) return null;
 

@@ -58,6 +58,18 @@ export { useAssetTwr, type UseAssetTwrInput } from "./use-asset-twr";
 export { usePortfolioTwr, type UsePortfolioTwrInput } from "./use-portfolio-twr";
 export { usePnlAnalysis, type UsePnlAnalysisInput, type PnlAnalysisData } from "./use-pnl-analysis";
 export {
+  usePortfolioRiskSeries,
+  useEmptyRiskSeriesView,
+  type UsePortfolioRiskSeriesInput,
+  type PortfolioRiskSeriesView,
+  type AssetRiskCurves,
+} from "./use-portfolio-risk-series";
+export {
+  usePortfolioBeta,
+  type UsePortfolioBetaInput,
+  type PortfolioBetaResult,
+} from "./use-portfolio-beta";
+export {
   useBenchmarkComparison,
   type UseBenchmarkComparisonInput,
   type BenchmarkBucketRow,

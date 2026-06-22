@@ -48,6 +48,12 @@ pnpm-debug.log*
 # cursor (skills mirrored from .claude/skills via tools/sync-skills.sh)
 .cursor/skills/
 
+# agents skill mirror (SkillsMP / other tools — regenerated, not canonical)
+.agents/
+
+# codex (local config — contains API keys / MCP tokens, never commit)
+.codex/
+
 # planning scratchpad (Delta screenshots, IA reference, designer drafts — local only)
 .tempref/
 

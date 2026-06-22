@@ -21,7 +21,8 @@ import Decimal from "decimal.js";
 import { returns, type Currency, type Transaction } from "@arc/core";
 import type { TimeRange } from "@arc/ui";
 
-import { computeFullValuationAtDate, fetchFxRateOnDay } from "../compute-valuation-at-date";
+import { computeFullValuationAtDate } from "../compute-valuation-at-date";
+import { buildHistoricalFxResolver } from "../historical-fx-resolver";
 import { indexByUtcDay, toUtcDayKey } from "../twr-day-lookup";
 import { resolvePortfolioTwrWindow } from "../twr-window";
 
@@ -32,7 +33,6 @@ import {
 } from "./use-portfolio-value-snapshots";
 import { useTransactions } from "./use-transactions";
 
-const ONE = new Decimal(1);
 const ZERO = new Decimal(0);
 
 export interface UsePnlAnalysisInput {
@@ -80,39 +80,6 @@ const resolveDayValues = async (input: {
   }
 
   return { valueByDay, perAssetByDay };
-};
-
-/**
- * Pre-resolve a sync historical-FX lookup for every transaction currency that
- * differs from the reporting currency (same-currency → 1, no fetch).
- */
-const buildFxResolver = async (input: {
-  readonly transactions: readonly Transaction[];
-  readonly reportingCurrency: Currency;
-}): Promise<(currency: Currency, date: Date) => Decimal> => {
-  const needed = new Set<string>(); // `${currency}|${dayKey}`
-  for (const tx of input.transactions) {
-    if (tx.currency === input.reportingCurrency) continue;
-    needed.add(`${tx.currency}|${toUtcDayKey(new Date(tx.tradeDate))}`);
-  }
-
-  const fxByKey = new Map<string, Decimal>();
-  for (const key of needed) {
-    const [currency, dayKey] = key.split("|") as [Currency, string];
-    const rate = await fetchFxRateOnDay(currency, input.reportingCurrency, dayKey);
-    fxByKey.set(key, rate.rate);
-  }
-
-  return (currency: Currency, date: Date): Decimal => {
-    if (currency === input.reportingCurrency) return ONE;
-    const value = fxByKey.get(`${currency}|${toUtcDayKey(date)}`);
-    if (value === undefined) {
-      throw new Error(
-        `no historical FX ${currency}->${input.reportingCurrency} for ${toUtcDayKey(date)}`
-      );
-    }
-    return value;
-  };
 };
 
 export const usePnlAnalysis = (
@@ -164,7 +131,7 @@ export const usePnlAnalysis = (
           transactions,
           reportingCurrency,
         }),
-        buildFxResolver({ transactions, reportingCurrency }),
+        buildHistoricalFxResolver({ transactions, reportingCurrency }),
       ]);
 
       const valueAt = (date: Date): Decimal => valueByDay.get(toUtcDayKey(date)) ?? ZERO;

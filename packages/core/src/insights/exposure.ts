@@ -7,7 +7,16 @@
  */
 
 import Decimal from "decimal.js";
-import { parseAssetId, type Currency, type Market, type MarketValuation } from "../domain/types";
+import {
+  parseAssetId,
+  type Currency,
+  type Market,
+  type MarketValuation,
+  type Transaction,
+} from "../domain/types";
+
+/** Group key for holdings with no recorded account/platform (#12). */
+export const ACCOUNT_UNASSIGNED = "__unassigned__";
 
 /** 单个敞口分片：报告货币市值合计 + 占比（0..1）。按 value 降序排列。 */
 export interface ExposureSlice<G extends string = string> {
@@ -114,3 +123,75 @@ export const currencyExposure = (
   perAsset: ReadonlyArray<MarketValuation>
 ): ReadonlyArray<ExposureSlice<Currency>> =>
   aggregateExposure(perAsset.map((v) => ({ group: v.nativeCurrency, value: v.valueReporting })));
+
+/**
+ * 资产位置敞口 rows（#12）：account 是 *交易* 属性，同一资产可分散在多个账户/平台，
+ * 故按净份额比例把该资产的报告货币市值拆分到各账户。net shares per (asset, account)
+ * 用 BUY(+)/SELL(−)（对齐 returns/twr.ts `computeSharesAt`，忽略 DIVIDEND/SPLIT/
+ * ADJUSTMENT）。拆分分母用各账户*正*净份额之和（负净额账户视为不持有、剔除），故各
+ * 账户值精确对账到该资产市值。无 account 的交易归入 `ACCOUNT_UNASSIGNED`；某资产无份额
+ * 信息（无交易或净额 ≤0）则整额归 unassigned，仍可对账（不变性 2：持仓=Σ交易）。
+ */
+const accountExposureRows = (
+  perAsset: ReadonlyArray<MarketValuation>,
+  transactions: ReadonlyArray<Transaction>
+): Array<{ group: string; assetId: string; value: Decimal }> => {
+  const byAsset = new Map<string, { total: Decimal; byAccount: Map<string, Decimal> }>();
+  for (const tx of transactions) {
+    if (tx.type !== "BUY" && tx.type !== "SELL") continue;
+    const signed = tx.type === "BUY" ? tx.shares : tx.shares.negated();
+    const account = tx.account && tx.account.length > 0 ? tx.account : ACCOUNT_UNASSIGNED;
+    const entry = byAsset.get(tx.assetId) ?? { total: new Decimal(0), byAccount: new Map() };
+    entry.total = entry.total.plus(signed);
+    entry.byAccount.set(account, (entry.byAccount.get(account) ?? new Decimal(0)).plus(signed));
+    byAsset.set(tx.assetId, entry);
+  }
+
+  const rows: Array<{ group: string; assetId: string; value: Decimal }> = [];
+  for (const v of perAsset) {
+    const entry = byAsset.get(v.assetId);
+    if (!entry || entry.total.lessThanOrEqualTo(0)) {
+      rows.push({ group: ACCOUNT_UNASSIGNED, assetId: v.assetId, value: v.valueReporting });
+      continue;
+    }
+    // Prorate by each account's *positive* net shares, using the sum of positive
+    // shares (not entry.total) as the denominator. A net-negative account (e.g. an
+    // import/over-sell artifact) can't hold a fraction of the asset, so it is
+    // dropped — but entry.total nets it out, which would push the positive accounts'
+    // fractions past 1 and over-allocate the asset's value. positiveTotal keeps the
+    // per-account values reconciling exactly to v.valueReporting.
+    let positiveTotal = new Decimal(0);
+    for (const shares of entry.byAccount.values()) {
+      if (shares.greaterThan(0)) positiveTotal = positiveTotal.plus(shares);
+    }
+    if (positiveTotal.lessThanOrEqualTo(0)) {
+      rows.push({ group: ACCOUNT_UNASSIGNED, assetId: v.assetId, value: v.valueReporting });
+      continue;
+    }
+    for (const [account, shares] of entry.byAccount) {
+      if (shares.lessThanOrEqualTo(0)) continue;
+      rows.push({
+        group: account,
+        assetId: v.assetId,
+        value: v.valueReporting.times(shares).dividedBy(positiveTotal),
+      });
+    }
+  }
+  return rows;
+};
+
+/** 资产位置敞口（按账户/平台分组）。 */
+export const accountExposure = (
+  perAsset: ReadonlyArray<MarketValuation>,
+  transactions: ReadonlyArray<Transaction>
+): ReadonlyArray<ExposureSlice<string>> =>
+  aggregateExposure(
+    accountExposureRows(perAsset, transactions).map((r) => ({ group: r.group, value: r.value }))
+  );
+
+/** 资产位置敞口明细（含组内资产，用于详情页可展开图例）。 */
+export const accountExposureBreakdown = (
+  perAsset: ReadonlyArray<MarketValuation>,
+  transactions: ReadonlyArray<Transaction>
+): ReadonlyArray<ExposureGroupBreakdown<string>> =>
+  breakdownBy(accountExposureRows(perAsset, transactions));

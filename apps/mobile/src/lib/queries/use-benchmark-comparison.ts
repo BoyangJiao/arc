@@ -9,12 +9,12 @@
  * bucket lacks data. Benchmark fetch failures degrade to null (no throw).
  */
 
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import Decimal from "decimal.js";
-import { insights, parseAssetId, returns, type Currency, type Transaction } from "@arc/core";
+import { keepPreviousData, useQuery, type UseQueryResult } from "@tanstack/react-query";
+import { insights, returns, type Currency, type Transaction } from "@arc/core";
 
-import { benchmarkById } from "../benchmark-catalog";
-import { getRegistry } from "../market-data";
+import { resolveBenchmarkCloses } from "../benchmark-closes";
+import { findEffectiveBucketFrom } from "../portfolio-snapshot-values";
+import { resolvePortfolioValuesByDay } from "../resolve-portfolio-boundary-values";
 import { buildValueAt, collectBoundaryDayKeys } from "../twr-day-lookup";
 
 import { usePortfolio } from "./use-portfolios";
@@ -52,24 +52,6 @@ const labelFor = (from: Date, g: BucketGranularity): string => {
   return `${y}/${String(m + 1).padStart(2, "0")}`;
 };
 
-const resolveBenchmarkCloses = async (
-  id: string,
-  from: Date,
-  to: Date
-): Promise<IndexClose[] | null> => {
-  const bm = benchmarkById(id);
-  if (!bm) return null;
-  try {
-    const adapter = getRegistry().resolvePriceAdapterByAssetId(bm.proxyAssetId);
-    if (!adapter.fetchHistorical) return null;
-    const { symbol } = parseAssetId(bm.proxyAssetId);
-    const quotes = await adapter.fetchHistorical(symbol, from, to);
-    return quotes.map((q) => ({ date: q.asOf.slice(0, 10), close: q.price }));
-  } catch {
-    return null; // degrade to absent benchmark bars
-  }
-};
-
 export const useBenchmarkComparison = (
   input: UseBenchmarkComparisonInput
 ): UseQueryResult<BenchmarkBucketRow[], Error> => {
@@ -92,7 +74,10 @@ export const useBenchmarkComparison = (
       !!portfolioQuery.data &&
       transactionsQuery.isSuccess &&
       snapshotsQuery.isSuccess,
-    staleTime: 5 * 60 * 1000,
+    // Persisted via query-persister whitelist — cold start shows last result while
+    // background refetch runs (offline-cache-stage-3 §决策 3).
+    staleTime: 30 * 60 * 1000,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<BenchmarkBucketRow[]> => {
       const portfolio = portfolioQuery.data!;
       const transactions: ReadonlyArray<Transaction> = transactionsQuery.data ?? [];
@@ -103,42 +88,53 @@ export const useBenchmarkComparison = (
       if (buckets.length === 0) return [];
       const spanFrom = buckets[0]!.from;
       const spanTo = buckets[buckets.length - 1]!.to;
+      const sortedSnaps = [...snapshots].sort((a, b) => a.asOf.localeCompare(b.asOf));
 
-      // ── portfolio per-bucket TWR ──────────────────────────────────────────
-      const txTimes = transactions
-        .map((t) => new Date(t.tradeDate).getTime())
-        .filter((ms) => ms >= spanFrom.getTime() && ms <= spanTo.getTime());
+      // Effective bucket starts (calendar from may predate first snapshot → use in-bucket inception).
+      const effectiveFromByKey = new Map<string, Date>();
+      for (const b of buckets) {
+        const effectiveFrom = findEffectiveBucketFrom(b, sortedSnaps, transactions);
+        if (effectiveFrom) effectiveFromByKey.set(b.key, effectiveFrom);
+      }
+
+      // Collect all TWR boundary day keys across buckets (cash-flow aware per bucket).
       const dayKeys = new Set<string>();
       for (const b of buckets) {
-        for (const k of collectBoundaryDayKeys(b.from, b.to, txTimes)) dayKeys.add(k);
-      }
-      // Forward-fill from the EOD snapshot series (no network / no throws — robust at
-      // calendar boundaries that fall on holidays). 0 before the first snapshot.
-      const sortedSnaps = [...snapshots].sort((a, b) => a.asOf.localeCompare(b.asOf));
-      const valueOnOrBefore = (dayKey: string): Decimal => {
-        let value = new Decimal(0);
-        for (const s of sortedSnaps) {
-          if (s.asOf.slice(0, 10) <= dayKey) value = s.totalValue;
-          else break;
+        const effectiveFrom = effectiveFromByKey.get(b.key);
+        if (!effectiveFrom) continue;
+        const cfTimes = returns
+          .detectCashFlowEvents(transactions, effectiveFrom, b.to)
+          .map((e) => e.date.getTime());
+        for (const k of collectBoundaryDayKeys(effectiveFrom, b.to, cfTimes)) {
+          dayKeys.add(k);
         }
-        return value;
-      };
-      const valueByDay = new Map<string, Decimal>();
-      for (const dayKey of dayKeys) valueByDay.set(dayKey, valueOnOrBefore(dayKey));
+      }
+
+      const valueByDay = await resolvePortfolioValuesByDay({
+        portfolioId: portfolioId!,
+        dayKeys: [...dayKeys],
+        snapshots,
+        transactions,
+        reportingCurrency,
+      });
       const valueAt = buildValueAt(valueByDay);
 
       const portfolioReturnByKey = new Map<string, number | null>();
       for (const b of buckets) {
+        const effectiveFrom = effectiveFromByKey.get(b.key);
+        if (!effectiveFrom) {
+          portfolioReturnByKey.set(b.key, null);
+          continue;
+        }
         try {
           const r = returns.computePortfolioTwr({
             portfolioId: portfolioId!,
             reportingCurrency,
-            from: b.from,
+            from: effectiveFrom,
             to: b.to,
             transactions,
             valueAt,
           });
-          // No holdings at/over the bucket → not meaningful.
           portfolioReturnByKey.set(
             b.key,
             r.startValue.isZero() ? null : r.value.times(100).toNumber()
@@ -157,12 +153,15 @@ export const useBenchmarkComparison = (
       );
 
       return buckets.map((b) => {
-        const fromISO = b.from.toISOString().slice(0, 10);
+        const effectiveFrom = effectiveFromByKey.get(b.key);
+        const fromISO = effectiveFrom
+          ? effectiveFrom.toISOString().slice(0, 10)
+          : b.from.toISOString().slice(0, 10);
         const toISO = b.to.toISOString().slice(0, 10);
         const benchmarkReturns: Record<string, number | null> = {};
         for (const id of benchmarkIds) {
           const closes = closesById.get(id) ?? null;
-          const r = closes ? insights.bucketReturn(closes, fromISO, toISO) : null;
+          const r = closes && effectiveFrom ? insights.bucketReturn(closes, fromISO, toISO) : null;
           benchmarkReturns[id] = r ? r.times(100).toNumber() : null;
         }
         return {

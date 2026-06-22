@@ -117,6 +117,7 @@ export default function AddTransactionScreen() {
   const [pricePerShare, setPricePerShare] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
   const [fee, setFee] = useState("0");
+  const [account, setAccount] = useState("");
   const [tradeDate, setTradeDate] = useState(todayIsoDate);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
@@ -233,6 +234,7 @@ export default function AddTransactionScreen() {
         fee: feeD.toString(),
         tradeDate: new Date(`${tradeDate}T12:00:00.000Z`).toISOString(),
         notes: notes.trim() || undefined,
+        account: account.trim() || undefined,
         assetMeta,
       });
       setSubmitSuccess(true);
@@ -403,6 +405,15 @@ export default function AddTransactionScreen() {
                 />
                 <Description>{t("transaction.dateHint")}</Description>
                 {errors.tradeDate && <FieldError>{errors.tradeDate}</FieldError>}
+              </TextField>
+              <TextField>
+                <Label>{t("transaction.account")}</Label>
+                <Input
+                  value={account}
+                  onChangeText={setAccount}
+                  placeholder={t("transaction.accountPlaceholder")}
+                  editable={!isSubmitting}
+                />
               </TextField>
               <TextField>
                 <Label>{t("transaction.notes")}</Label>
