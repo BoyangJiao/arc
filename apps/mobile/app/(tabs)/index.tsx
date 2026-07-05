@@ -318,6 +318,8 @@ export default function PortfolioTab() {
   const pricedCount = valuation?.perAsset.length ?? 0;
   const hasPartialQuotes =
     holdingsCount > 0 && pricedCount > 0 && pricedCount < holdingsCount && !valuationFetching;
+  // 铁律 4：缺 FX 的持仓被排除在总值外，必须显式提示（绝不静默 1:1）
+  const missingFxCount = valuation?.missingFxAssetIds.length ?? 0;
 
   const handleAvatarPress = () => {
     router.push("/me" as Href);
@@ -418,6 +420,11 @@ export default function PortfolioTab() {
             <Text className={typographyClass("caption", "-mt-2")}>
               {t("portfolio.partialQuotes", { loaded: pricedCount, total: holdingsCount })}{" "}
               {t("portfolio.partialQuotesMissing", { missing: holdingsCount - pricedCount })}
+            </Text>
+          )}
+          {missingFxCount > 0 && (
+            <Text className={typographyClass("caption", "-mt-2")}>
+              {t("portfolio.missingFxRates", { missing: missingFxCount })}
             </Text>
           )}
           {valuationError && (

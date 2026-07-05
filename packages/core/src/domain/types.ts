@@ -255,6 +255,13 @@ export interface PortfolioValuation {
   /** 总未实现盈亏百分比 */
   readonly totalUnrealizedPnLPercent: Decimal;
   readonly perAsset: ReadonlyArray<MarketValuation>;
+  /** 有持仓但缺报价、被估值跳过的资产（UI 必须提示「部分资产未计入」） */
+  readonly missingQuoteAssetIds: ReadonlyArray<string>;
+  /**
+   * 跨币种但缺 FX 汇率、被估值跳过的资产。
+   * 铁律 4：绝不静默按 1:1 换算 — 缺汇率就跳过并在此暴露。
+   */
+  readonly missingFxAssetIds: ReadonlyArray<string>;
   readonly computedAt: string;
 }
 

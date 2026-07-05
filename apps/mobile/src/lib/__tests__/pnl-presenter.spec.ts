@@ -53,6 +53,8 @@ describe("buildCumulativePnlSummary", () => {
       totalUnrealizedPnL: dec("56748.18"),
       totalUnrealizedPnLPercent: dec(0),
       perAsset: [mkMarketValuation({ assetId: "FUND:506002", fxRateUsed: dec(1) })],
+      missingQuoteAssetIds: [],
+      missingFxAssetIds: [],
       computedAt: "2026-05-01T00:00:00.000Z",
     };
     const holdings = [mkHolding({ assetId: "FUND:506002", totalDividends: dec("45125") })];
@@ -76,6 +78,8 @@ describe("buildCumulativePnlSummary", () => {
       perAsset: [
         mkMarketValuation({ assetId: "US:UBER", nativeCurrency: "USD", fxRateUsed: dec(7) }),
       ],
+      missingQuoteAssetIds: [],
+      missingFxAssetIds: [],
       computedAt: "2026-05-01T00:00:00.000Z",
     };
     // 10 USD dividends × 7 = 70 CNY
@@ -95,6 +99,8 @@ describe("buildCumulativePnlSummary", () => {
       totalUnrealizedPnL: dec(0),
       totalUnrealizedPnLPercent: dec(0),
       perAsset: [],
+      missingQuoteAssetIds: [],
+      missingFxAssetIds: [],
       computedAt: "2026-05-01T00:00:00.000Z",
     };
     const summary = buildCumulativePnlSummary(valuation, []);
