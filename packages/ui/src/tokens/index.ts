@@ -48,6 +48,9 @@ export {
   type BusinessTokensProviderProps,
 } from "./business-context";
 
+// Categorical chart palette (SVG stroke/fill — single source, ADR 006 charts/)
+export { CHART_CATEGORICAL_PALETTE, chartCategoricalColor } from "./chart-palette";
+
 // Navigation color values (for React Navigation style APIs that don't support className)
 export {
   NAVIGATION_COLORS,

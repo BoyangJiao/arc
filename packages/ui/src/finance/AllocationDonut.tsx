@@ -9,6 +9,7 @@ import Decimal from "decimal.js";
 import Svg, { G, Path } from "react-native-svg";
 
 import { Text } from "../primitives/Text";
+import { CHART_CATEGORICAL_PALETTE } from "../tokens/chart-palette";
 import { TYPO_CAPTION, TYPO_CAPTION_FOREGROUND } from "../tokens/typography";
 
 export interface AllocationDonutSlice {
@@ -27,20 +28,12 @@ export interface AllocationDonutProps {
 }
 
 /**
- * Shared allocation/exposure donut palette (Delta-ordered: purple → pink →
- * yellow → blue → green → gray, so the largest slice reads purple).
+ * Shared allocation/exposure donut palette — re-export of the canonical
+ * categorical palette in tokens/chart-palette.ts（单一来源；DeviationDonut +
+ * TargetAllocationForm 同源，保证再平衡流程同一资产颜色一致）.
  * Exported so custom legends (exposure detail) can color-match by index.
  */
-/* eslint-disable no-restricted-syntax -- SVG stroke/fill palette */
-export const ALLOCATION_PALETTE = [
-  "#7828c8",
-  "#f31260",
-  "#f5a524",
-  "#006fee",
-  "#17c964",
-  "#71717a",
-] as const;
-/* eslint-enable no-restricted-syntax */
+export const ALLOCATION_PALETTE = CHART_CATEGORICAL_PALETTE;
 const SLICE_COLORS = ALLOCATION_PALETTE;
 
 const polar = (cx: number, cy: number, r: number, angleDeg: number) => {
