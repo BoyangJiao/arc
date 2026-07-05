@@ -31,6 +31,14 @@ interface HoldingAccumulator {
  * - SPLIT: shares 按拆分比例放大或缩小，averageCost 按比例反向调整
  * - ADJUSTMENT: 直接修改 shares / cost basis（用于纠错，留审计痕迹）
  *
+ * 时序：内部按 tradeDate 升序防御性排序 — 平均成本 / 已实现盈亏依赖回放顺序，
+ * 不能依赖调用方（DB 查询 / CSV 导入）保证有序。
+ *
+ * 超卖（SELL > 当前持有）：**容忍，不 throw** — 与 period-pnl 的回放语义一致。
+ * CSV 导入 / 回溯录入随时可能出现临时超卖状态，一条坏数据不应让整个持仓
+ * 视图崩溃。持有份额允许变负并保留在输出中（UI 可见即信号）；
+ * 用 `validateTransactions` 获取结构化错误列表供 UI 提示修复。
+ *
  * 输出 holdings 已按 assetId 聚合，shares=0 的资产从结果中剔除。
  */
 export const computeHoldings = (
@@ -40,9 +48,13 @@ export const computeHoldings = (
     return [];
   }
 
+  const sorted = [...transactions].sort(
+    (a, b) => new Date(a.tradeDate).getTime() - new Date(b.tradeDate).getTime()
+  );
+
   const accumulators = new Map<string, HoldingAccumulator>();
 
-  for (const tx of transactions) {
+  for (const tx of sorted) {
     let acc = accumulators.get(tx.assetId);
     if (!acc) {
       acc = {
@@ -77,11 +89,7 @@ export const computeHoldings = (
       }
 
       case "SELL": {
-        if (tx.shares.greaterThan(acc.shares)) {
-          throw new Error(
-            `SELL quantity (${tx.shares.toString()}) exceeds current holding (${acc.shares.toString()}) for asset ${tx.assetId}`
-          );
-        }
+        // 超卖不 throw（见函数 docstring）— 语义与 period-pnl applyToAccumulator 一致
         // 已实现盈亏 = quantity × (sellPrice - averageCost)
         acc.realizedPnL = acc.realizedPnL.plus(
           tx.shares.times(tx.pricePerShare.minus(acc.averageCost))

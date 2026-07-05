@@ -9,8 +9,11 @@
  * where d_i is the day offset of CF_i from the reference date (the first
  * cash flow). Newton-Raphson:
  *     r_{n+1} = r_n - NPV(r_n) / NPV'(r_n)
- * stops when |NPV(r_n)| < tolerance, or throws ConvergenceError on iteration
- * cap, derivative collapse, or pathological input.
+ * stops when |NPV(r_n)| < tolerance × max(1, Σ|CF_i|) — the tolerance is
+ * scaled by total flow magnitude so convergence is scale-invariant (a
+ * ¥10,000,000 portfolio converges as readily as a ¥100 one) — or throws
+ * ConvergenceError on iteration cap, derivative collapse, or pathological
+ * input.
  *
  * Pure: zero I/O. decimal.js handles fractional exponents via `.pow()`.
  */
@@ -102,10 +105,18 @@ export const computeMwr = (
   // r = -0.45 from initialGuess 0.1 had its first NR step land at r = -1.0
   // exactly, falsely triggering "derivative collapsed".
   const DAMP_FLOOR = new Decimal("-0.999");
+
+  // Scale-invariant convergence threshold: tolerance × max(1, Σ|CF|).
+  // An absolute 1e-9 on NPV is scale-dependent — needlessly strict for large
+  // portfolios (can exhaust iterations on precision noise) and meaninglessly
+  // loose for tiny ones.
+  const flowMagnitude = flows.reduce((acc, f) => acc.plus(f.amount.abs()), new Decimal(0));
+  const threshold = tolerance.times(Decimal.max(1, flowMagnitude));
+
   let r = initialGuess;
   for (let i = 0; i < maxIterations; i++) {
     const { npv, dnpv } = npvAndDerivative(flows, r);
-    if (npv.abs().lt(tolerance)) {
+    if (npv.abs().lt(threshold)) {
       return { value: r, iterations: i, converged: true };
     }
     if (dnpv.isZero()) {

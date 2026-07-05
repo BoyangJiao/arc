@@ -17,6 +17,7 @@ import { AssetAvatar } from "./AssetAvatar";
 import { Label, Slider, Text } from "../primitives";
 import { NumberField } from "../primitives-pro";
 import { useBusinessClasses } from "../tokens/business-context";
+import { CHART_CATEGORICAL_PALETTE } from "../tokens/chart-palette";
 import { TYPO_BODY_MEDIUM, TYPO_CAPTION, TYPO_LABEL, typographyClass } from "../tokens/typography";
 import type { RebalanceMarket } from "./rebalance-types";
 
@@ -54,8 +55,10 @@ const parsePercentInput = (raw: string): number => {
   return Number.isFinite(n) ? n : Number.NaN;
 };
 
-/* eslint-disable no-restricted-syntax -- SVG ring stroke palette (ADR 006 charts/) */
-const RING_PALETTE = ["#006fee", "#7828c8", "#f5a524", "#f31260", "#71717a", "#17c964"] as const;
+/* Ring colors from the canonical categorical palette (tokens/chart-palette.ts)
+   — same source as AllocationDonut + DeviationDonut. */
+const RING_PALETTE = CHART_CATEGORICAL_PALETTE;
+/* eslint-disable no-restricted-syntax -- neutral ring track, not a data color */
 const TRACK_STROKE = "rgba(127,127,127,0.18)";
 /* eslint-enable no-restricted-syntax */
 

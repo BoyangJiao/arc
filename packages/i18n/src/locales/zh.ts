@@ -1,3 +1,6 @@
+import type { en } from "./en";
+
+/** 编译期保证中英键完全一致 — 漏键会静默 fallback 到英文（双语 Day 1 铁律）。 */
 export const zh = {
   common: {
     appName: "循迹",
@@ -36,6 +39,7 @@ export const zh = {
     noPortfoliosHint: "创建你的第一个组合开始追踪",
     partialQuotes: "行情已加载 {{loaded}}/{{total}} 只",
     partialQuotesMissing: "{{missing}} 只暂无行情，可下拉刷新",
+    missingFxRates: "{{missing}} 只资产暂缺汇率，未计入总值",
     expandHoldings: "展开持仓",
     collapseHoldings: "收起持仓",
     expandableEmptyHoldings: "该组合暂无持仓",
@@ -859,4 +863,4 @@ export const zh = {
     refreshing: "更新中…",
     offline: "无网络连接 — 显示上次缓存数据",
   },
-};
+} satisfies typeof en;

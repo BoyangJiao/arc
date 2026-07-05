@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 import json
+import traceback
 
 from lib.akshare_client import _require_token, fetch_quote
 
@@ -30,15 +31,17 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
             self.wfile.write(json.dumps({"message": str(e)}).encode())
-        except (ConnectionError, TimeoutError, OSError) as e:
+        except (ConnectionError, TimeoutError, OSError):
             # Transient upstream network failure (Block A P1-2 split): signal retry.
             # requests.exceptions.{ConnectionError,Timeout,HTTPError,RequestException} all extend OSError.
+            traceback.print_exc()  # server-side log only
             self.send_response(503)
             self.send_header("Retry-After", "60")
             self.end_headers()
-            self.wfile.write(json.dumps({"message": str(e)}).encode())
-        except Exception as e:
+            self.wfile.write(json.dumps({"message": "upstream unavailable, retry later"}).encode())
+        except Exception:
             # Bug / data shape change / unknown — do NOT signal retry; client → NetworkError → bubble (Sentry-ready).
+            traceback.print_exc()  # server-side log only (Vercel function logs)
             self.send_response(500)
             self.end_headers()
-            self.wfile.write(json.dumps({"message": str(e)}).encode())
+            self.wfile.write(json.dumps({"message": "internal error"}).encode())

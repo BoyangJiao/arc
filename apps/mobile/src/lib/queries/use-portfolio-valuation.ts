@@ -273,6 +273,30 @@ export type PortfolioValuationQuery = UseQueryResult<PortfolioValuation | null, 
   refreshFromLive: () => Promise<void>;
 };
 
+/**
+ * Collision-resistant fingerprint over ALL transaction ids + trade dates
+ * (FNV-1a). The previous `length:lastId` scheme collided on delete+add of the
+ * same count — the valuation query key would not change and a stale cached
+ * valuation could be served for the full staleTime window.
+ */
+const fingerprintTransactions = (
+  transactions: ReadonlyArray<{ id: string; tradeDate: string }>
+): string => {
+  let hash = 0x811c9dc5; // FNV offset basis (32-bit)
+  const mix = (s: string): void => {
+    for (let i = 0; i < s.length; i++) {
+      hash ^= s.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193); // FNV prime
+    }
+  };
+  for (const tx of transactions) {
+    mix(tx.id);
+    mix(tx.tradeDate);
+    mix("|");
+  }
+  return `${transactions.length}:${(hash >>> 0).toString(36)}`;
+};
+
 export const usePortfolioValuation = (
   portfolioId: string | undefined,
   reportingCurrency: Currency
@@ -282,7 +306,7 @@ export const usePortfolioValuation = (
   const queryStaleTime = valuationQueryStaleTimeMs();
 
   const txFingerprint = useMemo(
-    () => (transactions ? `${transactions.length}:${transactions.at(-1)?.id ?? ""}` : "0"),
+    () => (transactions ? fingerprintTransactions(transactions) : "0"),
     [transactions]
   );
 

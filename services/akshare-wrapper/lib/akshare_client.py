@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import os
 import time
 from datetime import datetime, timezone
@@ -23,8 +24,9 @@ def _require_token(headers: dict[str, str]) -> None:
     expected = os.environ.get("AKSHARE_WRAPPER_TOKEN", "")
     if not expected:
         raise PermissionError("AKSHARE_WRAPPER_TOKEN must be configured")
-    token = headers.get("x-arc-token") or headers.get("X-Arc-Token")
-    if token != expected:
+    token = headers.get("x-arc-token") or headers.get("X-Arc-Token") or ""
+    # Constant-time comparison — a plain != leaks match length via timing.
+    if not hmac.compare_digest(token.encode(), expected.encode()):
         raise PermissionError("unauthorized")
 
 

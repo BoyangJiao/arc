@@ -36,6 +36,7 @@ export const en = {
     noPortfoliosHint: "Create your first portfolio to start tracking",
     partialQuotes: "Quotes loaded for {{loaded}}/{{total}} holdings",
     partialQuotesMissing: "{{missing}} without a quote — pull to refresh",
+    missingFxRates: "{{missing}} missing an FX rate — excluded from totals",
     expandHoldings: "Show holdings",
     collapseHoldings: "Hide holdings",
     expandableEmptyHoldings: "No holdings in this portfolio yet",

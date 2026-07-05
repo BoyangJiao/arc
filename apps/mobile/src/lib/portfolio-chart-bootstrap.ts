@@ -164,6 +164,8 @@ const valuationOnDay = (input: {
       totalUnrealizedPnL: new Decimal(0),
       totalUnrealizedPnLPercent: new Decimal(0),
       perAsset: [],
+      missingQuoteAssetIds: [],
+      missingFxAssetIds: [],
       computedAt: `${input.dayKey}T23:00:00.000Z`,
     };
   }
