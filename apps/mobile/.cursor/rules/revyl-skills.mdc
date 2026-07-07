@@ -1,0 +1,20 @@
+---
+description: Use Revyl CLI agent skills for mobile dev loops, test authoring, failure analysis, and auth bypass.
+globs:
+alwaysApply: false
+---
+
+# Revyl Agent Skills
+
+Use this rule when the user asks Cursor to work with Revyl, mobile cloud devices, revyl dev, Revyl test creation, Revyl run analysis, or test-only auth bypass.
+
+Load the matching installed skill from .cursor/skills:
+
+- revyl-cli-dev-loop for starting or attaching to a Revyl dev loop, interacting with the cloud device, and verifying app behavior.
+- revyl-cli-create for authoring or refining stable Revyl YAML tests from app source, reports, or successful exploratory sessions.
+- revyl-cli-auth-bypass for setting up test-only authenticated app state across mobile stacks.
+- revyl-cli-analyze for failed run, workflow, or device-session triage when installed by name.
+
+Ask at most 1-3 concise clarification questions only when the repo and Revyl CLI cannot identify the target app, platform, session, URL, or sensitive action. Prefer revyl init --detect, revyl dev list, revyl app list, screenshots, and reports before asking.
+
+When Revyl prints a viewer, editor, report, or local app URL, open it with Cursor MCP/browser tools when Cursor exposes them. If no browser tool is available, report the URL and verify through revyl device screenshot or revyl device report instead of claiming browser access.
