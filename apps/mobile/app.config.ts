@@ -12,6 +12,7 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...(config as ExpoConfig),
+  plugins: [...(config.plugins ?? []), "./plugins/with-mmkv-ios"],
   extra: {
     ...config.extra,
     // Real / Clean DEV env emails (DEV only — not used in production builds).

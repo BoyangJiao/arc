@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
-    "mobile": "pnpm --filter @arc/mobile start",
+    "mobile": "pnpm --filter @arc/mobile start:dev",
     "mobile:ios": "pnpm --filter @arc/mobile ios",
     "mobile:web": "pnpm --filter @arc/mobile web",
     "build": "turbo run build",
@@ -53,7 +53,8 @@
     "functions:deploy:daily-snapshot": "node_modules/supabase/bin/supabase functions deploy daily-snapshot",
     "functions:secrets:dev-tools": "node_modules/supabase/bin/supabase secrets set DEV_TOOLS_ENABLED=true",
     "test:functions": "cd supabase/functions && deno test --allow-env --no-check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "eas-build-post-install": "node apps/mobile/scripts/eas-post-install.mjs"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.105.2",
@@ -80,6 +81,7 @@
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@shopify/react-native-skia",
       "heroui-pro",
       "heroui-native-pro"
     ],
