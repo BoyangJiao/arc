@@ -14,7 +14,7 @@
  *   - SELECT / INSERT / DELETE：user_id = auth.uid()
  *   - UPDATE：禁止（无可编辑字段；想"改"就 DELETE + INSERT）
  *
- * 见 .specify/feature-specs/watchlist-stage-2.md
+ * 见 .specify/feature-specs/stage-2/watchlist-stage-2.md
  */
 
 import { sql } from "drizzle-orm";

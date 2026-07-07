@@ -3,6 +3,12 @@ node_modules/
 .pnp
 .pnp.js
 
+# python — local venvs (e.g. services/akshare-wrapper); recreate via requirements.txt
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
 # testing
 coverage/
 
@@ -42,8 +48,21 @@ pnpm-debug.log*
 # cursor (skills mirrored from .claude/skills via tools/sync-skills.sh)
 .cursor/skills/
 
+# agents skill mirror (SkillsMP / other tools — regenerated, not canonical)
+.agents/
+
+# codex (local config — contains API keys / MCP tokens, never commit)
+.codex/
+
 # planning scratchpad (Delta screenshots, IA reference, designer drafts — local only)
 .tempref/
+
+# Repomix context bundles (local LLM snapshots — never commit)
+.specify/codectx/
+repomix-output.xml
+repomix-output.md
+repomix-output.json
+repomix-output.txt
 
 
 

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": ".specify/codectx/drawdown.xml",
+    "style": "xml",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "showLineNumbers": true,
+    "headerText": "Arc Block D — drawdown context bundle. Local only; do not commit."
+  },
+  "include": [
+    ".specify/feature-specs/stage-3/drawdown-stage-3.md",
+    ".specify/feature-specs/stage-3/twr-stage-3.md",
+    ".specify/data-model-invariants.md",
+    "docs/adr/009-daily-snapshot-timing.md",
+    "packages/core/src/returns/**",
+    "packages/ui/src/finance/**",
+    "packages/ui/src/charts/**",
+    "apps/mobile/app/(tabs)/index.tsx",
+    "apps/mobile/src/lib/queries/use-portfolio-value-snapshots.ts",
+    "packages/db/src/schema/portfolio-value-snapshots.ts"
+  ],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true
+  },
+  "security": {
+    "enableSecurityCheck": true
+  }
+}

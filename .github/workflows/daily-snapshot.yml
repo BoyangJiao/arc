@@ -1,6 +1,6 @@
 name: Daily Snapshot
 
-# Per ADR 008 §决策五 + .specify/feature-specs/daily-snapshot-stage-2.md
+# Per ADR 008 §决策五 + .specify/feature-specs/stage-2/daily-snapshot-stage-2.md
 # §"Snapshot timing": runs at 23:00 UTC daily (= 07:00 北京次日, US market
 # closed, CN market not yet open). Calls the Supabase Edge Function
 # `daily-snapshot` which writes one row per portfolio to

@@ -1,6 +1,6 @@
 # Edge Function: `daily-snapshot`
 
-Per Stage 2 J7 feature spec ([.specify/feature-specs/daily-snapshot-stage-2.md](../../../.specify/feature-specs/daily-snapshot-stage-2.md)).
+Per Stage 2 J7 feature spec ([.specify/feature-specs/stage-2/daily-snapshot-stage-2.md](../../../.specify/feature-specs/stage-2/daily-snapshot-stage-2.md)).
 
 Reads cached `price_snapshots` + `fx_rates`, computes each portfolio's current valuation, upserts one row per portfolio into `portfolio_value_snapshots` with `as_of` = today 23:00:00Z.
 
@@ -76,5 +76,5 @@ curl -X POST -H "Authorization: Bearer test-secret" \
 ## Notes for reviewers / future-self
 
 - **Why no `@arc/core` import**: Deno bundles each Edge Function in isolation at deploy time. The `computeHoldings` + `computeSnapshot` logic is duplicated here from the @arc/core spirit. If divergence becomes a real risk (Stage 3+), we can publish `@arc/core` as a separate package and `import` from JSR. For Stage 2 the duplication is tiny + audited via spec.
-- **Stage 2 supports BUY only** (mirrors mobile `validate-us-symbol` constraint). Stage 3 will add SELL / DIVIDEND / SPLIT.
+- **`computeHoldings` parity**: must stay aligned with `@arc/core` (`packages/core/src/domain/holdings.ts`). SELL over-hold logs a warning and skips the tx instead of aborting the whole cron run.
 - **Skip semantics**: portfolios with no priceable holdings (cache empty) produce `status: "skipped-empty"` instead of an empty row. Keeps the table tidy.

@@ -36,7 +36,7 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { prefs, update } = useUserPreferences();
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { colorMode, setColorMode } = useColorMode();
   const { financeColorMode, setFinanceColorMode } = useFinanceColorMode();
   const isDark = colorMode === "dark";
 
@@ -120,7 +120,10 @@ export default function SettingsScreen() {
               <ListGroup.ItemTitle>{t("settings.darkMode")}</ListGroup.ItemTitle>
             </ListGroup.ItemContent>
             <ListGroup.ItemSuffix>
-              <Switch isSelected={isDark} onSelectedChange={toggleColorMode} />
+              <Switch
+                isSelected={isDark}
+                onSelectedChange={(selected) => setColorMode(selected ? "dark" : "light")}
+              />
             </ListGroup.ItemSuffix>
           </ListGroup.Item>
 

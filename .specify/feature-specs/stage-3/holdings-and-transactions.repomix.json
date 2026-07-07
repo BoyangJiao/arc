@@ -1,0 +1,38 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": ".specify/codectx/holdings-and-transactions.xml",
+    "style": "xml",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "showLineNumbers": true,
+    "headerText": "Arc Block C — holdings & transactions context bundle. Local only; do not commit."
+  },
+  "include": [
+    ".specify/feature-specs/stage-3/holdings-and-transactions-stage-3.md",
+    ".specify/data-model-invariants.md",
+    "packages/ui/src/charts/**",
+    "packages/ui/src/finance/**",
+    "packages/ui/src/primitives/index.ts",
+    "packages/ui/src/primitives-pro/index.ts",
+    "apps/mobile/app/asset/**",
+    "apps/mobile/app/portfolio/**/transactions/**",
+    "apps/mobile/src/components/SymbolPicker.tsx",
+    "apps/mobile/src/lib/queries/use-symbol-search-cross-market.ts",
+    "apps/mobile/src/lib/queries/use-historical-quotes.ts",
+    "apps/mobile/src/lib/queries/use-portfolio-holdings.ts",
+    "apps/mobile/src/lib/market-data.ts",
+    "packages/data-sources/src/adapters/akshare/**",
+    "services/akshare-wrapper/**",
+    "packages/i18n/src/locales/en.ts",
+    "packages/i18n/src/locales/zh.ts"
+  ],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": ["**/.venv/**", "**/__pycache__/**"]
+  },
+  "security": {
+    "enableSecurityCheck": true
+  }
+}

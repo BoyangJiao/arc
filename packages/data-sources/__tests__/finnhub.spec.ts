@@ -146,6 +146,26 @@ describe("Finnhub adapter", () => {
     expect(await a.searchSymbols!("nope")).toEqual([]);
   });
 
+  test("searchSymbols includes ETP/ETF (e.g. IEF)", async () => {
+    const a = createFinnhubAdapter({
+      apiKey: "key",
+      fetcher: mockFetch({
+        result: [
+          {
+            symbol: "IEF",
+            displaySymbol: "IEF",
+            description: "iShares 7-10 Year Treasury Bond ETF",
+            type: "ETP",
+          },
+        ],
+      }),
+    });
+    const results = await a.searchSymbols!("ief");
+    expect(results).toHaveLength(1);
+    expect(results[0]?.assetId).toBe("US:IEF");
+    expect(results[0]?.currency).toBe("USD");
+  });
+
   test("searchSymbols filters displaySymbol with dot (BRK.A)", async () => {
     const a = createFinnhubAdapter({
       apiKey: "key",

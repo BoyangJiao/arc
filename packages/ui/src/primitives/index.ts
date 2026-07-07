@@ -9,10 +9,11 @@
 
 // ── HeroUI Native (OSS) re-exports ──────────────────────────────────────────
 // Phase 2 batch 1（2026-05-19, audit 后扩展）：
-//   按 .specify/feature-specs/component-audit.md §1.1 P0 列表开放。
+//   按 .specify/feature-specs/cross-stage/component-audit.md §1.1 P0 列表开放。
 //   未启用项（accordion / alert / checkbox / control-field / input-group /
-//   input-otp / menu / popover / radio-group / select / slider /
+//   input-otp / menu / popover / radio-group / slider /
 //   spinner / tag-group / text-area）推迟到实际场景出现再加。
+//   已启用额外项：select（HoldingsSortControl）。
 export {
   // Foundation
   HeroUINativeProvider,
@@ -44,10 +45,15 @@ export {
   SkeletonGroup,
   // Feedback
   Toast,
+  useToast,
   // Navigation
   Tabs,
+  // Slider — target-allocation editor (rebalance setup, first real-use unlock)
+  Slider,
   // Scroll utilities (crypto-wallet home pattern — ScrollShadow + LinearGradient)
   ScrollShadow,
+  // Select — compact sort/filter picker (first real-use unlock, HoldingsSortControl)
+  Select,
 } from "heroui-native";
 
 // HeroUI Pro re-exports live in primitives-pro/ (subpath import 强制纪律).

@@ -11,7 +11,7 @@ import { useThemeColor } from "heroui-native";
 
 import type { PhosphorIcon } from "./icons";
 
-type ThemeColorToken = "foreground" | "muted" | "accent" | "accent-foreground";
+type ThemeColorToken = "foreground" | "muted" | "accent" | "accent-foreground" | "warning";
 
 export interface ThemedIconProps {
   icon: PhosphorIcon;

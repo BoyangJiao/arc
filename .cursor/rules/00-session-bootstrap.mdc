@@ -5,8 +5,8 @@ alwaysApply: true
 
 # Session bootstrap
 
-**Read order:** see `AGENTS.md` (session-state → CLAUDE.md → constitution).
+**Read order:** see `AGENTS.md` (session-state → CLAUDE.md → constitution). If session-state lists **Context bundle**, Read that file after spec (via `pnpm ctx:auto --ensure` or session-start hook — no user command).
 
-**Before ending work:** update `.specify/session-state.md` (`/checkpoint` in Cursor or Claude Code).
+**Before ending work:** update `.specify/session-state.md` (`/checkpoint` in Cursor or Claude Code) — checkpoint auto-runs Repomix and writes Context slug/bundle rows.
 
 **Cross-IDE:** `session-state.md` is the only handoff artifact — do not rely on chat history when switching tools.

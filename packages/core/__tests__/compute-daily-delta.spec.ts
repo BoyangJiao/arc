@@ -34,6 +34,7 @@ const mkAssetVal = (
     costBasisReporting: dec(valueReporting),
     unrealizedPnL: dec(0),
     unrealizedPnLPercent: dec(0),
+    dailyChangePercent: null,
     reportingCurrency: "CNY",
     fxRateUsed: dec(1),
     priceAsOf: "2026-05-17T00:00:00.000Z",
@@ -115,7 +116,7 @@ describe("computeDailyDelta — status branches", () => {
 // Totals math (S2-AC-1.1)
 
 describe("computeDailyDelta — totals", () => {
-  it("totalDeltaReporting = current.totalValue - baseline.totalValue (Decimal)", () => {
+  it("totalDeltaReporting = sum of per-asset deltas for overnight-held assets", () => {
     const current = mkCurrent([mkAssetVal("US:AAPL", 10500)], 10500);
     const baseline = mkBaseline([mkSnapshotAsset("US:AAPL", 10000)], 10000);
     const result = computeDailyDelta(current, baseline);
@@ -131,12 +132,12 @@ describe("computeDailyDelta — totals", () => {
     expect(result.totalDeltaReporting.toString()).toBe("10.1");
   });
 
-  it("totalDeltaPercent = 0 when baseline total is 0 (no Infinity / NaN)", () => {
+  it("totalDeltaReporting = 0 when no current asset had a baseline row (empty per_asset)", () => {
     const current = mkCurrent([mkAssetVal("US:AAPL", 1000)], 1000);
     const baseline = mkBaseline([], 0);
     const result = computeDailyDelta(current, baseline);
     expect(result.totalDeltaPercent.toString()).toBe("0");
-    expect(result.totalDeltaReporting.toString()).toBe("1000");
+    expect(result.totalDeltaReporting.toString()).toBe("0");
   });
 
   it("negative deltas pass through with sign preserved", () => {
@@ -193,17 +194,29 @@ describe("computeDailyDelta — mover sort", () => {
     expect(order).toEqual(["US:AAPL", "US:MSFT"]);
   });
 
-  it("includes assets currently held even if not in baseline (new buy, deltaPercent = 0)", () => {
+  it("new position absent from baseline → deltaReporting and deltaPercent are 0", () => {
+    const current = mkCurrent([mkAssetVal("US:NVDA", 32034.4)], 32034.4);
+    const baseline = mkBaseline([mkSnapshotAsset("US:AAPL", 1000)], 1000);
+    const result = computeDailyDelta(current, baseline);
+    const nvda = result.movers.find((m: AssetDelta) => m.assetId === "US:NVDA")!;
+    expect(nvda.deltaReporting.toString()).toBe("0");
+    expect(nvda.deltaPercent.toString()).toBe("0");
+    expect(nvda.currentValueReporting.toString()).toBe("32034.4");
+  });
+
+  it("includes new buys in movers but excludes them from headline total", () => {
     const current = mkCurrent([mkAssetVal("US:AAPL", 1100), mkAssetVal("US:HOOD", 500)], 1600);
     const baseline = mkBaseline([mkSnapshotAsset("US:AAPL", 1000)], 1000);
     const result = computeDailyDelta(current, baseline);
     const hood = result.movers.find((m: AssetDelta) => m.assetId === "US:HOOD")!;
     expect(hood).toBeDefined();
-    expect(hood.deltaReporting.toString()).toBe("500");
-    expect(hood.deltaPercent.toString()).toBe("0"); // baseline 0 → percent 0 not Inf
+    expect(hood.deltaReporting.toString()).toBe("0");
+    expect(hood.deltaPercent.toString()).toBe("0");
+    expect(result.totalDeltaReporting.toString()).toBe("100"); // AAPL only
+    expect(result.totalDeltaPercent.toString()).toBe("10");
   });
 
-  it("excludes assets sold off (in baseline but not current)", () => {
+  it("excludes sold/deleted assets from headline total (not portfolio value delta)", () => {
     const current = mkCurrent([mkAssetVal("US:AAPL", 1000)], 1000);
     const baseline = mkBaseline(
       [mkSnapshotAsset("US:AAPL", 1000), mkSnapshotAsset("US:MSFT", 500)],
@@ -212,7 +225,115 @@ describe("computeDailyDelta — mover sort", () => {
     const result = computeDailyDelta(current, baseline);
     const msft = result.movers.find((m: AssetDelta) => m.assetId === "US:MSFT");
     expect(msft).toBeUndefined();
-    // (realized P&L from the sale is a separate concept — feature spec §Out of scope)
+    expect(result.totalDeltaReporting.toString()).toBe("0");
+    expect(result.totalDeltaPercent.toString()).toBe("0");
+  });
+
+  it("headline total matches sum of mover deltas when holdings were deleted overnight", () => {
+    // Repro: user deleted ~¥187k of assets; movers ≈ -¥919, old total showed -¥187k.
+    const current = mkCurrent(
+      [
+        mkAssetVal("US:UBER", 4771.21 - 109.18),
+        mkAssetVal("FUND:007346", 23800 - 338.57),
+        mkAssetVal("FUND:000216", 70400 - 678.79),
+        mkAssetVal("US:IEF", 3843 + 157.59),
+        mkAssetVal("FUND:012831", 17900 + 50.13),
+      ],
+      154940.21
+    );
+    const baseline = mkBaseline(
+      [
+        mkSnapshotAsset("US:UBER", 4771.21),
+        mkSnapshotAsset("FUND:007346", 23800),
+        mkSnapshotAsset("FUND:000216", 70400),
+        mkSnapshotAsset("US:IEF", 3843),
+        mkSnapshotAsset("FUND:012831", 17900),
+        mkSnapshotAsset("US:REMOVED", 187000), // deleted — must not hit headline total
+      ],
+      342940.21
+    );
+    const result = computeDailyDelta(current, baseline);
+    const sumMovers = result.movers.reduce((acc, m) => acc.plus(m.deltaReporting), dec(0));
+    expect(sumMovers.toString()).toBe(result.totalDeltaReporting.toString());
+    expect(result.totalDeltaReporting.toFixed(2)).toBe("-918.82");
+    expect(result.totalDeltaReporting.toString()).not.toBe(
+      current.totalValue.minus(baseline.totalValue).toString()
+    );
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// Cross-currency baseline (regression: baseline frozen in CNY, current in USD)
+//
+// Repro: portfolio snapshot written by the Edge Function in the portfolio's
+// reporting currency (CNY), then viewed after the user's *global* reporting
+// currency switched to USD. The old impl subtracted current.valueReporting (USD)
+// from baseline.valueReporting (CNY) → ~-85% on every asset + a garbage headline
+// that scaled with the FX rate. Fix compares in native currency.
+
+describe("computeDailyDelta — cross-currency baseline", () => {
+  // A single US asset held overnight: yesterday 100 shares @ $100 = $10,000 native.
+  // Baseline snapshot was stored with the portfolio in CNY (valueReporting in CNY),
+  // today the user views in USD (fxRateUsed = 1 for a USD asset → USD reporting).
+  const usAssetTodayUsd = (): MarketValuation => ({
+    ...mkAssetVal("US:AAPL", 11000, { shares: 100, priceNative: 110, currency: "USD" }),
+    // 100 sh × $110 = $11,000 native; viewing in USD so fx = 1, reporting = 11000
+    valueReporting: dec(11000),
+    reportingCurrency: "USD",
+    fxRateUsed: dec(1),
+  });
+
+  const usAssetBaselineCny = (): SnapshotAsset => ({
+    assetId: "US:AAPL",
+    shares: dec(100),
+    valueNative: dec(10000), // $10,000 native (currency-stable)
+    currency: "USD",
+    valueReporting: dec(72000), // frozen in CNY @ 7.2 — must be ignored
+  });
+
+  it("uses native delta, not the frozen cross-currency reporting value", () => {
+    const current = mkCurrent([usAssetTodayUsd()], 11000);
+    const baseline = mkBaseline([usAssetBaselineCny()], 72000);
+    const result = computeDailyDelta(current, baseline);
+
+    // Native overnight move: $10,000 → $11,000 = +$1,000 (+10%), NOT -85%.
+    expect(result.movers[0].deltaReporting.toString()).toBe("1000");
+    expect(result.movers[0].deltaPercent.toString()).toBe("10");
+    expect(result.totalDeltaReporting.toString()).toBe("1000");
+    expect(result.totalDeltaPercent.toString()).toBe("10");
+  });
+
+  it("deltaPercent is invariant to the reporting currency the user is viewing", () => {
+    // Same native move, now viewed in CNY (fx 7.2). Percent must match the USD view.
+    const currentCny = mkCurrent(
+      [
+        {
+          ...usAssetTodayUsd(),
+          valueReporting: dec(79200), // $11,000 × 7.2
+          reportingCurrency: "CNY",
+          fxRateUsed: dec("7.2"),
+        },
+      ],
+      79200
+    );
+    const baseline = mkBaseline([usAssetBaselineCny()], 72000);
+    const result = computeDailyDelta(currentCny, baseline);
+
+    expect(result.movers[0].deltaPercent.toString()).toBe("10"); // same % as USD view
+    // Reporting amount scales with FX: $1,000 native × 7.2 = ¥7,200.
+    expect(result.movers[0].deltaReporting.toString()).toBe("7200");
+    expect(result.totalDeltaPercent.toString()).toBe("10");
+  });
+
+  it("currency mismatch on the same assetId is treated as unreconcilable (no overnight delta)", () => {
+    const current = mkCurrent([usAssetTodayUsd()], 11000);
+    // Corrupt/legacy row: assetId matches but currency differs from today's native.
+    const baseline = mkBaseline([{ ...usAssetBaselineCny(), currency: "HKD" as Currency }], 72000);
+    const result = computeDailyDelta(current, baseline);
+
+    expect(result.movers[0].deltaReporting.toString()).toBe("0");
+    expect(result.movers[0].deltaPercent.toString()).toBe("0");
+    expect(result.totalDeltaReporting.toString()).toBe("0");
   });
 });
 
@@ -241,7 +362,7 @@ describe("computeDailyDelta — per-asset deltas", () => {
 // Property-based invariants
 
 describe("computeDailyDelta — property invariants", () => {
-  it("sum of per-asset deltas equals totalDelta when current and baseline cover the same asset set", () => {
+  it("sum of overnight-held mover deltas always equals headline totalDelta", () => {
     fc.assert(
       fc.property(
         fc.array(
@@ -274,7 +395,11 @@ describe("computeDailyDelta — property invariants", () => {
           );
 
           const result = computeDailyDelta(current, baseline);
-          const sumOfMovers = result.movers.reduce((acc, m) => acc.plus(m.deltaReporting), dec(0));
+          const sumOfMovers = result.movers.reduce((acc, m) => {
+            const baselineValue = deduped.find((r) => r.assetId === m.assetId)!.baselineValue;
+            if (baselineValue <= 0) return acc;
+            return acc.plus(m.deltaReporting);
+          }, dec(0));
           expect(sumOfMovers.toString()).toBe(result.totalDeltaReporting.toString());
         }
       )

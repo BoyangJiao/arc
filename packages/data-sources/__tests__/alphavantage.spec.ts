@@ -177,4 +177,51 @@ describe("Alpha Vantage adapter", () => {
     });
     await expect(a.fetchLatest("AAPL")).rejects.toBeInstanceOf(ParseError);
   });
+
+  test("fetchHistorical filters TIME_SERIES_DAILY by window and sorts asc", async () => {
+    const fetcher = mockFetch({
+      "Time Series (Daily)": {
+        "2026-05-20": { "4. close": "182.00" },
+        "2026-05-19": { "4. close": "180.50" },
+        "2026-05-10": { "4. close": "175.00" },
+      },
+    });
+    const a = createAlphaVantageAdapter({
+      apiKey: "key",
+      fetcher,
+    });
+
+    const quotes = await a.fetchHistorical!(
+      "AAPL",
+      new Date("2026-05-18T00:00:00Z"),
+      new Date("2026-05-21T00:00:00Z")
+    );
+
+    expect(quotes).toHaveLength(2);
+    expect(quotes[0]!.asOf).toMatch(/^2026-05-19/);
+    expect(quotes[1]!.asOf).toMatch(/^2026-05-20/);
+    expect(quotes[1]!.price.equals(new Decimal("182.00"))).toBe(true);
+    expect(fetcher.mock.calls[0]![0]).not.toContain("outputsize=full");
+  });
+
+  test("fetchHistorical sets outputsize=full when range exceeds 100 days (ADR 016)", async () => {
+    const fetcher = mockFetch({
+      "Time Series (Daily)": {
+        "2025-01-02": { "4. close": "170.00" },
+        "2026-05-20": { "4. close": "182.00" },
+      },
+    });
+    const a = createAlphaVantageAdapter({
+      apiKey: "key",
+      fetcher,
+    });
+
+    await a.fetchHistorical!(
+      "AAPL",
+      new Date("2025-01-01T00:00:00Z"),
+      new Date("2026-05-21T00:00:00Z")
+    );
+
+    expect(fetcher.mock.calls[0]![0]).toContain("outputsize=full");
+  });
 });

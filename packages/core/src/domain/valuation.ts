@@ -8,6 +8,8 @@
  */
 
 import Decimal from "decimal.js";
+
+import { findRate } from "../fx";
 import type {
   Currency,
   FxRate,
@@ -35,8 +37,8 @@ export const computeMarketValue = (
   const valueNative = holding.shares.times(quote.price);
   // 报告币种市值
   const valueReporting = valueNative.times(fxRate);
-  // 报告币种成本
-  const costBasisReporting = holding.shares.times(holding.averageCost).times(fxRate);
+  // 报告币种成本（含手续费 — 对齐 totalCostBasis / 支付宝「持有成本」）
+  const costBasisReporting = holding.totalCostBasis.times(fxRate);
   // 未实现盈亏
   const unrealizedPnL = valueReporting.minus(costBasisReporting);
   // 未实现盈亏百分比
@@ -54,6 +56,7 @@ export const computeMarketValue = (
     costBasisReporting,
     unrealizedPnL,
     unrealizedPnLPercent,
+    dailyChangePercent: quote.changePercent ?? null,
     reportingCurrency,
     fxRateUsed: fxRate,
     priceAsOf: quote.asOf,
@@ -80,27 +83,29 @@ export const computePortfolioValuation = (
     quoteMap.set(q.assetId, q);
   }
 
-  const fxMap = new Map<string, FxRate>();
-  for (const fx of fxRates) {
-    // key: "from->to"
-    fxMap.set(`${fx.from}->${fx.to}`, fx);
-  }
-
   let totalValue = new Decimal(0);
   let totalCostBasis = new Decimal(0);
   const perAsset: MarketValuation[] = [];
+  const missingQuoteAssetIds: string[] = [];
+  const missingFxAssetIds: string[] = [];
 
   for (const holding of holdings) {
     const quote = quoteMap.get(holding.assetId);
     if (!quote) {
-      // 无报价则跳过（不影响其他持仓的计算）
+      // 无报价则跳过（不影响其他持仓的计算），并记录以便 UI 提示
+      missingQuoteAssetIds.push(holding.assetId);
       continue;
     }
 
-    // 查找汇率：如果持仓币种与报告币种相同则无需换算
+    // 查找汇率（findRate 含同币种恒等 + 反向倒数回退）。
+    // 铁律 4：跨币种但查不到汇率 → 跳过该持仓并记录，绝不静默按 1:1。
     let fx: FxRate | null = null;
     if (holding.currency !== reportingCurrency) {
-      fx = fxMap.get(`${holding.currency}->${reportingCurrency}`) ?? null;
+      fx = findRate(holding.currency, reportingCurrency, fxRates);
+      if (!fx) {
+        missingFxAssetIds.push(holding.assetId);
+        continue;
+      }
     }
 
     const valuation = computeMarketValue(holding, quote, fx, reportingCurrency);
@@ -122,6 +127,8 @@ export const computePortfolioValuation = (
     totalUnrealizedPnL,
     totalUnrealizedPnLPercent,
     perAsset,
+    missingQuoteAssetIds,
+    missingFxAssetIds,
     computedAt: new Date().toISOString(),
   };
 };

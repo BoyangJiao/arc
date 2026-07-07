@@ -10,8 +10,20 @@
 
 import { parseAssetId, type Market } from "@arc/core";
 
+import {
+  createAkshareCnAdapter,
+  createAkshareFundAdapter,
+  createAkshareHkAdapter,
+  createAkshareUsAdapter,
+  createAkshareClient,
+} from "./adapters/akshare";
 import { createCashPriceAdapter } from "./adapters/cash-adapter";
-import { createFinnhubAdapter } from "./adapters/finnhub";
+import { createCoingeckoAdapter } from "./adapters/coingecko";
+import { createUsPriceAdapter } from "./adapters/us-price-adapter";
+import { createTushareClient } from "./adapters/tushare/client";
+import { createTushareCnAdapter } from "./adapters/tushare/cn";
+import { createTushareUsAdapter } from "./adapters/tushare/us";
+import { withFallback } from "./adapters/with-fallback";
 import { NotFoundError } from "./errors";
 import type { FxAdapter, PriceAdapter } from "./interfaces";
 
@@ -29,14 +41,68 @@ export interface RegistryConfig {
 
 export interface DefaultPriceAdaptersConfig {
   finnhubApiKey: string;
+  /** US historical charts — Finnhub free tier has no candle API. */
+  alphaVantageApiKey?: string;
+  tushareToken?: string;
+  akshareWrapperUrl?: string;
+  akshareWrapperToken?: string;
+  /** When true (default), CN uses withFallback(tushare, akshare) when both are configured. */
+  enableAkshareCnFallback?: boolean;
+  /** Optional — Stage 4 evaluate demo API key */
+  coingeckoApiKey?: string;
 }
 
-/** Default live price adapters — US via Finnhub (replaces Alpha Vantage in default registry). */
+/** Default live price adapters — US Finnhub; CN Tushare Phase 1A; HK/FUND AKShare Phase 2. */
 export const createDefaultPriceAdapters = (
   config: DefaultPriceAdaptersConfig
-): Partial<Record<Market, PriceAdapter>> => ({
-  US: createFinnhubAdapter({ apiKey: config.finnhubApiKey }),
-});
+): Partial<Record<Market, PriceAdapter>> => {
+  const tushareClient = config.tushareToken
+    ? createTushareClient({ token: config.tushareToken })
+    : null;
+
+  const akshareClient =
+    config.akshareWrapperUrl && config.akshareWrapperToken
+      ? createAkshareClient({
+          baseUrl: config.akshareWrapperUrl,
+          token: config.akshareWrapperToken,
+        })
+      : null;
+
+  const cnPrimary = tushareClient ? createTushareCnAdapter({ client: tushareClient }) : null;
+  const cnSecondary = akshareClient ? createAkshareCnAdapter({ client: akshareClient }) : null;
+
+  // US history precedence (live quotes always Finnhub):
+  //   akshare (DEV-only fallback, ADR 011 — remove pre-launch)
+  //   → Tushare us_daily (once entitled)
+  //   → Alpha Vantage (free-tier last resort, rate-capped).
+  const tushareUs = tushareClient ? createTushareUsAdapter({ client: tushareClient }) : null;
+  const akshareUs = akshareClient ? createAkshareUsAdapter({ client: akshareClient }) : null;
+  const usHistorical = akshareUs ?? tushareUs;
+
+  const adapters: Partial<Record<Market, PriceAdapter>> = {
+    US: createUsPriceAdapter({
+      finnhubApiKey: config.finnhubApiKey,
+      alphaVantageApiKey: config.alphaVantageApiKey,
+      ...(usHistorical ? { historical: usHistorical } : {}),
+    }),
+    CRYPTO: createCoingeckoAdapter({ apiKey: config.coingeckoApiKey }),
+  };
+
+  if (cnPrimary && cnSecondary && config.enableAkshareCnFallback !== false) {
+    adapters.CN = withFallback(cnPrimary, cnSecondary);
+  } else if (cnPrimary) {
+    adapters.CN = cnPrimary;
+  } else if (cnSecondary) {
+    adapters.CN = cnSecondary;
+  }
+
+  if (akshareClient) {
+    adapters.HK = createAkshareHkAdapter({ client: akshareClient });
+    adapters.FUND = createAkshareFundAdapter({ client: akshareClient });
+  }
+
+  return adapters;
+};
 
 /**
  * Builds a registry with the CASH constant adapter always registered.

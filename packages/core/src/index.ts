@@ -5,4 +5,8 @@ export * from "./domain";
 export * from "./snapshot";
 export * as returns from "./returns";
 export * as rebalance from "./rebalance";
+export * as portfolio from "./portfolio";
+export * from "./portfolio/transfer";
+export * from "./portfolio/resolve-active-portfolio";
 export * as fx from "./fx";
+export * as insights from "./insights";

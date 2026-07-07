@@ -7,13 +7,21 @@
 
 import { queryClient } from "../query-client";
 import { supabase } from "../supabase";
+import { useActivePortfolioStore } from "../store/active-portfolio";
 import {
   goHrefForScenario,
+  isPortfolioScenario,
   isRebalanceScenario,
   isWatchlistScenario,
   isWelcomeScenario,
   type DevSeedScenarioId,
 } from "./scenarios";
+import { runPortfoliosSeedClient, PortfoliosSeedError } from "./run-portfolios-seed-client";
+import {
+  isCrossMarketScenario,
+  runCrossMarketSeedClient,
+  CrossMarketSeedError,
+} from "./run-cross-market-seed-client";
 import { runRebalanceSeedClient, RebalanceSeedError } from "./run-rebalance-seed-client";
 import { runWatchlistSeedClient, WatchlistSeedError } from "./run-watchlist-seed-client";
 import { runWelcomeSeedClient, WelcomeSeedError } from "./run-welcome-seed-client";
@@ -23,7 +31,13 @@ export interface DevSeedInvokeResult {
   scenario: string;
   portfolioId: string;
   expectedUi: string[];
-  via: "client-watchlist" | "client-rebalance" | "client-welcome" | "edge";
+  via:
+    | "client-watchlist"
+    | "client-rebalance"
+    | "client-welcome"
+    | "client-cross-market"
+    | "client-portfolios"
+    | "edge";
 }
 
 interface DevSeedErrorBody {
@@ -39,6 +53,8 @@ export const invalidateDevSeedQueries = async (): Promise<void> => {
     queryClient.invalidateQueries({ queryKey: ["watchlist"] }),
     queryClient.invalidateQueries({ queryKey: ["watchlist-quote"] }),
     queryClient.invalidateQueries({ queryKey: ["symbol-search"] }),
+    queryClient.invalidateQueries({ queryKey: ["historical"] }),
+    queryClient.invalidateQueries({ queryKey: ["portfolio-value-snapshots"] }),
     queryClient.invalidateQueries({ queryKey: ["targetAllocations"] }),
     queryClient.invalidateQueries({ queryKey: ["rebalance"] }),
     queryClient.invalidateQueries({ queryKey: ["userPreferences"] }),
@@ -147,6 +163,61 @@ const invokeWelcomeClient = async (scenario: DevSeedScenarioId): Promise<DevSeed
   };
 };
 
+const invokeCrossMarketClient = async (
+  scenario: DevSeedScenarioId
+): Promise<DevSeedInvokeResult> => {
+  if (!isCrossMarketScenario(scenario)) {
+    throw new CrossMarketSeedError(`Not a cross-market scenario: ${scenario}`);
+  }
+
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    throw new CrossMarketSeedError("未登录 — 请先 OTP 登录");
+  }
+
+  const { portfolioId, expectedUi } = await runCrossMarketSeedClient(scenario, user.id);
+  await invalidateDevSeedQueries();
+
+  return {
+    ok: true,
+    scenario,
+    portfolioId,
+    expectedUi,
+    via: "client-cross-market",
+  };
+};
+
+const invokePortfoliosClient = async (
+  scenario: DevSeedScenarioId
+): Promise<DevSeedInvokeResult> => {
+  if (!isPortfolioScenario(scenario)) {
+    throw new PortfoliosSeedError(`Not a portfolios scenario: ${scenario}`);
+  }
+
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    throw new PortfoliosSeedError("未登录 — 请先 OTP 登录");
+  }
+
+  const { portfolioId, expectedUi } = await runPortfoliosSeedClient(scenario, user.id);
+  useActivePortfolioStore.getState().setActivePortfolioId(portfolioId);
+  await invalidateDevSeedQueries();
+
+  return {
+    ok: true,
+    scenario,
+    portfolioId,
+    expectedUi,
+    via: "client-portfolios",
+  };
+};
+
 const invokeRebalanceClient = async (scenario: DevSeedScenarioId): Promise<DevSeedInvokeResult> => {
   if (!isRebalanceScenario(scenario)) {
     throw new RebalanceSeedError(`Not a rebalance scenario: ${scenario}`);
@@ -183,6 +254,14 @@ export const invokeDevSeed = async (scenario: DevSeedScenarioId): Promise<DevSee
 
   if (isWelcomeScenario(scenario)) {
     return invokeWelcomeClient(scenario);
+  }
+
+  if (isCrossMarketScenario(scenario)) {
+    return invokeCrossMarketClient(scenario);
+  }
+
+  if (isPortfolioScenario(scenario)) {
+    return invokePortfoliosClient(scenario);
   }
 
   const result = await invokeEdgeDevSeed(scenario);

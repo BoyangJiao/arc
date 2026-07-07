@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.arc.portfolio"
+      "bundleIdentifier": "com.arc.portfolio",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.arc.portfolio",
@@ -29,10 +32,17 @@
       "output": "static",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-font"],
+    "plugins": ["expo-router", "expo-font", "expo-sharing", "expo-secure-store", "expo-dev-client"],
     "experiments": {
       "typedRoutes": true,
       "autolinkingModuleResolution": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "83163697-65fa-4f41-ae5e-c31418ec7b76"
+      }
+    },
+    "owner": "boyangjiao"
   }
 }

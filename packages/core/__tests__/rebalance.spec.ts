@@ -1,7 +1,7 @@
 /**
  * Rebalance engine property + example tests (Stage 2 J9).
  *
- * Maps to .specify/feature-specs/rebalance-stage-2.md §S2-AC-3.3, 3.5, 3.8.
+ * Maps to .specify/feature-specs/stage-2/rebalance-stage-2.md §S2-AC-3.3, 3.5, 3.8.
  *
  * Discipline:
  *   - All Decimal — never `number` for money / shares (constitution §3.1)
@@ -53,6 +53,7 @@ const mkVal = (
     costBasisReporting: valueReporting,
     unrealizedPnL: new Decimal(0),
     unrealizedPnLPercent: new Decimal(0),
+    dailyChangePercent: null,
     reportingCurrency: opts.reportingCurrency ?? opts.nativeCurrency,
     fxRateUsed,
     priceAsOf: "2026-05-18T00:00:00Z",

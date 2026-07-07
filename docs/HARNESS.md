@@ -107,15 +107,57 @@ pnpm --filter @arc/core test:watch       # interactive watch mode
 
 Not a runtime mechanism but a **read-time contract** for AI agents and humans. Every Claude session reads `constitution.md` (surfaced via SessionStart hook); every PR honors `data-model-invariants.md`.
 
-| File                           | Read by                                    | Purpose                                                          |
-| :----------------------------- | :----------------------------------------- | :--------------------------------------------------------------- |
-| `README.md`                    | New contributors                           | What is `.specify/`, when to update each file                    |
-| `constitution.md`              | All AI sessions, all PR reviewers          | Project-wide invariants (P0 + P1 constraints, forbidden phrases) |
-| `data-model-invariants.md`     | When changing domain types or computations | The 5 immutability laws (formal version of CLAUDE.md §3.2)       |
-| `stage-acceptance-criteria.md` | At Stage gates / PR review                 | Per-Stage DoD in BDD format, tied to user-journeys.md            |
-| `feature-specs/<name>.md`      | Before implementing a non-trivial feature  | Spec-first development — write the contract before the code      |
+| File                                  | Read by                                    | Purpose                                                                                         |
+| :------------------------------------ | :----------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| `README.md`                           | New contributors                           | What is `.specify/`, when to update each file                                                   |
+| `constitution.md`                     | All AI sessions, all PR reviewers          | Project-wide invariants (P0 + P1 constraints, forbidden phrases)                                |
+| `data-model-invariants.md`            | When changing domain types or computations | The 5 immutability laws (formal version of CLAUDE.md §3.2)                                      |
+| `stage-acceptance-criteria.md`        | At Stage gates / PR review                 | Per-Stage DoD in BDD format, tied to user-journeys.md                                           |
+| `feature-specs/<stage-dir>/<name>.md` | Before implementing a non-trivial feature  | Spec-first development — write the contract before the code（索引见 `feature-specs/README.md`） |
 
 See `.specify/README.md` for full workflow.
+
+---
+
+## Layer 6 — Context packaging (Repomix, agent-automated)
+
+[Repomix](https://github.com/yamadashy/repomix) packs selected source files into one LLM-friendly XML bundle. Arc uses it to **reduce cold-start grep cost** when switching IDE, model, or feature scope. It complements SDD (intent in specs) — it does **not** replace `session-state.md`, ADRs, or feature specs.
+
+**Developer experience: zero manual commands.** Agents and hooks run Repomix; the developer only reads session-state as today.
+
+| Trigger                              | Who runs                           | Command                                                |
+| :----------------------------------- | :--------------------------------- | :----------------------------------------------------- |
+| Session start (Cursor / Claude Code) | `session-start.sh` hook            | `node tools/repomix-auto-context.mjs --ensure --quiet` |
+| New feature implementation session   | Agent (rule `05-repomix-auto.mdc`) | `pnpm ctx:auto --ensure`                               |
+| `/checkpoint`                        | Agent (checkpoint skill Step 3)    | `pnpm ctx:auto --ensure` + optional `--dump`           |
+| Slug inference debug                 | Agent / maintainer                 | `pnpm ctx:infer --json`                                |
+
+**Machine pointers** (gitignored):
+
+- `.specify/codectx/.active.json` — `{ slug, path, generatedAt }` written on every auto run
+- `session-state.md` §You are here — **Context slug** + **Context bundle** rows (checkpoint maintains)
+
+| Command                   | Purpose                                                              |
+| :------------------------ | :------------------------------------------------------------------- |
+| `pnpm ctx:auto`           | **Default** — infer slug from session-state/git, ensure bundle fresh |
+| `pnpm ctx:auto --dump`    | Timestamped snapshot (handoff history)                               |
+| `pnpm ctx:infer`          | Debug slug inference only                                            |
+| `pnpm ctx:feature <slug>` | Manual override (legacy; agents prefer `ctx:auto`)                   |
+| `pnpm ctx`                | Full monorepo snapshot (heavy; rare)                                 |
+
+**Slug inference** (`tools/repomix-infer-slug.mjs` + `tools/repomix-slug-registry.json`): scores session-state, handoffs, and recent git paths against Stage 3 feature slugs. Explicit `**Context slug**` in session-state wins.
+
+**Typical workflow (no user steps)**
+
+1. Agent reads `session-state.md` + feature spec
+2. Hook or agent runs `ctx:auto` → Read `.specify/codectx/twr.xml` (example)
+3. Checkpoint writes slug + path back to session-state for next session
+
+**Rules (do not violate SDD)**
+
+- Output lives in `.specify/codectx/` — **gitignored**, never commit
+- Repomix is **not** a quality gate — do not add to husky or `quality-gate.sh`
+- Generated code context ≠ design rationale — keep ADRs and feature specs as source of truth for _why_
 
 ---
 
@@ -131,6 +173,8 @@ pnpm test                     # all property tests
 pnpm test:watch               # interactive
 pnpm format                   # prettier on full repo (rare; lint-staged handles per-commit)
 pnpm sync:skills              # manual skill sync (post-checkout/merge auto-runs this)
+pnpm ctx:auto                 # agent/hook: infer slug + refresh bundle (developer: no-op)
+pnpm ctx:infer                # debug slug inference
 ```
 
 ### Adding a new test
@@ -163,6 +207,7 @@ git commit -m "test(core): cover X invariant"
 
 - **E2E tests** (Detox/Playwright) — Stage 4 P0
 - **LLM eval harness** (promptfoo / inspect_ai) — Stage 4+ when AI features ship
+- **Persistent code graph DB** (GitNexus / CodeGraph) — Repomix covers Arc's solo cold-start need
 - **Dev container** — solo dev, not needed
 - **Pre-push hook** locally — CI gate is sufficient; husky `pre-push` would slow local workflow
 - **Branch protection rules** on `main` — single contributor, low value vs friction

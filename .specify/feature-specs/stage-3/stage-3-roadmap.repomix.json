@@ -1,0 +1,25 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": ".specify/codectx/stage-3-roadmap.xml",
+    "style": "xml",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "showLineNumbers": true,
+    "headerText": "Arc Stage 3 roadmap + all Block specs overview. Local only; do not commit."
+  },
+  "include": [
+    ".specify/feature-specs/stage-3/stage-3-roadmap.md",
+    ".specify/feature-specs/stage-3/*.md",
+    ".specify/session-state.md",
+    ".specify/polish-backlog.md",
+    "docs/development-plan.md"
+  ],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true
+  },
+  "security": {
+    "enableSecurityCheck": true
+  }
+}

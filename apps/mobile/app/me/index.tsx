@@ -56,6 +56,56 @@ export default function MeScreen() {
 
       <View className="mt-4">
         <ListGroup>
+          <PressableFeedback
+            animation={false}
+            onPress={() => router.push("/me/portfolios" as Href)}
+          >
+            <PressableFeedback.Scale>
+              <ListGroup.Item disabled>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>{t("portfolios.manage")}</ListGroup.ItemTitle>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix />
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+            <PressableFeedback.Ripple />
+          </PressableFeedback>
+          <PressableFeedback animation={false} onPress={() => router.push("/me/inbox" as Href)}>
+            <PressableFeedback.Scale>
+              <ListGroup.Item disabled>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>{t("inbox.entryTitle")}</ListGroup.ItemTitle>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix />
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+            <PressableFeedback.Ripple />
+          </PressableFeedback>
+          <PressableFeedback animation={false} onPress={() => router.push("/me/data" as Href)}>
+            <PressableFeedback.Scale>
+              <ListGroup.Item disabled>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>{t("data.entryTitle")}</ListGroup.ItemTitle>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix />
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+            <PressableFeedback.Ripple />
+          </PressableFeedback>
+          <PressableFeedback
+            animation={false}
+            onPress={() => router.push("/me/subscription" as Href)}
+          >
+            <PressableFeedback.Scale>
+              <ListGroup.Item disabled>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>{t("subscription.title")}</ListGroup.ItemTitle>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix />
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+            <PressableFeedback.Ripple />
+          </PressableFeedback>
           <PressableFeedback animation={false} onPress={() => router.push("/me/settings" as Href)}>
             <PressableFeedback.Scale>
               <ListGroup.Item disabled>
@@ -75,6 +125,11 @@ export default function MeScreen() {
           </Button>
         </View>
       </View>
+
+      {/* Global disclaimer — single canonical placement (app-wide consolidation) */}
+      <Text className="text-muted text-xs text-center mt-10 mb-2">
+        {t("common.notInvestmentAdvice")}
+      </Text>
     </Screen>
   );
 }

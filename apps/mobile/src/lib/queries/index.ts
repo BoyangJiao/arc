@@ -6,14 +6,32 @@
 
 export { usePrice, type UsePriceOptions } from "./use-price";
 export { useFxRate, type UseFxRateOptions } from "./use-fx-rate";
-export { usePortfolios, usePortfolio, useEnsureDefaultPortfolio } from "./use-portfolios";
+export {
+  usePortfolios,
+  usePortfolio,
+  useEnsureDefaultPortfolio,
+  useCreatePortfolio,
+  useArchivePortfolio,
+  useUnarchivePortfolio,
+  useRenamePortfolio,
+  useHardDeletePortfolio,
+  usePortfolioTransactionCount,
+  type UsePortfoliosOptions,
+} from "./use-portfolios";
+export { useActivePortfolio, type UseActivePortfolioResult } from "./use-active-portfolio";
+export { useTransferBetweenPortfolios, TransferValidationError } from "./use-transfer";
 export {
   useTransactions,
+  useAllTransactions,
   useCreateTransaction,
+  useDeleteTransaction,
   useDeleteAssetTransactions,
+  useAssetTransactions,
   type CreateTransactionInput,
+  type CreateTransactionAssetMeta,
 } from "./use-transactions";
 export { usePortfolioHoldings } from "./use-portfolio-holdings";
+export { useAssetCatalog, type AssetCatalogRow } from "./use-asset-catalog";
 export { usePortfolioValuation } from "./use-portfolio-valuation";
 export { useDailySnapshot } from "./use-daily-snapshot";
 export { useDailyDelta, type DailyDeltaResult } from "./use-daily-delta";
@@ -26,6 +44,36 @@ export {
 } from "./use-watchlist";
 export { useWatchlistQuotes, type UseWatchlistQuotesOptions } from "./use-watchlist-quotes";
 export { useSymbolSearch, type UseSymbolSearchResult } from "./use-symbol-search";
+export { useSymbolSearchCrossMarket } from "./use-symbol-search-cross-market";
+export { useHistoricalQuotes, historicalQuotesToChartPoints } from "./use-historical-quotes";
+export { useAssetDetail, type AssetDetailView } from "./use-asset-detail";
+export {
+  usePortfolioValueSnapshots,
+  snapshotsToChartPoints,
+  snapshotPeakTrough,
+  type PortfolioSnapshotPoint,
+} from "./use-portfolio-value-snapshots";
+export { usePortfolioChartSeries } from "./use-portfolio-chart-series";
+export { useAssetTwr, type UseAssetTwrInput } from "./use-asset-twr";
+export { usePortfolioTwr, type UsePortfolioTwrInput } from "./use-portfolio-twr";
+export { usePnlAnalysis, type UsePnlAnalysisInput, type PnlAnalysisData } from "./use-pnl-analysis";
+export {
+  usePortfolioRiskSeries,
+  useEmptyRiskSeriesView,
+  type UsePortfolioRiskSeriesInput,
+  type PortfolioRiskSeriesView,
+  type AssetRiskCurves,
+} from "./use-portfolio-risk-series";
+export {
+  usePortfolioBeta,
+  type UsePortfolioBetaInput,
+  type PortfolioBetaResult,
+} from "./use-portfolio-beta";
+export {
+  useBenchmarkComparison,
+  type UseBenchmarkComparisonInput,
+  type BenchmarkBucketRow,
+} from "./use-benchmark-comparison";
 export {
   useTargetAllocations,
   useUpsertTargetAllocations,

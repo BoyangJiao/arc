@@ -9,6 +9,8 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import Svg, { G, Path } from "react-native-svg";
 import { Text } from "../primitives/Text";
+import { CHART_CATEGORICAL_PALETTE } from "../tokens/chart-palette";
+import { TYPO_CAPTION, TYPO_CAPTION_FOREGROUND } from "../tokens/typography";
 
 import type { RebalanceDonutSegment } from "./rebalance-types";
 
@@ -18,10 +20,10 @@ export interface DeviationDonutProps {
   readonly size?: number;
 }
 
-/* Chart-only stroke palette — SVG Path does not accept Tailwind className. */
-/* eslint-disable no-restricted-syntax -- rebalance donut ring colors (ADR 006 charts/) */
-const RING_STROKE_PALETTE = ["#71717a", "#006fee", "#f5a524", "#f31260", "#7828c8"] as const;
-/* eslint-enable no-restricted-syntax */
+/* Canonical categorical palette (tokens/chart-palette.ts) — same source as
+   AllocationDonut + TargetAllocationForm so a given asset keeps one color
+   across the whole rebalance flow. */
+const RING_STROKE_PALETTE = CHART_CATEGORICAL_PALETTE;
 
 const polar = (cx: number, cy: number, r: number, angleDeg: number) => {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -113,11 +115,11 @@ export function DeviationDonut({
                   backgroundColor: RING_STROKE_PALETTE[index % RING_STROKE_PALETTE.length],
                 }}
               />
-              <Text className="text-foreground text-xs" numberOfLines={1}>
+              <Text className={TYPO_CAPTION_FOREGROUND} numberOfLines={1}>
                 {seg.label}
               </Text>
             </View>
-            <Text className="text-muted text-xs">{seg.percent.toFixed(0)}%</Text>
+            <Text className={`${TYPO_CAPTION} tabular-nums`}>{seg.percent.toFixed(0)}%</Text>
           </View>
         ))}
       </View>

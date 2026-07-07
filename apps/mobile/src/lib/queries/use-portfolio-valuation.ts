@@ -19,7 +19,13 @@ import {
   type PortfolioValuation,
   type PriceQuote,
 } from "@arc/core";
-import { fetchFxWithCache, fetchPriceWithCache, RateLimitError } from "@arc/data-sources";
+import {
+  fetchFxWithCache,
+  fetchPriceWithCache,
+  NetworkError,
+  NotFoundError,
+  RateLimitError,
+} from "@arc/data-sources";
 import type { Holding } from "@arc/core";
 
 import {
@@ -36,10 +42,42 @@ import { usePortfolioHoldings } from "./use-portfolio-holdings";
 /** Finnhub free tier: 60 req/min — wait between retries when throttled. */
 const PRICE_RATE_LIMIT_BACKOFF_MS = 12_500;
 
-/** Small gap between symbols to keep per-minute load smooth on pull-to-refresh. */
+/**
+ * NetworkError backoff for intermittent failures (CN ↔ Finnhub flakiness).
+ * Exponential: 500ms → 1.5s → 4.5s. Total worst-case ~6.5s before fall-through
+ * to stale cache. Targets transient TCP / DNS errors; not RateLimit (handled
+ * above with its own constant).
+ */
+const PRICE_NETWORK_BACKOFF_MS = 500;
+const PRICE_NETWORK_BACKOFF_FACTOR = 3;
+
+/** Parallel live fetches — stay under Finnhub 60/min while avoiding serial 350ms gaps. */
+const PRICE_FETCH_CONCURRENCY = 5;
+
+/** Small gap between symbols when throttling background cache-miss fetches. */
 const PRICE_INTER_SYMBOL_GAP_MS = 350;
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const mapWithConcurrency = async <T, R>(
+  items: readonly T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> => {
+  if (items.length === 0) return [];
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+
+  const worker = async (): Promise<void> => {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      results[index] = await fn(items[index]!, index);
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
+  return results;
+};
 
 const fetchQuoteForHolding = async (
   holding: Holding,
@@ -60,6 +98,23 @@ const fetchQuoteForHolding = async (
     } catch (err) {
       if (err instanceof RateLimitError && attempt < maxAttempts - 1) {
         await sleep(err.retryAfterMs ?? PRICE_RATE_LIMIT_BACKOFF_MS);
+        continue;
+      }
+      // NotFoundError is permanent (404 / invalid symbol) — no retry.
+      if (err instanceof NotFoundError) {
+        console.warn(
+          `[portfolio-valuation] price fetch failed for ${holding.assetId}:`,
+          err instanceof Error ? err.message : err
+        );
+        return null;
+      }
+      // NetworkError = intermittent (CN ↔ Finnhub flakiness). Exponential
+      // backoff per ADR 016 v2 follow-up: 500ms → 1.5s → 4.5s.
+      if (err instanceof NetworkError && attempt < maxAttempts - 1) {
+        await sleep(PRICE_NETWORK_BACKOFF_MS * PRICE_NETWORK_BACKOFF_FACTOR ** attempt);
+        continue;
+      }
+      if (attempt < maxAttempts - 1) {
         continue;
       }
       console.warn(
@@ -107,12 +162,45 @@ const fillStaleQuotes = async (
   return merged;
 };
 
+const fetchQuotesForHoldings = async (
+  holdings: readonly Holding[],
+  freshnessMs: number,
+  options?: { readonly parallel?: boolean }
+): Promise<PriceQuote[]> => {
+  const parallel = options?.parallel ?? freshnessMs === 0;
+
+  if (parallel) {
+    const results = await mapWithConcurrency(holdings, PRICE_FETCH_CONCURRENCY, (holding) =>
+      fetchQuoteForHolding(holding, freshnessMs)
+    );
+    return results.filter((quote): quote is PriceQuote => quote !== null);
+  }
+
+  const quotes: PriceQuote[] = [];
+  for (let i = 0; i < holdings.length; i++) {
+    if (i > 0) {
+      const prevMarket = parseAssetId(holdings[i - 1]!.assetId).market;
+      if (prevMarket !== "CASH") await sleep(PRICE_INTER_SYMBOL_GAP_MS);
+    }
+    const quote = await fetchQuoteForHolding(holdings[i]!, freshnessMs);
+    if (quote) quotes.push(quote);
+  }
+
+  return quotes;
+};
+
 const fetchAllQuotes = async (
   holdings: readonly Holding[],
   forceNetwork: boolean
 ): Promise<PriceQuote[]> => {
   if (!forceNetwork && isCacheFirstMarketData()) {
-    return readCachedQuotesOnly(holdings);
+    const cached = await readCachedQuotesOnly(holdings);
+    const have = new Set(cached.map((q) => q.assetId));
+    const missing = holdings.filter((h) => !have.has(h.assetId));
+    if (missing.length === 0) return cached;
+
+    const fetched = await fetchQuotesForHoldings(missing, 0);
+    return fillStaleQuotes(holdings, [...cached, ...fetched]);
   }
 
   const freshnessMs = readPriceFreshnessMs(forceNetwork);
@@ -130,48 +218,42 @@ const fetchAllQuotes = async (
     needsNetwork.push(holding);
   }
 
-  for (let i = 0; i < needsNetwork.length; i++) {
-    if (i > 0) {
-      const prevMarket = parseAssetId(needsNetwork[i - 1]!.assetId).market;
-      if (prevMarket !== "CASH") await sleep(PRICE_INTER_SYMBOL_GAP_MS);
-    }
-    const quote = await fetchQuoteForHolding(needsNetwork[i]!, 0);
-    if (quote) quotes.push(quote);
-  }
+  const fetched = await fetchQuotesForHoldings(needsNetwork, 0);
+  quotes.push(...fetched);
 
   return fillStaleQuotes(holdings, quotes);
 };
 
 const fetchFxRates = async (pairs: readonly string[], forceNetwork: boolean): Promise<FxRate[]> => {
   const freshnessMs = readFxFreshnessMs(forceNetwork);
-  const rates: FxRate[] = [];
 
-  for (const pair of pairs) {
+  const results = await mapWithConcurrency(pairs, 4, async (pair) => {
     const [from, to] = pair.split("->") as [Currency, Currency];
     if (!forceNetwork && isCacheFirstMarketData()) {
       const cached = await fxCache.get(from, to, CACHE_FIRST_READ_FRESHNESS_MS);
-      if (cached) rates.push(cached);
-      continue;
+      if (cached) return cached;
+      return null;
     }
 
     try {
-      const rate = await fetchFxWithCache({
+      return await fetchFxWithCache({
         adapter: getRegistry().fxAdapter,
         from,
         to,
         cache: fxCache,
         freshnessMs,
       });
-      rates.push(rate);
     } catch (err) {
       console.warn(
         `[portfolio-valuation] FX fetch failed for ${pair}:`,
         err instanceof Error ? err.message : err
       );
       const stale = await fxCache.get(from, to, CACHE_FIRST_READ_FRESHNESS_MS);
-      if (stale) rates.push(stale);
+      return stale ?? null;
     }
-  }
+  });
+
+  const rates = results.filter((rate): rate is FxRate => rate !== null);
 
   if (rates.length === 0 && pairs.length > 0) {
     for (const pair of pairs) {
@@ -191,6 +273,30 @@ export type PortfolioValuationQuery = UseQueryResult<PortfolioValuation | null, 
   refreshFromLive: () => Promise<void>;
 };
 
+/**
+ * Collision-resistant fingerprint over ALL transaction ids + trade dates
+ * (FNV-1a). The previous `length:lastId` scheme collided on delete+add of the
+ * same count — the valuation query key would not change and a stale cached
+ * valuation could be served for the full staleTime window.
+ */
+const fingerprintTransactions = (
+  transactions: ReadonlyArray<{ id: string; tradeDate: string }>
+): string => {
+  let hash = 0x811c9dc5; // FNV offset basis (32-bit)
+  const mix = (s: string): void => {
+    for (let i = 0; i < s.length; i++) {
+      hash ^= s.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193); // FNV prime
+    }
+  };
+  for (const tx of transactions) {
+    mix(tx.id);
+    mix(tx.tradeDate);
+    mix("|");
+  }
+  return `${transactions.length}:${(hash >>> 0).toString(36)}`;
+};
+
 export const usePortfolioValuation = (
   portfolioId: string | undefined,
   reportingCurrency: Currency
@@ -200,7 +306,7 @@ export const usePortfolioValuation = (
   const queryStaleTime = valuationQueryStaleTimeMs();
 
   const txFingerprint = useMemo(
-    () => (transactions ? `${transactions.length}:${transactions.at(-1)?.id ?? ""}` : "0"),
+    () => (transactions ? fingerprintTransactions(transactions) : "0"),
     [transactions]
   );
 
@@ -209,7 +315,8 @@ export const usePortfolioValuation = (
     enabled: !!portfolioId && holdings.length > 0,
     staleTime: queryStaleTime,
     gcTime: Number.isFinite(queryStaleTime) ? queryStaleTime * 2 : 24 * 60 * 60_000,
-    placeholderData: (previous) => previous,
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[1] === portfolioId ? previous : undefined,
     queryFn: async (): Promise<PortfolioValuation | null> => {
       if (!portfolioId || holdings.length === 0) return null;
 

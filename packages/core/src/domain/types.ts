@@ -90,6 +90,8 @@ export interface Transaction {
   readonly tradeDate: string;
   /** 备注 — 仅展示用，不参与计算 */
   readonly notes?: string;
+  /** 持有账户 / 平台（如「支付宝」「IBKR」）— 资产位置敞口分组用（#12）；可空 */
+  readonly account?: string;
 }
 
 // ─── 持仓 (Holding) ──────────────────────────────────────────────────────
@@ -180,6 +182,8 @@ export interface Portfolio {
   /** 该 portfolio 的报告货币（用户偏好可覆盖到全局或个组合）*/
   readonly reportingCurrency: Currency;
   readonly createdAt: string;
+  /** 软归档时间（ISO）；NULL = 活跃 */
+  readonly archivedAt: string | null;
   /** 派生：当前持仓 */
   readonly holdings?: Holding[];
   /** Stage 2 字段：目标配置 */
@@ -230,6 +234,8 @@ export interface MarketValuation {
   readonly unrealizedPnL: Decimal;
   /** 未实现盈亏百分比 = unrealizedPnL / costBasisReporting × 100 */
   readonly unrealizedPnLPercent: Decimal;
+  /** 相对前收 / 24h 涨跌幅（来自最新 quote；与 unrealizedPnLPercent 不同） */
+  readonly dailyChangePercent: Decimal | null;
   readonly reportingCurrency: Currency;
   /** 计算所用汇率快照（便于审计） */
   readonly fxRateUsed: Decimal;
@@ -249,6 +255,13 @@ export interface PortfolioValuation {
   /** 总未实现盈亏百分比 */
   readonly totalUnrealizedPnLPercent: Decimal;
   readonly perAsset: ReadonlyArray<MarketValuation>;
+  /** 有持仓但缺报价、被估值跳过的资产（UI 必须提示「部分资产未计入」） */
+  readonly missingQuoteAssetIds: ReadonlyArray<string>;
+  /**
+   * 跨币种但缺 FX 汇率、被估值跳过的资产。
+   * 铁律 4：绝不静默按 1:1 换算 — 缺汇率就跳过并在此暴露。
+   */
+  readonly missingFxAssetIds: ReadonlyArray<string>;
   readonly computedAt: string;
 }
 
@@ -256,7 +269,7 @@ export interface PortfolioValuation {
 
 /**
  * SnapshotAsset — 快照时点某个持仓的明细
- * 见 .specify/feature-specs/daily-snapshot-stage-2.md
+ * 见 .specify/feature-specs/stage-2/daily-snapshot-stage-2.md
  */
 export interface SnapshotAsset {
   readonly assetId: string;

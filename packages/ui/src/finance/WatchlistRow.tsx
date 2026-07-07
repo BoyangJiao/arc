@@ -1,8 +1,7 @@
 /**
  * WatchlistRow — Stage 2 J8 presentational list row.
  *
- * Pure presentational: symbol / name / price / change% chip + optional stale dot.
- * Change % uses Pro TrendChip with finance color mode (S1-AC-5 / S2-AC-2.7).
+ * Pure presentational: symbol / name / price / change% as text (no chip).
  */
 
 import { type ReactNode } from "react";
@@ -11,10 +10,15 @@ import type Decimal from "decimal.js";
 
 import { Card } from "../primitives";
 import { Text } from "../primitives/Text";
-import { TrendChip } from "../primitives-pro";
-import { useFinanceColorMode } from "../tokens/business-context";
+import { useBusinessClasses } from "../tokens/business-context";
+import {
+  TYPO_BODY_MEDIUM,
+  TYPO_CAPTION,
+  TYPO_METRIC_SM,
+  typographyClass,
+} from "../tokens/typography";
 
-import { pnlSignFromDecimal, trendDirectionForPnL } from "./trend-for-business";
+import { pnlSignFromDecimal } from "./trend-for-business";
 
 export interface WatchlistRowProps {
   readonly symbol: string;
@@ -40,42 +44,39 @@ export function WatchlistRow(props: WatchlistRowProps): ReactNode {
     accessibilityLabel,
   } = props;
 
-  const { financeColorMode } = useFinanceColorMode();
-
+  const classes = useBusinessClasses();
   const changeLabel = changePercent !== null ? formatPercent(changePercent) : "—";
-  const trend =
-    changePercent !== null
-      ? trendDirectionForPnL(pnlSignFromDecimal(changePercent), financeColorMode)
-      : "neutral";
+  const changeSign =
+    changePercent !== null ? pnlSignFromDecimal(changePercent) : ("neutral" as const);
+  const changeColorClass =
+    changeSign === "gain"
+      ? classes.gain.text
+      : changeSign === "loss"
+        ? classes.loss.text
+        : classes.pnlNeutral.text;
 
   const content = (
     <Card>
       <View
-        className="flex-row items-center px-3 py-3 gap-3"
+        className="flex-row items-center gap-3"
         accessibilityLabel={accessibilityLabel ?? `${symbol} ${name}`}
       >
         <View className="flex-1 min-w-0">
-          <Text className="text-foreground font-medium">{symbol}</Text>
-          <Text className="text-muted text-xs" numberOfLines={1}>
+          <Text className={TYPO_BODY_MEDIUM}>{symbol}</Text>
+          <Text className={TYPO_CAPTION} numberOfLines={1}>
             {name}
           </Text>
         </View>
         <View className="items-end shrink-0">
           <View className="flex-row items-center gap-1">
-            <Text className="text-foreground text-sm font-medium">{priceLabel}</Text>
+            <Text className={TYPO_METRIC_SM}>{priceLabel}</Text>
             {stale ? (
-              <Text className="text-muted-foreground text-xs" accessibilityLabel="stale quote">
+              <Text className={TYPO_CAPTION} accessibilityLabel="stale quote">
                 ·
               </Text>
             ) : null}
           </View>
-          {changePercent !== null ? (
-            <TrendChip trend={trend} size="sm" variant="soft">
-              {changeLabel}
-            </TrendChip>
-          ) : (
-            <Text className="text-muted text-sm font-medium">{changeLabel}</Text>
-          )}
+          <Text className={typographyClass("rowValue", changeColorClass)}>{changeLabel}</Text>
         </View>
       </View>
     </Card>

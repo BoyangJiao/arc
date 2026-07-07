@@ -48,6 +48,9 @@ export {
   type BusinessTokensProviderProps,
 } from "./business-context";
 
+// Categorical chart palette (SVG stroke/fill — single source, ADR 006 charts/)
+export { CHART_CATEGORICAL_PALETTE, chartCategoricalColor } from "./chart-palette";
+
 // Navigation color values (for React Navigation style APIs that don't support className)
 export {
   NAVIGATION_COLORS,
@@ -55,3 +58,52 @@ export {
   type NavigationColorSet,
   type TabBarColorSet,
 } from "./navigation-colors";
+
+// Semantic typography (specs + pre-built class strings)
+export {
+  typography,
+  typographySpecs,
+  typographySpecToClassName,
+  typographyClass,
+  TYPO_DISPLAY,
+  TYPO_DISPLAY_2XL,
+  TYPO_DISPLAY_3XL,
+  TYPO_SECTION_TITLE,
+  TYPO_TITLE_LG,
+  TYPO_TITLE,
+  TYPO_LABEL,
+  TYPO_METRIC,
+  TYPO_METRIC_SM,
+  TYPO_BODY,
+  TYPO_BODY_SM,
+  TYPO_BODY_MEDIUM,
+  TYPO_SYMBOL,
+  TYPO_ROW_TITLE,
+  TYPO_ROW_VALUE,
+  TYPO_CHANGE_LG,
+  TYPO_CHANGE_MD,
+  TYPO_CHANGE_AMOUNT,
+  TYPO_BADGE_SM,
+  TYPO_BADGE_MD,
+  TYPO_CAPTION,
+  TYPO_CAPTION_FOREGROUND,
+  TYPO_CAPTION_MEDIUM,
+  TYPO_CONTROL_LABEL,
+  TYPO_OVERLINE,
+  TYPO_EMPTY_MESSAGE,
+  TYPO_DISCLAIMER,
+  TYPO_FIELD_LABEL,
+  TYPO_DANGER,
+  TYPO_DANGER_SM,
+  TYPO_AVATAR_MONOGRAM,
+  TYPO_AVATAR_BADGE,
+  TYPO_CHIP_STATUS,
+  type TypographyRole,
+  type TypographySpec,
+  type TypographyFontSize,
+  type TypographyFontWeight,
+  type TypographyColor,
+  type TypographyLineHeight,
+  type TypographyLetterSpacing,
+  type TypographyFontFamily,
+} from "./typography";

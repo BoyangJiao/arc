@@ -8,6 +8,12 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import {
+  isPortfoliosBlockCScenario,
+  PortfoliosBlockCSeedError,
+  runPortfoliosBlockCSeed,
+} from "./seed-portfolios-block-c.ts";
+
 // ──────────────────────────────────────────────────────────────────────────
 // Scenario registry
 
@@ -25,6 +31,16 @@ export const SCENARIOS = [
   "rebalance:aligned",
   "rebalance:mild-drift",
   "rebalance:heavy-drift",
+  "default:cn-only",
+  "default:hk-only",
+  "default:fund-only",
+  "default:cross-market",
+  "default:crypto-only",
+  "portfolios:single",
+  "portfolios:multi-3",
+  "portfolios:transfer-history",
+  "portfolios:multi-market-full",
+  "portfolios:30-days-history",
 ] as const;
 
 export type Scenario = (typeof SCENARIOS)[number];
@@ -43,6 +59,10 @@ export interface ScenarioPlan {
     factor?: number;
     expectedDeltaSummary: string;
   };
+  /** Override default US seed transactions (e.g. CN-only holdings). */
+  transactions?: ReadonlyArray<SeedTx>;
+  /** Skip seed-dev price_snapshots — use live adapters (Tushare / AKShare). */
+  skipPriceSnapshots?: boolean;
   /** When set, (re)seeds watchlist_items for the user. */
   watchlist?: {
     assetIds: ReadonlyArray<string>;
@@ -73,7 +93,8 @@ const baselineFromMarks = (
   return out;
 };
 
-export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = {
+// SCENARIO_PLANS — built after SEED_* transaction constants (avoid TDZ)
+const buildScenarioPlans = (): Record<Scenario, ScenarioPlan> => ({
   default: {
     includeTransactions: true,
     baseline: {
@@ -189,7 +210,57 @@ export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = {
     },
     description: "NVDA ~+15% / MSFT ~-15% vs fixture current (critical bars).",
   },
-};
+  "default:cn-only": {
+    includeTransactions: true,
+    baseline: null,
+    transactions: SEED_CN_ONLY_TRANSACTIONS,
+    skipPriceSnapshots: true,
+    description: "CN only: 100× CN:600519 — live Tushare CNY price (no seed-dev quotes).",
+  },
+  "default:hk-only": {
+    includeTransactions: true,
+    baseline: null,
+    transactions: SEED_HK_ONLY_TRANSACTIONS,
+    skipPriceSnapshots: true,
+    description: "HK only: 50× HK:00700 — live AKShare wrapper HKD price.",
+  },
+  "default:fund-only": {
+    includeTransactions: true,
+    baseline: null,
+    transactions: SEED_FUND_ONLY_TRANSACTIONS,
+    skipPriceSnapshots: true,
+    description: "FUND only: 1000× FUND:000001 — live AKShare wrapper NAV.",
+  },
+  "default:cross-market": {
+    includeTransactions: true,
+    baseline: null,
+    transactions: SEED_CROSS_MARKET_TRANSACTIONS,
+    skipPriceSnapshots: true,
+    description: "CN + HK + FUND mix — live multi-market adapters.",
+  },
+  "default:crypto-only": {
+    includeTransactions: true,
+    baseline: null,
+    transactions: SEED_CRYPTO_ONLY_TRANSACTIONS,
+    skipPriceSnapshots: true,
+    description: "CRYPTO only: BTC × 0.5 + ETH × 5 + USDC × 1000 — live CoinGecko USD quotes.",
+  },
+  "portfolios:single": {
+    includeTransactions: false,
+    baseline: null,
+    description: "Single portfolio only — switcher has no ▼.",
+  },
+  "portfolios:multi-3": {
+    includeTransactions: false,
+    baseline: null,
+    description: "Three portfolios with holdings, targets, and CASH balances.",
+  },
+  "portfolios:transfer-history": {
+    includeTransactions: false,
+    baseline: null,
+    description: "Multi-3 plus one historical CASH transfer pair (notes pattern).",
+  },
+});
 
 /** UI-facing scenario buttons (subset with stable ids for i18n keys). */
 export const DEV_SEED_UI_SCENARIOS: ReadonlyArray<{
@@ -236,6 +307,37 @@ export const SEED_ASSETS = [
     name: "NVIDIA Corporation",
     currency: "USD",
   },
+  {
+    id: "CN:600519",
+    market: "CN",
+    symbol: "600519",
+    name: "贵州茅台",
+    currency: "CNY",
+  },
+  {
+    id: "HK:00700",
+    market: "HK",
+    symbol: "00700",
+    name: "腾讯控股",
+    currency: "HKD",
+  },
+  {
+    id: "FUND:000001",
+    market: "FUND",
+    symbol: "000001",
+    name: "华夏成长",
+    currency: "CNY",
+  },
+  {
+    id: "FUND:510300",
+    market: "FUND",
+    symbol: "510300",
+    name: "沪深300ETF",
+    currency: "CNY",
+  },
+  { id: "CRYPTO:BTC", market: "CRYPTO", symbol: "BTC", name: "Bitcoin", currency: "USD" },
+  { id: "CRYPTO:ETH", market: "CRYPTO", symbol: "ETH", name: "Ethereum", currency: "USD" },
+  { id: "CRYPTO:USDC", market: "CRYPTO", symbol: "USDC", name: "USD Coin", currency: "USD" },
 ] as const;
 
 export interface SeedTx {
@@ -243,7 +345,7 @@ export interface SeedTx {
   type: "BUY";
   shares: string;
   price_per_share: string;
-  currency: "USD";
+  currency: "USD" | "CNY" | "HKD";
   fee: string;
   trade_date: string;
   notes: string | null;
@@ -252,6 +354,12 @@ export interface SeedTx {
 const monthsAgo = (m: number) => {
   const d = new Date();
   d.setMonth(d.getMonth() - m);
+  return d.toISOString();
+};
+
+const daysAgo = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
   return d.toISOString();
 };
 
@@ -265,6 +373,94 @@ const SEED_CASH_TX: SeedTx = {
   trade_date: monthsAgo(0),
   notes: "Cash balance (rebalance seed)",
 };
+
+export const SEED_CN_ONLY_TRANSACTIONS: SeedTx[] = [
+  {
+    asset_id: "CN:600519",
+    type: "BUY",
+    shares: "100",
+    price_per_share: "1688.00",
+    currency: "CNY",
+    fee: "0",
+    trade_date: monthsAgo(1),
+    notes: "CN-only dev seed",
+  },
+];
+
+export const SEED_HK_ONLY_TRANSACTIONS: SeedTx[] = [
+  {
+    asset_id: "HK:00700",
+    type: "BUY",
+    shares: "50",
+    price_per_share: "380.00",
+    currency: "HKD",
+    fee: "0",
+    trade_date: monthsAgo(1),
+    notes: "HK-only dev seed",
+  },
+];
+
+export const SEED_FUND_ONLY_TRANSACTIONS: SeedTx[] = [
+  {
+    asset_id: "FUND:000001",
+    type: "BUY",
+    shares: "1000",
+    price_per_share: "1.20",
+    currency: "CNY",
+    fee: "0",
+    trade_date: monthsAgo(1),
+    notes: "FUND open-end dev seed",
+  },
+];
+
+export const SEED_CROSS_MARKET_TRANSACTIONS: SeedTx[] = [
+  ...SEED_CN_ONLY_TRANSACTIONS,
+  ...SEED_HK_ONLY_TRANSACTIONS,
+  ...SEED_FUND_ONLY_TRANSACTIONS,
+  {
+    asset_id: "FUND:510300",
+    type: "BUY",
+    shares: "500",
+    price_per_share: "4.50",
+    currency: "CNY",
+    fee: "0",
+    trade_date: monthsAgo(0),
+    notes: "FUND ETF dev seed",
+  },
+];
+
+export const SEED_CRYPTO_ONLY_TRANSACTIONS: SeedTx[] = [
+  {
+    asset_id: "CRYPTO:BTC",
+    type: "BUY",
+    shares: "0.5",
+    price_per_share: "65000",
+    currency: "USD",
+    fee: "0",
+    trade_date: daysAgo(7),
+    notes: "CRYPTO-only dev seed",
+  },
+  {
+    asset_id: "CRYPTO:ETH",
+    type: "BUY",
+    shares: "5",
+    price_per_share: "3200",
+    currency: "USD",
+    fee: "0",
+    trade_date: daysAgo(14),
+    notes: "CRYPTO-only dev seed",
+  },
+  {
+    asset_id: "CRYPTO:USDC",
+    type: "BUY",
+    shares: "1000",
+    price_per_share: "1",
+    currency: "USD",
+    fee: "0",
+    trade_date: daysAgo(21),
+    notes: "CRYPTO-only dev seed",
+  },
+];
 
 export const SEED_TRANSACTIONS: SeedTx[] = [
   {
@@ -305,6 +501,8 @@ const SHARES_BY_SYMBOL: Record<"AAPL" | "MSFT" | "NVDA", string> = {
   NVDA: "8",
 };
 
+export const SCENARIO_PLANS: Record<Scenario, ScenarioPlan> = buildScenarioPlans();
+
 export class SeedError extends Error {
   constructor(message: string) {
     super(message);
@@ -333,12 +531,344 @@ const noopLog: LogFn = () => {};
 /**
  * Idempotent dev seed for one user. Requires service-role Supabase client.
  */
+const runPortfoliosBlockBSeed = async (
+  supabase: SupabaseClient,
+  userId: string,
+  scenario: Scenario,
+  mode: "reset" | "append",
+  log: LogFn
+): Promise<RunSeedResult> => {
+  if (mode === "reset") {
+    const { error: delErr } = await supabase.from("portfolios").delete().eq("user_id", userId);
+    if (delErr) throw new SeedError(`Portfolio delete failed: ${delErr.message}`);
+    log("✓ Cleared portfolios for user");
+  }
+
+  const cashAssets = [
+    { id: "CASH:USD", market: "CASH", symbol: "USD", name: "USD", currency: "USD" },
+    { id: "CASH:CNY", market: "CASH", symbol: "CNY", name: "CNY", currency: "CNY" },
+  ];
+  const { error: assetErr } = await supabase
+    .from("assets")
+    .upsert([...SEED_ASSETS, ...cashAssets] as never, { onConflict: "id" });
+  if (assetErr) throw new SeedError(`Asset upsert failed: ${assetErr.message}`);
+
+  const portfolioDefs =
+    scenario === "portfolios:single"
+      ? [{ name: "My Portfolio", reporting_currency: "CNY" as const }]
+      : [
+          { name: "My Portfolio", reporting_currency: "CNY" as const },
+          { name: "加密钱包", reporting_currency: "USD" as const },
+          { name: "401k", reporting_currency: "USD" as const },
+        ];
+
+  const createdIds: string[] = [];
+  for (const def of portfolioDefs) {
+    const { data, error } = await supabase
+      .from("portfolios")
+      .insert({ user_id: userId, name: def.name, reporting_currency: def.reporting_currency })
+      .select("id")
+      .single();
+    if (error || !data) throw new SeedError(`Portfolio insert failed: ${error?.message}`);
+    createdIds.push(data.id as string);
+    log(`✓ Portfolio "${def.name}"`);
+  }
+
+  const [p1, p2, p3] = createdIds;
+  const iso = monthsAgo(0);
+
+  if (p1) {
+    await supabase.from("transactions").insert([
+      {
+        portfolio_id: p1,
+        asset_id: "CN:600519",
+        type: "BUY",
+        shares: "10",
+        price_per_share: "1688",
+        currency: "CNY",
+        fee: "0",
+        trade_date: monthsAgo(2),
+        notes: "portfolios:multi-3",
+      },
+      {
+        portfolio_id: p1,
+        asset_id: "CASH:CNY",
+        type: "BUY",
+        shares: "12000",
+        price_per_share: "1",
+        currency: "CNY",
+        fee: "0",
+        trade_date: iso,
+        notes: "portfolios:multi-3",
+      },
+    ]);
+    await supabase.from("target_allocations").delete().eq("portfolio_id", p1);
+    await supabase.from("target_allocations").insert([
+      { portfolio_id: p1, asset_id: "CN:600519", target_percent: "40" },
+      { portfolio_id: p1, asset_id: "CASH:CNY", target_percent: "60" },
+    ]);
+  }
+
+  if (p2 && scenario !== "portfolios:single") {
+    await supabase.from("transactions").insert([
+      {
+        portfolio_id: p2,
+        asset_id: "US:NVDA",
+        type: "BUY",
+        shares: "5",
+        price_per_share: "875",
+        currency: "USD",
+        fee: "0",
+        trade_date: monthsAgo(1),
+        notes: "portfolios:multi-3",
+      },
+      {
+        portfolio_id: p2,
+        asset_id: "CASH:USD",
+        type: "BUY",
+        shares: "3000",
+        price_per_share: "1",
+        currency: "USD",
+        fee: "0",
+        trade_date: iso,
+        notes: "portfolios:multi-3",
+      },
+    ]);
+    await supabase.from("target_allocations").delete().eq("portfolio_id", p2);
+    await supabase.from("target_allocations").insert([
+      { portfolio_id: p2, asset_id: "US:NVDA", target_percent: "70" },
+      { portfolio_id: p2, asset_id: "CASH:USD", target_percent: "30" },
+    ]);
+  }
+
+  if (p3 && scenario !== "portfolios:single") {
+    await supabase.from("transactions").insert([
+      {
+        portfolio_id: p3,
+        asset_id: "US:AAPL",
+        type: "BUY",
+        shares: "20",
+        price_per_share: "189.5",
+        currency: "USD",
+        fee: "0",
+        trade_date: monthsAgo(3),
+        notes: "portfolios:multi-3",
+      },
+      {
+        portfolio_id: p3,
+        asset_id: "US:MSFT",
+        type: "BUY",
+        shares: "8",
+        price_per_share: "420.3",
+        currency: "USD",
+        fee: "0",
+        trade_date: monthsAgo(2),
+        notes: "portfolios:multi-3",
+      },
+      {
+        portfolio_id: p3,
+        asset_id: "CASH:USD",
+        type: "BUY",
+        shares: "8000",
+        price_per_share: "1",
+        currency: "USD",
+        fee: "0",
+        trade_date: iso,
+        notes: "portfolios:multi-3",
+      },
+    ]);
+    await supabase.from("target_allocations").delete().eq("portfolio_id", p3);
+    await supabase.from("target_allocations").insert([
+      { portfolio_id: p3, asset_id: "US:AAPL", target_percent: "35" },
+      { portfolio_id: p3, asset_id: "US:MSFT", target_percent: "25" },
+      { portfolio_id: p3, asset_id: "CASH:USD", target_percent: "40" },
+    ]);
+  }
+
+  const snapshotAsOf = (() => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - 1);
+    d.setUTCHours(23, 0, 0, 0);
+    return d.toISOString();
+  })();
+
+  const portfolioSnapshots: Array<{
+    portfolio_id: string;
+    as_of: string;
+    total_value: string;
+    total_cost_basis: string;
+    reporting_currency: "CNY" | "USD";
+    per_asset: unknown;
+    source: "manual";
+  }> = [];
+
+  if (p1) {
+    portfolioSnapshots.push({
+      portfolio_id: p1,
+      as_of: snapshotAsOf,
+      total_value: "50000.00",
+      total_cost_basis: "50000.00",
+      reporting_currency: "CNY",
+      per_asset: [
+        {
+          assetId: "CN:600519",
+          shares: "10",
+          valueNative: "15000.00",
+          currency: "CNY",
+          valueReporting: "15000.00",
+        },
+        {
+          assetId: "CASH:CNY",
+          shares: "12000",
+          valueNative: "12000.00",
+          currency: "CNY",
+          valueReporting: "12000.00",
+        },
+      ],
+      source: "manual",
+    });
+  }
+  if (p2 && scenario !== "portfolios:single") {
+    portfolioSnapshots.push({
+      portfolio_id: p2,
+      as_of: snapshotAsOf,
+      total_value: "12000.00",
+      total_cost_basis: "12000.00",
+      reporting_currency: "USD",
+      per_asset: [
+        {
+          assetId: "US:NVDA",
+          shares: "5",
+          valueNative: "4000.00",
+          currency: "USD",
+          valueReporting: "4000.00",
+        },
+        {
+          assetId: "CASH:USD",
+          shares: "3000",
+          valueNative: "3000.00",
+          currency: "USD",
+          valueReporting: "3000.00",
+        },
+      ],
+      source: "manual",
+    });
+  }
+  if (p3 && scenario !== "portfolios:single") {
+    portfolioSnapshots.push({
+      portfolio_id: p3,
+      as_of: snapshotAsOf,
+      total_value: "28000.00",
+      total_cost_basis: "28000.00",
+      reporting_currency: "USD",
+      per_asset: [
+        {
+          assetId: "US:AAPL",
+          shares: "20",
+          valueNative: "10000.00",
+          currency: "USD",
+          valueReporting: "10000.00",
+        },
+        {
+          assetId: "US:MSFT",
+          shares: "8",
+          valueNative: "8000.00",
+          currency: "USD",
+          valueReporting: "8000.00",
+        },
+        {
+          assetId: "CASH:USD",
+          shares: "8000",
+          valueNative: "8000.00",
+          currency: "USD",
+          valueReporting: "8000.00",
+        },
+      ],
+      source: "manual",
+    });
+  }
+  if (portfolioSnapshots.length > 0) {
+    const { error: snapErr } = await supabase
+      .from("portfolio_value_snapshots")
+      .upsert(portfolioSnapshots as never, { onConflict: "portfolio_id,as_of" });
+    if (snapErr) throw new SeedError(`portfolio_value_snapshots upsert failed: ${snapErr.message}`);
+    log("✓ Per-portfolio daily snapshots (B.11)");
+  }
+
+  if (scenario === "portfolios:transfer-history" && p1 && p2) {
+    await supabase.from("transactions").insert([
+      {
+        portfolio_id: p1,
+        asset_id: "CASH:USD",
+        type: "BUY",
+        shares: "2000",
+        price_per_share: "1",
+        currency: "USD",
+        fee: "0",
+        trade_date: monthsAgo(1),
+        notes: "portfolios:multi-3",
+      },
+      {
+        portfolio_id: p1,
+        asset_id: "CASH:USD",
+        type: "SELL",
+        shares: "500",
+        price_per_share: "1",
+        currency: "USD",
+        fee: "0",
+        trade_date: iso,
+        notes: `transfer-out-to-${p2}`,
+      },
+      {
+        portfolio_id: p2,
+        asset_id: "CASH:USD",
+        type: "BUY",
+        shares: "500",
+        price_per_share: "1",
+        currency: "USD",
+        fee: "0",
+        trade_date: iso,
+        notes: `transfer-in-from-${p1}`,
+      },
+    ]);
+    log("✓ Seeded transfer pair");
+  }
+
+  const expectedUi = describeExpectedUi(scenario);
+  return { scenario, portfolioId: p1 ?? createdIds[0]!, expectedUi };
+};
+
 export const runSeedForUser = async (
   supabase: SupabaseClient,
   options: RunSeedOptions,
   log: LogFn = noopLog
 ): Promise<RunSeedResult> => {
   const { userId, scenario, mode = "reset" } = options;
+
+  if (isPortfoliosBlockCScenario(scenario)) {
+    try {
+      const { portfolioId, expectedUi } = await runPortfoliosBlockCSeed(supabase, userId, scenario);
+      log(`✓ Block C portfolio seed: ${scenario}`);
+      return { scenario, portfolioId, expectedUi };
+    } catch (err) {
+      const msg =
+        err instanceof PortfoliosBlockCSeedError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      throw new SeedError(msg);
+    }
+  }
+
+  if (
+    scenario === "portfolios:single" ||
+    scenario === "portfolios:multi-3" ||
+    scenario === "portfolios:transfer-history"
+  ) {
+    return runPortfoliosBlockBSeed(supabase, userId, scenario, mode, log);
+  }
+
   const plan = SCENARIO_PLANS[scenario];
   const marks: UsMarketPrices = {
     ...FALLBACK_MARKS,
@@ -394,9 +924,9 @@ export const runSeedForUser = async (
   log(`✓ Created portfolio "My Portfolio" (${portfolioId.slice(0, 8)}…)`);
 
   if (plan.includeTransactions) {
-    const txs = plan.rebalance?.includeCashTx
-      ? [...SEED_TRANSACTIONS, SEED_CASH_TX]
-      : SEED_TRANSACTIONS;
+    const txs =
+      plan.transactions ??
+      (plan.rebalance?.includeCashTx ? [...SEED_TRANSACTIONS, SEED_CASH_TX] : SEED_TRANSACTIONS);
     const txRows = txs.map((tx) => ({
       portfolio_id: portfolioId,
       ...tx,
@@ -405,33 +935,55 @@ export const runSeedForUser = async (
     if (txErr) throw new SeedError(`Transaction insert failed: ${txErr.message}`);
     log(`✓ Inserted ${txRows.length} transactions`);
 
-    const asOf = new Date().toISOString();
-    const priceRows = [
-      { asset_id: "US:AAPL", as_of: asOf, price: marks.AAPL, currency: "USD", source: "seed-dev" },
-      { asset_id: "US:MSFT", as_of: asOf, price: marks.MSFT, currency: "USD", source: "seed-dev" },
-      { asset_id: "US:NVDA", as_of: asOf, price: marks.NVDA, currency: "USD", source: "seed-dev" },
-      ...(plan.rebalance?.includeCashTx
-        ? [{ asset_id: "CASH:USD", as_of: asOf, price: "1", currency: "USD", source: "seed-dev" }]
-        : []),
-    ];
-    const { error: priceErr } = await supabase
-      .from("price_snapshots")
-      .upsert(priceRows as never, { onConflict: "asset_id,as_of" });
-    if (priceErr) throw new SeedError(`price_snapshots upsert failed: ${priceErr.message}`);
-    log(`✓ Seeded price_snapshots`);
+    if (!plan.skipPriceSnapshots) {
+      const asOf = new Date().toISOString();
+      const priceRows = [
+        {
+          asset_id: "US:AAPL",
+          as_of: asOf,
+          price: marks.AAPL,
+          currency: "USD",
+          source: "seed-dev",
+        },
+        {
+          asset_id: "US:MSFT",
+          as_of: asOf,
+          price: marks.MSFT,
+          currency: "USD",
+          source: "seed-dev",
+        },
+        {
+          asset_id: "US:NVDA",
+          as_of: asOf,
+          price: marks.NVDA,
+          currency: "USD",
+          source: "seed-dev",
+        },
+        ...(plan.rebalance?.includeCashTx
+          ? [{ asset_id: "CASH:USD", as_of: asOf, price: "1", currency: "USD", source: "seed-dev" }]
+          : []),
+      ];
+      const { error: priceErr } = await supabase
+        .from("price_snapshots")
+        .upsert(priceRows as never, { onConflict: "asset_id,as_of" });
+      if (priceErr) throw new SeedError(`price_snapshots upsert failed: ${priceErr.message}`);
+      log(`✓ Seeded price_snapshots`);
 
-    const { error: fxErr } = await supabase.from("fx_rates").upsert(
-      {
-        from_currency: "USD",
-        to_currency: "CNY",
-        as_of: asOf,
-        rate: "7.20",
-        source: "seed-dev",
-      } as never,
-      { onConflict: "from_currency,to_currency,as_of" }
-    );
-    if (fxErr) throw new SeedError(`fx_rates upsert failed: ${fxErr.message}`);
-    log(`✓ Seeded fx_rates`);
+      const { error: fxErr } = await supabase.from("fx_rates").upsert(
+        {
+          from_currency: "USD",
+          to_currency: "CNY",
+          as_of: asOf,
+          rate: "7.20",
+          source: "seed-dev",
+        } as never,
+        { onConflict: "from_currency,to_currency,as_of" }
+      );
+      if (fxErr) throw new SeedError(`fx_rates upsert failed: ${fxErr.message}`);
+      log(`✓ Seeded fx_rates`);
+    } else {
+      log(`↷ Skipped price_snapshots (live adapter path)`);
+    }
   } else {
     log(`↷ Skipped transactions (empty portfolio scenario)`);
   }
@@ -660,5 +1212,34 @@ export const describeExpectedUi = (scenario: Scenario): string[] => {
       return ["Insights Tab — at least one yellow warning bar (~7% deviation)"];
     case "rebalance:heavy-drift":
       return ["Insights Tab — at least one red critical bar (~15% deviation)"];
+    case "default:cn-only":
+      return [
+        "Portfolio: 100× CN:600519 only",
+        "Pull Portfolio to fetch live CNY price via Tushare (EXPO_PUBLIC_TUSHARE_TOKEN)",
+      ];
+    case "default:hk-only":
+      return ["Portfolio: 50× HK:00700 — live HKD via AKShare wrapper"];
+    case "default:fund-only":
+      return ["Portfolio: 1000× FUND:000001 — live NAV via AKShare wrapper"];
+    case "default:cross-market":
+      return ["Portfolio: CN + HK + FUND holdings — verify each market quotes"];
+    case "default:crypto-only":
+      return [
+        "Portfolio: 0.5× CRYPTO:BTC + 5× CRYPTO:ETH + 1000× CRYPTO:USDC",
+        "Pull Portfolio to fetch live USD prices via CoinGecko (no API key)",
+      ];
+    case "portfolios:single":
+      return ["Single portfolio — Portfolio Tab name without ▼ chevron"];
+    case "portfolios:multi-3":
+      return [
+        "Three portfolios — Portfolio Tab ▼ switcher",
+        "Insights Tab — 3 cards + cross-portfolio placeholder",
+      ];
+    case "portfolios:transfer-history":
+      return ["Multi-3 + transfer notes on transactions for CASH:USD"];
+    case "portfolios:multi-market-full":
+      return ["Block C 多市场", "US/CN/HK/FUND/CRYPTO/CASH 持仓", "持仓表分组"];
+    case "portfolios:30-days-history":
+      return ["Block C 多市场", "30 天 area-chart 数据", "Portfolio Tab 曲线"];
   }
 };

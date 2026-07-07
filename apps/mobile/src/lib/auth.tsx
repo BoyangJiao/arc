@@ -22,6 +22,7 @@ import type { ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
 import { resetInsightsSessionValuation } from "./insights-session-valuation";
+import { clearQueryCache } from "./cache/clear-query-cache";
 import { supabase } from "./supabase";
 
 interface AuthContextValue {
@@ -107,7 +108,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signOut: async () => {
         const { error } = await supabase.auth.signOut();
-        if (!error) resetInsightsSessionValuation();
+        if (!error) {
+          resetInsightsSessionValuation();
+          // Clear MMKV + in-memory Query cache on sign-out so a re-login
+          // (or a different user) never sees stale cached holdings (AC.OF.9).
+          await clearQueryCache();
+        }
         return { error: error ?? null };
       },
     }),

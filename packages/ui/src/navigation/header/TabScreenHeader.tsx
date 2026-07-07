@@ -13,9 +13,12 @@ import { type ReactNode } from "react";
 import { View } from "react-native";
 
 import { Text } from "../../primitives/Text";
+import { TYPO_TITLE } from "../../tokens/typography";
 
 export interface TabScreenHeaderProps {
   title: string;
+  /** When set, replaces centered title text (e.g. PortfolioSwitcher). */
+  centerSlot?: ReactNode;
   /** Me / profile entry — left slot (fixed width for title centering). */
   leftSlot: ReactNode;
   /** Page actions — search icon, manage, etc. */
@@ -25,7 +28,7 @@ export interface TabScreenHeaderProps {
 const SLOT_WIDTH = 64;
 const HEADER_HEIGHT = 44;
 
-export function TabScreenHeader({ title, leftSlot, rightSlot }: TabScreenHeaderProps) {
+export function TabScreenHeader({ title, centerSlot, leftSlot, rightSlot }: TabScreenHeaderProps) {
   return (
     <View
       className="flex-row items-center px-4 bg-background"
@@ -36,9 +39,11 @@ export function TabScreenHeader({ title, leftSlot, rightSlot }: TabScreenHeaderP
         {leftSlot}
       </View>
       <View className="flex-1 items-center px-2">
-        <Text className="text-foreground text-base font-semibold" numberOfLines={1}>
-          {title}
-        </Text>
+        {centerSlot ?? (
+          <Text className={TYPO_TITLE} numberOfLines={1}>
+            {title}
+          </Text>
+        )}
       </View>
       <View style={{ width: SLOT_WIDTH }} className="items-end justify-center">
         {rightSlot ?? null}

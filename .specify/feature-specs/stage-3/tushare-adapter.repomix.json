@@ -1,0 +1,33 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": ".specify/codectx/tushare-adapter.xml",
+    "style": "xml",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "showLineNumbers": true,
+    "headerText": "Arc Block A — Tushare/AKShare adapter context bundle. Local only; do not commit."
+  },
+  "include": [
+    ".specify/feature-specs/stage-3/tushare-adapter-stage-3.md",
+    "packages/data-sources/src/adapters/tushare/**",
+    "packages/data-sources/src/adapters/akshare/**",
+    "packages/data-sources/src/adapters/with-fallback.ts",
+    "packages/data-sources/src/registry.ts",
+    "packages/data-sources/src/static-symbols.ts",
+    "packages/data-sources/__tests__/tushare*.ts",
+    "packages/data-sources/__tests__/akshare*.ts",
+    "packages/data-sources/__tests__/with-fallback.spec.ts",
+    "services/akshare-wrapper/**",
+    "docs/adr/011-multi-source-fallback-and-akshare.md",
+    "apps/mobile/src/lib/market-data.ts"
+  ],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": ["**/.venv/**", "**/__pycache__/**"]
+  },
+  "security": {
+    "enableSecurityCheck": true
+  }
+}

@@ -29,6 +29,31 @@ export type { AlphaVantageAdapterConfig } from "./adapters/alphavantage";
 export { createFinnhubAdapter } from "./adapters/finnhub";
 export type { FinnhubAdapterConfig } from "./adapters/finnhub";
 
+export { createUsPriceAdapter } from "./adapters/us-price-adapter";
+export type { UsPriceAdapterConfig } from "./adapters/us-price-adapter";
+
+export { createTushareClient, assertTushareRowsNonEmpty } from "./adapters/tushare/client";
+export type { TushareClient, TushareClientConfig, TushareRows } from "./adapters/tushare/client";
+export { createTushareCnAdapter } from "./adapters/tushare/cn";
+export type { TushareCnAdapterConfig } from "./adapters/tushare/cn";
+export {
+  cnSymbolToTsCode,
+  hkSymbolToTsCode,
+  fundSymbolToTsCode,
+  tsCodeToSymbol,
+} from "./adapters/tushare/symbol-resolver";
+
+export {
+  createAkshareClient,
+  createAkshareCnAdapter,
+  createAkshareHkAdapter,
+  createAkshareFundAdapter,
+} from "./adapters/akshare";
+export type { AkshareClient, AkshareClientConfig } from "./adapters/akshare";
+
+export { withFallback, defaultFallbackClassifier } from "./adapters/with-fallback";
+export type { FallbackDecision } from "./adapters/with-fallback";
+
 export { searchStaticSymbols, US_STATIC_SYMBOLS } from "./static-symbols";
 export type { StaticUsSymbol } from "./static-symbols";
 export { searchSymbolsWithFallback } from "./search-symbols";

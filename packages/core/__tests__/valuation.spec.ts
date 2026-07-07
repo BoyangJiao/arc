@@ -90,6 +90,16 @@ describe("computeMarketValue", () => {
     expect(v.fxRateUsed.equals(new Decimal("7.2"))).toBe(true);
   });
 
+  test("cost basis uses totalCostBasis (includes fees), not shares × averageCost", () => {
+    const holding = makeHolding(10, 100, {
+      totalCostBasis: new Decimal("1009.99"),
+    });
+    const quote = makeQuote(120);
+    const v = computeMarketValue(holding, quote, null, "USD");
+    expect(v.costBasisReporting.equals(new Decimal("1009.99"))).toBe(true);
+    expect(v.unrealizedPnL.equals(new Decimal("1200").minus("1009.99"))).toBe(true);
+  });
+
   test("zero cost basis → unrealizedPnLPercent = 0", () => {
     const holding = makeHolding(0, "0", {
       shares: new Decimal(10),
@@ -157,6 +167,43 @@ describe("computePortfolioValuation", () => {
     // Only AAPL is valued
     expect(pv.perAsset.length).toBe(1);
     expect(pv.totalValue.equals(new Decimal(6000))).toBe(true);
+    // The skipped holding is surfaced, not silently dropped
+    expect(pv.missingQuoteAssetIds).toEqual(["US:GOOG"]);
+    expect(pv.missingFxAssetIds).toEqual([]);
+  });
+
+  test("missing FX for cross-currency holding → skipped + surfaced (NEVER 1:1)", () => {
+    const holdings = [
+      makeHolding(100, "50", { assetId: "US:AAPL", currency: "USD" }),
+      makeHolding(10, "1000", { assetId: "CN:600519", currency: "CNY" }),
+    ];
+    const quotes = [
+      makeQuote("60", { assetId: "US:AAPL" }),
+      makeQuote("1500", { assetId: "CN:600519", currency: "CNY" }),
+    ];
+
+    // Reporting USD, but no CNY→USD rate available
+    const pv = computePortfolioValuation("p-1", holdings, quotes, [], "USD");
+
+    // CNY holding must NOT be counted at an implicit 1:1 rate
+    expect(pv.perAsset.length).toBe(1);
+    expect(pv.totalValue.equals(new Decimal(6000))).toBe(true);
+    expect(pv.missingFxAssetIds).toEqual(["CN:600519"]);
+    expect(pv.missingQuoteAssetIds).toEqual([]);
+  });
+
+  test("inverse-only FX rate is used (reciprocal), holding valued", () => {
+    const holdings = [makeHolding(10, "1000", { assetId: "CN:600519", currency: "CNY" })];
+    const quotes = [makeQuote("1600", { assetId: "CN:600519", currency: "CNY" })];
+    // Only USD→CNY provided; CNY→USD must fall back to the reciprocal
+    const fx = [makeFx("USD", "CNY", "8")];
+
+    const pv = computePortfolioValuation("p-1", holdings, quotes, fx, "USD");
+
+    expect(pv.perAsset.length).toBe(1);
+    // 10 × 1600 CNY = 16000 CNY → ÷8 = 2000 USD
+    expect(pv.totalValue.equals(new Decimal(2000))).toBe(true);
+    expect(pv.missingFxAssetIds).toEqual([]);
   });
 
   test("empty holdings → zero totals", () => {

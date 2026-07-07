@@ -86,6 +86,13 @@ export interface HeaderActionButtonProps {
   accessibilityLabel: string;
   /** Icon size in px. Default 22. */
   size?: number;
+  /**
+   * Phosphor icon weight. Default "regular" (outline). Use "fill" to convey
+   * active / selected state (e.g. star toggled in watchlist).
+   */
+  weight?: "regular" | "fill" | "bold" | "duotone" | "light" | "thin";
+  /** HeroUI semantic color token. Default "foreground". */
+  colorToken?: "foreground" | "muted" | "accent" | "accent-foreground";
 }
 
 export function HeaderActionButton({
@@ -93,10 +100,12 @@ export function HeaderActionButton({
   onPress,
   accessibilityLabel,
   size = 22,
+  weight = "regular",
+  colorToken = "foreground",
 }: HeaderActionButtonProps) {
   return (
     <LinkButton isIconOnly onPress={onPress} accessibilityLabel={accessibilityLabel}>
-      <ThemedIcon icon={Icon} size={size} weight="regular" />
+      <ThemedIcon icon={Icon} size={size} weight={weight} colorToken={colorToken} />
     </LinkButton>
   );
 }

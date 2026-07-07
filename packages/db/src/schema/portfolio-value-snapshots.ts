@@ -20,7 +20,7 @@
  *   - INSERT/UPDATE/DELETE: service_role only（Edge Function 用 service_role；
  *     client 永不直接写）
  *
- * 见 .specify/feature-specs/daily-snapshot-stage-2.md
+ * 见 .specify/feature-specs/stage-2/daily-snapshot-stage-2.md
  */
 
 import { sql } from "drizzle-orm";

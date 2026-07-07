@@ -4,9 +4,9 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Alert, View } from "react-native";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import Decimal from "decimal.js";
-import { rebalance, type TargetAllocation } from "@arc/core";
+import { parseAssetId, rebalance, type Market, type TargetAllocation } from "@arc/core";
 import {
   HeaderSaveButton,
   InScreenHeader,
@@ -18,12 +18,15 @@ import {
 } from "@arc/ui";
 import { useTranslation } from "@arc/i18n";
 
+import { resolveAssetLogoUrl } from "../../../src/lib/asset-logo-url";
 import { assetLabel } from "../../../src/lib/rebalance-format";
 import {
+  useActivePortfolio,
   usePortfolioHoldings,
-  usePortfolios,
+  usePortfolioValuation,
   useUpsertTargetAllocations,
 } from "../../../src/lib/queries";
+import { useUserPreferences } from "../../../src/lib/user-preferences";
 
 const { validateTargetAllocations } = rebalance;
 type TargetAllocationError = rebalance.TargetAllocationError;
@@ -44,10 +47,33 @@ const tryPercent = (raw: string): Decimal | null => {
 export default function RebalanceSetupScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { data: portfolios } = usePortfolios();
-  const portfolioId = portfolios?.[0]?.id;
+  const { portfolioId: queryPortfolioId } = useLocalSearchParams<{ portfolioId?: string }>();
+  const { activePortfolioId } = useActivePortfolio();
+  const portfolioId =
+    typeof queryPortfolioId === "string" && queryPortfolioId.length > 0
+      ? queryPortfolioId
+      : (activePortfolioId ?? undefined);
   const { holdings } = usePortfolioHoldings(portfolioId);
+  const { prefs } = useUserPreferences();
+  const reportingCurrency = prefs?.reportingCurrency ?? "CNY";
+  const { data: valuation } = usePortfolioValuation(portfolioId, reportingCurrency);
   const upsert = useUpsertTargetAllocations();
+
+  const marketLabel = useCallback(
+    (m: Market) => t(`holdings.markets.${m}` as "holdings.markets.US"),
+    [t]
+  );
+
+  const currentWeightByAsset = useMemo(() => {
+    const map = new Map<string, Decimal>();
+    const total = valuation?.totalValue;
+    if (valuation && total && !total.isZero()) {
+      for (const a of valuation.perAsset) {
+        map.set(a.assetId, a.valueReporting.div(total).times(100));
+      }
+    }
+    return map;
+  }, [valuation]);
 
   const initialPercents = useMemo(() => {
     const map = new Map<string, string>();
@@ -149,15 +175,26 @@ export default function RebalanceSetupScreen() {
         <Text className="text-muted text-sm mb-4">{t("rebalance.setupIntro")}</Text>
 
         <TargetAllocationForm
-          rows={holdings.map((h) => ({
-            assetId: h.assetId,
-            label: assetLabel(
-              h.assetId,
-              t(`rebalance.cashNames.${h.assetId.split(":")[1]}` as "rebalance.cashNames.USD")
-            ),
-            percentInput: percents.get(h.assetId) ?? "",
-            onPercentChange: (v) => setPercent(h.assetId, v),
-          }))}
+          rows={holdings.map((h) => {
+            const { market, symbol } = parseAssetId(h.assetId);
+            const current = currentWeightByAsset.get(h.assetId);
+            return {
+              assetId: h.assetId,
+              label: assetLabel(
+                h.assetId,
+                t(`rebalance.cashNames.${h.assetId.split(":")[1]}` as "rebalance.cashNames.USD")
+              ),
+              symbol,
+              market,
+              marketLabel: marketLabel(market),
+              imageUrl: resolveAssetLogoUrl(market, symbol),
+              currentWeightLabel: current
+                ? t("rebalance.currentWeight", { pct: current.toFixed(1) })
+                : undefined,
+              percentInput: percents.get(h.assetId) ?? "",
+              onPercentChange: (v) => setPercent(h.assetId, v),
+            };
+          })}
           sumActual={sumActual}
           sumStatus={sumStatus}
           sumDelta={sumDelta}

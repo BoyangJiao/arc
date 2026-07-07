@@ -2,7 +2,7 @@
  * Top US tickers for watchlist symbol search (Path B — no AV quota).
  *
  * Stage 2: static list first; Alpha Vantage SYMBOL_SEARCH only when zero matches.
- * See .specify/feature-specs/watchlist-stage-2.md §Resolved decisions #1.
+ * See .specify/feature-specs/stage-2/watchlist-stage-2.md §Resolved decisions #1.
  */
 
 import { composeAssetId, type Currency } from "@arc/core";
@@ -126,6 +126,9 @@ export const US_STATIC_SYMBOLS: ReadonlyArray<StaticUsSymbol> = [
   { symbol: "MDT", name: "Medtronic plc" },
   { symbol: "SPY", name: "SPDR S&P 500 ETF Trust" },
   { symbol: "QQQ", name: "Invesco QQQ Trust" },
+  { symbol: "IEF", name: "iShares 7-10 Year Treasury Bond ETF" },
+  { symbol: "TLT", name: "iShares 20+ Year Treasury Bond ETF" },
+  { symbol: "GLD", name: "SPDR Gold Shares" },
   { symbol: "IWM", name: "iShares Russell 2000 ETF" },
   { symbol: "DIA", name: "SPDR Dow Jones Industrial Average ETF" },
   { symbol: "VOO", name: "Vanguard S&P 500 ETF" },

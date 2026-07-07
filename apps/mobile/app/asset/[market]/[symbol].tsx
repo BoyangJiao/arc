@@ -1,0 +1,373 @@
+/**
+ * Asset detail — /asset/[market]/[symbol]
+ */
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, View } from "react-native";
+import { Stack, useLocalSearchParams, useRouter, type Href } from "expo-router";
+import {
+  Button,
+  DotsThreeVerticalIcon,
+  HeaderActionButton,
+  HoldingReturnInlineLabel,
+  InScreenHeader,
+  Screen,
+  StarIcon,
+  Tabs,
+  Text,
+  TwrInlineLabel,
+  type TimeRange,
+  DEFAULT_TIME_RANGE,
+} from "@arc/ui";
+import { useTranslation } from "@arc/i18n";
+import { composeAssetId, type Market } from "@arc/core";
+
+import { AssetDetailChartSection } from "../../../src/components/AssetDetailChartSection";
+import { AssetDetailPriceHeader } from "../../../src/components/AssetDetailPriceHeader";
+import { AssetTransactionHistorySection } from "../../../src/components/AssetTransactionHistorySection";
+import { resolveAssetDetailChartStatus } from "../../../src/lib/asset-detail-chart-status";
+import { formatMoney, currencySymbol, formatShares } from "../../../src/lib/format-money";
+import { useAmountRedacted } from "../../../src/lib/use-amount-redacted";
+import { useActivePortfolio } from "../../../src/lib/queries/use-active-portfolio";
+import {
+  historicalQuotesToChartPoints,
+  useAddWatchlistItem,
+  useAssetDetail,
+  useAssetTransactions,
+  useAssetTwr,
+  useDeleteAssetTransactions,
+  useDeleteTransaction,
+  useHistoricalQuotes,
+  useRemoveWatchlistItem,
+  useWatchlistBase,
+} from "../../../src/lib/queries";
+
+export default function AssetDetailScreen() {
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
+  const { market, symbol } = useLocalSearchParams<{ market: string; symbol: string }>();
+  const [range, setRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
+  const [chartScrubbing, setChartScrubbing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"holding" | "transactions">("holding");
+  const { portfolio } = useActivePortfolio();
+  const { amountsHidden } = useAmountRedacted();
+  const deleteAssetTransactions = useDeleteAssetTransactions();
+  const deleteTransaction = useDeleteTransaction();
+
+  const detail = useAssetDetail(market, symbol);
+  const assetId = market && symbol ? composeAssetId(market as Market, symbol) : undefined;
+  const historical = useHistoricalQuotes(assetId, range);
+  const assetTwr = useAssetTwr({
+    portfolioId: portfolio?.id,
+    assetId,
+    range,
+  });
+  const assetTransactions = useAssetTransactions(portfolio?.id, assetId);
+  const chartData = useMemo(
+    () => historicalQuotesToChartPoints(historical.data ?? []),
+    [historical.data]
+  );
+
+  useEffect(() => {
+    if (market === "CASH") {
+      router.back();
+    }
+  }, [market, router]);
+
+  const formatScrubDate = useCallback(
+    (iso: string) =>
+      new Intl.DateTimeFormat(i18n.language.startsWith("zh") ? "zh-CN" : "en-US", {
+        dateStyle: "medium",
+        timeZone: "UTC",
+      }).format(new Date(iso)),
+    [i18n.language]
+  );
+
+  const holdingLabel = useMemo(() => {
+    const name = detail.data?.name ?? symbol ?? "";
+    return name !== symbol ? `${name} (${symbol})` : name;
+  }, [detail.data?.name, symbol]);
+
+  const handleConfirmRemove = useCallback(() => {
+    if (!portfolio?.id || !assetId) return;
+    Alert.alert(
+      t("portfolioDetail.removeHoldingTitle"),
+      t("portfolioDetail.removeHoldingMessage", { symbol: holdingLabel }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("portfolioDetail.removeHolding"),
+          style: "destructive",
+          onPress: () => {
+            void deleteAssetTransactions
+              .mutateAsync({ portfolioId: portfolio.id, assetId })
+              .then(() => {
+                router.back();
+              })
+              .catch(() => {
+                Alert.alert(t("common.error"), t("portfolioDetail.removeHoldingFailed"));
+              });
+          },
+        },
+      ]
+    );
+  }, [assetId, deleteAssetTransactions, holdingLabel, portfolio?.id, router, t]);
+
+  const handleDeleteTransaction = useCallback(
+    (id: string, portfolioId: string) => {
+      deleteTransaction.mutate(
+        { id, portfolioId },
+        {
+          onError: () => {
+            Alert.alert(t("common.error"), t("assetDetail.transactions.deleteFailed"));
+          },
+        }
+      );
+    },
+    [deleteTransaction, t]
+  );
+
+  const handleOpenMore = useCallback(() => {
+    Alert.alert(t("assetDetail.more"), undefined, [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("assetDetail.removeFromPortfolio"),
+        style: "destructive",
+        onPress: handleConfirmRemove,
+      },
+    ]);
+  }, [handleConfirmRemove, t]);
+
+  // Watchlist toggle — star icon in header. Filled = in watchlist, outline = not.
+  const watchlist = useWatchlistBase();
+  const addWatchlist = useAddWatchlistItem();
+  const removeWatchlist = useRemoveWatchlistItem();
+  const watchlistEntry = useMemo(
+    () => (assetId ? (watchlist.data?.find((row) => row.asset.id === assetId) ?? null) : null),
+    [assetId, watchlist.data]
+  );
+  const isInWatchlist = !!watchlistEntry;
+  const watchlistPending = addWatchlist.isPending || removeWatchlist.isPending;
+
+  const handleToggleWatchlist = useCallback(() => {
+    if (!assetId || !market || !symbol || watchlistPending) return;
+    if (watchlistEntry) {
+      removeWatchlist.mutate(watchlistEntry.id, {
+        onError: () => {
+          Alert.alert(t("common.error"), t("assetDetail.watchlistRemoveFailed"));
+        },
+      });
+    } else {
+      addWatchlist.mutate(
+        {
+          symbol,
+          name: detail.data?.name ?? symbol,
+          market: market as Market,
+          currency: detail.data?.currency,
+        },
+        {
+          onError: () => {
+            Alert.alert(t("common.error"), t("assetDetail.watchlistAddFailed"));
+          },
+        }
+      );
+    }
+  }, [
+    assetId,
+    market,
+    symbol,
+    watchlistPending,
+    watchlistEntry,
+    removeWatchlist,
+    addWatchlist,
+    detail.data?.name,
+    detail.data?.currency,
+    t,
+  ]);
+
+  if (market === "CASH") {
+    return null;
+  }
+
+  const quote = detail.data?.latestQuote;
+  const currency = detail.data?.currency ?? quote?.currency ?? "CNY";
+  const currencySym = currencySymbol(currency);
+  const hasHolding = !!detail.data?.holding;
+  const chartPeriodLoading = historical.isFetching && chartData.length === 0;
+  const chartStatus = resolveAssetDetailChartStatus(historical, chartData.length);
+
+  const handleAddTx = () => {
+    if (!portfolio?.id || !market || !symbol) return;
+    router.push(
+      `/portfolio/${portfolio.id}/transactions/new?prefillMarket=${market}&prefillSymbol=${symbol}` as Href
+    );
+  };
+
+  return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <Screen
+        scrollEnabled={!chartScrubbing}
+        edges={["top", "bottom"]}
+        footer={
+          <View className="border-t border-border bg-background px-6 pb-2 pt-3">
+            <Button onPress={handleAddTx}>
+              <Button.Label>{t("assetDetail.addTransactionCta")}</Button.Label>
+            </Button>
+          </View>
+        }
+      >
+        <InScreenHeader
+          title={detail.data?.name ?? symbol ?? ""}
+          leftType="back"
+          rightSlot={
+            <View className="flex-row items-center gap-1">
+              <HeaderActionButton
+                icon={StarIcon}
+                weight={isInWatchlist ? "fill" : "regular"}
+                colorToken={isInWatchlist ? "accent" : "foreground"}
+                onPress={handleToggleWatchlist}
+                accessibilityLabel={t(
+                  isInWatchlist ? "assetDetail.removeFromWatchlist" : "assetDetail.addToWatchlist"
+                )}
+              />
+              {hasHolding ? (
+                <HeaderActionButton
+                  icon={DotsThreeVerticalIcon}
+                  onPress={handleOpenMore}
+                  accessibilityLabel={t("assetDetail.more")}
+                />
+              ) : null}
+            </View>
+          }
+        />
+        <View>
+          <AssetDetailPriceHeader
+            assetId={assetId}
+            disclaimer={t("common.disclaimer")}
+            quote={
+              quote
+                ? {
+                    price: quote.price,
+                    currency: quote.currency,
+                    changePercent: quote.changePercent ?? null,
+                  }
+                : undefined
+            }
+            chartData={chartData}
+            range={range}
+            periodChangeLabel={t(`portfolio.periodChangeByRange.${range}`)}
+            chartPeriodLoading={chartPeriodLoading}
+            chartPeriodUnavailable={chartStatus === "error"}
+            unavailableLabel={t("twr.unavailable")}
+            detailPending={detail.isPending}
+            loadingLabel={t("common.loading")}
+            amountsHidden={amountsHidden}
+          />
+
+          <AssetDetailChartSection
+            range={range}
+            onRangeChange={setRange}
+            chartData={chartData}
+            chartStatus={chartStatus}
+            chartErrorTitle={t("assetDetail.chart.loadErrorTitle")}
+            chartErrorDescription={t("assetDetail.chart.loadErrorDescription")}
+            chartEmptyTitle={t("assetDetail.chart.noDataTitle")}
+            chartEmptyDescription={t("assetDetail.chart.noDataDescription")}
+            valuePrefix={currencySym}
+            formatScrubDate={formatScrubDate}
+            onScrubbingChange={setChartScrubbing}
+          />
+
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as "holding" | "transactions")}
+            variant="secondary"
+            className="mt-4 w-full"
+          >
+            <Tabs.List className="w-full self-stretch">
+              <Tabs.Indicator />
+              <Tabs.Trigger value="holding" className="flex-1">
+                <Tabs.Label className="text-center">{t("assetDetail.myHolding")}</Tabs.Label>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="transactions" className="flex-1">
+                <Tabs.Label className="text-center">
+                  {t("assetDetail.transactions.sectionTitle")}
+                </Tabs.Label>
+              </Tabs.Trigger>
+            </Tabs.List>
+          </Tabs>
+
+          <View className="mt-4">
+            {activeTab === "holding" ? (
+              detail.data?.holding ? (
+                <View className="gap-3">
+                  <TwrInlineLabel
+                    size="prominent"
+                    range={range}
+                    result={assetTwr.isError ? undefined : assetTwr.data}
+                    loading={assetTwr.isLoading}
+                    unavailable={t("twr.unavailable")}
+                    twrAbbrevLabel={t("twr.label")}
+                    tooltipTitle={t("twr.tooltipTitle")}
+                    tooltipBody={t("assetDetail.twr.tooltip")}
+                    closeLabel={t("common.close")}
+                  />
+
+                  {detail.data.unrealizedPnL !== null ? (
+                    <HoldingReturnInlineLabel
+                      label={t("assetDetail.holdingReturn.label")}
+                      amount={detail.data.unrealizedPnL}
+                      percent={detail.data.unrealizedPnLPercent}
+                      currencySymbol={currencySymbol(detail.data.currency)}
+                      redactAmount={amountsHidden}
+                      tooltipTitle={t("assetDetail.holdingReturn.tooltipTitle")}
+                      tooltipBody={t("assetDetail.costBasis.tooltip")}
+                      closeLabel={t("common.close")}
+                    />
+                  ) : null}
+
+                  <View className="gap-1">
+                    <Text className="text-muted text-sm">
+                      {t("assetDetail.shares", {
+                        shares: formatShares(detail.data.holding.shares, {
+                          decimals: 4,
+                          redact: amountsHidden,
+                        }),
+                      })}
+                    </Text>
+                    <Text className="text-muted text-sm">
+                      {t("assetDetail.avgCost", {
+                        cost: formatMoney(detail.data.holding.averageCost, detail.data.currency, {
+                          redact: amountsHidden,
+                        }),
+                      })}
+                    </Text>
+                  </View>
+
+                  <Text className="text-muted text-xs">
+                    {t("assetDetail.dataCompleteness.disclosure")}
+                  </Text>
+                </View>
+              ) : (
+                <View className="py-8">
+                  <Text className="text-muted text-center text-sm">
+                    {t("assetDetail.noHolding")}
+                  </Text>
+                </View>
+              )
+            ) : (
+              <AssetTransactionHistorySection
+                transactions={assetTransactions.data}
+                isPending={assetTransactions.isPending}
+                portfolioId={portfolio?.id}
+                amountsHidden={amountsHidden}
+                onDeleteTransaction={handleDeleteTransaction}
+              />
+            )}
+          </View>
+        </View>
+      </Screen>
+    </>
+  );
+}

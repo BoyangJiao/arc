@@ -55,6 +55,20 @@ Read `.specify/session-state.md` and identify which sections changed:
 
 Use Edit (preferred over full Write) to modify only the changed sections. Preserve the file's structure exactly — the section names and table formats are part of the contract that future Claude sessions read.
 
+**Before editing session-state**, refresh the Repomix code bundle (automatic — do not ask the user):
+
+```bash
+pnpm ctx:auto --ensure --json
+pnpm ctx:auto --ensure --dump --json   # timestamped snapshot for handoff history
+```
+
+Read `.specify/codectx/.active.json` and add/update in §"You are here" table:
+
+| **Context slug** | `<slug>` |
+| **Context bundle** | `<path>` e.g. `.specify/codectx/twr.xml` |
+
+If `ctx:auto` skips (no slug / low confidence), omit these rows — do not block checkpoint.
+
 Set the "Last updated" line:
 
 ```md
@@ -87,8 +101,12 @@ Summary:
 - Open blockers: M
 - Updated sections: A, B, C
 
-Next session can resume by reading CLAUDE.md → session-state.md → starting work.
+Next session can resume by reading CLAUDE.md → session-state.md → **Read Context bundle path** → starting work.
 ```
+
+See Step 3 for automatic Repomix refresh (no user action).
+
+See `docs/HARNESS.md` Layer 6.
 
 ## Anti-patterns (do NOT)
 
@@ -103,6 +121,8 @@ Next session can resume by reading CLAUDE.md → session-state.md → starting w
 When a new Claude session starts (per CLAUDE.md "P0 必读"):
 
 1. Read `.specify/session-state.md` first
-2. Cross-reference last commit's hash in `git log -1` to verify state file is fresh
-3. If state file > 24h old AND repo has new commits since: re-derive state from `git log` + report stale-checkpoint to user
-4. Begin work on the "Immediate next actions" section
+2. Run `pnpm ctx:auto --ensure --quiet` (or rely on session-start hook output)
+3. If session-state or `.specify/codectx/.active.json` has **Context bundle**, Read that path
+4. Cross-reference last commit's hash in `git log -1` to verify state file is fresh
+5. If state file > 24h old AND repo has new commits since: re-derive state from `git log` + report stale-checkpoint to user
+6. Begin work on the "Immediate next actions" section

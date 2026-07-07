@@ -159,9 +159,34 @@ describe("computeHoldings", () => {
     expect(h.averageCost.equals(new Decimal(50))).toBe(true);
   });
 
-  test("SELL exceeding holding → throws clear error", () => {
+  test("SELL exceeding holding → tolerated (no throw), negative shares surfaced", () => {
+    // 一条坏数据（CSV 导入 / 回溯录入）不应让整个持仓视图崩溃；
+    // 语义与 period-pnl 回放一致。用 validateTransactions 拿结构化错误。
     const txs = [makeBuy(10, "100"), makeSell(20, "120")];
-    expect(() => computeHoldings(txs)).toThrow(/exceeds current holding/);
+    const result = computeHoldings(txs);
+    expect(result.length).toBe(1);
+    const [h] = result;
+    expect(h!.shares.equals(new Decimal(-10))).toBe(true);
+    // realized = 20 × (120 − 100) = 400（相对平均成本，同 period-pnl）
+    expect(h!.realizedPnL.equals(new Decimal(400))).toBe(true);
+  });
+
+  test("out-of-order transactions → sorted by tradeDate before replay", () => {
+    // SELL 的 tradeDate 晚于 BUY，但数组顺序相反 — 结果必须与时序回放一致
+    const sell = makeSell(5, "120", { tradeDate: "2026-03-01T10:00:00Z" });
+    const buyEarly = makeBuy(10, "100", { tradeDate: "2026-01-01T10:00:00Z" });
+    const buyLate = makeBuy(10, "200", { tradeDate: "2026-02-01T10:00:00Z" });
+
+    const shuffled = computeHoldings([sell, buyLate, buyEarly]);
+    const ordered = computeHoldings([buyEarly, buyLate, sell]);
+
+    expect(shuffled.length).toBe(1);
+    // avgCost after both buys = (10×100 + 10×200)/20 = 150; SELL 5 → 15 shares left
+    expect(shuffled[0]!.shares.equals(new Decimal(15))).toBe(true);
+    expect(shuffled[0]!.averageCost.equals(new Decimal(150))).toBe(true);
+    // realized = 5 × (120 − 150) = −150 — only correct when SELL replays LAST
+    expect(shuffled[0]!.realizedPnL.equals(new Decimal(-150))).toBe(true);
+    expect(shuffled[0]!.realizedPnL.equals(ordered[0]!.realizedPnL)).toBe(true);
   });
 
   test("complete sell (shares → 0) removes from results", () => {
@@ -177,6 +202,20 @@ describe("computeHoldings", () => {
     expect(h.totalCostBasis.equals(new Decimal("1009.99"))).toBe(true);
     // averageCost doesn't include fee (it's pure price average)
     expect(h.averageCost.equals(new Decimal(100))).toBe(true);
+  });
+
+  test("multiple BUY accumulates cost basis (ADR 016 extreme example)", () => {
+    const txs = [
+      {
+        ...makeBuy(1000, "2"),
+        tradeDate: "2026-05-01T10:00:00Z",
+      },
+      makeBuy(5000, "2.5", { tradeDate: "2026-05-15T10:00:00Z" }),
+    ];
+    const [h] = computeHoldings(txs);
+    expect(h.shares.equals(new Decimal(6000))).toBe(true);
+    expect(h.totalCostBasis.equals(new Decimal("14500"))).toBe(true);
+    expect(h.averageCost.equals(new Decimal("14500").div(6000))).toBe(true);
   });
 
   test("multiple assets in one portfolio", () => {

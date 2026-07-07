@@ -41,4 +41,26 @@ if [ -f "turbo.json" ]; then
   fi
 fi
 
+# ─── Repomix: auto-ensure feature context bundle (silent on success, logged on error) ─
+if [ -f ".specify/session-state.md" ] && command -v node &>/dev/null && [ -f "tools/repomix-auto-context.mjs" ]; then
+  CTX_LOG=/tmp/arc-ctx-auto.log
+  if ! node tools/repomix-auto-context.mjs --ensure --quiet > "$CTX_LOG" 2>&1; then
+    echo "⚠️  Repomix ctx:auto failed (non-blocking) — see $CTX_LOG"
+  fi
+  if [ -f ".specify/codectx/.active.json" ]; then
+    BUNDLE_INFO=$(node -e "
+      try {
+        const j = require('./.specify/codectx/.active.json');
+        if (j.slug && j.path) {
+          const age = Math.round((Date.now() - new Date(j.generatedAt).getTime()) / 1000);
+          process.stdout.write(\`slug=\${j.slug} path=\${j.path} age=\${age}s confidence=\${j.confidence || '?'}\`);
+        }
+      } catch {}
+    " 2>/dev/null || true)
+    if [ -n "$BUNDLE_INFO" ]; then
+      echo "📦 Repomix context ready ($BUNDLE_INFO) — Read this path before grepping for feature code."
+    fi
+  fi
+fi
+
 exit 0

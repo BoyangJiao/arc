@@ -22,7 +22,8 @@ import {
 import { useTranslation } from "@arc/i18n";
 
 import { useAuth } from "../../src/lib/auth";
-import { currencySymbol } from "../../src/lib/format-money";
+import { formatMoney } from "../../src/lib/format-money";
+import { useAmountRedacted } from "../../src/lib/use-amount-redacted";
 import { useWatchlist } from "../../src/lib/queries/use-watchlist";
 
 const formatChangePercent = (percent: Decimal): string => {
@@ -35,6 +36,7 @@ export default function MarketsTab() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
+  const { amountsHidden } = useAmountRedacted();
   const [forceRefresh, setForceRefresh] = useState(false);
   const quotePullIntentRef = useRef(false);
   const [quoteBanner, setQuoteBanner] = useState<{ message: string } | null>(null);
@@ -133,7 +135,7 @@ export default function MarketsTab() {
               <View className="gap-2">
                 {rows.map((row) => {
                   const priceLabel = row.quote
-                    ? `${currencySymbol(row.quote.currency)}${row.quote.price.toFixed(2)}`
+                    ? formatMoney(row.quote.price, row.quote.currency, { redact: amountsHidden })
                     : isPending
                       ? t("markets.quoteLoading")
                       : t("markets.priceUnavailable");

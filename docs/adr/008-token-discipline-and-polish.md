@@ -221,6 +221,6 @@ archive `design.md.original` 搬至 [packages/ui/DESIGN-TOKENS.md](../../package
 
 ## 实施清单
 
-详见 [.specify/feature-specs/token-polish-sprint.md](../../.specify/feature-specs/token-polish-sprint.md) — 3 周节奏，10 个执行项。
+详见 [.specify/feature-specs/cross-stage/token-polish-sprint.md](../../.specify/feature-specs/cross-stage/token-polish-sprint.md) — 3 周节奏，10 个执行项。
 
 本 ADR 接受后即可执行 Week 1（基建复位 + Light accent 候选验证准备）。

@@ -14,8 +14,8 @@
     "@dicebear/core": "^9.4.2",
     "expo-haptics": "~55.0.14",
     "expo-linear-gradient": "~55.0.14",
-    "heroui-native": "^1.0.3",
-    "heroui-native-pro": "1.0.0-beta.3",
+    "heroui-native": "^1.0.4",
+    "heroui-native-pro": "1.0.0-beta.4",
     "phosphor-react-native": "^3.0.6"
   },
   "devDependencies": {
@@ -33,10 +33,12 @@
     "react-native-svg": "^15.15.3",
     "typescript": "~5.9.2",
     "uniwind": "^1.6.4",
+    "victory-native": "^41.20.2",
     "vitest": "^4.1.6"
   },
   "peerDependencies": {
     "@expo/vector-icons": "*",
+    "@shopify/react-native-skia": ">=2.0.0",
     "decimal.js": "*",
     "expo-linear-gradient": "~55.0.14",
     "expo-router": "~55.0.14",
@@ -46,6 +48,7 @@
     "react-native-gesture-handler": ">=2.30.0",
     "react-native-reanimated": ">=4.0.0",
     "react-native-safe-area-context": "*",
-    "react-native-svg": "*"
+    "react-native-svg": "*",
+    "victory-native": "^41.20.2"
   }
 }

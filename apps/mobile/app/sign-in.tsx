@@ -30,9 +30,9 @@
  * advance the state machine.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TextInput, View } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import * as Linking from "expo-linking";
 
 import { Button, Card, Screen, Text } from "@arc/ui";
@@ -59,10 +59,29 @@ export default function SignInScreen() {
   const { t } = useTranslation();
   const { signInWithMagicLink, signInWithOtpCode, verifyOtpCode } = useAuth();
 
-  const [email, setEmail] = useState("");
+  // DEV env switcher prefills `?email=&codeSent=1` so the user lands directly
+  // in the OTP code screen for the target +alias account (Real ↔ Clean swap).
+  // See `.specify/feature-specs/cross-stage/real-env-dev-tools.md` §J-RE.1.
+  const params = useLocalSearchParams<{ email?: string; codeSent?: string }>();
+  const prefilledEmail = typeof params.email === "string" ? params.email : "";
+  const prefillCodeSent = params.codeSent === "1";
+
+  const [email, setEmail] = useState(prefilledEmail);
   const [code, setCode] = useState("");
-  const [flow, setFlow] = useState<FlowState>("start");
+  const [flow, setFlow] = useState<FlowState>(
+    prefilledEmail && prefillCodeSent ? "awaitingCode" : "start"
+  );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Update if query params arrive after first render (e.g. router.replace).
+  useEffect(() => {
+    if (prefilledEmail && prefilledEmail !== email) {
+      setEmail(prefilledEmail);
+      setFlow(prefillCodeSent ? "awaitingCode" : "start");
+    }
+    // intentionally narrow deps — we only want to react to URL-provided email
+    // (react-hooks/exhaustive-deps is not enforced in this flat config)
+  }, [prefilledEmail, prefillCodeSent]);
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
@@ -205,7 +224,7 @@ function StartCard({
   const busy = isSendingCode || isSendingLink;
   return (
     <Card>
-      <View className="p-4 gap-3">
+      <View className="gap-3">
         <Text className="text-foreground">{t("auth.emailLabel")}</Text>
         <TextInput
           value={email}
@@ -256,7 +275,7 @@ function CodeInputCard({
 }) {
   return (
     <Card>
-      <View className="p-4 gap-3">
+      <View className="gap-3">
         <Text className="text-foreground text-lg font-semibold">{t("auth.codeSentTitle")}</Text>
         <Text className="text-muted">{t("auth.codeSentBody", { email })}</Text>
 
@@ -291,7 +310,7 @@ function CodeInputCard({
 function LinkSentCard({ email, onBack, t }: { email: string; onBack: () => void; t: I18nT }) {
   return (
     <Card>
-      <View className="p-4 gap-3">
+      <View className="gap-3">
         <Text className="text-foreground text-lg font-semibold">{t("auth.linkSentTitle")}</Text>
         <Text className="text-muted">{t("auth.linkSentBody", { email })}</Text>
         <Button variant="ghost" onPress={onBack}>

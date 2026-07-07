@@ -2,7 +2,7 @@
  * Watchlist — J8 Markets Tab 读模型
  *
  * 纯类型；排序与过滤在 TanStack hook 层完成。
- * 见 .specify/feature-specs/watchlist-stage-2.md §@arc/core additions
+ * 见 .specify/feature-specs/stage-2/watchlist-stage-2.md §@arc/core additions
  */
 
 import type { Decimal } from "decimal.js";
