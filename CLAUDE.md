@@ -11,12 +11,15 @@
 > **按需阅读**：
 >
 > - `docs/project-background.md` — 产品定位、市场、风险登记册
-> - `docs/development-plan.md` — 阶段拆解、模型分工、Skill 应用时机
-> - `docs/preflight-checklist.md` — Stage 0 准备清单
-> - `docs/legal-risk-map.md` — 法律风险与文案合规
+> - `docs/development-plan.md` — 阶段拆解、模型分工、Skill 应用时机（早期章节部分已被 ADR 取代，以文内横幅为准）
+> - `docs/legal-risk-map.md` — 法律风险与文案合规（数据源授权见 ADR 017）
 > - `docs/adr/` — 关键架构决策记录
+> - `docs/testing-strategy.md` — 分层测试选型（写 spec Test plan 时必读）
+> - `docs/dev-seed-cheatsheet.md` — UAT / 手测 seed 命令速查
 > - `docs/ux/README.md` — UX 交互模式库索引（Sheet/Overlay、导航语义等；做模态/流程时必读）
 > - `.specify/feature-specs/<stage-dir>/<name>.md` — 当前 feature 的契约（索引见 `feature-specs/README.md`）
+> - `.specify/polish-backlog.md` — 跨 Block 的非阻塞 polish 待办（打磨类工作起手先扫）
+> - `docs/preflight-checklist.md` — Stage 0 准备清单（已完成，存档参考）
 >
 > **会话结束 / 上下文将满时**：更新 `session-state.md`（Cursor：`/checkpoint`；Claude Code：`.claude/skills/checkpoint/`），下一会话才能无缝接续。多工具入口见 `AGENTS.md`。
 
@@ -27,7 +30,7 @@
 - **名称**: Arc（中文副标题：循迹）
 - **定位**: 全球资产配置追踪器 & 再平衡助手
 - **目标用户**: 在 A股 / 港股 / 美股 / 公募基金 / 加密货币 中持有 ≥3 类资产、跨 ≥2 个平台的中国投资者
-- **当前阶段**: Stage 0 → Stage 1（Pre-flight → MVP-0 骨架）
+- **当前阶段**: Stage 3 → Stage 4 过渡（Stage 3 全量已合 `main`，PR #10；当前 = EAS dev build 上机 + 自用 ≥4 周。**live 进度以 `.specify/session-state.md` 为准，本行只标大阶段**）
 - **开发节奏**: 兼职，6-12h/周；详细里程碑见 `docs/development-plan.md §七`
 
 ---
@@ -86,23 +89,23 @@
 
 ## 四、技术栈
 
-| 层        | 选型                                                          |
-| :-------- | :------------------------------------------------------------ |
-| 跨端框架  | Expo SDK 55 + Expo Router（file-based）                       |
-| 语言      | TypeScript strict                                             |
-| 样式      | Uniwind + Tailwind CSS v4                                     |
-| UI 组件   | HeroUI Native (OSS) + HeroUI Native Pro + 自建 finance/charts |
-| 状态管理  | Zustand + TanStack Query                                      |
-| 表单      | React Hook Form + Zod                                         |
-| 后端      | Supabase（PostgreSQL + Auth + RLS + Storage）                 |
-| ORM       | Drizzle ORM                                                   |
-| 图表      | Web: Recharts；RN: Victory Native                             |
-| i18n      | i18next + react-i18next                                       |
-| 日期/时区 | date-fns + date-fns-tz                                        |
-| 金额计算  | **decimal.js（绝不用 number）**                               |
-| 本地存储  | MMKV (RN) / IndexedDB (Web)                                   |
-| 错误监控  | Sentry                                                        |
-| 分析      | PostHog                                                       |
+| 层        | 选型                                                                                |
+| :-------- | :---------------------------------------------------------------------------------- |
+| 跨端框架  | Expo SDK 55 + Expo Router（file-based）                                             |
+| 语言      | TypeScript strict                                                                   |
+| 样式      | Uniwind + Tailwind CSS v4                                                           |
+| UI 组件   | HeroUI Native (OSS) + HeroUI Native Pro + 自建 finance/charts                       |
+| 状态管理  | Zustand + TanStack Query                                                            |
+| 表单      | React Hook Form + Zod                                                               |
+| 后端      | Supabase（PostgreSQL + Auth + RLS + Storage）                                       |
+| ORM       | Drizzle ORM                                                                         |
+| 图表      | 统一走 `@arc/ui/charts` wrappers（HeroUI Native Pro charts + Skia；roadmap 决策 6） |
+| i18n      | i18next + react-i18next                                                             |
+| 日期/时区 | date-fns + date-fns-tz                                                              |
+| 金额计算  | **decimal.js（绝不用 number）**                                                     |
+| 本地存储  | MMKV (RN) / IndexedDB (Web)                                                         |
+| 错误监控  | Sentry                                                                              |
+| 分析      | PostHog                                                                             |
 
 ---
 
@@ -233,12 +236,12 @@ const gainColor = "#00A86B";
 
 ### 质量保障 Skills
 
-| Skill                     | 何时用                             |
-| :------------------------ | :--------------------------------- |
-| `find-bugs`               | 提交前审查分支变更中的 bug         |
-| `security-best-practices` | Stage 2 末、Stage 4 上架前安全审查 |
-| `code-review`             | 任何涉及金融计算或支付的 PR        |
-| `smart-commit`            | 生成规范 commit message、推送代码  |
+| Skill                     | 何时用                                    |
+| :------------------------ | :---------------------------------------- |
+| `find-bugs`               | 提交前审查分支变更中的 bug                |
+| `security-best-practices` | Stage 2 末、Stage 4 上架前安全审查        |
+| `code-review`             | 任何涉及金融计算或支付的 PR               |
+| `checkpoint`              | 会话结束 / 上下文将满时更新 session-state |
 
 ### 工具 Skills（按需）
 
@@ -273,7 +276,7 @@ pnpm --filter @arc/db generate   # 生成 Drizzle migration
 pnpm --filter @arc/db push       # 推送 schema 到 Supabase
 
 # Dev UAT 种子数据（Layer 4 — 见 docs/dev-seed-cheatsheet.md；DEV_SEED_EMAIL in .env.dev.local）：
-pnpm seed:default | pnpm seed:ds:happy | pnpm seed:ds:first-day | …  # 短命令
+pnpm seed:default | pnpm seed:ds:gain | pnpm seed:ds:first-day | …  # 短命令（全表见 docs/dev-seed-cheatsheet.md）
 # IDE: Cmd+Shift+P → Tasks: Run Task → Seed: …
 # Cursor chat: /seed-dev + 场景名
 ```
