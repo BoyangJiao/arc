@@ -44,6 +44,8 @@ export const watchlistItems = pgTable(
     uniqueIndex("watchlist_items_user_asset_uniq").on(t.userId, t.assetId),
     // 默认排序索引：按用户 + 加入时间 desc
     index("watchlist_items_user_added_at_idx").on(t.userId, t.addedAt.desc()),
+    // FK covering index（asset 级联删除 / join 查询）
+    index("watchlist_items_asset_id_idx").on(t.assetId),
   ]
 );
 

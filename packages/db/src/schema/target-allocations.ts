@@ -55,6 +55,8 @@ export const targetAllocations = pgTable(
   (t) => [
     uniqueIndex("target_allocations_portfolio_asset_uniq").on(t.portfolioId, t.assetId),
     index("target_allocations_portfolio_id_idx").on(t.portfolioId),
+    // FK covering index（asset join / 引用完整性检查）
+    index("target_allocations_asset_id_idx").on(t.assetId),
     check(
       "target_allocations_percent_range",
       sql`${t.targetPercent} >= 0 AND ${t.targetPercent} <= 100`
