@@ -26,6 +26,7 @@
     },
     "production": {},
     "revyl-build": {
+      "developmentClient": true,
       "distribution": "internal",
       "ios": {
         "simulator": true
