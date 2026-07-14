@@ -255,7 +255,6 @@ export default function AssetDetailScreen() {
                 : undefined
             }
             chartData={chartData}
-            range={range}
             periodChangeLabel={t(`portfolio.periodChangeByRange.${range}`)}
             chartPeriodLoading={chartPeriodLoading}
             chartPeriodUnavailable={chartStatus === "error"}

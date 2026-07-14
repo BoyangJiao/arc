@@ -20,7 +20,6 @@ import {
   typographyClass,
   useBusinessClasses,
   type ChartPoint,
-  type TimeRange,
 } from "@arc/ui";
 
 import { formatMoney, currencySymbol } from "../lib/format-money";
@@ -30,7 +29,6 @@ export interface AssetDetailPriceHeaderProps {
   readonly disclaimer: string;
   readonly quote: { price: Decimal; currency: Currency; changePercent: Decimal | null } | undefined;
   readonly chartData: ReadonlyArray<ChartPoint>;
-  readonly range: TimeRange;
   readonly periodChangeLabel: string;
   readonly chartPeriodLoading: boolean;
   /** Historical chart failed — show em dash instead of daily-change fallback. */
@@ -46,7 +44,6 @@ export function AssetDetailPriceHeader({
   disclaimer,
   quote,
   chartData,
-  range,
   periodChangeLabel,
   chartPeriodLoading,
   chartPeriodUnavailable,

@@ -5,9 +5,7 @@
 import {
   AdapterError,
   NetworkError,
-  NotFoundError,
   NotImplementedError,
-  ParseError,
   QuotaError,
   RateLimitError,
 } from "../errors";

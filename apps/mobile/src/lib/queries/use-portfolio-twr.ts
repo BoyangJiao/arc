@@ -4,7 +4,7 @@
 
 import { useMemo } from "react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { returns, type Transaction } from "@arc/core";
+import { returns } from "@arc/core";
 import type { TimeRange } from "@arc/ui";
 
 import { resolvePortfolioValuesByDay } from "../resolve-portfolio-boundary-values";

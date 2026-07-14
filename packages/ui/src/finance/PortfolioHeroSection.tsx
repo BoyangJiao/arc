@@ -23,14 +23,7 @@ import {
 } from "../charts";
 import { Skeleton, Text } from "../primitives";
 import { useBusinessClasses } from "../tokens/business-context";
-import {
-  TYPO_CAPTION,
-  TYPO_CHANGE_LG,
-  TYPO_DISPLAY,
-  TYPO_EMPTY_MESSAGE,
-  TYPO_LABEL,
-  typographyClass,
-} from "../tokens/typography";
+import { TYPO_CAPTION, TYPO_DISPLAY, TYPO_LABEL, typographyClass } from "../tokens/typography";
 
 export interface PortfolioHeroSectionProps {
   readonly totalValueTitle: string;

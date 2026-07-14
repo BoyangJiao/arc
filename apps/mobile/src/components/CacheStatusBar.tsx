@@ -20,7 +20,6 @@ import { View } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { useTranslation } from "@arc/i18n";
 import { Text } from "@arc/ui";
-import { TYPO_CAPTION } from "@arc/ui";
 
 interface CacheStatusBarProps {
   /** ISO timestamp string of when data was last fetched. Null = not yet loaded. */
