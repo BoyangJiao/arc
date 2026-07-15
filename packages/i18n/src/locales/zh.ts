@@ -768,6 +768,17 @@ export const zh = {
     emptyTitle: "暂无消息",
     emptyDescription: "这里会显示价格异动与提醒记录。",
   },
+  revylAuth: {
+    title: "测试登录",
+    signingIn: "正在使用测试凭据登录…",
+    success: "登录成功，正在跳转…",
+    rejected: {
+      disabled: "此构建未启用测试登录。",
+      missing_credentials: "缺少测试凭据。",
+      email_not_allowlisted: "该账号不允许使用测试登录。",
+      auth_failed: "测试登录失败，请检查测试凭据。",
+    },
+  },
   ai: {
     title: "AI 助手",
     heroTitle: "AI 助手",

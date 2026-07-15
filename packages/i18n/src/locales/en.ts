@@ -783,6 +783,17 @@ export const en = {
     emptyTitle: "No messages yet",
     emptyDescription: "Price alerts and reminders will show up here.",
   },
+  revylAuth: {
+    title: "Test sign-in",
+    signingIn: "Signing in with test credentials…",
+    success: "Signed in. Redirecting…",
+    rejected: {
+      disabled: "Test sign-in is disabled in this build.",
+      missing_credentials: "Missing test credentials.",
+      email_not_allowlisted: "This account is not allowed for test sign-in.",
+      auth_failed: "Test sign-in failed. Check the test credentials.",
+    },
+  },
   ai: {
     title: "AI Assistant",
     heroTitle: "AI Assistant",

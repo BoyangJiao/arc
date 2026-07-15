@@ -28,6 +28,9 @@
     "revyl-build": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_REVYL_BYPASS": "true"
+      },
       "ios": {
         "simulator": true
       },
