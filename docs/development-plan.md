@@ -57,6 +57,9 @@
 
 ## 二、技术栈定稿
 
+> ➡️ **本节已被取代**（2026-07 标注）：现行技术栈以 **CLAUDE.md §四** 为准。本节保留作决策史。
+> 已知偏差：实际为 Expo SDK 55 + **Uniwind**（非 NativeWind v4）；UI 走 HeroUI Native OSS + Pro（ADR 002/006）；图表统一走 `@arc/ui/charts` wrappers（HeroUI Pro + Skia，roadmap 决策 6，非 Recharts/Victory Native）。
+
 | 层              | 选型                                           | 理由                                                        |
 | :-------------- | :--------------------------------------------- | :---------------------------------------------------------- |
 | **跨端框架**    | Expo SDK 53+ + Expo Router                     | 单代码库出 iOS/Android/Web，原生模块生态成熟                |
@@ -85,6 +88,8 @@
 ---
 
 ## 三、Monorepo 结构
+
+> ➡️ **本节已被取代**（2026-07 标注）：现行结构以 **CLAUDE.md §五** 为准（`packages/ui` 分层已按 ADR 006 演进为 primitives / primitives-pro / wrappers / navigation / finance / charts / avatar）。下图中根目录 `delta/` 为项目旧名，现为 `arc/`。
 
 ```
 delta/
@@ -323,6 +328,9 @@ fx_rate (
 ---
 
 ## 六、数据源选型
+
+> ➡️ **本节已被取代**（2026-07 标注）：数据源现状以 **ADR 011（多源 fallback + AKShare wrapper）** 与 **ADR 017（数据治理管道 + 商用授权闸门）** 为准。本节保留作决策史。
+> 关键偏差：① Tushare / AKShare / 聚宽经 2026-06-18 实证均为**非商用授权**，仅限 dev / 自用，下表「✅ 合规付费」结论**不成立**；② 天天基金 adapter 已放弃（roadmap 决策 9）；③ US 实时已切 Finnhub、历史走 AKShare→Tushare→AV fallback；④ §6.4 成本预估随之失效，上架需专项采购 CN 公募基金历史净值（Choice / iFinD）。
 
 ### 6.1 行情数据源对比
 
@@ -737,13 +745,6 @@ export interface FxAdapter {
 | `keybindings-help`         | 个人偏好；想自定义 Claude Code 快捷键时                       |          任何阶段           |
 
 ---
-
-| UI 微调 / 文案 / a11y | **Haiku** | Sonnet | — |
-| 依赖升级 / typo / lint 修复 | **Haiku** | Sonnet | — |
-| 文档编写 | Sonnet | Haiku | Opus（成本不值） |
-| Prompt engineering（AI 模块） | **Opus** | Sonnet | Haiku |
-| 合规 / 法律风险审查 | **Opus** | Sonnet | Haiku |
-| 安全 review | **Opus** | Sonnet | Haiku |
 
 ## 十、测试策略
 

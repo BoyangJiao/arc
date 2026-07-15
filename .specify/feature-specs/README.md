@@ -32,29 +32,37 @@
 
 > 触发于 Stage 2 中后期，影响 `@arc/ui` 与全局 token 纪律；不绑定单一 Stage gate。
 
-| 序  | 文件                                                           | 状态 | 触发       | 说明                        |
-| :-: | :------------------------------------------------------------- | :--- | :--------- | :-------------------------- |
-|  1  | [token-polish-sprint.md](./cross-stage/token-polish-sprint.md) | —    | 2026-05-19 | ADR 008 Token Polish Sprint |
-|  2  | [component-audit.md](./cross-stage/component-audit.md)         | —    | 2026-05-19 | @arc/ui 四方组件 audit      |
-|  3  | [ui-polish-handoff.md](./cross-stage/ui-polish-handoff.md)     | —    | 2026-05-19 | UI Polish 交接与 Batch 计划 |
+| 序  | 文件                                                           | 状态        | 触发       | 说明                                            |
+| :-: | :------------------------------------------------------------- | :---------- | :--------- | :---------------------------------------------- |
+|  1  | [token-polish-sprint.md](./cross-stage/token-polish-sprint.md) | —           | 2026-05-19 | ADR 008 Token Polish Sprint                     |
+|  2  | [component-audit.md](./cross-stage/component-audit.md)         | —           | 2026-05-19 | @arc/ui 四方组件 audit                          |
+|  3  | [ui-polish-handoff.md](./cross-stage/ui-polish-handoff.md)     | —           | 2026-05-19 | UI Polish 交接与 Batch 计划                     |
+|  4  | [real-env-dev-tools.md](./cross-stage/real-env-dev-tools.md)   | Implemented | 2026-05-25 | Real / Clean 双环境 DEV 工具（dogfooding 前置） |
 
 ### Stage 3 — MVP-1 自用版
 
 > 总路线图：[stage-3-roadmap.md](./stage-3/stage-3-roadmap.md)（Accepted 2026-05-19）
 
-| 序  | Block | 文件                                                                                   | 状态     | 创建       | 说明                                                 |
-| :-: | :---- | :------------------------------------------------------------------------------------- | :------- | :--------- | :--------------------------------------------------- |
-|  0  | —     | [stage-3-roadmap.md](./stage-3/stage-3-roadmap.md)                                     | Accepted | 2026-05-19 | 依赖排序 + 模型路由 + 风险登记                       |
-|  1  | A     | [tushare-adapter-stage-3.md](./stage-3/tushare-adapter-stage-3.md)                     | Accepted | 2026-05-19 | CN 行情（Tushare + AKShare reshape）                 |
-|  2  | A     | [coingecko-adapter-stage-3.md](./stage-3/coingecko-adapter-stage-3.md)                 | Accepted | 2026-05-20 | CRYPTO 行情（Block A 漏单收口）                      |
-|  3  | B     | [multi-portfolio-stage-3.md](./stage-3/multi-portfolio-stage-3.md)                     | Accepted | 2026-05-20 | 多组合管理 + 跨组合现金划转                          |
-|  4  | C     | [holdings-and-transactions-stage-3.md](./stage-3/holdings-and-transactions-stage-3.md) | Accepted | 2026-05-20 | 持仓表 / 资产详情 / 图表 / 跨市场录入                |
-|  5  | D     | [twr-stage-3.md](./stage-3/twr-stage-3.md)                                             | Draft    | 2026-05-24 | TWR / MWR 算法                                       |
-|  6  | D     | [performance-attribution-stage-3.md](./stage-3/performance-attribution-stage-3.md)     | Draft    | 2026-05-24 | 业绩归因                                             |
-|  7  | D     | [drawdown-stage-3.md](./stage-3/drawdown-stage-3.md)                                   | Draft    | 2026-05-24 | 回撤分析                                             |
-|  8  | D     | [insights-enrichment-stage-3.md](./stage-3/insights-enrichment-stage-3.md)             | Accepted | 2026-06-15 | Insights 扩充（敞口/基准/风险卡 + 图表复用）         |
-|  9  | D     | [benchmark-comparison-stage-3.md](./stage-3/benchmark-comparison-stage-3.md)           | Draft    | 2026-06-16 | 组合 vs 基准 + beta（用户可选基准 · 需指数 adapter） |
-| 10  | D     | [realized-pnl-fx-stage-3.md](./stage-3/realized-pnl-fx-stage-3.md)                     | Draft    | 2026-06-16 | 收益报告「已实现」列（历史 FX）                      |
+| 序  | Block | 文件                                                                                   | 状态                 | 创建       | 说明                                                 |
+| :-: | :---- | :------------------------------------------------------------------------------------- | :------------------- | :--------- | :--------------------------------------------------- |
+|  0  | —     | [stage-3-roadmap.md](./stage-3/stage-3-roadmap.md)                                     | Accepted             | 2026-05-19 | 依赖排序 + 模型路由 + 风险登记                       |
+|  1  | A     | [tushare-adapter-stage-3.md](./stage-3/tushare-adapter-stage-3.md)                     | Implemented          | 2026-05-19 | CN 行情（Tushare + AKShare reshape）                 |
+|  2  | A     | [coingecko-adapter-stage-3.md](./stage-3/coingecko-adapter-stage-3.md)                 | Implemented          | 2026-05-20 | CRYPTO 行情（Block A 漏单收口）                      |
+|  3  | B     | [multi-portfolio-stage-3.md](./stage-3/multi-portfolio-stage-3.md)                     | Implemented          | 2026-05-20 | 多组合管理 + 跨组合现金划转                          |
+|  4  | C     | [holdings-and-transactions-stage-3.md](./stage-3/holdings-and-transactions-stage-3.md) | Implemented          | 2026-05-20 | 持仓表 / 资产详情 / 图表 / 跨市场录入                |
+|  5  | D     | [twr-stage-3.md](./stage-3/twr-stage-3.md)                                             | Implemented（P1+P2） | 2026-05-24 | TWR / MWR 算法（Phase 3 雪球对标待自用数据）         |
+|  6  | D     | [performance-attribution-stage-3.md](./stage-3/performance-attribution-stage-3.md)     | Accepted（未实施）   | 2026-05-24 | 业绩归因                                             |
+|  7  | D     | [drawdown-stage-3.md](./stage-3/drawdown-stage-3.md)                                   | Accepted             | 2026-05-24 | 回撤分析（`/insights/drawdown` 详情页已落地）        |
+|  8  | E     | [pnl-analysis-insights.md](./stage-3/pnl-analysis-insights.md)                         | Implemented          | 2026-05-30 | 盈亏分析 Insights 模块（时段/累计/排行/MWR）         |
+|  9  | E     | [block-e-experience-polish-stage-3.md](./stage-3/block-e-experience-polish-stage-3.md) | Implemented          | 2026-05-31 | 份额脱敏收口 + Inbox 空态 + AI/订阅占位              |
+| 10  | F     | [csv-export-stage-3.md](./stage-3/csv-export-stage-3.md)                               | Implemented          | 2026-06-01 | CSV 导出（RFC 4180 + Decimal 全精度）                |
+| 11  | F     | [csv-import-stage-3.md](./stage-3/csv-import-stage-3.md)                               | Implemented          | 2026-06-01 | CSV 导入（三层 profile 架构 + round-trip AC）        |
+| 12  | F     | [offline-cache-stage-3.md](./stage-3/offline-cache-stage-3.md)                         | Implemented          | 2026-06-02 | 离线只读缓存（MMKV + persist-client）                |
+| 13  | D     | [insights-enrichment-stage-3.md](./stage-3/insights-enrichment-stage-3.md)             | Implemented          | 2026-06-15 | Insights 扩充（敞口/基准/风险卡 + 图表复用）         |
+| 14  | D     | [benchmark-comparison-stage-3.md](./stage-3/benchmark-comparison-stage-3.md)           | Implemented          | 2026-06-16 | 组合 vs 基准（指数对标 #9 已落地；beta 仍 deferred） |
+| 15  | D     | [realized-pnl-fx-stage-3.md](./stage-3/realized-pnl-fx-stage-3.md)                     | Draft                | 2026-06-16 | 收益报告「已实现」列（历史 FX）                      |
+
+> **状态口径**：本表「状态」列反映 **as-built 实际落地状态**（Stage 3 已全量合 `main`，PR #10）。个别 spec 文件头部的 Status 字段可能滞后于此表，以此表为准；下次触碰该 spec 时顺手回签。
 
 ---
 
