@@ -26,6 +26,18 @@
     },
     "production": {},
     "revyl-build": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_REVYL_BYPASS": "true"
+      },
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "revyl-dev": {
       "developmentClient": true,
       "distribution": "internal",
       "env": {
