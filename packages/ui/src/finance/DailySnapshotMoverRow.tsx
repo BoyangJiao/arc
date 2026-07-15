@@ -8,7 +8,7 @@ import type Decimal from "decimal.js";
 
 import { Text } from "../primitives/Text";
 import { useBusinessClasses } from "../tokens/business-context";
-import { TYPO_CAPTION, TYPO_METRIC_SM, TYPO_SYMBOL, typographyClass } from "../tokens/typography";
+import { TYPO_SYMBOL, typographyClass } from "../tokens/typography";
 
 import type { DailySnapshotAssetDelta } from "./DailySnapshotCard";
 

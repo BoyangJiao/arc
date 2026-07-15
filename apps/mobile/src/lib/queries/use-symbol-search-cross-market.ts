@@ -5,7 +5,7 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { Market } from "@arc/core";
 
-import { AkshareSearchNotConfiguredError, searchSymbolsForMarket } from "../market-data";
+import { searchSymbolsForMarket } from "../market-data";
 import { useDebouncedValue } from "../use-debounced-value";
 
 export const useSymbolSearchCrossMarket = (market: Market, query: string) => {

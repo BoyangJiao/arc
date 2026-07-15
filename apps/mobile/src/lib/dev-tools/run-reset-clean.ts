@@ -61,7 +61,6 @@ interface ResetSummary {
   clearedAsyncStorageKeys: ReadonlyArray<string>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const resetCleanEnv = async (_queryClient: unknown): Promise<ResetSummary> => {
   const {
     data: { user },

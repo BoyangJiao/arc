@@ -1,3 +1,10 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - "apps/*"
+  - "packages/*"
+
+# Dependency postinstall/build script allowlist (pnpm v10 blocks by default).
+# Keep in sync with `pnpm.onlyBuiltDependencies` in root package.json.
+allowBuilds:
+  heroui-native-pro: true
+  heroui-pro: true
+  "@shopify/react-native-skia": true

@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import Decimal from "decimal.js";
 
-import { computeRebalance, validateTargetAllocations, type DeviationItem } from "../src/rebalance";
+import { computeRebalance, validateTargetAllocations } from "../src/rebalance";
 import { decimalsForRounding, roundShares } from "../src/rebalance/rounding";
 import type {
   Currency,

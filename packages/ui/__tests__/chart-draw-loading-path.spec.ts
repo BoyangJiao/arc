@@ -76,7 +76,6 @@ describe("chart-draw-loading-path", () => {
     const points = buildChartDrawLoadingPoints(width, height);
 
     const cx = (bounds.left + bounds.right) / 2;
-    const cy = (bounds.top + bounds.bottom) / 2;
     const innerW = bounds.right - bounds.left;
     const innerH = bounds.bottom - bounds.top;
 
