@@ -13,46 +13,49 @@
 
 ## Last updated
 
+- **2026-07-15 by Claude Code (Fable 5)** — **换机后全仓地毯式排查 + 修复批次（PR #13 + docs PR #12 均已合入）**。排查结论：**换机无损坏**（typecheck/lint/tests/lint:copy 全绿、husky 在位、无密钥入库、铁律零违规、live DB 数据完好）。落地：lint 17 warnings 清零；删 `tools/spike-heroui-native/` + `generate-stage1-design-pen.mjs`（git 历史留档）；换机适配入库（allowBuilds 收敛 + `.nvmrc` + `install-heroui-pro.sh`）；**revyl-build profile 加 `developmentClient`**（原配置 hot reload 连不上 Metro）；**migration 0017（RLS policy 合并 + FK 索引）已应用 live**，advisor `multiple_permissive_policies` 清零（R8 有意保留）；**远端 11 个已合并分支全删，仓库只剩 `main`**；Revyl CLI v0.1.51 已装 + auth 完成。发现：Supabase leaked password protection 为 **Pro 专属**，Free plan 无法开启（advisor 警告不可消，已确认忽略）。**BoyangJiao 决策（2026-07-15，调整锁定时序，已认可）**：Stage 4 前先做**全量 UX/UI 打磨**；顺序 = Revyl Atlas 全量基线 → 打磨（Atlas 当覆盖清单）→ Atlas 回归 → **阿里云迁移规划**；onboarding 设计放**大陆 Auth 方案锁定后**（第一屏=注册登录，Auth 不定设计必重做）；TestFlight 在打磨 + onboarding v1 后、**不等迁移完成**（TestFlight 不需备案；中国区 App Store 上架需 App 备案 = 迁移是硬前置）；**自用上机用 preview build（非 dev build）**，与 Atlas/打磨并行；Apple Developer 账号已注册 ✅。
 - **2026-07-08 by Claude Code (remote)** — **文档系统 review + 修复批次**（branch `claude/docs-review-optimization-1so23n`）。修复：project-background 未闭合代码块（§3.2/3.3 含 R7/R8 此前渲染为代码块）；**ADR 017 授权结论回写** legal-risk-map L3/§七 + 风险登记册 R1（旧「Tushare Pro 已含授权」口径清除）；CLAUDE.md 阶段快照（Stage 0→1 更正为 Stage 3→4）/图表栈/seed 命令/skill 表/阅读地图；development-plan §二§三§六 加「已被取代」横幅 + 删孤儿表格碎片；feature-specs README 补 6 份缺失 spec + 状态列对齐 as-built；本文件瘦身（722 行 → 精简版，全量存档零损失）。**同会话另交付**：全部 .specify/docs 文档的 16 项发现 review + 架构/算法/数据源选型按 2026-07 标准的 re-review（结论见会话记录；未修项按优先级列入 §Open items #8）。
 - **2026-07-05 by Claude Code (remote)** — **全项目深度 code review + 修复批次**（PR #11，已合入）。9 组修复要点：FX 缺失不再静默 1:1（`core/fx` 真实现 + `missingQuote/FxAssetIds` 暴露 + 首页提示）；computeHoldings 防御排序 + 超卖不 throw；XIRR 容差尺度相关；daily-snapshot Edge Function 重构（依赖注入 + 10 deno test；修交易未排序 / supabase-js 1000 行静默截断 / cost basis 含 fee 口径统一）；txFingerprint 改 FNV-1a；图表色板集中 `tokens/chart-palette.ts`；i18n `zh satisfies typeof en`；akshare wrapper 加固；风险登记册 +R7/R8（均上架 blocker）。验证：core 238 / ds 171 / ui 40 / mobile 169 / functions 10 全绿。**有意不动**：性能项（规模到了再做）、R7/R8 架构迁移（绑定阿里云迁移轮）、assets 元数据 enrich（待 BoyangJiao 决策）。
-- **2026-06-18 by Opus 4.8** — 风险/回撤拆两个详情页 + `/insights/trade-stats` + **数据源大调研（Tushare/akshare/聚宽全非商用 → ADR 017 + 发版闸门）** + 美股历史切 akshare 兜底（registry US 历史 akshare→tushare→AV；Finnhub 仍管实时）+ **指数对标 #9 全栈**（bucketReturn/calendarBuckets + benchmark 目录 ETF 代理 + `/insights/benchmark` 详情页）。踩坑：app 读 `apps/mobile/.env`（非 root `.env.dev.local`）；`AKSHARE_WRAPPER_TOKEN` Vercel Sensitive 不可读回，已轮换。
 
 ## You are here
 
-| Field                 | Value                                                                                                                                                                                                     |
-| :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 → Stage 4 过渡** — Stage 3 全量已合 `main`（**PR #10 merged**，merge commit `d314314`）；PR #11（code review 修复）已合入；EAS dev build 配置已落地（`46370e6`）；Revyl 云测试配置（`f34fa69`） |
-| **Next step**         | 锁定时序第 3–4 步：**EAS dev build 装真机 → 自用 ≥4 周**（真实场景 + 攒 TWR 雪球对标数据 + 记 bug）。注：原时序第 5 步（PR #10 合 main）已提前完成                                                        |
-| **Branch**            | `main`（`dev/stage-3` 已合并）；文档修复分支 `claude/docs-review-optimization-1so23n` 待 review                                                                                                           |
-| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                                                        |
-| **Out of scope**      | Block E 价格异动后台 job、Finnhub Vercel proxy、大陆 Auth（ADR 012 P1）实现 — 全部绑定**阿里云迁移轮**；多平台 CSV profile（按真实模板逐个加，架构 seam 已就位）                                          |
+| Field                 | Value                                                                                                                                                                                                      |
+| :-------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **Stage 3 收尾 → 全量 UX/UI 打磨**（BoyangJiao 2026-07-15 决策：Stage 4 前插入）— PR #10–#13 全部已合 `main`；换机排查修复批次完成                                                                         |
+| **Next step**         | 并行两条线：① **preview build 上机自用**（`eas device:create` → `eas build -p ios --profile preview --local`，4 周时钟启动）② **Revyl Atlas 全量基线**（`revyl build` → journey 测试喂 Atlas）→ UX/UI 打磨 |
+| **Branch**            | `main`（远端分支已全部清理，仅剩 main）                                                                                                                                                                    |
+| **Context slug**      | `twr`                                                                                                                                                                                                      |
+| **Context bundle**    | `.specify/codectx/twr.xml`                                                                                                                                                                                 |
+| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                                                         |
+| **Out of scope**      | Block E 价格异动后台 job、Finnhub Vercel proxy、大陆 Auth（ADR 012 P1）实现 — 全部绑定**阿里云迁移轮**；多平台 CSV profile（按真实模板逐个加，架构 seam 已就位）                                           |
 
-**BoyangJiao 外部 todo**：注册 **Apple Developer 账号（$99/年）** — dev build 装真机必需（若已注册，checkpoint 时删本行）。
-
-## 🗺️ 时序（BoyangJiao 锁定 2026-06-02；改动需其同意）
+## 🗺️ 时序（BoyangJiao 锁定 2026-06-02；2026-07-15 认可调整；改动需其同意）
 
 ```
-1. Block F UAT ✅ → 2. UI/UX 地基打磨（80 分即停）✅ → 3. EAS dev build 上机 ← 当前
-→ 4. 自用 ≥4 周 + 雪球对标 + 记 bug → 5. Stage 3 收尾 PR #10 合 main ✅（已提前）
-→ 6. Stage 4：onboarding（第一件）→ IAP / TestFlight / 阿里云迁移 / 法务
+1. Block F UAT ✅ → 2. UI/UX 地基打磨 ✅ → 3. Stage 3 全量合 main（PR #10–13）✅
+→ 4. preview build 上机自用（4 周时钟）＋ Revyl Atlas 全量基线（两线并行）← 当前
+→ 5. 全量 UX/UI 打磨（Atlas 覆盖清单 + 自用反馈驱动）→ 打磨完 Atlas 回归
+→ 6. 阿里云迁移规划（ADR：架构 / 大陆 Auth / 备案主体）→ onboarding 设计（Auth 方案锁定后）
+→ 7. Stage 4：onboarding 实现 → TestFlight（不等迁移完成）→ IAP → 迁移实施 + App 备案 → 中国区上架
 ```
 
-- 自用 = dev build 上机（Expo Go 不可用：MMKV/NitroModules 不支持），不是 TestFlight。
-- UI/UX 第二波（使用驱动精修）依赖 4 周自用数据，自用后再做。
+- **自用 = preview build**（release、JS 内嵌、独立运行）；dev build 无 bundle 必须连 Metro，只用于开发。Expo Go 不可用（MMKV/NitroModules）。
+- **中国区 App Store 上架强制 App 备案（需国内服务器）→ 阿里云迁移是上架硬前置**；TestFlight 内测不需要备案号，可先行。
+- UI/UX 第二波（使用驱动精修）依赖 4 周自用数据，与第 5 步打磨合流。
 
 ## ⏸️ 有意推后（不是漏做）
 
-| 项                                | 为何推后                                                             | 目标节点             |
-| :-------------------------------- | :------------------------------------------------------------------- | :------------------- |
-| Inbox 推送 + 价格异动后台         | 需 Edge Function+cron+APNs；迁移前不建新 Vercel                      | 阿里云迁移轮         |
-| 订阅打通 + 支付（IAP/Stripe）     | 上架级工程；需自用反馈 + 计价策略                                    | Stage 4              |
-| new user onboarding               | 自用不需引导；设计应被自用困惑点驱动                                 | Stage 4 开头         |
-| UI/UX 第二波（使用驱动精修）      | 需 4 周自用数据                                                      | Stage 3 末 / Stage 4 |
-| TestFlight                        | 给外部测试者的渠道，自用不需要                                       | Stage 4              |
-| 收益报告「已实现」列              | `realized-pnl-fx-stage-3.md`（Draft）；需历史 FX-at-sale 查询        | 新会话（focused）    |
-| Performance Attribution 实施      | spec Accepted 未实施（`performance-attribution-stage-3.md`）         | 待排期               |
-| #12 资产位置（按平台/账户）       | 需 DB migration `transactions.account` + 录入表单；BoyangJiao 暂跳过 | 待定                 |
-| benchmark beta（vs 基准回归系数） | 指数对标已落地，beta 算法 deferred                                   | 待排期               |
+| 项                                | 为何推后                                                             | 目标节点                            |
+| :-------------------------------- | :------------------------------------------------------------------- | :---------------------------------- |
+| Inbox 推送 + 价格异动后台         | 需 Edge Function+cron+APNs；迁移前不建新 Vercel                      | 阿里云迁移轮                        |
+| 订阅打通 + 支付（IAP/Stripe）     | 上架级工程；需自用反馈 + 计价策略                                    | Stage 4                             |
+| new user onboarding               | 设计依赖大陆 Auth 方案（第一屏=注册登录）+ 自用困惑点                | 设计=Auth 方案锁定后；实现=Stage 4  |
+| UI/UX 第二波（使用驱动精修）      | 需 4 周自用数据                                                      | 与全量打磨（时序第 5 步）合流       |
+| TestFlight                        | 给外部测试者的渠道，自用不需要；内测无需 App 备案                    | 打磨 + onboarding v1 后（不等迁移） |
+| 收益报告「已实现」列              | `realized-pnl-fx-stage-3.md`（Draft）；需历史 FX-at-sale 查询        | 新会话（focused）                   |
+| Performance Attribution 实施      | spec Accepted 未实施（`performance-attribution-stage-3.md`）         | 待排期                              |
+| #12 资产位置（按平台/账户）       | 需 DB migration `transactions.account` + 录入表单；BoyangJiao 暂跳过 | 待定                                |
+| benchmark beta（vs 基准回归系数） | 指数对标已落地，beta 算法 deferred                                   | 待排期                              |
 
 ## Open items / known bugs（未修，按发现时间）
 
@@ -83,20 +86,25 @@
 - **Real/Clean env**: `DEV_*_EMAIL` 经 `app.config.ts` → `Constants.expoConfig.extra`；改 `.env` 必须 `pnpm mobile -- --clear`；`envMode=unknown` → 全部 seed 场景隐藏（by design）。
 - **Auth email (dev)**: 新 alias 首次 → **Confirm signup** 模板；returning → **Magic Link**；两模板都要 `{{ .Token }}`。
 - **app 实际读 `apps/mobile/.env`**（非 root `.env.dev.local`，后者只给 seed 脚本）。
+- **自用上机 = preview build**：dev build 无内嵌 JS，必须连 Metro（同 WiFi 或 --tunnel）；preview 与 dev build 同 bundleId（`com.arc.portfolio`）**互相覆盖**，想并存需 app variant。
+- **EAS 云构建不上传 gitignored `.env`** → `EXPO_PUBLIC_*` 要么 `eas env:push` 上云，要么 `--local` 构建（读本地 .env）。
+- **Revyl**: 装 CLI 用 `brew install RevylAI/tap/revyl`（换机必装）；Atlas 由跑过的会话/测试自动成图，无需单独操作。
 - **Portfolio Hero UAT 首选场景**: DEV FAB → 组合 → `portfolios:30-days-history`。
 - 更早的 Stage 1/2 gotchas（FixtureAdapter、OTP 8-digit、DeviationBar 高度、rebalance seed 预热等）见 archive。
 
 ## Active env / config snapshot
 
-| File               | Status                                                                                              |
-| :----------------- | :-------------------------------------------------------------------------------------------------- |
-| `apps/mobile/.env` | Supabase + Finnhub + Tushare + AKShare + `DEV_REAL_EMAIL` / `DEV_CLEAN_EMAIL`（+alias，gitignored） |
-| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`（建议 = Clean alias）                                            |
-| Resend / Supabase  | `auth.boyangjiao.xyz` Verified · SMTP `noreply@auth.boyangjiao.xyz`（Dashboard 配置，非 repo）      |
-| Migrations         | `0001`–`0013` ✅ 全部已应用（dev Supabase）                                                         |
-| AKShare wrapper    | `https://arc-akshare-wrapper.vercel.app` + `AKSHARE_WRAPPER_TOKEN` on Vercel（已轮换 06-18）        |
-| Supabase project   | `jdvlzkictwinkgcvgwew`                                                                              |
-| EAS                | dev build 配置已落地（`46370e6`：eas.json + dev client + 模拟器 profile）                           |
+| File               | Status                                                                                                                  |
+| :----------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| `apps/mobile/.env` | Supabase + Finnhub + Tushare + AKShare + `DEV_REAL_EMAIL` / `DEV_CLEAN_EMAIL`（+alias，gitignored）                     |
+| `.env.dev.local`   | `SUPABASE_DEV_*`, `DEV_SEED_EMAIL`（建议 = Clean alias）                                                                |
+| Resend / Supabase  | `auth.boyangjiao.xyz` Verified · SMTP `noreply@auth.boyangjiao.xyz`（Dashboard 配置，非 repo）                          |
+| Migrations         | `0001`–`0017` ✅ 全部已应用（0017 = RLS 合并 + FK 索引，2026-07-15 经 MCP 应用并复验 advisor）                          |
+| AKShare wrapper    | `https://arc-akshare-wrapper.vercel.app` + `AKSHARE_WRAPPER_TOKEN` on Vercel（已轮换 06-18）                            |
+| Supabase project   | `jdvlzkictwinkgcvgwew`（Free plan — leaked password protection 不可用，advisor 该警告忽略）                             |
+| EAS                | 5 profile 就绪：development / development-simulator / preview（自用）/ production / revyl-build（含 developmentClient） |
+| Revyl              | CLI v0.1.51（brew `RevylAI/tap/revyl`）已认证；config `apps/mobile/.revyl/config.yaml`（Metro 8082 / scheme arc）       |
+| Node               | `.nvmrc` = 22.22.1（换机后 `nvm use` 即可）                                                                             |
 
 ## Recent ADRs (most relevant first)
 
