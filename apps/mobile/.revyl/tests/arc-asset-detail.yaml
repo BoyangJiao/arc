@@ -1,0 +1,29 @@
+# Revyl Test Definition
+
+_meta:
+  remote_id: 1bc1608e-8645-4bf7-b4d6-e7be6c5ddac7
+  remote_version: 2
+  local_version: 2
+  last_synced_at: "2026-07-16T00:35:07+08:00"
+  checksum: 3190b8e5747c0968509b20c0fe416d7551b00401dd9ba2f73cc4d5caefa2118c
+test:
+  metadata:
+    name: arc-asset-detail
+    platform: ios
+    tags:
+      - atlas-baseline
+  build:
+    name: Arc
+  blocks:
+    - type: module_import
+      module: arc-bypass-login
+    - type: instructions
+      step_description: Scroll to the holdings list on the portfolio home and tap the first asset row to open its detail screen.
+    - type: validation
+      step_description: The asset detail screen shows a price header with a chart and a returns section.
+    - type: instructions
+      step_description: Tap through the chart time range options one by one.
+    - type: instructions
+      step_description: Tap each small ⓘ info icon on the screen to open its explanation tooltip, then dismiss it.
+    - type: instructions
+      step_description: Scroll down to the transaction history section (交易记录), view the rows, then navigate back to the portfolio home.

@@ -11,13 +11,13 @@ build:
   output: build/app.tar.gz
   platforms:
     android:
-      app_id: eb43e8e7-e41c-466d-b316-907fc115fc4e
       command: npx --yes eas-cli build --platform android --profile revyl-build --local --output build/app.apk
       output: build/app.apk
+      app_id: eb43e8e7-e41c-466d-b316-907fc115fc4e
     ios:
-      app_id: 3b442abb-ac2a-44d5-bd1d-9ee7ae3f1e09
       command: npx --yes eas-cli build --platform ios --profile revyl-build --local --output build/app.tar.gz
       output: build/app.tar.gz
+      app_id: 3b442abb-ac2a-44d5-bd1d-9ee7ae3f1e09
 defaults:
   open_browser: true
   timeout: 1800
@@ -34,3 +34,4 @@ hotreload:
       platform_keys:
         android: android
         ios: ios
+last_synced_at: "2026-07-15T16:36:39Z"

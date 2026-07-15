@@ -1,0 +1,31 @@
+# Revyl Test Definition
+
+_meta:
+  remote_id: 1ff0aa39-7f8c-4ad0-ae93-ba5b47abff5a
+  remote_version: 2
+  local_version: 2
+  last_synced_at: "2026-07-16T00:35:59+08:00"
+  checksum: 0526cf41adaaf1a043d2983a112f387bd2853c6398e31d170c7867dc1ef80a81
+test:
+  metadata:
+    name: arc-insights-overview
+    platform: ios
+    tags:
+      - atlas-baseline
+  build:
+    name: Arc
+  blocks:
+    - type: module_import
+      module: arc-bypass-login
+    - type: instructions
+      step_description: Tap the 洞察 tab in the bottom tab bar.
+    - type: validation
+      step_description: The insights screen shows sections including asset allocation with a donut chart.
+    - type: instructions
+      step_description: Press and hold on a slice of the allocation donut chart, observe the highlighted slice details, then release.
+    - type: instructions
+      step_description: Tap the rebalance card to open the rebalance action list screen, scroll through it, then go back. If a setup screen for target allocation appears instead, scroll through it and go back.
+    - type: instructions
+      step_description: Tap the market exposure tile (市场敞口) to open its detail screen with a large donut, expand its legend if possible, then go back.
+    - type: instructions
+      step_description: Tap the currency exposure tile (币种敞口) to open its detail screen, then go back to the insights screen.

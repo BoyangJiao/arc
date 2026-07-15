@@ -1,0 +1,31 @@
+# Revyl Test Definition
+
+_meta:
+  remote_id: b528e183-ece6-42f1-a449-328412d24579
+  remote_version: 2
+  local_version: 2
+  last_synced_at: "2026-07-16T00:34:49+08:00"
+  checksum: f3f96eed2a72748ea7287dc1a1ba8d15aa3db67f6db01db54c0880572318c9fc
+test:
+  metadata:
+    name: arc-portfolio-holdings
+    platform: ios
+    tags:
+      - atlas-baseline
+  build:
+    name: Arc
+  blocks:
+    - type: module_import
+      module: arc-bypass-login
+    - type: validation
+      step_description: The portfolio home shows a total value amount and an area chart below it.
+    - type: instructions
+      step_description: Press and hold on the area chart, drag horizontally to scrub it, then release.
+    - type: instructions
+      step_description: Tap each chart time range option (such as 1月, 3月, 1年) one by one, ending back on the default.
+    - type: instructions
+      step_description: Scroll down to the holdings list. Tap each market filter chip above the list (such as 全部 and market names) one at a time, ending on 全部.
+    - type: validation
+      step_description: The holdings list shows multiple asset rows with values.
+    - type: instructions
+      step_description: Tap the eye icon near the total value to hide amounts, observe the masked values, then tap it again to reveal.

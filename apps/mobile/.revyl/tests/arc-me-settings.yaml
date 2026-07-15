@@ -1,0 +1,33 @@
+# Revyl Test Definition
+
+_meta:
+  remote_id: 251e1669-8c7d-4547-8b9e-5888a416b246
+  remote_version: 2
+  local_version: 2
+  last_synced_at: "2026-07-16T00:36:34+08:00"
+  checksum: 9fa6a4940f9762141b6544df7bccb0dfb5cd11cd961575ef3c2c0efe7e24bc71
+test:
+  metadata:
+    name: arc-me-settings
+    platform: ios
+    tags:
+      - atlas-baseline
+  build:
+    name: Arc
+  blocks:
+    - type: module_import
+      module: arc-bypass-login
+    - type: instructions
+      step_description: Open the Me screen by tapping the avatar in the top corner of the portfolio home.
+    - type: validation
+      step_description: The Me screen shows entries including 设置 and a disclaimer text at the bottom (本工具不构成投资建议).
+    - type: instructions
+      step_description: Open 设置, toggle the gain/loss color scheme option (红涨绿跌), observe, toggle it back, then go back.
+    - type: instructions
+      step_description: Open the portfolios management entry (组合), view the list, then go back.
+    - type: instructions
+      step_description: Open the data management entry (数据) showing export and import, open the export screen (导出), view the confirmation info WITHOUT sharing, then go back twice.
+    - type: instructions
+      step_description: Open the subscription entry (订阅), view the tier cards, then go back.
+    - type: instructions
+      step_description: Open the inbox entry (收件箱), view the empty state, then go back and close the Me screen.

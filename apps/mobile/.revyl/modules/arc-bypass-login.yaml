@@ -1,0 +1,10 @@
+# 可复用登录模块 — Revyl auth-bypass（PR #14）。
+# 凭据来自 org global vars（--secret），不落 YAML。
+blocks:
+  - type: manual
+    step_type: navigate
+    step_description: "arc://revyl-auth?email={{global.arc-bypass-email}}&password={{global.arc-bypass-password}}"
+  - type: instructions
+    step_description: "Wait for sign-in to complete. If a welcome screen (欢迎) appears, dismiss it by tapping its primary button. The app UI is in Chinese."
+  - type: validation
+    step_description: "The bottom tab bar with tabs 组合, 行情, 洞察 is visible."
