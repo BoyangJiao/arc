@@ -44,9 +44,17 @@ export const validateRevylBypassParams = (
 ): RevylBypassValidation => {
   if (!enabled) return { ok: false, reason: "disabled" };
 
-  // URL query 中 `+` 解码为空格；邮箱不可能含空格，故还原（cyberjby+arc-clean@… 场景）。
-  const email =
-    typeof params.email === "string" ? params.email.trim().toLowerCase().replace(/ /g, "+") : "";
+  // Deep link 经过 Revyl / iOS / router 的多层编解码，email 可能以三种形态到达：
+  // 原始 `+`、被解码成空格、或残留一层 %2B 百分号编码。逐一归一化。
+  let email = typeof params.email === "string" ? params.email.trim() : "";
+  if (/%[0-9a-fA-F]{2}/.test(email)) {
+    try {
+      email = decodeURIComponent(email);
+    } catch {
+      // 保留原样，交给 allowlist 拒绝
+    }
+  }
+  email = email.toLowerCase().replace(/ /g, "+");
   const password = typeof params.password === "string" ? params.password : "";
   if (!email || !password) return { ok: false, reason: "missing_credentials" };
 

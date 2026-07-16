@@ -46,13 +46,19 @@ describe("validateRevylBypassParams", () => {
     expect(r).toEqual({ ok: true, email: CLEAN_EMAIL, password: "pw" });
   });
 
-  it("restores '+' from URL-decoded spaces in the email local part", () => {
-    // arc://revyl-auth?email=cyberjby+arc-clean@… 深链解码后 + 变空格。
-    const r = validateRevylBypassParams(
-      { email: "cyberjby arc-clean@gmail.com", password: "pw" },
-      true
-    );
-    expect(r).toEqual({ ok: true, email: CLEAN_EMAIL, password: "pw" });
+  it("normalizes all three deep-link arrival forms of the email (+, space, %2B)", () => {
+    for (const email of [
+      CLEAN_EMAIL,
+      "cyberjby arc-clean@gmail.com",
+      "cyberjby%2Barc-clean@gmail.com",
+      "cyberjby%2barc-clean@gmail.com",
+    ]) {
+      expect(validateRevylBypassParams({ email, password: "pw" }, true)).toEqual({
+        ok: true,
+        email: CLEAN_EMAIL,
+        password: "pw",
+      });
+    }
   });
 });
 
