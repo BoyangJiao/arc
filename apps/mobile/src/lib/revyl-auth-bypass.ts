@@ -44,7 +44,9 @@ export const validateRevylBypassParams = (
 ): RevylBypassValidation => {
   if (!enabled) return { ok: false, reason: "disabled" };
 
-  const email = typeof params.email === "string" ? params.email.trim().toLowerCase() : "";
+  // URL query 中 `+` 解码为空格；邮箱不可能含空格，故还原（cyberjby+arc-clean@… 场景）。
+  const email =
+    typeof params.email === "string" ? params.email.trim().toLowerCase().replace(/ /g, "+") : "";
   const password = typeof params.password === "string" ? params.password : "";
   if (!email || !password) return { ok: false, reason: "missing_credentials" };
 
