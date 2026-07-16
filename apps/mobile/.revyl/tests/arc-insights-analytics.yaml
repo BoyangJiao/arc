@@ -2,10 +2,10 @@
 
 _meta:
   remote_id: 7d34830d-18c9-4df1-b310-c8deaecec261
-  remote_version: 2
-  local_version: 2
-  last_synced_at: "2026-07-16T00:36:16+08:00"
-  checksum: 0d2c48f44213b9d3d1e71da143a672f43e27db4606671c20eb04238c709e33e6
+  remote_version: 3
+  local_version: 3
+  last_synced_at: "2026-07-17T00:26:40+08:00"
+  checksum: d20214542a27327a5999d99351fc71033b7d5008d487b1622a0b089fcab6e1f6
 test:
   metadata:
     name: arc-insights-analytics
@@ -18,7 +18,7 @@ test:
     - type: module_import
       module: arc-bypass-login
     - type: instructions
-      step_description: Tap the 洞察 tab in the bottom tab bar.
+      step_description: Tap the third icon (insights 洞察) in the floating bottom tab bar.
     - type: instructions
       step_description: Open the profit and loss analysis entry (盈亏分析), scroll through the whole screen including the cumulative return chart and rankings, then go back.
     - type: instructions

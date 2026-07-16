@@ -2,10 +2,10 @@
 
 _meta:
   remote_id: 470aecd5-1ba1-4b8d-b476-b1d043d73d22
-  remote_version: 2
-  local_version: 2
-  last_synced_at: "2026-07-16T00:30:56+08:00"
-  checksum: 660627a6ac86a4c408d22a71dbfe6edea6b6410df1cd8e60894d9b99729ebcfb
+  remote_version: 3
+  local_version: 3
+  last_synced_at: "2026-07-17T00:25:47+08:00"
+  checksum: fada10dc76d213ac7179141ae2ac14dc121786d6411e1f622a1fb3136c44d29b
 test:
   metadata:
     name: arc-smoke-bypass-login
@@ -22,6 +22,6 @@ test:
     - type: instructions
       step_description: Wait for sign-in to complete. If a welcome screen (欢迎) appears, dismiss it by tapping its primary button. The app UI is in Chinese.
     - type: validation
-      step_description: The bottom tab bar with tabs 组合, 行情, 洞察 is visible.
+      step_description: A floating bottom tab bar with three tab icons is visible.
     - type: validation
       step_description: The portfolio home screen shows a total value amount and a value chart.

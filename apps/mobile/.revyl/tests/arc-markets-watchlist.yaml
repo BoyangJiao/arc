@@ -2,10 +2,10 @@
 
 _meta:
   remote_id: abc1db40-4288-4abd-8317-a5c9b3817d02
-  remote_version: 2
-  local_version: 2
-  last_synced_at: "2026-07-16T00:35:41+08:00"
-  checksum: c20633c095ce655a5010e70684c3179beda44b32f721fdfdb24978fe25e5c950
+  remote_version: 3
+  local_version: 3
+  last_synced_at: "2026-07-17T00:26:05+08:00"
+  checksum: 02ba12463b305258c1c4a21bbf048561680e5f54767988dc2b06c0b0e388c641
 test:
   metadata:
     name: arc-markets-watchlist
@@ -18,7 +18,7 @@ test:
     - type: module_import
       module: arc-bypass-login
     - type: instructions
-      step_description: Tap the 行情 tab in the bottom tab bar.
+      step_description: Tap the second icon (markets 行情) in the floating bottom tab bar.
     - type: validation
       step_description: The markets screen is visible with a watchlist area (自选) or an empty watchlist message.
     - type: instructions
@@ -28,4 +28,4 @@ test:
     - type: validation
       step_description: AAPL appears in the watchlist with a price or a pending price placeholder.
     - type: instructions
-      step_description: Remove AAPL from the watchlist (swipe or long-press action), then return to the 组合 tab.
+      step_description: Remove AAPL from the watchlist (swipe or long-press action), then tap the first icon in the bottom tab bar to return to the portfolio home.

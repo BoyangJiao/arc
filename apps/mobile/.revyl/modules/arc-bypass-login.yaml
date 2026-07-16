@@ -7,4 +7,4 @@ blocks:
   - type: instructions
     step_description: "Wait for sign-in to complete. If a welcome screen (欢迎) appears, dismiss it by tapping its primary button. The app UI is in Chinese."
   - type: validation
-    step_description: "The bottom tab bar with tabs 组合, 行情, 洞察 is visible."
+    step_description: "A floating bottom tab bar with three tab icons is visible."

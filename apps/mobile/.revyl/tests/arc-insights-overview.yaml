@@ -2,10 +2,10 @@
 
 _meta:
   remote_id: 1ff0aa39-7f8c-4ad0-ae93-ba5b47abff5a
-  remote_version: 2
-  local_version: 2
-  last_synced_at: "2026-07-16T00:35:59+08:00"
-  checksum: 0526cf41adaaf1a043d2983a112f387bd2853c6398e31d170c7867dc1ef80a81
+  remote_version: 3
+  local_version: 3
+  last_synced_at: "2026-07-17T00:26:22+08:00"
+  checksum: 8f3afa6db1eec38dfc8b62eba87723c88e4a516cfc330ea8399fabc17a1b5f34
 test:
   metadata:
     name: arc-insights-overview
@@ -18,7 +18,7 @@ test:
     - type: module_import
       module: arc-bypass-login
     - type: instructions
-      step_description: Tap the 洞察 tab in the bottom tab bar.
+      step_description: Tap the third icon (insights 洞察) in the floating bottom tab bar.
     - type: validation
       step_description: The insights screen shows sections including asset allocation with a donut chart.
     - type: instructions

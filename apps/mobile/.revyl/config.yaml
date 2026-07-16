@@ -18,7 +18,6 @@ build:
       command: npx --yes eas-cli build --platform ios --profile revyl-build --local --output build/app.tar.gz
       output: build/app.tar.gz
       app_id: 3b442abb-ac2a-44d5-bd1d-9ee7ae3f1e09
-    # dev client build（仅 revyl dev 热重载用；test run 必须用上面的静态 release 包）
     ios-dev:
       command: npx --yes eas-cli build --platform ios --profile revyl-dev --local --output build/app-dev.tar.gz
       output: build/app-dev.tar.gz
@@ -39,4 +38,4 @@ hotreload:
       platform_keys:
         android: android
         ios: ios-dev
-last_synced_at: "2026-07-15T16:36:39Z"
+last_synced_at: "2026-07-16T16:26:45Z"
