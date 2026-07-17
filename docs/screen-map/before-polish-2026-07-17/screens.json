@@ -1,0 +1,238 @@
+{
+  "capturedAt": "2026-07-17T14:45:49.693Z",
+  "app": "com.arc.portfolio",
+  "count": 33,
+  "screens": [
+    {
+      "id": "home",
+      "route": "/",
+      "deepLink": "arc://",
+      "screenshot": "home.png",
+      "status": "captured"
+    },
+    {
+      "id": "ai",
+      "route": "/ai",
+      "deepLink": "arc://ai",
+      "screenshot": "ai.png",
+      "status": "captured"
+    },
+    {
+      "id": "asset__FUND__000216",
+      "route": "/asset/FUND/000216",
+      "deepLink": "arc://asset/FUND/000216",
+      "screenshot": "asset__FUND__000216.png",
+      "status": "captured"
+    },
+    {
+      "id": "asset__US__MSFT",
+      "route": "/asset/US/MSFT",
+      "deepLink": "arc://asset/US/MSFT",
+      "screenshot": "asset__US__MSFT.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights",
+      "route": "/insights",
+      "deepLink": "arc://insights",
+      "screenshot": "insights.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__asset-value",
+      "route": "/insights/asset-value",
+      "deepLink": "arc://insights/asset-value",
+      "screenshot": "insights__asset-value.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__attribution",
+      "route": "/insights/attribution",
+      "deepLink": "arc://insights/attribution",
+      "screenshot": "insights__attribution.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__benchmark",
+      "route": "/insights/benchmark",
+      "deepLink": "arc://insights/benchmark",
+      "screenshot": "insights__benchmark.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__drawdown",
+      "route": "/insights/drawdown",
+      "deepLink": "arc://insights/drawdown",
+      "screenshot": "insights__drawdown.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__exposure__currency",
+      "route": "/insights/exposure/currency",
+      "deepLink": "arc://insights/exposure/currency",
+      "screenshot": "insights__exposure__currency.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__exposure__market",
+      "route": "/insights/exposure/market",
+      "deepLink": "arc://insights/exposure/market",
+      "screenshot": "insights__exposure__market.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__pnl-analysis",
+      "route": "/insights/pnl-analysis",
+      "deepLink": "arc://insights/pnl-analysis",
+      "screenshot": "insights__pnl-analysis.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__rebalance__actions",
+      "route": "/insights/rebalance/actions",
+      "deepLink": "arc://insights/rebalance/actions",
+      "screenshot": "insights__rebalance__actions.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__rebalance__setup",
+      "route": "/insights/rebalance/setup",
+      "deepLink": "arc://insights/rebalance/setup",
+      "screenshot": "insights__rebalance__setup.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__risk",
+      "route": "/insights/risk",
+      "deepLink": "arc://insights/risk",
+      "screenshot": "insights__risk.png",
+      "status": "captured"
+    },
+    {
+      "id": "insights__trade-stats",
+      "route": "/insights/trade-stats",
+      "deepLink": "arc://insights/trade-stats",
+      "screenshot": "insights__trade-stats.png",
+      "status": "captured"
+    },
+    {
+      "id": "markets",
+      "route": "/markets",
+      "deepLink": "arc://markets",
+      "screenshot": "markets.png",
+      "status": "captured"
+    },
+    {
+      "id": "markets__search",
+      "route": "/markets/search",
+      "deepLink": "arc://markets/search",
+      "screenshot": "markets__search.png",
+      "status": "captured"
+    },
+    {
+      "id": "me",
+      "route": "/me",
+      "deepLink": "arc://me",
+      "screenshot": "me.png",
+      "status": "captured"
+    },
+    {
+      "id": "me__cash-balances",
+      "route": "/me/cash-balances",
+      "deepLink": "arc://me/cash-balances",
+      "screenshot": "me__cash-balances.png",
+      "status": "captured"
+    },
+    {
+      "id": "me__data",
+      "route": "/me/data",
+      "deepLink": "arc://me/data",
+      "screenshot": "me__data.png",
+      "status": "captured"
+    },
+    {
+      "id": "me__dev-tools",
+      "route": "/me/dev-tools",
+      "deepLink": "arc://me/dev-tools",
+      "screenshot": "me__dev-tools.png",
+      "status": "captured"
+    },
+    {
+      "id": "me__export",
+      "route": "/me/export",
+      "deepLink": "arc://me/export",
+      "screenshot": "me__export.png",
+      "status": "captured"
+    },
+    {
+      "id": "me__import",
+      "route": "/me/import",
+      "deepLink": "arc://me/import",
+      "screenshot": "me__import.png",
+      "status": "captured"
+    },
+    {
+      "id": "me__inbox",
+      "route": "/me/inbox",
+      "deepLink": "arc://me/inbox",
+      "screenshot": "me__inbox.png",
+      "status": "captured"
+    },
+    {
+      "id": "me__portfolios",
+      "route": "/me/portfolios",
+      "deepLink": "arc://me/portfolios",
+      "screenshot": "me__portfolios.png",
+      "status": "captured"
+    },
+    {
+      "id": "me__portfolios__new",
+      "route": "/me/portfolios/new",
+      "deepLink": "arc://me/portfolios/new",
+      "screenshot": "me__portfolios__new.png",
+      "status": "captured"
+    },
+    {
+      "id": "me__settings",
+      "route": "/me/settings",
+      "deepLink": "arc://me/settings",
+      "screenshot": "me__settings.png",
+      "status": "captured"
+    },
+    {
+      "id": "me__subscription",
+      "route": "/me/subscription",
+      "deepLink": "arc://me/subscription",
+      "screenshot": "me__subscription.png",
+      "status": "captured"
+    },
+    {
+      "id": "portfolio__7231552a-6025-4f0f-a2be-8d2807a21af5",
+      "route": "/portfolio/7231552a-6025-4f0f-a2be-8d2807a21af5",
+      "deepLink": "arc://portfolio/7231552a-6025-4f0f-a2be-8d2807a21af5",
+      "screenshot": "portfolio__7231552a-6025-4f0f-a2be-8d2807a21af5.png",
+      "status": "captured"
+    },
+    {
+      "id": "portfolio__7231552a-6025-4f0f-a2be-8d2807a21af5__daily-snapshot",
+      "route": "/portfolio/7231552a-6025-4f0f-a2be-8d2807a21af5/daily-snapshot",
+      "deepLink": "arc://portfolio/7231552a-6025-4f0f-a2be-8d2807a21af5/daily-snapshot",
+      "screenshot": "portfolio__7231552a-6025-4f0f-a2be-8d2807a21af5__daily-snapshot.png",
+      "status": "captured"
+    },
+    {
+      "id": "portfolio__7231552a-6025-4f0f-a2be-8d2807a21af5__transactions__new",
+      "route": "/portfolio/7231552a-6025-4f0f-a2be-8d2807a21af5/transactions/new",
+      "deepLink": "arc://portfolio/7231552a-6025-4f0f-a2be-8d2807a21af5/transactions/new",
+      "screenshot": "portfolio__7231552a-6025-4f0f-a2be-8d2807a21af5__transactions__new.png",
+      "status": "captured"
+    },
+    {
+      "id": "portfolio__7231552a-6025-4f0f-a2be-8d2807a21af5__transactions__new__trade",
+      "route": "/portfolio/7231552a-6025-4f0f-a2be-8d2807a21af5/transactions/new/trade",
+      "deepLink": "arc://portfolio/7231552a-6025-4f0f-a2be-8d2807a21af5/transactions/new/trade",
+      "screenshot": "portfolio__7231552a-6025-4f0f-a2be-8d2807a21af5__transactions__new__trade.png",
+      "status": "captured"
+    }
+  ]
+}
