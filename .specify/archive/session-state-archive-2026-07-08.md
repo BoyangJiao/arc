@@ -734,3 +734,5 @@ UAT 验收：
 ## 移档自 session-state.md（2026-07-15 checkpoint，瘦身规则 ≤3 条）
 
 - **2026-06-18 by Opus 4.8** — 风险/回撤拆两个详情页 + `/insights/trade-stats` + **数据源大调研（Tushare/akshare/聚宽全非商用 → ADR 017 + 发版闸门）** + 美股历史切 akshare 兜底（registry US 历史 akshare→tushare→AV；Finnhub 仍管实时）+ **指数对标 #9 全栈**（bucketReturn/calendarBuckets + benchmark 目录 ETF 代理 + `/insights/benchmark` 详情页）。踩坑：app 读 `apps/mobile/.env`（非 root `.env.dev.local`）；`AKSHARE_WRAPPER_TOKEN` Vercel Sensitive 不可读回，已轮换。
+
+- **2026-07-05 by Claude Code (remote)** — **全项目深度 code review + 修复批次**（PR #11，已合入）。9 组修复要点：FX 缺失不再静默 1:1（`core/fx` 真实现 + `missingQuote/FxAssetIds` 暴露 + 首页提示）；computeHoldings 防御排序 + 超卖不 throw；XIRR 容差尺度相关；daily-snapshot Edge Function 重构（依赖注入 + 10 deno test；修交易未排序 / supabase-js 1000 行静默截断 / cost basis 含 fee 口径统一）；txFingerprint 改 FNV-1a；图表色板集中 `tokens/chart-palette.ts`；i18n `zh satisfies typeof en`；akshare wrapper 加固；风险登记册 +R7/R8（均上架 blocker）。验证：core 238 / ds 171 / ui 40 / mobile 169 / functions 10 全绿。**有意不动**：性能项（规模到了再做）、R7/R8 架构迁移（绑定阿里云迁移轮）、assets 元数据 enrich（待 BoyangJiao 决策）。

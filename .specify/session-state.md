@@ -13,28 +13,28 @@
 
 ## Last updated
 
+- **2026-07-17 by Claude Code (Fable 5)** — **Revyl Atlas 基线轮完成 + 进入全量 UX/UI 打磨（branch `dev/ux-polish`）**。(1) **auth-bypass 落地**（PR #14 merged）：`arc://revyl-auth?email&password` → 真实 `signInWithPassword`（ADR 007 合规）；三重防线 = 构建期门禁 `EXPO_PUBLIC_REVYL_BYPASS`（仅 revyl-build/revyl-dev profile）+ Clean 邮箱 allowlist + 凭据走 Revyl org vars；邮箱归一化覆盖深链三形态（+/空格/%2B，云端实测踩坑）。Clean 账号已设密码（`.env.dev.local` `REVYL_BYPASS_PASSWORD`）。(2) **8 个 journey 测试套件**入库（`apps/mobile/.revyl/tests/` + 登录模块），**6 跑 5 过**；Atlas 成图 **14 屏 / 20 转场 / 265 观测**（app.revyl.ai Atlas 页）。(3) **构建踩坑**：`revyl test run` 需静态 release 包（dev client 无 Metro 起不来）→ profile 拆分 revyl-build/revyl-dev；EAS 本地构建 tarball 环境拿不到 `HEROUI_AUTH_TOKEN`（Pro 包装不上 → release 打包解析失败）→ **临时用 xcodebuild 直构 + `revyl build upload` 绕过**，遗留：把 token 放进 EAS env 修正规链路。(4) **两个待查发现**：active portfolio 解析疑似不一致（同账号有的会话空组合有的满配，Atlas 拍到 portfolio_empty_state）；transaction-flow 删除路径未走通（Revyl 报告有录像）。Clean 账号已重 seed 清残留。(5) **BoyangJiao 决策**：Revyl 暂停充值（$20/mo 现阶段不值），**上架前再充一个月做全量回归 + 刷新 Atlas**（测试资产已入库即插即用）；自建**轻量 screen-map**（复刻 Atlas 运行时观测思想）：v0 = 路由清单 + 深链截图 sweep（`tools/screen-map/`，打磨 before/after 基线），v1 = dev-only 导航监听出真实转场图，v2 = 上架后评估独立工具化；**产品化接口（schema 工具无关）、最小化实现**；可视化用 React Flow/SVG 即可，WebGL 属过度工程。
 - **2026-07-15 by Claude Code (Fable 5)** — **换机后全仓地毯式排查 + 修复批次（PR #13 + docs PR #12 均已合入）**。排查结论：**换机无损坏**（typecheck/lint/tests/lint:copy 全绿、husky 在位、无密钥入库、铁律零违规、live DB 数据完好）。落地：lint 17 warnings 清零；删 `tools/spike-heroui-native/` + `generate-stage1-design-pen.mjs`（git 历史留档）；换机适配入库（allowBuilds 收敛 + `.nvmrc` + `install-heroui-pro.sh`）；**revyl-build profile 加 `developmentClient`**（原配置 hot reload 连不上 Metro）；**migration 0017（RLS policy 合并 + FK 索引）已应用 live**，advisor `multiple_permissive_policies` 清零（R8 有意保留）；**远端 11 个已合并分支全删，仓库只剩 `main`**；Revyl CLI v0.1.51 已装 + auth 完成。发现：Supabase leaked password protection 为 **Pro 专属**，Free plan 无法开启（advisor 警告不可消，已确认忽略）。**BoyangJiao 决策（2026-07-15，调整锁定时序，已认可）**：Stage 4 前先做**全量 UX/UI 打磨**；顺序 = Revyl Atlas 全量基线 → 打磨（Atlas 当覆盖清单）→ Atlas 回归 → **阿里云迁移规划**；onboarding 设计放**大陆 Auth 方案锁定后**（第一屏=注册登录，Auth 不定设计必重做）；TestFlight 在打磨 + onboarding v1 后、**不等迁移完成**（TestFlight 不需备案；中国区 App Store 上架需 App 备案 = 迁移是硬前置）；**自用上机用 preview build（非 dev build）**，与 Atlas/打磨并行；Apple Developer 账号已注册 ✅。
 - **2026-07-08 by Claude Code (remote)** — **文档系统 review + 修复批次**（branch `claude/docs-review-optimization-1so23n`）。修复：project-background 未闭合代码块（§3.2/3.3 含 R7/R8 此前渲染为代码块）；**ADR 017 授权结论回写** legal-risk-map L3/§七 + 风险登记册 R1（旧「Tushare Pro 已含授权」口径清除）；CLAUDE.md 阶段快照（Stage 0→1 更正为 Stage 3→4）/图表栈/seed 命令/skill 表/阅读地图；development-plan §二§三§六 加「已被取代」横幅 + 删孤儿表格碎片；feature-specs README 补 6 份缺失 spec + 状态列对齐 as-built；本文件瘦身（722 行 → 精简版，全量存档零损失）。**同会话另交付**：全部 .specify/docs 文档的 16 项发现 review + 架构/算法/数据源选型按 2026-07 标准的 re-review（结论见会话记录；未修项按优先级列入 §Open items #8）。
-- **2026-07-05 by Claude Code (remote)** — **全项目深度 code review + 修复批次**（PR #11，已合入）。9 组修复要点：FX 缺失不再静默 1:1（`core/fx` 真实现 + `missingQuote/FxAssetIds` 暴露 + 首页提示）；computeHoldings 防御排序 + 超卖不 throw；XIRR 容差尺度相关；daily-snapshot Edge Function 重构（依赖注入 + 10 deno test；修交易未排序 / supabase-js 1000 行静默截断 / cost basis 含 fee 口径统一）；txFingerprint 改 FNV-1a；图表色板集中 `tokens/chart-palette.ts`；i18n `zh satisfies typeof en`；akshare wrapper 加固；风险登记册 +R7/R8（均上架 blocker）。验证：core 238 / ds 171 / ui 40 / mobile 169 / functions 10 全绿。**有意不动**：性能项（规模到了再做）、R7/R8 架构迁移（绑定阿里云迁移轮）、assets 元数据 enrich（待 BoyangJiao 决策）。
 
 ## You are here
 
-| Field                 | Value                                                                                                                                                                                                      |
-| :-------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Active stage**      | **Stage 3 收尾 → 全量 UX/UI 打磨**（BoyangJiao 2026-07-15 决策：Stage 4 前插入）— PR #10–#13 全部已合 `main`；换机排查修复批次完成                                                                         |
-| **Next step**         | 并行两条线：① **preview build 上机自用**（`eas device:create` → `eas build -p ios --profile preview --local`，4 周时钟启动）② **Revyl Atlas 全量基线**（`revyl build` → journey 测试喂 Atlas）→ UX/UI 打磨 |
-| **Branch**            | `main`（远端分支已全部清理，仅剩 main）                                                                                                                                                                    |
-| **Context slug**      | `twr`                                                                                                                                                                                                      |
-| **Context bundle**    | `.specify/codectx/twr.xml`                                                                                                                                                                                 |
-| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                                                                         |
-| **Out of scope**      | Block E 价格异动后台 job、Finnhub Vercel proxy、大陆 Auth（ADR 012 P1）实现 — 全部绑定**阿里云迁移轮**；多平台 CSV profile（按真实模板逐个加，架构 seam 已就位）                                           |
+| Field                 | Value                                                                                                                                                            |
+| :-------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Active stage**      | **全量 UX/UI 打磨进行中**（Stage 4 前插入阶段）— PR #10–#14 全部已合 `main`；Release 已上机自用（4 周时钟运行中）；Atlas 基线已立                                |
+| **Next step**         | ① screen-map v0（深链截图 sweep → 打磨 before 基线）② 打磨 backlog 整理（首查 active portfolio 解析不一致）③ 逐屏/逐流程打磨                                     |
+| **Branch**            | `dev/ux-polish`（打磨主分支，完成后 PR 合 main）                                                                                                                 |
+| **Context slug**      | `twr`                                                                                                                                                            |
+| **Context bundle**    | `.specify/codectx/twr.xml`                                                                                                                                       |
+| **Mobile dev server** | `pnpm mobile` → 8081；改 `.env` / migration 后 **Metro `--clear`**                                                                                               |
+| **Out of scope**      | Block E 价格异动后台 job、Finnhub Vercel proxy、大陆 Auth（ADR 012 P1）实现 — 全部绑定**阿里云迁移轮**；多平台 CSV profile（按真实模板逐个加，架构 seam 已就位） |
 
 ## 🗺️ 时序（BoyangJiao 锁定 2026-06-02；2026-07-15 认可调整；改动需其同意）
 
 ```
 1. Block F UAT ✅ → 2. UI/UX 地基打磨 ✅ → 3. Stage 3 全量合 main（PR #10–13）✅
-→ 4. preview build 上机自用（4 周时钟）＋ Revyl Atlas 全量基线（两线并行）← 当前
-→ 5. 全量 UX/UI 打磨（Atlas 覆盖清单 + 自用反馈驱动）→ 打磨完 Atlas 回归
+→ 4. preview build 上机自用 ✅（时钟运行中）＋ Revyl Atlas 基线 ✅（14 屏图已立）
+→ 5. 全量 UX/UI 打磨（screen-map + Atlas 当覆盖清单 + 自用反馈驱动）← 当前
 → 6. 阿里云迁移规划（ADR：架构 / 大陆 Auth / 备案主体）→ onboarding 设计（Auth 方案锁定后）
 → 7. Stage 4：onboarding 实现 → TestFlight（不等迁移完成）→ IAP → 迁移实施 + App 备案 → 中国区上架
 ```
@@ -56,17 +56,20 @@
 | Performance Attribution 实施      | spec Accepted 未实施（`performance-attribution-stage-3.md`）         | 待排期                              |
 | #12 资产位置（按平台/账户）       | 需 DB migration `transactions.account` + 录入表单；BoyangJiao 暂跳过 | 待定                                |
 | benchmark beta（vs 基准回归系数） | 指数对标已落地，beta 算法 deferred                                   | 待排期                              |
+| Revyl 付费全量回归 + Atlas 刷新   | 免费额度尽；$20/mo 现阶段不值；测试资产已入库即插即用                | 上架前（充一个月）                  |
 
 ## Open items / known bugs（未修，按发现时间）
 
 1. **风险页年化波动率 450% / 回撤 -54.8% 异常** = 快照 totalValue 序列脏数据/尖刺（2026-06-18 发现，数据质量 bug，未修）。
 2. 指数对标 forward-fill 修复后**真机复验**是否出数据；多基准分组柱颜色/拥挤度；全部 Skia 图表真机渲染（06-17/06-18 待 UAT 项）。
-3. **assets 元数据 first-writer 永不 enrich**（需 UPDATE policy 设计，待 BoyangJiao 决策）。
-4. **R7 客户端内嵌数据源 key / R8 共享缓存表投毒** — 上架 blocker，随阿里云迁移轮做 Edge Function 代理 + RLS 收敛（风险登记册 + ADR 017）。
-5. MMKV 加密 key 的 expo-crypto follow-up（沙箱装不上，暂用 Web Crypto getRandomValues + Math.random 兜底）。
-6. TWR known limitations FU-1…FU-5（批量 fallback 拉价 / Sentry 接管 warn / from clamp / FX_LOOKBACK / useAssetTwr 双拉价）见 `twr-stage-3.md §Known limitations`。
-7. `export.tsx` 错误 Alert 读 stale-closure errorMessage（建议改内联渲染，非阻塞）。
-8. 文档层遗留（2026-07-08 review 的 P1/P2 项）：stage-acceptance-criteria Stage 3 段回填或降级定位；product-roadmap 订阅/CSV 口径与 roadmap 决策 2 矛盾；information-architecture「以本文件为准」条款 vs as-built 漂移；polish-backlog 核销一轮；handoffs/ 归档；HARNESS.md pre-commit typecheck gate 未回写；\_RESTRUCTURE-PLAN 触发器状态行过期（stage-3 已 16 份）。
+3. **active portfolio 解析疑似不一致**（2026-07-17 Atlas 基线发现：同 Clean 账号部分会话见空组合；查 `resolve-active-portfolio` + 默认组合自愈逻辑；Revyl 报告有录像）。
+4. **transaction-flow 删除路径未走通**（2026-07-17：云端测试搜不到刚加的 600519 完成删除；需人工复现判定 app bug vs 测试措辞）。
+5. **assets 元数据 first-writer 永不 enrich**（需 UPDATE policy 设计，待 BoyangJiao 决策）。
+6. **R7 客户端内嵌数据源 key / R8 共享缓存表投毒** — 上架 blocker，随阿里云迁移轮做 Edge Function 代理 + RLS 收敛（风险登记册 + ADR 017）。
+7. MMKV 加密 key 的 expo-crypto follow-up（沙箱装不上，暂用 Web Crypto getRandomValues + Math.random 兜底）。
+8. TWR known limitations FU-1…FU-5（批量 fallback 拉价 / Sentry 接管 warn / from clamp / FX_LOOKBACK / useAssetTwr 双拉价）见 `twr-stage-3.md §Known limitations`。
+9. `export.tsx` 错误 Alert 读 stale-closure errorMessage（建议改内联渲染，非阻塞）。
+10. 文档层遗留（2026-07-08 review 的 P1/P2 项）：stage-acceptance-criteria Stage 3 段回填或降级定位；product-roadmap 订阅/CSV 口径与 roadmap 决策 2 矛盾；information-architecture「以本文件为准」条款 vs as-built 漂移；polish-backlog 核销一轮；handoffs/ 归档；HARNESS.md pre-commit typecheck gate 未回写；\_RESTRUCTURE-PLAN 触发器状态行过期（stage-3 已 16 份）。
 
 ## Critical mental model (gotchas easy to forget)
 
