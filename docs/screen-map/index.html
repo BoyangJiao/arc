@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Arc Screen Map</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --line: #262b36; --text: #e8eaf0;
+    --muted: #8b93a5; --accent: #4f7cff; --good: #34c77b; --warn: #ff5d73;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, "SF Pro", "PingFang SC", sans-serif; }
+  header { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    padding: 14px 20px; background: rgba(15,17,21,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 16px; font-weight: 700; letter-spacing: .02em; margin-right: 8px; }
+  header h1 span { color: var(--accent); }
+  .tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .tabs button { border: 0; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+  .tabs button.on { background: var(--accent); color: #fff; }
+  select, input[type=search] { background: var(--panel); color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 10px; font-size: 13px; }
+  input[type=search] { width: 200px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chips button { border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+    border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 12px; }
+  .chips button.on { border-color: var(--accent); color: var(--accent); }
+  main { padding: 20px; max-width: 1600px; margin: 0 auto; }
+  .meta { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+  .group h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 22px 0 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+    cursor: zoom-in; transition: transform .12s ease, border-color .12s ease; }
+  .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .card img { width: 100%; aspect-ratio: 1206/2622; object-fit: cover; display: block; background: #000; }
+  .card .cap { padding: 8px 10px; font-size: 11px; color: var(--muted); word-break: break-all; }
+  .card .cap b { display: block; color: var(--text); font-size: 12px; margin-bottom: 2px; }
+  .missing { display: flex; align-items: center; justify-content: center; aspect-ratio: 1206/2622;
+    color: var(--warn); font-size: 12px; background: repeating-linear-gradient(45deg, #171a21, #171a21 8px, #1c202a 8px, #1c202a 16px); }
+  /* flows */
+  .flow { margin-bottom: 30px; }
+  .flow h2 { font-size: 14px; margin-bottom: 4px; }
+  .flow p { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+  .lane { display: flex; gap: 0; overflow-x: auto; padding-bottom: 8px; align-items: center; }
+  .lane .card { flex: 0 0 140px; }
+  .arrow { flex: 0 0 34px; text-align: center; color: var(--accent); font-size: 18px; }
+  /* compare */
+  .cmp-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pair-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  .pair-wrap h3 { font-size: 12px; margin-bottom: 8px; word-break: break-all; }
+  .pair img { width: 100%; border-radius: 6px; display: block; cursor: zoom-in; }
+  .cmp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
+  .badge.only { background: rgba(255,93,115,.15); color: var(--warn); }
+  /* lightbox */
+  #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: none;
+    align-items: center; justify-content: center; z-index: 99; cursor: zoom-out; }
+  #lightbox.on { display: flex; }
+  #lightbox img { max-height: 94vh; max-width: 94vw; border-radius: 12px; }
+  #lightbox .lb-cap { position: fixed; bottom: 16px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Arc <span>Screen Map</span></h1>
+  <nav class="tabs" id="tabs">
+    <button data-v="sitemap" class="on">Sitemap</button>
+    <button data-v="flows">Flows</button>
+    <button data-v="compare">Compare</button>
+  </nav>
+  <select id="capSel"></select>
+  <input type="search" id="q" placeholder="筛选 route…" />
+  <div class="chips" id="chips"></div>
+</header>
+<main id="main"></main>
+<div id="lightbox"><img alt="" /><div class="lb-cap"></div></div>
+<script src="captures.js"></script>
+<script>
+const caps = window.SCREEN_MAP_CAPTURES || [];
+const $ = (s) => document.querySelector(s);
+const state = { view: "sitemap", cap: caps[0]?.id, q: "", group: null, cmpA: caps[0]?.id, cmpB: caps[1]?.id ?? caps[0]?.id };
+
+const GROUPS = [
+  ["首页 Tab", (r) => r === "/" || r.startsWith("/portfolio")],
+  ["行情 Tab", (r) => r.startsWith("/markets")],
+  ["洞察 Tab", (r) => r.startsWith("/insights")],
+  ["资产详情", (r) => r.startsWith("/asset")],
+  ["Me / 设置", (r) => r.startsWith("/me")],
+  ["其他", () => true],
+];
+const groupOf = (r) => GROUPS.find(([, fn]) => fn(r))[0];
+
+// Journey flows（route 前缀匹配当前版本截图；来源 docs/user-journeys.md）
+const FLOWS = [
+  { name: "J2 · 录入交易", desc: "首页 → 组合详情 → 新建交易 → 交易表单", routes: ["/", "/portfolio/", "/transactions/new", "/transactions/new/trade"] },
+  { name: "J8 · 行情与自选", desc: "行情 Tab → 跨市场搜索", routes: ["/markets", "/markets/search"] },
+  { name: "J9 · 再平衡", desc: "洞察 → 目标配置 → 行动单", routes: ["/insights", "/insights/rebalance/setup", "/insights/rebalance/actions"] },
+  { name: "洞察分析", desc: "洞察 → 盈亏 → 资产价值 → 指数对标 → 交易统计 → 风险 → 回撤", routes: ["/insights", "/insights/pnl-analysis", "/insights/asset-value", "/insights/benchmark", "/insights/trade-stats", "/insights/risk", "/insights/drawdown"] },
+  { name: "敞口", desc: "洞察 → 市场敞口 → 币种敞口", routes: ["/insights", "/insights/exposure/market", "/insights/exposure/currency"] },
+  { name: "Me · 数据", desc: "Me → 数据管理 → 导出 / 导入", routes: ["/me", "/me/data", "/me/export", "/me/import"] },
+  { name: "Me · 管理", desc: "Me → 设置 / 组合 / 现金 / 订阅 / 收件箱", routes: ["/me", "/me/settings", "/me/portfolios", "/me/cash-balances", "/me/subscription", "/me/inbox"] },
+  { name: "资产详情", desc: "首页 → 美股详情 / 基金详情", routes: ["/", "/asset/US/", "/asset/FUND/"] },
+];
+
+const capById = (id) => caps.find((c) => c.id === id);
+const findShot = (cap, routeLike) =>
+  cap?.screens.find((s) => s.route === routeLike) ??
+  cap?.screens.find((s) => s.route.includes(routeLike));
+
+function card(cap, s, extraCap = "") {
+  if (!s || !s.screenshot)
+    return `<div class="card"><div class="missing">缺失</div><div class="cap"><b>—</b>${extraCap}</div></div>`;
+  const src = `${cap.id}/${s.screenshot}`;
+  return `<div class="card" onclick="lb('${src}','${s.route}')">
+    <img loading="lazy" src="${src}" alt="${s.route}" />
+    <div class="cap"><b>${s.route}</b>${extraCap || s.id}</div></div>`;
+}
+
+function renderSitemap() {
+  const cap = capById(state.cap);
+  if (!cap) return "<p class='meta'>无 capture 数据 — 先跑 sweep.mjs</p>";
+  const shots = cap.screens.filter(
+    (s) => (!state.q || s.route.includes(state.q)) && (!state.group || groupOf(s.route) === state.group)
+  );
+  const byGroup = new Map();
+  for (const s of shots) {
+    const g = groupOf(s.route);
+    if (!byGroup.has(g)) byGroup.set(g, []);
+    byGroup.get(g).push(s);
+  }
+  let html = `<p class="meta">${cap.id} · ${new Date(cap.capturedAt).toLocaleString()} · ${shots.length}/${cap.screens.length} 屏</p>`;
+  for (const [g] of GROUPS) {
+    const list = byGroup.get(g);
+    if (!list?.length) continue;
+    html += `<section class="group"><h2>${g} · ${list.length}</h2><div class="grid">${list
+      .map((s) => card(cap, s)).join("")}</div></section>`;
+  }
+  return html;
+}
+
+function renderFlows() {
+  const cap = capById(state.cap);
+  if (!cap) return "";
+  return FLOWS.map((f) => {
+    const steps = f.routes.map((r) => findShot(cap, r));
+    return `<section class="flow"><h2>${f.name}</h2><p>${f.desc}</p><div class="lane">${steps
+      .map((s, i) => (i ? '<div class="arrow">→</div>' : "") + card(cap, s)).join("")}</div></section>`;
+  }).join("");
+}
+
+function renderCompare() {
+  const A = capById(state.cmpA), B = capById(state.cmpB);
+  if (!A || !B) return "";
+  const ids = [...new Set([...A.screens.map((s) => s.id), ...B.screens.map((s) => s.id)])].sort();
+  const opts = (sel) => caps.map((c) => `<option value="${c.id}" ${c.id === sel ? "selected" : ""}>${c.id}</option>`).join("");
+  let html = `<div class="cmp-bar">
+    <select onchange="state.cmpA=this.value;render()">${opts(state.cmpA)}</select> vs
+    <select onchange="state.cmpB=this.value;render()">${opts(state.cmpB)}</select>
+    <span class="meta">${ids.length} 屏 · 左 ${A.id} · 右 ${B.id}</span></div><div class="cmp-grid">`;
+  for (const id of ids) {
+    if (state.q && !id.includes(state.q.replaceAll("/", "__"))) continue;
+    const a = A.screens.find((s) => s.id === id), b = B.screens.find((s) => s.id === id);
+    const badge = !a ? '<span class="badge only">仅右侧</span>' : !b ? '<span class="badge only">仅左侧</span>' : "";
+    html += `<div class="pair-wrap"><h3>${(a ?? b).route}${badge}</h3><div class="pair">
+      ${a?.screenshot ? `<img loading="lazy" src="${A.id}/${a.screenshot}" onclick="lb('${A.id}/${a.screenshot}','${A.id}')" />` : '<div class="missing">无</div>'}
+      ${b?.screenshot ? `<img loading="lazy" src="${B.id}/${b.screenshot}" onclick="lb('${B.id}/${b.screenshot}','${B.id}')" />` : '<div class="missing">无</div>'}
+    </div></div>`;
+  }
+  return html + "</div>";
+}
+
+function render() {
+  $("#main").innerHTML =
+    state.view === "sitemap" ? renderSitemap() : state.view === "flows" ? renderFlows() : renderCompare();
+}
+function lb(src, cap) {
+  $("#lightbox img").src = src;
+  $("#lightbox .lb-cap").textContent = `${src}  ·  ${cap}`;
+  $("#lightbox").classList.add("on");
+}
+$("#lightbox").onclick = () => $("#lightbox").classList.remove("on");
+
+// header wiring
+$("#capSel").innerHTML = caps.map((c) => `<option value="${c.id}">${c.id}（${c.count} 屏）</option>`).join("");
+$("#capSel").onchange = (e) => { state.cap = e.target.value; render(); };
+$("#q").oninput = (e) => { state.q = e.target.value.trim(); render(); };
+$("#tabs").onclick = (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.view = b.dataset.v;
+  document.querySelectorAll("#tabs button").forEach((x) => x.classList.toggle("on", x === b));
+  render();
+};
+$("#chips").innerHTML = GROUPS.slice(0, -1).map(([g]) => `<button data-g="${g}">${g}</button>`).join("");
+$("#chips").onclick = (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.group = state.group === b.dataset.g ? null : b.dataset.g;
+  document.querySelectorAll("#chips button").forEach((x) => x.classList.toggle("on", x.dataset.g === state.group));
+  render();
+};
+render();
+</script>
+</body>
+</html>
