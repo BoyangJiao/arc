@@ -19,6 +19,7 @@ import {
   expectedBootstrapPointCount,
   needsChartBootstrap,
   resolveMarketFilteredChartSeries,
+  snapshotsCurrencyMismatch,
 } from "../portfolio-chart-density";
 
 import { usePortfolioHoldings } from "./use-portfolio-holdings";
@@ -44,7 +45,13 @@ export const usePortfolioChartSeries = (input: {
     [transactions]
   );
 
-  const dbSnapshots = snapshotsQuery.isPlaceholderData ? [] : (snapshotsQuery.data ?? []);
+  const rawDbSnapshots = snapshotsQuery.isPlaceholderData ? [] : (snapshotsQuery.data ?? []);
+  // 快照存储币种 ≠ 当前显示币种 → 快照数值不可直接上图（铁律 4/5），
+  // 一律走 True-Historical bootstrap（在显示币种下用逐日历史 FX 重算）。
+  const dbSnapshots = useMemo(
+    () => (snapshotsCurrencyMismatch(rawDbSnapshots, reportingCurrency) ? [] : rawDbSnapshots),
+    [rawDbSnapshots, reportingCurrency]
+  );
 
   const marketFilterActive = isMarketFilterActive(marketFilters ?? new Set());
 
