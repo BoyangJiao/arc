@@ -728,3 +728,9 @@ UAT 验收：
 1. **Block C UAT 会话**: CLAUDE.md → this file §Block C UAT → `holdings-and-transactions-stage-3.md` §S3-AC-C.
 2. DEV FAB: **组合** → **`portfolios:30-days-history`**（Hero 全量 UAT）；日涨跌 edge → **每日快照** 组。
 3. End session: `/checkpoint`.
+
+---
+
+## 移档自 session-state.md（2026-07-15 checkpoint，瘦身规则 ≤3 条）
+
+- **2026-06-18 by Opus 4.8** — 风险/回撤拆两个详情页 + `/insights/trade-stats` + **数据源大调研（Tushare/akshare/聚宽全非商用 → ADR 017 + 发版闸门）** + 美股历史切 akshare 兜底（registry US 历史 akshare→tushare→AV；Finnhub 仍管实时）+ **指数对标 #9 全栈**（bucketReturn/calendarBuckets + benchmark 目录 ETF 代理 + `/insights/benchmark` 详情页）。踩坑：app 读 `apps/mobile/.env`（非 root `.env.dev.local`）；`AKSHARE_WRAPPER_TOKEN` Vercel Sensitive 不可读回，已轮换。

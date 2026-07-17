@@ -1,0 +1,27 @@
+# Revyl Test Definition
+
+_meta:
+  remote_id: 470aecd5-1ba1-4b8d-b476-b1d043d73d22
+  remote_version: 3
+  local_version: 3
+  last_synced_at: "2026-07-17T00:25:47+08:00"
+  checksum: fada10dc76d213ac7179141ae2ac14dc121786d6411e1f622a1fb3136c44d29b
+test:
+  metadata:
+    name: arc-smoke-bypass-login
+    platform: ios
+    tags:
+      - smoke
+      - atlas-baseline
+  build:
+    name: Arc
+  blocks:
+    - type: manual
+      step_type: navigate
+      step_description: arc://revyl-auth?email={{global.arc-bypass-email}}&password={{global.arc-bypass-password}}
+    - type: instructions
+      step_description: Wait for sign-in to complete. If a welcome screen (欢迎) appears, dismiss it by tapping its primary button. The app UI is in Chinese.
+    - type: validation
+      step_description: A floating bottom tab bar with three tab icons is visible.
+    - type: validation
+      step_description: The portfolio home screen shows a total value amount and a value chart.

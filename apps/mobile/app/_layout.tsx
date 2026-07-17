@@ -53,6 +53,7 @@ import {
 
 import { DevToolsFloatingOverlay } from "../src/components/dev-tools/DevToolsFloatingOverlay";
 import { AuthProvider, useAuth } from "../src/lib/auth";
+import { REVYL_BYPASS_ENABLED } from "../src/lib/revyl-auth-bypass";
 import {
   buildPersister,
   shouldPersistQuery,
@@ -149,7 +150,10 @@ function AppShell() {
     if (authLoading) return;
 
     const seg0 = segments[0] as string | undefined;
-    const inAuthFlow = seg0 === "sign-in" || seg0 === "auth";
+    // revyl-auth 仅在 Revyl 测试构建中可达（REVYL_BYPASS_ENABLED 构建期内联，
+    // 其他构建中该分支是死代码）；归入 auth flow 使守卫在登录成功后接管跳转。
+    const inAuthFlow =
+      seg0 === "sign-in" || seg0 === "auth" || (REVYL_BYPASS_ENABLED && seg0 === "revyl-auth");
     const onWelcome = seg0 === "welcome";
 
     if (!session && !inAuthFlow) {
@@ -193,6 +197,7 @@ function AppShell() {
         <Stack screenOptions={screenOptions}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+          <Stack.Screen name="revyl-auth" options={{ headerShown: false }} />
           <Stack.Screen name="welcome" options={{ headerShown: false }} />
           <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
           <Stack.Screen name="portfolio/[id]/index" options={{ headerShown: false }} />

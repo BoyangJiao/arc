@@ -1,0 +1,31 @@
+# Revyl Test Definition
+
+_meta:
+  remote_id: abc1db40-4288-4abd-8317-a5c9b3817d02
+  remote_version: 3
+  local_version: 3
+  last_synced_at: "2026-07-17T00:26:05+08:00"
+  checksum: 02ba12463b305258c1c4a21bbf048561680e5f54767988dc2b06c0b0e388c641
+test:
+  metadata:
+    name: arc-markets-watchlist
+    platform: ios
+    tags:
+      - atlas-baseline
+  build:
+    name: Arc
+  blocks:
+    - type: module_import
+      module: arc-bypass-login
+    - type: instructions
+      step_description: Tap the second icon (markets 行情) in the floating bottom tab bar.
+    - type: validation
+      step_description: The markets screen is visible with a watchlist area (自选) or an empty watchlist message.
+    - type: instructions
+      step_description: Open the market search, type AAPL, and wait for results across markets.
+    - type: instructions
+      step_description: Add AAPL to the watchlist from the search results, then close the search.
+    - type: validation
+      step_description: AAPL appears in the watchlist with a price or a pending price placeholder.
+    - type: instructions
+      step_description: Remove AAPL from the watchlist (swipe or long-press action), then tap the first icon in the bottom tab bar to return to the portfolio home.

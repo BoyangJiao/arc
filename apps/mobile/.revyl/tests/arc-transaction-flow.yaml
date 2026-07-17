@@ -1,0 +1,33 @@
+# Revyl Test Definition
+
+_meta:
+  remote_id: fa4d5c87-f0a9-4ceb-b21c-80a9079aa423
+  remote_version: 2
+  local_version: 2
+  last_synced_at: "2026-07-16T00:35:24+08:00"
+  checksum: a0f7889dc61ec9ae376e32686fcc46cb9bcf1a7fab1074aa7a24ac0ad2d9f63c
+test:
+  metadata:
+    name: arc-transaction-flow
+    platform: ios
+    tags:
+      - atlas-baseline
+  build:
+    name: Arc
+  blocks:
+    - type: module_import
+      module: arc-bypass-login
+    - type: instructions
+      step_description: On the portfolio home, tap the floating add button (＋) and choose to add a transaction (手动添加交易).
+    - type: validation
+      step_description: A new transaction form is shown with an asset search field.
+    - type: instructions
+      step_description: Search for asset 600519 in the asset search field and select the result (贵州茅台).
+    - type: instructions
+      step_description: Enter quantity 1 and keep the suggested price, then save the transaction (保存).
+    - type: validation
+      step_description: The form closes and the holdings list now includes 贵州茅台 / 600519.
+    - type: instructions
+      step_description: Open the 600519 asset detail, scroll to the transaction history (交易记录), swipe left on the transaction created just now and delete it (删除), confirming if asked.
+    - type: validation
+      step_description: The deleted transaction is no longer listed in the transaction history.

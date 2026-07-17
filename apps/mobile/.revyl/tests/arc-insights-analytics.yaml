@@ -1,0 +1,35 @@
+# Revyl Test Definition
+
+_meta:
+  remote_id: 7d34830d-18c9-4df1-b310-c8deaecec261
+  remote_version: 3
+  local_version: 3
+  last_synced_at: "2026-07-17T00:26:40+08:00"
+  checksum: d20214542a27327a5999d99351fc71033b7d5008d487b1622a0b089fcab6e1f6
+test:
+  metadata:
+    name: arc-insights-analytics
+    platform: ios
+    tags:
+      - atlas-baseline
+  build:
+    name: Arc
+  blocks:
+    - type: module_import
+      module: arc-bypass-login
+    - type: instructions
+      step_description: Tap the third icon (insights 洞察) in the floating bottom tab bar.
+    - type: instructions
+      step_description: Open the profit and loss analysis entry (盈亏分析), scroll through the whole screen including the cumulative return chart and rankings, then go back.
+    - type: instructions
+      step_description: In the portfolio performance section (投资组合表现), open the asset value detail (资产价值), press and drag on the multi-line chart to scrub it, toggle an asset chip, then go back.
+    - type: instructions
+      step_description: Open the benchmark comparison detail (指数对标), switch between 月/季度/年 groupings, then go back.
+    - type: instructions
+      step_description: Open the trade statistics detail (交易统计), switch a grouping option, then go back.
+    - type: instructions
+      step_description: Open the risk detail (风险), scroll through the volatility ranking, then go back.
+    - type: instructions
+      step_description: Open the drawdown detail (回撤), view the underwater curve, then go back to the insights screen.
+    - type: validation
+      step_description: The insights screen is visible again with its section cards.
