@@ -6,81 +6,140 @@
 <title>Arc Screen Map</title>
 <style>
   :root {
-    --bg: #0f1115; --panel: #171a21; --line: #262b36; --text: #e8eaf0;
-    --muted: #8b93a5; --accent: #4f7cff; --good: #34c77b; --warn: #ff5d73;
+    --bg: #101114; --panel: #17181d; --line: #26272e; --text: #e8eaf0;
+    --muted: #8b93a5; --accent: #6d7cff; --warn: #ff5d73;
     color-scheme: dark;
   }
   * { box-sizing: border-box; margin: 0; }
-  body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, "SF Pro", "PingFang SC", sans-serif; }
-  header { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
-    padding: 14px 20px; background: rgba(15,17,21,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
-  header h1 { font-size: 16px; font-weight: 700; letter-spacing: .02em; margin-right: 8px; }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, "SF Pro", "PingFang SC", sans-serif;
+    display: flex; flex-direction: column; overflow: hidden; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 18px;
+    background: var(--bg); border-bottom: 1px solid var(--line); flex: 0 0 auto; z-index: 10; }
+  header h1 { font-size: 15px; font-weight: 700; margin-right: 6px; }
   header h1 span { color: var(--accent); }
   .tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
-  .tabs button { border: 0; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+  .tabs button { border: 0; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; }
   .tabs button.on { background: var(--accent); color: #fff; }
   select, input[type=search] { background: var(--panel); color: var(--text); border: 1px solid var(--line);
     border-radius: 8px; padding: 7px 10px; font-size: 13px; }
-  input[type=search] { width: 200px; }
-  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-  .chips button { border: 1px solid var(--line); background: var(--panel); color: var(--muted);
-    border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 12px; }
-  .chips button.on { border-color: var(--accent); color: var(--accent); }
-  main { padding: 20px; max-width: 1600px; margin: 0 auto; }
-  .meta { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
-  .group h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 22px 0 10px; }
+  main { flex: 1 1 auto; min-height: 0; position: relative; }
+  .view { position: absolute; inset: 0; display: none; }
+  .view.on { display: block; }
+  .meta { color: var(--muted); font-size: 12px; }
+
+  /* ── Map（无限画布）────────────────────────────── */
+  #canvas { position: absolute; inset: 0; overflow: hidden; cursor: grab;
+    background-image: radial-gradient(var(--line) 1px, transparent 1px); background-size: 24px 24px; }
+  #canvas.panning { cursor: grabbing; }
+  #world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  #edges { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+  #edges path { fill: none; stroke: #4b529e; stroke-width: 1.6; opacity: .8; }
+  .node { position: absolute; width: 128px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; overflow: hidden; cursor: grab; user-select: none; }
+  .node:hover { border-color: var(--accent); }
+  .node.dragging { cursor: grabbing; z-index: 5; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+  .node .nm { padding: 5px 8px 4px; font-size: 10px; font-weight: 600; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .04em; }
+  .node img { width: 100%; aspect-ratio: 1206/2622; object-fit: cover; display: block; background: #000; pointer-events: none; }
+  .node.root { width: auto; padding: 8px 18px; border-radius: 999px; background: #1d1f33;
+    border-color: var(--accent); color: var(--accent); font-weight: 700; font-size: 12px; }
+  #mapCtl { position: absolute; left: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 6; }
+  #mapCtl button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--text); font-size: 16px; cursor: pointer; }
+  #mapHint { position: absolute; right: 16px; bottom: 16px; z-index: 6; font-size: 11px; color: var(--muted); }
+
+  /* ── Screens（网格）───────────────────────────── */
+  #screens { overflow: auto; padding: 18px; }
+  .group h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 20px 0 10px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
-    cursor: zoom-in; transition: transform .12s ease, border-color .12s ease; }
-  .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; cursor: zoom-in; }
+  .card:hover { border-color: var(--accent); }
   .card img { width: 100%; aspect-ratio: 1206/2622; object-fit: cover; display: block; background: #000; }
   .card .cap { padding: 8px 10px; font-size: 11px; color: var(--muted); word-break: break-all; }
   .card .cap b { display: block; color: var(--text); font-size: 12px; margin-bottom: 2px; }
   .missing { display: flex; align-items: center; justify-content: center; aspect-ratio: 1206/2622;
-    color: var(--warn); font-size: 12px; background: repeating-linear-gradient(45deg, #171a21, #171a21 8px, #1c202a 8px, #1c202a 16px); }
-  /* flows */
-  .flow { margin-bottom: 30px; }
-  .flow h2 { font-size: 14px; margin-bottom: 4px; }
-  .flow p { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
-  .lane { display: flex; gap: 0; overflow-x: auto; padding-bottom: 8px; align-items: center; }
-  .lane .card { flex: 0 0 140px; }
-  .arrow { flex: 0 0 34px; text-align: center; color: var(--accent); font-size: 18px; }
-  /* compare */
+    color: var(--warn); font-size: 12px; background: repeating-linear-gradient(45deg, #17181d, #17181d 8px, #1c1e26 8px, #1c1e26 16px); }
+
+  /* ── Flows（侧栏 + 泳道）─────────────────────── */
+  #flows { display: none; }
+  #flows.on { display: flex; }
+  #flowNav { flex: 0 0 250px; border-right: 1px solid var(--line); background: var(--panel);
+    display: flex; flex-direction: column; min-height: 0; }
+  #flowNav .fsearch { padding: 12px; border-bottom: 1px solid var(--line); }
+  #flowNav .fsearch input { width: 100%; }
+  #flowList { overflow: auto; flex: 1; padding: 6px 0; }
+  #flowList .fgroup { padding: 10px 14px 4px; font-size: 10px; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+  #flowList button { display: flex; justify-content: space-between; align-items: center; width: 100%;
+    text-align: left; border: 0; background: transparent; color: var(--text); padding: 8px 14px;
+    cursor: pointer; font-size: 13px; border-left: 2px solid transparent; }
+  #flowList button:hover { background: rgba(109,124,255,.08); }
+  #flowList button.on { background: rgba(109,124,255,.12); border-left-color: var(--accent); color: #fff; }
+  #flowList button .n { color: var(--muted); font-size: 11px; }
+  #flowMain { flex: 1; overflow: auto; padding: 20px; min-width: 0; }
+  #flowMain h2 { font-size: 16px; }
+  #flowMain .desc { color: var(--muted); font-size: 12px; margin: 4px 0 16px; }
+  .lane { display: flex; overflow-x: auto; padding-bottom: 10px; align-items: center; gap: 0; }
+  .lane .card { flex: 0 0 170px; cursor: zoom-in; }
+  .arrow { flex: 0 0 40px; text-align: center; color: var(--accent); font-size: 20px; }
+
+  /* ── Compare ─────────────────────────────────── */
+  #compare { overflow: auto; padding: 18px; }
   .cmp-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cmp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
   .pair-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
   .pair-wrap h3 { font-size: 12px; margin-bottom: 8px; word-break: break-all; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .pair img { width: 100%; border-radius: 6px; display: block; cursor: zoom-in; }
-  .cmp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
-  .badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
-  .badge.only { background: rgba(255,93,115,.15); color: var(--warn); }
-  /* lightbox */
-  #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: none;
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; margin-left: 6px; background: rgba(255,93,115,.15); color: var(--warn); }
+
+  #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.9); display: none;
     align-items: center; justify-content: center; z-index: 99; cursor: zoom-out; }
   #lightbox.on { display: flex; }
   #lightbox img { max-height: 94vh; max-width: 94vw; border-radius: 12px; }
-  #lightbox .lb-cap { position: fixed; bottom: 16px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 12px; }
+  #lightbox .lb-cap { position: fixed; bottom: 14px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 12px; }
 </style>
 </head>
 <body>
 <header>
   <h1>Arc <span>Screen Map</span></h1>
   <nav class="tabs" id="tabs">
-    <button data-v="sitemap" class="on">Sitemap</button>
+    <button data-v="map" class="on">Map</button>
+    <button data-v="screens">Screens</button>
     <button data-v="flows">Flows</button>
     <button data-v="compare">Compare</button>
   </nav>
   <select id="capSel"></select>
-  <input type="search" id="q" placeholder="筛选 route…" />
-  <div class="chips" id="chips"></div>
+  <input type="search" id="q" placeholder="筛选 route…（Screens/Compare）" />
+  <span class="meta" id="capMeta"></span>
 </header>
-<main id="main"></main>
+<main>
+  <div class="view on" id="map">
+    <div id="canvas"><div id="world"><svg id="edges"></svg></div></div>
+    <div id="mapCtl">
+      <button id="zin">＋</button><button id="zout">－</button><button id="zfit" title="fit">⤢</button>
+    </div>
+    <div id="mapHint">拖动空白平移 · 滚轮缩放 · 拖动节点重排（自动保存）· 点节点看大图</div>
+  </div>
+  <div class="view" id="screens"></div>
+  <div class="view" id="flows">
+    <aside id="flowNav">
+      <div class="fsearch"><input type="search" id="fq" placeholder="Search flows…" /></div>
+      <div id="flowList"></div>
+    </aside>
+    <section id="flowMain"></section>
+  </div>
+  <div class="view" id="compare"></div>
+</main>
 <div id="lightbox"><img alt="" /><div class="lb-cap"></div></div>
 <script src="captures.js"></script>
 <script>
 const caps = window.SCREEN_MAP_CAPTURES || [];
 const $ = (s) => document.querySelector(s);
-const state = { view: "sitemap", cap: caps[0]?.id, q: "", group: null, cmpA: caps[0]?.id, cmpB: caps[1]?.id ?? caps[0]?.id };
+const state = { view: "map", cap: caps[0]?.id, q: "", fq: "", flow: 0,
+  cmpA: caps[0]?.id, cmpB: caps[1]?.id ?? caps[0]?.id };
+const capById = (id) => caps.find((c) => c.id === id);
+const shortName = (r) => r === "/" ? "首页" : r.replace(/\/[0-9a-f-]{36}/g, "/:id").split("/").filter(Boolean).slice(-2).join("/");
 
 const GROUPS = [
   ["首页 Tab", (r) => r === "/" || r.startsWith("/portfolio")],
@@ -92,113 +151,302 @@ const GROUPS = [
 ];
 const groupOf = (r) => GROUPS.find(([, fn]) => fn(r))[0];
 
-// Journey flows（route 前缀匹配当前版本截图；来源 docs/user-journeys.md）
 const FLOWS = [
-  { name: "J2 · 录入交易", desc: "首页 → 组合详情 → 新建交易 → 交易表单", routes: ["/", "/portfolio/", "/transactions/new", "/transactions/new/trade"] },
-  { name: "J8 · 行情与自选", desc: "行情 Tab → 跨市场搜索", routes: ["/markets", "/markets/search"] },
-  { name: "J9 · 再平衡", desc: "洞察 → 目标配置 → 行动单", routes: ["/insights", "/insights/rebalance/setup", "/insights/rebalance/actions"] },
-  { name: "洞察分析", desc: "洞察 → 盈亏 → 资产价值 → 指数对标 → 交易统计 → 风险 → 回撤", routes: ["/insights", "/insights/pnl-analysis", "/insights/asset-value", "/insights/benchmark", "/insights/trade-stats", "/insights/risk", "/insights/drawdown"] },
-  { name: "敞口", desc: "洞察 → 市场敞口 → 币种敞口", routes: ["/insights", "/insights/exposure/market", "/insights/exposure/currency"] },
-  { name: "Me · 数据", desc: "Me → 数据管理 → 导出 / 导入", routes: ["/me", "/me/data", "/me/export", "/me/import"] },
-  { name: "Me · 管理", desc: "Me → 设置 / 组合 / 现金 / 订阅 / 收件箱", routes: ["/me", "/me/settings", "/me/portfolios", "/me/cash-balances", "/me/subscription", "/me/inbox"] },
-  { name: "资产详情", desc: "首页 → 美股详情 / 基金详情", routes: ["/", "/asset/US/", "/asset/FUND/"] },
+  { area: "首页", name: "录入交易 (J2)", desc: "首页 → 组合详情 → 新建交易 → 交易表单", routes: ["/", "/portfolio/", "/transactions/new", "/transactions/new/trade"] },
+  { area: "首页", name: "每日快照", desc: "首页 → 组合详情 → 每日盈亏", routes: ["/", "/portfolio/", "/daily-snapshot"] },
+  { area: "首页", name: "资产详情", desc: "首页 → 美股详情 / 基金详情", routes: ["/", "/asset/US/", "/asset/FUND/"] },
+  { area: "行情", name: "行情与自选 (J8)", desc: "行情 Tab → 跨市场搜索", routes: ["/markets", "/markets/search"] },
+  { area: "洞察", name: "再平衡 (J9)", desc: "洞察 → 目标配置 → 行动单", routes: ["/insights", "/insights/rebalance/setup", "/insights/rebalance/actions"] },
+  { area: "洞察", name: "盈亏与表现", desc: "洞察 → 盈亏分析 → 资产价值 → 指数对标", routes: ["/insights", "/insights/pnl-analysis", "/insights/asset-value", "/insights/benchmark"] },
+  { area: "洞察", name: "统计与风险", desc: "洞察 → 交易统计 → 风险 → 回撤", routes: ["/insights", "/insights/trade-stats", "/insights/risk", "/insights/drawdown"] },
+  { area: "洞察", name: "敞口", desc: "洞察 → 市场敞口 → 币种敞口", routes: ["/insights", "/insights/exposure/market", "/insights/exposure/currency"] },
+  { area: "Me", name: "数据进出", desc: "Me → 数据管理 → 导出 / 导入", routes: ["/me", "/me/data", "/me/export", "/me/import"] },
+  { area: "Me", name: "账户管理", desc: "Me → 设置 / 组合 / 现金 / 订阅 / 收件箱", routes: ["/me", "/me/settings", "/me/portfolios", "/me/cash-balances", "/me/subscription", "/me/inbox"] },
 ];
+const findShot = (cap, like) =>
+  cap?.screens.find((s) => s.route === like) ?? cap?.screens.find((s) => s.route.includes(like));
 
-const capById = (id) => caps.find((c) => c.id === id);
-const findShot = (cap, routeLike) =>
-  cap?.screens.find((s) => s.route === routeLike) ??
-  cap?.screens.find((s) => s.route.includes(routeLike));
+function lb(src, cap) {
+  $("#lightbox img").src = src;
+  $("#lightbox .lb-cap").textContent = `${src} · ${cap}`;
+  $("#lightbox").classList.add("on");
+}
+$("#lightbox").onclick = () => $("#lightbox").classList.remove("on");
 
-function card(cap, s, extraCap = "") {
+function card(cap, s, onclickExtra) {
   if (!s || !s.screenshot)
-    return `<div class="card"><div class="missing">缺失</div><div class="cap"><b>—</b>${extraCap}</div></div>`;
+    return `<div class="card"><div class="missing">缺失</div><div class="cap"><b>—</b></div></div>`;
   const src = `${cap.id}/${s.screenshot}`;
-  return `<div class="card" onclick="lb('${src}','${s.route}')">
+  return `<div class="card" onclick="lb('${src}','${cap.id}')">
     <img loading="lazy" src="${src}" alt="${s.route}" />
-    <div class="cap"><b>${s.route}</b>${extraCap || s.id}</div></div>`;
+    <div class="cap"><b>${s.route}</b>${s.id}</div></div>`;
 }
 
-function renderSitemap() {
+/* ══ Map：树布局 + 无限画布 ══════════════════════ */
+const NODE_W = 128, NODE_H = 128 * 2622 / 1206 + 24, GAP_X = 26, GAP_Y = 80;
+let mapState = null; // { nodes: Map<id,{x,y,el,screen}>, tf: {x,y,z} }
+
+function parentRoute(route, routeSet) {
+  if (route === "/") return null;
+  const segs = route.split("/").filter(Boolean);
+  for (let i = segs.length - 1; i >= 1; i--) {
+    const p = "/" + segs.slice(0, i).join("/");
+    if (routeSet.has(p)) return p;
+  }
+  return "/";
+}
+
+function buildTree(cap) {
+  const routeSet = new Set(cap.screens.map((s) => s.route));
+  const children = new Map(); // parent route -> screens[]
+  for (const s of cap.screens) {
+    const p = s.route === "/" ? "@root" : parentRoute(s.route, routeSet);
+    if (!children.has(p)) children.set(p, []);
+    children.get(p).push(s);
+  }
+  for (const list of children.values()) list.sort((a, b) => a.route.localeCompare(b.route));
+  return children;
+}
+
+function layoutMap(cap) {
+  const children = buildTree(cap);
+  const pos = new Map();
+  const width = (route) => {
+    const kids = children.get(route) ?? [];
+    if (!kids.length) return NODE_W;
+    const w = kids.reduce((acc, k) => acc + width(k.route), 0) + GAP_X * (kids.length - 1);
+    return Math.max(NODE_W, w);
+  };
+  const place = (route, left, depth) => {
+    const kids = children.get(route) ?? [];
+    const w = width(route);
+    pos.set(route, { x: left + w / 2 - NODE_W / 2, y: depth * (NODE_H + GAP_Y) });
+    let x = left;
+    for (const k of kids) {
+      place(k.route, x, depth + 1);
+      x += width(k.route) + GAP_X;
+    }
+  };
+  // 虚拟根
+  const roots = children.get("@root") ?? [];
+  let x = 0;
+  const rootW = roots.reduce((a, r) => a + width(r.route), 0) + GAP_X * Math.max(0, roots.length - 1);
+  pos.set("@root", { x: rootW / 2 - 60, y: -70 });
+  for (const r of roots) { place(r.route, x, 1); x += width(r.route) + GAP_X; }
+  // 一级深度修正：@root 的孩子 depth 1 → y 应从 0 开始
+  for (const [k, p] of pos) if (k !== "@root") p.y -= NODE_H + GAP_Y;
+  return { children, pos };
+}
+
+const posKey = (capId) => `screenmap-pos-${capId}`;
+
+function renderMap() {
   const cap = capById(state.cap);
-  if (!cap) return "<p class='meta'>无 capture 数据 — 先跑 sweep.mjs</p>";
-  const shots = cap.screens.filter(
-    (s) => (!state.q || s.route.includes(state.q)) && (!state.group || groupOf(s.route) === state.group)
-  );
+  const world = $("#world"), svg = $("#edges");
+  world.querySelectorAll(".node").forEach((n) => n.remove());
+  if (!cap) return;
+  const { children, pos } = layoutMap(cap);
+  // 恢复用户拖过的位置
+  try {
+    const saved = JSON.parse(localStorage.getItem(posKey(cap.id)) || "{}");
+    for (const [k, p] of Object.entries(saved)) if (pos.has(k)) Object.assign(pos.get(k), p);
+  } catch {}
+
+  const nodes = new Map();
+  const mkNode = (route, screen) => {
+    const el = document.createElement("div");
+    const p = pos.get(route);
+    if (route === "@root") {
+      el.className = "node root"; el.textContent = "▶ Arc";
+    } else {
+      el.className = "node";
+      el.innerHTML = `<div class="nm">${shortName(route)}</div>` +
+        (screen?.screenshot ? `<img src="${cap.id}/${screen.screenshot}" />` : `<div class="missing">缺失</div>`);
+    }
+    el.style.left = p.x + "px"; el.style.top = p.y + "px";
+    world.appendChild(el);
+    nodes.set(route, { ...p, el, screen });
+    return el;
+  };
+  mkNode("@root", null);
+  for (const s of cap.screens) mkNode(s.route, s);
+
+  const drawEdges = () => {
+    let d = "";
+    for (const [parent, kids] of children) {
+      const pp = nodes.get(parent); if (!pp) continue;
+      const pw = parent === "@root" ? pp.el.offsetWidth : NODE_W;
+      const ph = pp.el.offsetHeight;
+      for (const k of kids) {
+        const kp = nodes.get(k.route); if (!kp) continue;
+        const x1 = pp.x + pw / 2, y1 = pp.y + ph;
+        const x2 = kp.x + NODE_W / 2, y2 = kp.y;
+        d += `M ${x1} ${y1} C ${x1} ${y1 + 40}, ${x2} ${y2 - 40}, ${x2} ${y2} `;
+      }
+    }
+    svg.innerHTML = `<path d="${d}" />`;
+    const xs = [...nodes.values()];
+    const minX = Math.min(...xs.map((n) => n.x)) - 200, minY = Math.min(...xs.map((n) => n.y)) - 200;
+    const maxX = Math.max(...xs.map((n) => n.x)) + 400, maxY = Math.max(...xs.map((n) => n.y)) + 600;
+    svg.setAttribute("viewBox", `${minX} ${minY} ${maxX - minX} ${maxY - minY}`);
+    svg.style.left = minX + "px"; svg.style.top = minY + "px";
+    svg.style.width = (maxX - minX) + "px"; svg.style.height = (maxY - minY) + "px";
+  };
+  drawEdges();
+
+  mapState = { nodes, drawEdges, cap };
+  // 节点拖拽 + 点击放大
+  for (const [route, n] of nodes) {
+    if (route === "@root") continue;
+    n.el.addEventListener("pointerdown", (e) => {
+      e.stopPropagation();
+      const start = { mx: e.clientX, my: e.clientY, x: n.x, y: n.y };
+      let moved = false;
+      n.el.classList.add("dragging");
+      n.el.setPointerCapture(e.pointerId);
+      const move = (ev) => {
+        const dx = (ev.clientX - start.mx) / tf.z, dy = (ev.clientY - start.my) / tf.z;
+        if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+        n.x = start.x + dx; n.y = start.y + dy;
+        n.el.style.left = n.x + "px"; n.el.style.top = n.y + "px";
+        drawEdges();
+      };
+      const up = () => {
+        n.el.classList.remove("dragging");
+        n.el.removeEventListener("pointermove", move);
+        n.el.removeEventListener("pointerup", up);
+        if (moved) {
+          const saved = JSON.parse(localStorage.getItem(posKey(cap.id)) || "{}");
+          saved[route] = { x: n.x, y: n.y };
+          localStorage.setItem(posKey(cap.id), JSON.stringify(saved));
+        } else if (n.screen?.screenshot) {
+          lb(`${cap.id}/${n.screen.screenshot}`, cap.id);
+        }
+      };
+      n.el.addEventListener("pointermove", move);
+      n.el.addEventListener("pointerup", up);
+    });
+  }
+  fitMap();
+}
+
+/* 画布平移缩放 */
+const tf = { x: 60, y: 60, z: 0.5 };
+const applyTf = () => { $("#world").style.transform = `translate(${tf.x}px, ${tf.y}px) scale(${tf.z})`; };
+function fitMap() {
+  if (!mapState) return;
+  const xs = [...mapState.nodes.values()];
+  const minX = Math.min(...xs.map((n) => n.x)), maxX = Math.max(...xs.map((n) => n.x + NODE_W));
+  const minY = Math.min(...xs.map((n) => n.y)), maxY = Math.max(...xs.map((n) => n.y + NODE_H));
+  const cw = $("#canvas").clientWidth, ch = $("#canvas").clientHeight;
+  tf.z = Math.min(1, cw / (maxX - minX + 120), ch / (maxY - minY + 120));
+  tf.x = (cw - (maxX - minX) * tf.z) / 2 - minX * tf.z;
+  tf.y = (ch - (maxY - minY) * tf.z) / 2 - minY * tf.z + 10;
+  applyTf();
+}
+$("#canvas").addEventListener("pointerdown", (e) => {
+  const start = { mx: e.clientX, my: e.clientY, x: tf.x, y: tf.y };
+  $("#canvas").classList.add("panning");
+  const move = (ev) => { tf.x = start.x + ev.clientX - start.mx; tf.y = start.y + ev.clientY - start.my; applyTf(); };
+  const up = () => { $("#canvas").classList.remove("panning");
+    window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+  window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
+});
+$("#canvas").addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const r = $("#canvas").getBoundingClientRect();
+  const cx = e.clientX - r.left, cy = e.clientY - r.top;
+  const nz = Math.min(2.5, Math.max(0.08, tf.z * (e.deltaY < 0 ? 1.12 : 0.89)));
+  tf.x = cx - ((cx - tf.x) / tf.z) * nz; tf.y = cy - ((cy - tf.y) / tf.z) * nz; tf.z = nz;
+  applyTf();
+}, { passive: false });
+$("#zin").onclick = () => { tf.z = Math.min(2.5, tf.z * 1.25); applyTf(); };
+$("#zout").onclick = () => { tf.z = Math.max(0.08, tf.z / 1.25); applyTf(); };
+$("#zfit").onclick = fitMap;
+
+/* ══ Screens ══════════════════════════════════ */
+function renderScreens() {
+  const cap = capById(state.cap);
+  if (!cap) { $("#screens").innerHTML = "<p class='meta'>无数据</p>"; return; }
+  const shots = cap.screens.filter((s) => !state.q || s.route.includes(state.q));
   const byGroup = new Map();
   for (const s of shots) {
     const g = groupOf(s.route);
     if (!byGroup.has(g)) byGroup.set(g, []);
     byGroup.get(g).push(s);
   }
-  let html = `<p class="meta">${cap.id} · ${new Date(cap.capturedAt).toLocaleString()} · ${shots.length}/${cap.screens.length} 屏</p>`;
+  let html = "";
   for (const [g] of GROUPS) {
     const list = byGroup.get(g);
     if (!list?.length) continue;
     html += `<section class="group"><h2>${g} · ${list.length}</h2><div class="grid">${list
       .map((s) => card(cap, s)).join("")}</div></section>`;
   }
-  return html;
+  $("#screens").innerHTML = html || "<p class='meta'>无匹配</p>";
 }
 
+/* ══ Flows：侧栏导航 + 泳道 ════════════════════ */
 function renderFlows() {
   const cap = capById(state.cap);
-  if (!cap) return "";
-  return FLOWS.map((f) => {
-    const steps = f.routes.map((r) => findShot(cap, r));
-    return `<section class="flow"><h2>${f.name}</h2><p>${f.desc}</p><div class="lane">${steps
-      .map((s, i) => (i ? '<div class="arrow">→</div>' : "") + card(cap, s)).join("")}</div></section>`;
-  }).join("");
+  const q = state.fq.toLowerCase();
+  const visible = FLOWS.map((f, i) => ({ ...f, i }))
+    .filter((f) => !q || f.name.toLowerCase().includes(q) || f.desc.toLowerCase().includes(q));
+  let nav = "", lastArea = null;
+  for (const f of visible) {
+    if (f.area !== lastArea) { nav += `<div class="fgroup">${f.area}</div>`; lastArea = f.area; }
+    nav += `<button class="${f.i === state.flow ? "on" : ""}" onclick="state.flow=${f.i};renderFlows()">
+      <span>${f.name}</span><span class="n">${f.routes.length}</span></button>`;
+  }
+  $("#flowList").innerHTML = nav || "<div class='fgroup'>无匹配</div>";
+  const f = FLOWS[state.flow];
+  if (!f || !cap) { $("#flowMain").innerHTML = ""; return; }
+  const steps = f.routes.map((r) => findShot(cap, r));
+  $("#flowMain").innerHTML = `<h2>${f.name}</h2><p class="desc">${f.desc} · ${steps.filter(Boolean).length}/${f.routes.length} 屏</p>
+    <div class="lane">${steps.map((s, i) => (i ? '<div class="arrow">→</div>' : "") + card(cap, s)).join("")}</div>`;
 }
 
+/* ══ Compare ══════════════════════════════════ */
 function renderCompare() {
   const A = capById(state.cmpA), B = capById(state.cmpB);
-  if (!A || !B) return "";
+  if (!A || !B) { $("#compare").innerHTML = "<p class='meta'>需要至少一个 capture</p>"; return; }
   const ids = [...new Set([...A.screens.map((s) => s.id), ...B.screens.map((s) => s.id)])].sort();
   const opts = (sel) => caps.map((c) => `<option value="${c.id}" ${c.id === sel ? "selected" : ""}>${c.id}</option>`).join("");
   let html = `<div class="cmp-bar">
-    <select onchange="state.cmpA=this.value;render()">${opts(state.cmpA)}</select> vs
-    <select onchange="state.cmpB=this.value;render()">${opts(state.cmpB)}</select>
-    <span class="meta">${ids.length} 屏 · 左 ${A.id} · 右 ${B.id}</span></div><div class="cmp-grid">`;
+    <select onchange="state.cmpA=this.value;renderCompare()">${opts(state.cmpA)}</select><span class="meta">vs</span>
+    <select onchange="state.cmpB=this.value;renderCompare()">${opts(state.cmpB)}</select>
+    <span class="meta">${ids.length} 屏</span></div><div class="cmp-grid">`;
   for (const id of ids) {
     if (state.q && !id.includes(state.q.replaceAll("/", "__"))) continue;
     const a = A.screens.find((s) => s.id === id), b = B.screens.find((s) => s.id === id);
-    const badge = !a ? '<span class="badge only">仅右侧</span>' : !b ? '<span class="badge only">仅左侧</span>' : "";
+    const badge = !a ? '<span class="badge">仅右侧</span>' : !b ? '<span class="badge">仅左侧</span>' : "";
     html += `<div class="pair-wrap"><h3>${(a ?? b).route}${badge}</h3><div class="pair">
       ${a?.screenshot ? `<img loading="lazy" src="${A.id}/${a.screenshot}" onclick="lb('${A.id}/${a.screenshot}','${A.id}')" />` : '<div class="missing">无</div>'}
       ${b?.screenshot ? `<img loading="lazy" src="${B.id}/${b.screenshot}" onclick="lb('${B.id}/${b.screenshot}','${B.id}')" />` : '<div class="missing">无</div>'}
     </div></div>`;
   }
-  return html + "</div>";
+  $("#compare").innerHTML = html + "</div>";
 }
 
+/* ══ 全局接线 ═════════════════════════════════ */
 function render() {
-  $("#main").innerHTML =
-    state.view === "sitemap" ? renderSitemap() : state.view === "flows" ? renderFlows() : renderCompare();
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === state.view));
+  if (state.view === "map") renderMap();
+  else if (state.view === "screens") renderScreens();
+  else if (state.view === "flows") renderFlows();
+  else renderCompare();
 }
-function lb(src, cap) {
-  $("#lightbox img").src = src;
-  $("#lightbox .lb-cap").textContent = `${src}  ·  ${cap}`;
-  $("#lightbox").classList.add("on");
-}
-$("#lightbox").onclick = () => $("#lightbox").classList.remove("on");
-
-// header wiring
-$("#capSel").innerHTML = caps.map((c) => `<option value="${c.id}">${c.id}（${c.count} 屏）</option>`).join("");
-$("#capSel").onchange = (e) => { state.cap = e.target.value; render(); };
-$("#q").oninput = (e) => { state.q = e.target.value.trim(); render(); };
 $("#tabs").onclick = (e) => {
   const b = e.target.closest("button"); if (!b) return;
   state.view = b.dataset.v;
   document.querySelectorAll("#tabs button").forEach((x) => x.classList.toggle("on", x === b));
   render();
 };
-$("#chips").innerHTML = GROUPS.slice(0, -1).map(([g]) => `<button data-g="${g}">${g}</button>`).join("");
-$("#chips").onclick = (e) => {
-  const b = e.target.closest("button"); if (!b) return;
-  state.group = state.group === b.dataset.g ? null : b.dataset.g;
-  document.querySelectorAll("#chips button").forEach((x) => x.classList.toggle("on", x.dataset.g === state.group));
-  render();
-};
+$("#capSel").innerHTML = caps.map((c) => `<option value="${c.id}">${c.id}（${c.count} 屏）</option>`).join("");
+$("#capSel").onchange = (e) => { state.cap = e.target.value; render(); };
+$("#q").oninput = (e) => { state.q = e.target.value.trim(); if (state.view !== "map") render(); };
+$("#fq") && ($("#fq").oninput = (e) => { state.fq = e.target.value.trim(); renderFlows(); });
+const cap0 = capById(state.cap);
+$("#capMeta").textContent = cap0 ? `${new Date(cap0.capturedAt).toLocaleString()}` : "";
 render();
 </script>
 </body>

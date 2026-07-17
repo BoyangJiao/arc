@@ -54,7 +54,9 @@
     "functions:secrets:dev-tools": "node_modules/supabase/bin/supabase secrets set DEV_TOOLS_ENABLED=true",
     "test:functions": "cd supabase/functions && deno test --allow-env --no-check",
     "prepare": "husky",
-    "eas-build-post-install": "node apps/mobile/scripts/eas-post-install.mjs"
+    "eas-build-post-install": "node apps/mobile/scripts/eas-post-install.mjs",
+    "screenmap": "node tools/screen-map/sweep.mjs && node tools/screen-map/build-viewer.mjs",
+    "screenmap:open": "open docs/screen-map/index.html"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.105.2",
