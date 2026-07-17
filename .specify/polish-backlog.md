@@ -140,6 +140,45 @@
 
 ---
 
+## 全量打磨桶 — 2026-07 screen-map 基线发现（dev/ux-polish 打磨阶段主战场）
+
+> 来源标 `screen-map baseline` = 33 屏截图基线 / Atlas 云测试 / viewer Flows 视角发现。
+> 基线：`docs/screen-map/before-polish-2026-07-17/`；viewer：`pnpm screenmap:open`。
+
+### ~~首页周期涨跌币种混算（-\$225,903 (77.95%)）~~
+
+- **来源**: screen-map baseline 2026-07-17 首页截图 → 精确复算定位
+- **根因**: chart series 直接用快照 totalValue（CNY），Hero live 值用显示币种（USD）→ 两种单位相减
+- **Resolved**: `4dbc6f4` 2026-07-17 — `snapshotsCurrencyMismatch` 守卫强制 True-Historical bootstrap；+4 单测 + 模拟器实拍验证
+
+### 再平衡行动单/setup 空态过空
+
+- **来源**: viewer Flows「再平衡 (J9)」泳道 — 行动单页在未设目标配置时近乎全白，setup 页 0% 环无引导
+- **影响**: 高价值功能的第一触点是一面白墙；违背三态审计「空态给出路」的既有标准
+- **fix 方案**: actions 空态给「先设定目标配置」引导卡 + CTA；setup 0% 态加说明文案/示例
+- **影响 DoD**: ❌ 不影响
+
+### active portfolio 解析疑似不一致
+
+- **来源**: Atlas 云测试 2026-07-17 — 同 Clean 账号部分会话见空组合（portfolio_empty_state 入图），insights-overview 测试因此失败
+- **fix 方案**: 复现 → 查 `resolve-active-portfolio` + 默认组合自愈逻辑的排序稳定性；Revyl 报告有录像
+- **影响 DoD**: ❌（若确认高频则升级）
+
+### transaction-flow 删除路径云测试未走通
+
+- **来源**: Atlas 云测试 2026-07-17 — AI 找不到刚建仓的 600519 完成删除
+- **fix 方案**: 人工复现判定 app bug（列表刷新/滚动定位）vs 测试措辞问题
+- **影响 DoD**: ❌
+
+### 3M/1Y 范围超出数据史时的周期语义
+
+- **来源**: screen-map baseline — 「过去 3 个月」实际基线是 30 天前首笔建仓日（更早为空仓 0）
+- **影响**: 文案说 3 个月、数字算的是建仓以来；用户可能误读
+- **fix 方案**: 讨论项 — 空仓段是否该计入（现符合 ADR 014 阶跃语义）；或 label 动态改「建仓以来」
+- **影响 DoD**: ❌（先讨论后动）
+
+---
+
 ## 元信息
 
 - **建立日期**: 2026-05-25 by Claude Opus 4.7
